@@ -18,7 +18,7 @@ export function AdminDashboard({ challenges, partners, payouts, users, claims }:
     const renderTabContent = () => {
         switch (activeTab) {
             case "challenges":
-                return <ChallengesTab challenges={challenges} />;
+                return <ChallengesTab challenges={challenges} users={users} />;
             case "partners":
                 return <PartnersTab partners={partners} />;
             case "claims":

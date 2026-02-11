@@ -11,7 +11,7 @@ interface AddChallengeModalProps {
 }
 
 const PROP_FIRMS = ["MyFundedFutures", "Alpha Futures", "Lucid Trading"];
-const ACCOUNT_SIZES = ["50k", "100k", "150k"];
+const ACCOUNT_SIZES = ["25k", "50k", "100k", "150k"];
 
 export function AddChallengeModal({ isOpen, onClose }: AddChallengeModalProps) {
     const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ export function AddChallengeModal({ isOpen, onClose }: AddChallengeModalProps) {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Ár ($)</label>
+                        <label className="block text-sm text-gray-400 mb-1">Ár ($) - kuponnal együtt</label>
                         <input
                             name="price"
                             type="number"
