@@ -28,6 +28,19 @@ export async function submitPayout(formData: FormData) {
         return { error: error.message };
     }
 
+    // Update challenge status to reflect pending review
+    const { error: updateError } = await supabase
+        .from("challenges")
+        .update({ status: "Reviewing" })
+        .eq("id", challenge_id);
+
+    if (updateError) {
+        console.error("Error updating challenge status:", updateError);
+        return { error: updateError.message };
+    }
+
+
+
     revalidatePath("/dashboard");
     return { success: true };
 }
