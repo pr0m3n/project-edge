@@ -34,24 +34,57 @@ export default function ClaimsClient({ initialClaims }: { initialClaims: any[] }
         e.preventDefault();
         setLoading(true);
 
-        const formData = new FormData(e.currentTarget);
-        formData.append("type", activeTab);
-        // Mock file handling: we're not actually uploading to storage in this demo phase without bucket config,
-        // so we just pass the filename as text to the action for now.
-        if (fileName) {
-            formData.set("evidence_file", fileName); // Overwrite file object with name for simple text storage
-        }
+        try {
+            const formData = new FormData(e.currentTarget);
+            formData.append("type", activeTab);
 
-        const result = await createClaim(formData);
+            // File Upload Logic
+            const file = fileInputRef.current?.files?.[0];
+            if (file) {
+                // 1. Initialize Supabase Client (Browser)
+                const { createClient } = await import("@/lib/supabase/client");
+                const supabase = createClient();
 
-        setLoading(false);
+                // 2. Get User (for folder structure)
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("Nem vagy bejelentkezve!");
 
-        if (result.error) {
-            alert("Hiba történt: " + result.error);
-        } else {
-            alert("Igénylés sikeresen beküldve!");
-            setFileName("");
-            // Optional: reset form
+                // 3. Upload File
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('claims-evidence')
+                    .upload(fileName, file);
+
+                if (uploadError) {
+                    console.error("Upload error:", uploadError);
+                    throw new Error("Fájl feltöltése sikertelen: " + uploadError.message);
+                }
+
+                // 4. Get Public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('claims-evidence')
+                    .getPublicUrl(fileName);
+
+                console.log("File uploaded:", publicUrl);
+                formData.set("evidence_file", publicUrl);
+            }
+
+            const result = await createClaim(formData);
+
+            if (result.error) {
+                alert("Hiba történt: " + result.error);
+            } else {
+                alert("Igénylés sikeresen beküldve!");
+                setFileName("");
+                // Reset form manually if needed
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            }
+        } catch (err: any) {
+            alert("Hiba: " + err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
