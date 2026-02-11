@@ -38,7 +38,7 @@ export function PayoutsTab({ payouts }: { payouts: any[] }) {
                             <th className="px-6 py-4">Dátum</th>
                             <th className="px-6 py-4">Felhasználó</th>
                             <th className="px-6 py-4">Összeg</th>
-                            <th className="px-6 py-4">Mód</th>
+                            <th className="px-6 py-4">Kifizetési Adatok</th>
                             <th className="px-6 py-4">Státusz</th>
                             <th className="px-6 py-4 text-right">Műveletek</th>
                         </tr>
@@ -63,9 +63,16 @@ export function PayoutsTab({ payouts }: { payouts: any[] }) {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-xs">
+                                    <span className="bg-white/5 border border-white/10 px-2 py-1 rounded text-xs mb-1 inline-block">
                                         {METHODS[payout.method] || payout.method}
                                     </span>
+                                    {payout.details && (
+                                        <div className="text-xs space-y-0.5 text-gray-400 mt-1">
+                                            <div><span className="text-gray-500">Bank:</span> {payout.details.bank_name}</div>
+                                            <div><span className="text-gray-500">Számla:</span> <span className="font-mono">{payout.details.account_number}</span></div>
+                                            <div><span className="text-gray-500">Név:</span> {payout.details.beneficiary_name}</div>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4">
                                     <span

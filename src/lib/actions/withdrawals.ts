@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth";
 
 export async function getUserBalance() {
     const supabase = await createClient();
@@ -49,7 +50,16 @@ export async function createWithdrawal(formData: FormData) {
     if (!user) return { error: "Unauthorized" };
 
     const amount = parseFloat(formData.get("amount") as string);
-    const method = formData.get("method") as string;
+    // Force method to "bank"
+    const method = "bank";
+
+    const bank_name = formData.get("bank_name") as string;
+    const account_number = formData.get("account_number") as string;
+    const beneficiary_name = formData.get("beneficiary_name") as string;
+
+    if (!bank_name || !account_number || !beneficiary_name) {
+        return { error: "Minden banki adat kitöltése kötelező!" };
+    }
 
     if (!amount || amount < 25) {
         return { error: "Minimum kifizetés: $25" };
@@ -87,7 +97,12 @@ export async function createWithdrawal(formData: FormData) {
             user_id: user.id,
             amount,
             method,
-            status: "Pending"
+            status: "Pending",
+            details: {
+                bank_name,
+                account_number,
+                beneficiary_name
+            }
         });
 
     if (insertError) {
@@ -106,6 +121,7 @@ export async function createWithdrawal(formData: FormData) {
 }
 
 export async function getAllWithdrawals() {
+    await requireAdmin();
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
@@ -121,6 +137,7 @@ export async function getAllWithdrawals() {
 }
 
 export async function updateWithdrawalStatus(id: string, status: string) {
+    await requireAdmin();
     const adminClient = createAdminClient();
 
     // If rejecting, refund the balance

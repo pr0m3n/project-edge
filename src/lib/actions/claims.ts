@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth";
 
 export async function createClaim(formData: FormData) {
     const supabase = await createClient();
@@ -68,6 +69,7 @@ export async function getUserClaims() {
 }
 
 export async function getAllClaims() {
+    await requireAdmin();
     const supabase = createAdminClient();
 
     // In real app, check admin role here
@@ -87,6 +89,7 @@ export async function getAllClaims() {
 }
 
 export async function updateClaimStatus(id: string, status: string, amount?: number) {
+    await requireAdmin();
     const supabase = createAdminClient();
 
     const { error } = await supabase

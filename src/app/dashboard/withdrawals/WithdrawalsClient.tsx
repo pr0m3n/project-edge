@@ -90,20 +90,44 @@ export default function WithdrawalsClient({
                     <GlassCard className="p-8 mb-8">
                         <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                             <Wallet className="w-5 h-5 text-primary" />
-                            Kifizetés Igénylése
+                            Kifizetés Igénylése (Banki Átutalás)
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            <input type="hidden" name="method" value="bank" />
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-300">Bank Neve</label>
+                                    <input
+                                        name="bank_name"
+                                        type="text"
+                                        required
+                                        placeholder="Pl. OTP Bank"
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 focus:border-primary outline-none text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-gray-300">Kedvezményezett Neve</label>
+                                    <input
+                                        name="beneficiary_name"
+                                        type="text"
+                                        required
+                                        placeholder="Számlatulajdonos neve"
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 focus:border-primary outline-none text-white"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-300">Kifizetési Mód</label>
-                                <select
-                                    name="method"
-                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 focus:border-primary outline-none text-white"
-                                >
-                                    {METHODS.map((m) => (
-                                        <option key={m.value} value={m.value}>{m.label}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-sm font-medium mb-2 text-gray-300">Számlaszám (IBAN)</label>
+                                <input
+                                    name="account_number"
+                                    type="text"
+                                    required
+                                    placeholder="HU00 0000 0000 0000 0000 0000 0000"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 focus:border-primary outline-none text-white font-mono"
+                                />
                             </div>
 
                             <div>
