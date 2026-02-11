@@ -4,10 +4,28 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Wallet, Trophy, ClipboardCheck, ArrowUpRight, AlertCircle, Calendar } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Fetch claims count
+    const { count: claimsCount } = await supabase
+        .from('claims')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id || '');
+
+    // Fetch withdrawals total
+    const { data: withdrawals } = await supabase
+        .from('withdrawals')
+        .select('amount')
+        .eq('user_id', user?.id || '')
+        .eq('status', 'Completed');
+
+    const totalWithdrawals = withdrawals?.reduce((su, w) => su + w.amount, 0) || 0;
     return (
         <DashboardLayout>
             {/* Header */}
@@ -23,9 +41,9 @@ export default function DashboardPage() {
                     variant="primary"
                 />
                 <StatsCard
-                    title="Igényelt Számlák"
-                    value="0"
-                    description="Ingyenes számlák + havi"
+                    title="Benyújtott Igények"
+                    value={claimsCount?.toString() || "0"}
+                    description="Összes beküldött igény"
                     icon={ClipboardCheck}
                 />
                 <StatsCard
@@ -36,7 +54,7 @@ export default function DashboardPage() {
                 />
                 <StatsCard
                     title="Összes Kifizetés"
-                    value="$0"
+                    value={`$${totalWithdrawals}`}
                     description="Sikeres kifizetések"
                     icon={ArrowUpRight}
                 />

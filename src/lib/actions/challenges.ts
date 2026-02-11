@@ -41,6 +41,23 @@ export async function createChallenge(formData: FormData) {
     return { success: true };
 }
 
+export async function deleteChallenge(id: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from("challenges")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+    return { success: true };
+}
+
 export async function getChallenges() {
     const supabase = await createClient();
     const {
