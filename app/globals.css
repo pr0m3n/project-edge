@@ -272,7 +272,7 @@ p {
 }
 
 .hero-visual-stack {
-  min-height: 660px;
+  min-height: 760px;
   position: relative;
 }
 
@@ -293,7 +293,7 @@ p {
   border: 1px solid rgba(245, 245, 245, 0.18);
   border-radius: 42px;
   box-shadow: 0 38px 130px rgba(0, 0, 0, 0.34);
-  height: 430px;
+  height: 390px;
   inset: 0 0 auto auto;
   overflow: hidden;
   position: absolute;
@@ -303,7 +303,7 @@ p {
     rotateY(calc(var(--mx) * 7deg))
     rotate(-3deg);
   transition: transform 180ms ease-out;
-  width: min(100%, 620px);
+  width: min(100%, 580px);
   z-index: 4;
 }
 
@@ -326,7 +326,7 @@ p {
 .scene-stage {
   height: 560px;
   position: sticky;
-  top: 130px;
+  top: 210px;
   transform-style: preserve-3d;
   z-index: 2;
 }
@@ -345,16 +345,17 @@ p {
   border: 1px solid rgba(245, 245, 245, 0.2);
   border-radius: 28px;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.38);
-  height: 380px;
-  left: 2%;
+  height: 250px;
+  left: 9%;
   overflow: hidden;
-  top: 230px;
+  top: 430px;
   transform:
     rotateX(calc(58deg - var(--scroll, 0) * 28deg))
     rotateZ(calc(-20deg + var(--scroll, 0) * 22deg))
     translateX(calc(var(--mx) * -18px))
     translateY(calc(var(--scroll, 0) * -54px));
-  width: 500px;
+  width: 390px;
+  z-index: 1;
 }
 
 .device-screen {
@@ -362,7 +363,7 @@ p {
     linear-gradient(135deg, rgba(118, 171, 174, 0.95), rgba(255, 87, 34, 0.92)),
     linear-gradient(#fff, #fff);
   border-radius: 18px;
-  inset: 46px 34px 90px;
+  inset: 34px 28px 76px;
   position: absolute;
 }
 
@@ -385,23 +386,23 @@ p {
 }
 
 .device-line.one {
-  bottom: 54px;
-  width: 180px;
+  bottom: 45px;
+  width: 140px;
 }
 
 .device-line.two {
-  bottom: 30px;
-  width: 280px;
+  bottom: 24px;
+  width: 220px;
 }
 
 .device-chip {
   background: var(--ember);
   border-radius: 10px;
-  bottom: 24px;
-  height: 48px;
+  bottom: 20px;
+  height: 38px;
   position: absolute;
   right: 34px;
-  width: 86px;
+  width: 70px;
 }
 
 .device-card {
@@ -413,8 +414,8 @@ p {
   gap: 8px;
   height: 150px;
   padding: 24px;
-  right: 1%;
-  top: 396px;
+  right: 3%;
+  top: 520px;
   transform:
     rotateY(calc(-24deg + var(--scroll, 0) * 34deg))
     translateX(calc(var(--mx) * 28px))
@@ -443,7 +444,7 @@ p {
   background: rgba(118, 171, 174, 0.12);
   border: 1px solid rgba(118, 171, 174, 0.36);
   border-radius: 26px;
-  bottom: 18px;
+  bottom: -24px;
   display: grid;
   gap: 14px;
   height: 180px;
@@ -467,7 +468,7 @@ p {
   border-radius: 50%;
   height: 360px;
   left: 18%;
-  top: 190px;
+  top: 398px;
   transform:
     rotateX(68deg)
     rotateZ(calc(18deg + var(--scroll, 0) * 80deg));
@@ -573,34 +574,6 @@ p {
   width: 500px;
 }
 
-.orbit-dot {
-  animation: orbit-dot 10s linear infinite;
-  background: var(--ember);
-  border-radius: 50%;
-  box-shadow: 0 0 28px rgba(255, 87, 34, 0.9);
-  height: 18px;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform:
-    rotate(0deg)
-    translateX(var(--orbit-radius, 250px))
-    rotate(0deg)
-    scaleY(0.42);
-  transform-origin: 0 0;
-  width: 18px;
-}
-
-@keyframes orbit-dot {
-  to {
-    transform:
-      rotate(360deg)
-      translateX(var(--orbit-radius, 250px))
-      rotate(-360deg)
-      scaleY(0.42);
-  }
-}
-
 .signal-strip {
   background: var(--ember);
   color: var(--white);
@@ -615,6 +588,123 @@ p {
 .signal-strip span {
   border-right: 1px solid rgba(255, 255, 255, 0.25);
   padding: 24px 12px;
+}
+
+.featured-work {
+  align-items: center;
+  background:
+    radial-gradient(circle at 82% 30%, rgba(255, 87, 34, 0.14), transparent 28%),
+    linear-gradient(135deg, rgba(118, 171, 174, 0.16), transparent 42%),
+    var(--paper);
+  display: grid;
+  gap: clamp(30px, 6vw, 86px);
+  grid-template-columns: 0.82fr 1fr;
+  padding: clamp(76px, 9vw, 128px) clamp(18px, 5vw, 76px);
+  position: relative;
+}
+
+.featured-work::before {
+  background: linear-gradient(90deg, transparent, rgba(48, 56, 65, 0.12), transparent);
+  content: "";
+  height: 1px;
+  left: clamp(18px, 5vw, 76px);
+  position: absolute;
+  right: clamp(18px, 5vw, 76px);
+  top: 0;
+}
+
+.featured-copy {
+  display: grid;
+  gap: 24px;
+  max-width: 620px;
+}
+
+.featured-copy h2 {
+  font-size: clamp(48px, 8vw, 112px);
+  line-height: 0.88;
+}
+
+.featured-copy p:not(.micro-label) {
+  color: rgba(48, 56, 65, 0.72);
+  font-size: 20px;
+  line-height: 1.75;
+}
+
+.featured-copy .button {
+  justify-self: start;
+}
+
+.checky-card {
+  animation:
+    float-card 7s ease-in-out infinite,
+    reveal-up both;
+  animation-timeline: auto, view();
+  animation-range: normal, entry 8% cover 28%;
+  background: var(--night);
+  border: 1px solid rgba(48, 56, 65, 0.12);
+  border-radius: 38px;
+  box-shadow: 0 34px 110px rgba(17, 23, 28, 0.22);
+  color: var(--paper);
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+  padding: 18px;
+  transform:
+    translate3d(calc(var(--mx) * -14px), calc(var(--my) * -10px), 0)
+    rotate(-2deg);
+}
+
+.checky-card:hover {
+  transform:
+    translate3d(calc(var(--mx) * -14px), calc(var(--my) * -10px), 0)
+    rotate(0deg)
+    translateY(-8px);
+}
+
+.case-tag {
+  background: var(--ember);
+  border-radius: 999px;
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 950;
+  justify-self: start;
+  padding: 9px 13px;
+  text-transform: uppercase;
+}
+
+.checky-card img {
+  aspect-ratio: 16 / 10;
+  border-radius: 26px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.checky-card div {
+  display: grid;
+  gap: 8px;
+  padding: 4px 8px 8px;
+}
+
+.checky-card strong {
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1;
+}
+
+.checky-card small {
+  color: rgba(245, 245, 245, 0.68);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+@keyframes float-card {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -14px;
+  }
 }
 
 .route-section,
@@ -1100,7 +1190,8 @@ p {
   .route-intro,
   .manifesto,
   .quote-layout,
-  .orbit-section {
+  .orbit-section,
+  .featured-work {
     grid-template-columns: 1fr;
   }
 
@@ -1123,7 +1214,7 @@ p {
   }
 
   .hero-visual-stack {
-    min-height: 760px;
+    min-height: 700px;
   }
 
   .laptop-model {
@@ -1198,10 +1289,6 @@ p {
   .orbit-line.two {
     height: 190px;
     width: 300px;
-  }
-
-  .orbit-dot {
-    --orbit-radius: 150px;
   }
 
   .form-grid,

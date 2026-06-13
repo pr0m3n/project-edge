@@ -74,6 +74,29 @@ export default function Home() {
         ))}
       </section>
 
+      <section className="featured-work">
+        <div className="featured-copy">
+          <p className="micro-label dark">Referencia</p>
+          <h2>Checky.hu</h2>
+          <p>
+            A Checky.hu-nál nem csak a felület készült el. Mi raktuk össze a teljes rendszert:
+            frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
+            egy kézben épültek.
+          </p>
+          <a className="button primary" href="https://checky.hu" rel="noreferrer" target="_blank">
+            checky.hu megnyitása
+          </a>
+        </div>
+        <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
+          <span className="case-tag">Full-stack munka</span>
+          <img alt="Checky.hu weboldal referencia" src="/work/checky.png" />
+          <div>
+            <strong>Checky.hu</strong>
+            <small>Frontend, backend, adatfolyamok, komplex webes rendszer.</small>
+          </div>
+        </a>
+      </section>
+
       <section className="route-section">
         <div className="route-intro">
           <p className="micro-label dark">Válassz belépési pontot</p>
@@ -112,7 +135,6 @@ export default function Home() {
           />
           <span className="orbit-line one" />
           <span className="orbit-line two" />
-          <span className="orbit-dot" />
         </div>
       </section>
 
