@@ -28,6 +28,14 @@ type Ticket = {
   admin_reply: string | null;
 };
 
+type TicketMessage = {
+  id: string;
+  ticket_id: string;
+  created_at: string;
+  sender: "customer" | "admin";
+  body: string;
+};
+
 const statuses = [
   ["new", "Új"],
   ["contacted", "Megkeresve"],
@@ -46,6 +54,8 @@ const ticketStatuses = [
 export function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
+  const [ticketReplies, setTicketReplies] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -75,7 +85,7 @@ export function AdminDashboard() {
     const { data: ticketData, error: ticketError } = await supabase
       .from("support_tickets")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("last_message_at", { ascending: false });
 
     if (error || ticketError) {
       setMessage("Nem sikerült betölteni a leadeket. Ellenőrizd az admin jogosultságot és az RLS szabályokat.");
@@ -83,8 +93,29 @@ export function AdminDashboard() {
       return;
     }
 
+    const ticketIds = (ticketData ?? []).map((ticket) => ticket.id);
+    const { data: messagesData, error: messagesError } = ticketIds.length
+      ? await supabase
+          .from("support_ticket_messages")
+          .select("*")
+          .in("ticket_id", ticketIds)
+          .order("created_at", { ascending: true })
+      : { data: [], error: null };
+
+    if (messagesError) {
+      setMessage("A ticket üzeneteket nem sikerült betölteni.");
+      setLoading(false);
+      return;
+    }
+
+    const groupedMessages = (messagesData ?? []).reduce<Record<string, TicketMessage[]>>((groups, item) => {
+      groups[item.ticket_id] = [...(groups[item.ticket_id] ?? []), item];
+      return groups;
+    }, {});
+
     setLeads(data ?? []);
     setTickets(ticketData ?? []);
+    setTicketMessages(groupedMessages);
     setLoading(false);
   }
 
@@ -110,6 +141,38 @@ export function AdminDashboard() {
 
     setTickets((current) => current.map((ticket) => (ticket.id === id ? { ...ticket, ...patch } : ticket)));
     setMessage("Ticket mentve.");
+  }
+
+  async function sendTicketReply(ticketId: string) {
+    const body = ticketReplies[ticketId]?.trim();
+    if (!body) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("support_ticket_messages")
+      .insert({
+        ticket_id: ticketId,
+        sender: "admin",
+        body
+      })
+      .select("*")
+      .single();
+
+    if (error || !data) {
+      setMessage("Nem sikerült elküldeni a választ.");
+      return;
+    }
+
+    setTicketMessages((current) => ({
+      ...current,
+      [ticketId]: [...(current[ticketId] ?? []), data]
+    }));
+    setTicketReplies((current) => ({ ...current, [ticketId]: "" }));
+    setTickets((current) =>
+      current.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "answered" } : ticket))
+    );
+    setMessage("Válasz elküldve.");
   }
 
   async function signOut() {
@@ -198,7 +261,7 @@ export function AdminDashboard() {
       <div className="lead-table">
         <div className="lead-row ticket header">
           <span>Feladó</span>
-          <span>Kérdés</span>
+          <span>Beszélgetés</span>
           <span>Státusz</span>
           <span>Válasz</span>
         </div>
@@ -219,7 +282,14 @@ export function AdminDashboard() {
                 <p>{ticket.email}</p>
               </div>
               <div>
-                <p>{ticket.message}</p>
+                <div className="admin-chat-thread">
+                  {(ticketMessages[ticket.id] ?? []).map((item) => (
+                    <div className={`admin-chat-message ${item.sender}`} key={item.id}>
+                      <span>{item.sender === "admin" ? "Te" : ticket.name}</span>
+                      <p>{item.body}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <select
@@ -233,11 +303,20 @@ export function AdminDashboard() {
               </div>
               <div>
                 <textarea
-                  defaultValue={ticket.admin_reply ?? ""}
-                  onBlur={(event) => updateTicket(ticket.id, { admin_reply: event.target.value })}
-                  placeholder="Ide írd a válaszod vagy belső jegyzeted..."
+                  value={ticketReplies[ticket.id] ?? ""}
+                  onChange={(event) =>
+                    setTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
+                  }
+                  placeholder="Írd ide a válaszod, majd küldd el..."
                   style={{ minHeight: 110 }}
                 />
+                <button
+                  className="button primary admin-reply-button"
+                  onClick={() => sendTicketReply(ticket.id)}
+                  type="button"
+                >
+                  Válasz küldése
+                </button>
               </div>
             </article>
           ))

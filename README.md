@@ -65,7 +65,9 @@ values (
 
 The public site does not show the admin link. Open `/admin` directly, sign in with the Supabase Auth user added to `public.admin_users`, then manage quote requests and support tickets from `/admin/dashboard`.
 
-Quote requests are saved to `quote_requests`. Bottom-right support widget messages are saved to `support_tickets`.
+Quote requests are saved to `quote_requests`.
+
+The bottom-right support widget creates a chat-style ticket in `support_tickets` and stores the conversation in `support_ticket_messages`. The visitor can reopen the same browser and continue the conversation. Admin replies are sent from `/admin/dashboard`.
 
 ## Keep the old project
 

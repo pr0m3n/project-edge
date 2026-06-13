@@ -1144,6 +1144,45 @@ p {
   grid-template-columns: 0.8fr 1.25fr 0.7fr 1.2fr;
 }
 
+.admin-chat-thread {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.admin-chat-message {
+  border-radius: 18px;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.admin-chat-message.customer {
+  background: rgba(48, 56, 65, 0.08);
+}
+
+.admin-chat-message.admin {
+  background: rgba(255, 87, 34, 0.12);
+}
+
+.admin-chat-message span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.admin-chat-message p {
+  line-height: 1.55;
+}
+
+.admin-reply-button {
+  margin-top: 10px;
+  min-height: 42px;
+}
+
 .lead-row:not(:last-child) {
   border-bottom: 1px solid var(--line);
 }
@@ -1221,11 +1260,15 @@ p {
   width: min(calc(100vw - 32px), 380px);
 }
 
+.support-panel.chat {
+  padding: 0;
+}
+
 .support-head {
   align-items: start;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 14px;
+  padding: 18px 18px 14px;
 }
 
 .support-head div {
@@ -1259,6 +1302,7 @@ p {
 .support-panel form {
   display: grid;
   gap: 10px;
+  padding: 0 18px 18px;
 }
 
 .support-panel input,
@@ -1294,6 +1338,82 @@ p {
 
 .support-notice.error {
   color: #b5361b;
+}
+
+.chat-meta {
+  align-items: center;
+  border-top: 1px solid rgba(48, 56, 65, 0.08);
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 18px;
+}
+
+.chat-meta span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.chat-meta button {
+  background: transparent;
+  border: 0;
+  color: var(--ember);
+  font-weight: 950;
+}
+
+.chat-messages {
+  background:
+    linear-gradient(180deg, rgba(118, 171, 174, 0.08), transparent),
+    rgba(255, 255, 255, 0.52);
+  display: grid;
+  gap: 10px;
+  max-height: 330px;
+  min-height: 250px;
+  overflow: auto;
+  padding: 18px;
+}
+
+.chat-empty {
+  align-self: center;
+  color: var(--muted);
+  justify-self: center;
+}
+
+.chat-bubble {
+  border-radius: 20px;
+  line-height: 1.55;
+  max-width: 86%;
+  padding: 12px 14px;
+  width: fit-content;
+}
+
+.chat-bubble.customer {
+  background: var(--ink);
+  color: var(--paper);
+  justify-self: end;
+}
+
+.chat-bubble.admin {
+  background: var(--white);
+  border: 1px solid rgba(48, 56, 65, 0.12);
+  color: var(--ink);
+  justify-self: start;
+}
+
+.chat-reply {
+  border-top: 1px solid rgba(48, 56, 65, 0.08);
+}
+
+.chat-reply textarea {
+  min-height: 86px;
+}
+
+.chat-reply .button {
+  justify-self: stretch;
+}
+
+.support-panel > .support-notice {
+  padding: 0 18px 16px;
 }
 
 @keyframes support-in {
