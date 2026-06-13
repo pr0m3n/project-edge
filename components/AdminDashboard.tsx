@@ -258,30 +258,25 @@ export function AdminDashboard() {
       </div>
 
       <h2 className="admin-section-title">Ügyfélszolgálati ticketek</h2>
-      <div className="lead-table">
-        <div className="lead-row ticket header">
-          <span>Feladó</span>
-          <span>Beszélgetés</span>
-          <span>Státusz</span>
-          <span>Válasz</span>
-        </div>
+      <div className="ticket-inbox">
         {loading ? (
-          <div className="lead-row ticket">
+          <div className="ticket-card">
             <strong>Betöltés...</strong>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="lead-row ticket">
+          <div className="ticket-card">
             <strong>Még nincs ticket.</strong>
             <span>Az alsó jobb oldali widgetből érkező kérdések itt jelennek meg.</span>
           </div>
         ) : (
           tickets.map((ticket) => (
-            <article className="lead-row ticket" key={ticket.id}>
-              <div>
+            <article className="ticket-card" key={ticket.id}>
+              <div className="ticket-person">
+                <span className="status-pill">{ticket.status}</span>
                 <strong>{ticket.name}</strong>
-                <p>{ticket.email}</p>
+                <a href={`mailto:${ticket.email}`}>{ticket.email}</a>
               </div>
-              <div>
+              <div className="ticket-conversation">
                 <div className="admin-chat-thread">
                   {(ticketMessages[ticket.id] ?? []).map((item) => (
                     <div className={`admin-chat-message ${item.sender}`} key={item.id}>
@@ -291,7 +286,7 @@ export function AdminDashboard() {
                   ))}
                 </div>
               </div>
-              <div>
+              <div className="ticket-actions">
                 <select
                   value={ticket.status}
                   onChange={(event) => updateTicket(ticket.id, { status: event.target.value })}
@@ -300,8 +295,6 @@ export function AdminDashboard() {
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
-              </div>
-              <div>
                 <textarea
                   value={ticketReplies[ticket.id] ?? ""}
                   onChange={(event) =>
