@@ -20,7 +20,9 @@ as $projectedge$
   );
 $projectedge$;
 
-create table if not exists public.support_tickets (
+drop table if exists public.support_tickets cascade;
+
+create table public.support_tickets (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -32,44 +34,6 @@ create table if not exists public.support_tickets (
   source text not null default 'projectedge.hu',
   admin_reply text
 );
-
-alter table public.support_tickets
-add column if not exists id uuid default gen_random_uuid(),
-add column if not exists created_at timestamptz not null default now(),
-add column if not exists updated_at timestamptz not null default now(),
-add column if not exists name text,
-add column if not exists email text,
-add column if not exists message text,
-add column if not exists status text not null default 'open',
-add column if not exists source text not null default 'projectedge.hu',
-add column if not exists admin_reply text;
-
-update public.support_tickets
-set
-  name = coalesce(name, 'Ismeretlen'),
-  email = coalesce(email, 'unknown@example.com'),
-  message = coalesce(message, 'Korábbi hiányos ticket'),
-  status = coalesce(status, 'open'),
-  source = coalesce(source, 'projectedge.hu');
-
-alter table public.support_tickets
-alter column name set not null,
-alter column email set not null,
-alter column message set not null;
-
-do $projectedge$
-begin
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'support_tickets_status_check'
-  ) then
-    alter table public.support_tickets
-    add constraint support_tickets_status_check
-    check (status in ('open', 'answered', 'closed'));
-  end if;
-end;
-$projectedge$;
 
 grant insert on public.support_tickets to anon;
 grant select, insert, update, delete on public.support_tickets to authenticated;
