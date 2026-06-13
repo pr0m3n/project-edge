@@ -70,12 +70,12 @@ create table if not exists public.portfolio_items (
 );
 
 create or replace function public.set_updated_at()
-returns trigger as $$
+returns trigger as $projectedge$
 begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$projectedge$ language plpgsql;
 
 drop trigger if exists quote_requests_set_updated_at on public.quote_requests;
 create trigger quote_requests_set_updated_at
@@ -93,12 +93,12 @@ returns boolean
 language sql
 security definer
 set search_path = public
-as $$
+as $projectedge$
   select exists (
     select 1 from public.admin_users
     where user_id = auth.uid()
   );
-$$;
+$projectedge$;
 
 drop policy if exists "Admins can read admin users" on public.admin_users;
 create policy "Admins can read admin users"
