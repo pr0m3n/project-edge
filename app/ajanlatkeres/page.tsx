@@ -8,14 +8,14 @@ export default function QuotePage() {
       <section className="quote-layout">
         <aside>
           <p className="micro-label">Ajánlatkérés</p>
-          <h1>Írd le a projektet. A többit rendszerbe rakjuk.</h1>
+          <h1>Írd le röviden, min szeretnél javítani.</h1>
           <p>
-            Pár konkrét válaszból már látszik, milyen weboldalra, milyen lead folyamatra és milyen
-            admin háttérre van szükség.
+            Nem baj, ha még nincs kész briefed. Elég, ha leírod, van-e már oldalad, mi zavar benne,
+            vagy milyen új irányt szeretnél.
           </p>
           <div className="quote-note">
             <strong>Mi történik utána?</strong>
-            <span>Megnézem az igényt, összerakom az irányt, és kapsz egy következő lépést.</span>
+            <span>Átnézem, válaszolok, és megmondom, szerintem mi lenne a legésszerűbb első lépés.</span>
           </div>
         </aside>
         <QuoteForm />

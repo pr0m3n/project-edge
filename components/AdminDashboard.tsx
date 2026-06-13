@@ -13,7 +13,6 @@ type Lead = {
   website: string | null;
   project_type: string;
   budget: string | null;
-  timeline: string;
   goals: string;
   status: string;
   notes: string | null;
@@ -130,7 +129,6 @@ export function AdminDashboard() {
               </div>
               <div>
                 <strong>{lead.project_type}</strong>
-                <p>{lead.timeline}</p>
                 <p>{lead.goals}</p>
               </div>
               <div>

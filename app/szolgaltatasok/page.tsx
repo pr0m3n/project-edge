@@ -2,10 +2,10 @@ import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
 
 const services = [
-  ["Signature weboldal", "Egyedi arculati irány, prémium nyitóélmény, gyors betöltés, tiszta ajánlat és konverziós útvonal."],
-  ["Ajánlatkérő rendszer", "Többlépcsős űrlap, Supabase adatmentés, lead státuszok és admin áttekintés."],
-  ["Üzleti admin", "Zárt dashboard érdeklődők, ügyfelek, projektek, jegyzetek és későbbi automatizációk kezelésére."],
-  ["Redesign sprint", "Meglévő oldal újrapozicionálása frissebb vizuális nyelvvel és jobb ügyfélszerző struktúrával."]
+  ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
+  ["Meglévő oldal javítása", "Ha már van weboldalad, megnézzük, hol gyenge: szöveg, sebesség, ajánlatkérés, mobilnézet vagy bizalomépítés."],
+  ["Ajánlatkérő űrlap", "Olyan űrlap, amit tényleg ki lehet tölteni. A beküldések adatbázisba mennek, nem vesznek el emailben."],
+  ["Admin háttér", "Egyszerű felület a beérkező érdeklődőknek, státuszoknak és jegyzeteknek. Később bővíthető ügyfélkezeléssé."]
 ];
 
 export default function ServicesPage() {
@@ -14,10 +14,10 @@ export default function ServicesPage() {
       <SiteNav />
       <section className="page-hero compact">
         <p className="micro-label dark">Szolgáltatások</p>
-        <h1>Komolyabb online jelenlét, rendszerként megépítve.</h1>
+        <h1>Nem minden cégnek ugyanaz az oldal kell.</h1>
         <p>
-          A cél nem az, hogy “legyen egy oldalad”. A cél az, hogy a látogató gyorsan értse az
-          értékedet, merjen kapcsolatba lépni, te pedig azonnal kezelni tudd a beérkező leadet.
+          Van, ahol egy gyors, jól megírt landing elég. Máshol kell ajánlatkérő, admin felület,
+          több aloldal vagy teljes újratervezés. Először ezt tisztázzuk.
         </p>
       </section>
 
@@ -32,7 +32,7 @@ export default function ServicesPage() {
       </section>
 
       <section className="cta-band">
-        <h2>Ha prémiumabbnak kell hatnia, másképp kell felépíteni.</h2>
+        <h2>Ha most kell rendbe rakni az online jelenléted, kezdjük egy rövid igényfelméréssel.</h2>
         <Link className="button primary" href="/ajanlatkeres">
           Ajánlatot kérek
         </Link>

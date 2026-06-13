@@ -2,11 +2,11 @@ import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
 
 const steps = [
-  ["01", "Pozicionálás", "Kinek szól, mit kell elhinnie, és milyen döntést kell meghoznia?"],
-  ["02", "Architektúra", "Oldaltérkép, ajánlatkérő logika, tartalomritmus és adatfolyam."],
-  ["03", "Vizuális rendszer", "Tipográfia, mozgás, szekcióritmus, 3D/effekt elemek és mobil működés."],
-  ["04", "Építés", "Next.js, Supabase, admin felület, Vercel deploy, env és adatbázis bekötés."],
-  ["05", "Indítás után", "Finomhangolás az első leadek és visszajelzések alapján."]
+  ["01", "Átbeszéljük", "Mi van most, mi nem működik, és milyen típusú megkereséseket szeretnél kapni?"],
+  ["02", "Rendet rakunk", "Oldalak, szövegek, ajánlatkérő mezők, fontos döntési pontok. Itt derül ki, mire van tényleg szükség."],
+  ["03", "Megtervezem", "Nem kész sablonból indulok. Kapsz egy vizuális irányt, ami illik a szolgáltatásodhoz és az ügyfeleidhez."],
+  ["04", "Felépítem", "Next.js, Supabase, gyors betöltés, mobilnézet, domain és Vercel deploy. Amit kell, bekötünk."],
+  ["05", "Finomítjuk", "Indulás után megnézzük, hogyan viselkedik az oldal, és javítunk azon, ami a valós használatban látszik."]
 ];
 
 export default function ProcessPage() {
@@ -15,7 +15,7 @@ export default function ProcessPage() {
       <SiteNav />
       <section className="page-hero compact inverse">
         <p className="micro-label">Folyamat</p>
-        <h1>Nem vakon designolunk. Előbb megtervezzük, mit kell elérnie.</h1>
+        <h1>Előbb kitaláljuk, mit kell mondania az oldalnak.</h1>
       </section>
       <section className="timeline">
         {steps.map(([number, title, copy]) => (
@@ -27,7 +27,7 @@ export default function ProcessPage() {
         ))}
       </section>
       <section className="cta-band dark">
-        <h2>Ha ez a tempó illik hozzád, indulhatunk.</h2>
+        <h2>Ha szereted, amikor átlátható a munka, valószínűleg jól fogunk haladni.</h2>
         <Link className="button primary" href="/ajanlatkeres">
           Projekt indítása
         </Link>

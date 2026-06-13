@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const budgetOptions = new Set([
+  "100k-300k",
   "300k-600k",
   "600k-1m",
   "1m-2m",
@@ -17,7 +18,6 @@ type QuotePayload = {
   website?: string;
   projectType?: string;
   budget?: string;
-  timeline?: string;
   goals?: string;
 };
 
@@ -41,10 +41,9 @@ export async function POST(request: Request) {
   const website = clean(payload.website);
   const projectType = clean(payload.projectType);
   const budget = clean(payload.budget);
-  const timeline = clean(payload.timeline);
   const goals = clean(payload.goals);
 
-  if (!name || !email || !projectType || !timeline || !goals) {
+  if (!name || !email || !projectType || !goals) {
     return NextResponse.json({ error: "Please fill every required field." }, { status: 400 });
   }
 
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
     website,
     project_type: projectType,
     budget,
-    timeline,
+    timeline: "not specified",
     goals,
     status: "new",
     source: "projectedge.hu"

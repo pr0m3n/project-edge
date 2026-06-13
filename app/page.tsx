@@ -7,20 +7,20 @@ const paths = [
   {
     href: "/szolgaltatasok",
     eyebrow: "01 / Mit kapsz",
-    title: "Weboldal, ajánlatkérő rendszer, admin felület.",
-    copy: "Nem sablonos bemutatkozó oldal, hanem olyan digitális rendszer, ami bizalmat épít és érdeklődőket hoz."
+    title: "Weboldal, ami után könnyebb megkeresni téged.",
+    copy: "Tiszta ajánlat, jó első benyomás, átgondolt űrlap. Nem kell túlbonyolítani, csak rendesen összerakni."
   },
   {
     href: "/folyamat",
     eyebrow: "02 / Hogyan dolgozunk",
-    title: "Stratégia után design. Design után rendszer.",
-    copy: "Világos döntési pontok, gyors iterációk, mérhető célok és tiszta indulási terv."
+    title: "Előbb megértjük az ajánlatod, aztán jöhet a látvány.",
+    copy: "Rövid egyeztetések, látható haladás, nincs felesleges kör. Mindig tudod, épp min dolgozunk."
   },
   {
     href: "/ajanlatkeres",
     eyebrow: "03 / Indítás",
-    title: "Mondd el, mit építsünk, és kapsz egy irányt.",
-    copy: "Az ajánlatkérő már lead-kezelő rendszerbe érkezik, hogy a projekt ne chatüzenetek között vesszen el."
+    title: "Írd le pár mondatban, hol tartasz most.",
+    copy: "Lehet új oldal, redesign, gyorsítás vagy csak egy jobb ajánlatkérő. Visszajelzek, merre érdemes indulni."
   }
 ];
 
@@ -43,9 +43,9 @@ export default function Home() {
               <span>Dolgozik.</span>
             </h1>
             <p className="hero-lead">
-              Prémium weboldalakat, ajánlatkérő folyamatokat és ügyfélkezelő admin rendszereket
-              építek olyan vállalkozásoknak, akik komolyabb online jelenlétet akarnak, nem még egy
-              átlagos landing page-et.
+              Olyan weboldalakat építek, ahol a látvány, a szöveg és az ajánlatkérés egy irányba
+              dolgozik. Ha már van oldalad, rendbe rakjuk. Ha nincs, felépítjük úgy, hogy ne kelljen
+              fél év múlva újrakezdeni.
             </p>
             <div className="hero-command">
               <Link className="button primary" href="/ajanlatkeres">
@@ -77,7 +77,7 @@ export default function Home() {
       <section className="route-section">
         <div className="route-intro">
           <p className="micro-label dark">Válassz belépési pontot</p>
-          <h2>Nem kell mindent egy oldalon eldöntened.</h2>
+          <h2>Nézd meg külön, ami most érdekel.</h2>
         </div>
         <div className="route-grid">
           {paths.map((path) => (
@@ -94,10 +94,10 @@ export default function Home() {
       <section className="orbit-section">
         <div className="orbit-copy">
           <p className="micro-label">3D / Motion / Karakter</p>
-          <h2>Az oldalnak legyen saját világa, ne csak szekciói.</h2>
+          <h2>Legyen emlékezetes, de maradjon használható.</h2>
           <p>
-            A mozgás és a 3D nem öncélú dísz: segít megkülönböztetni a márkát, emlékezetesebbé
-            teszi az első benyomást, és prémiumabb digitális környezetet ad.
+            A mozgás és a 3D akkor működik jól, ha nem akadályozza az olvasást. Itt pont ez a cél:
+            adjon karaktert, de ne vigye el a figyelmet arról, amit el akarsz mondani.
           </p>
           <Link className="button spectral" href="/munkak">
             Milyen irányok lehetnek?
@@ -124,8 +124,8 @@ export default function Home() {
           <p>konverzió</p>
         </div>
         <article>
-          <span>ProjectEdge elv</span>
-          <h2>A jó weboldal nem dekoráció. Ügyfélszerző infrastruktúra.</h2>
+          <span>Röviden</span>
+          <h2>A jó weboldal nem magyarázkodik. Tisztán vezet tovább.</h2>
           <Link className="button secondary" href="/folyamat">
             Nézd meg a folyamatot
           </Link>

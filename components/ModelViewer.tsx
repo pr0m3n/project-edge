@@ -25,6 +25,8 @@ export function ModelViewer({ alt, className, exposure = "1", src }: ModelViewer
         alt,
         src,
         "auto-rotate": true,
+        "auto-rotate-delay": "0",
+        "rotation-per-second": "18deg",
         "camera-controls": true,
         "disable-zoom": true,
         "interaction-prompt": "none",

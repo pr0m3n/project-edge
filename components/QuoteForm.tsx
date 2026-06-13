@@ -10,7 +10,6 @@ const initialForm = {
   website: "",
   projectType: "premium-business-site",
   budget: "not-sure",
-  timeline: "1-2 months",
   goals: ""
 };
 
@@ -55,7 +54,7 @@ export function QuoteForm() {
             required
             value={form.name}
             onChange={(event) => updateField("name", event.target.value)}
-            placeholder="Boczán Patrik"
+            placeholder="Kovács Anna"
           />
         </div>
         <div className="field">
@@ -66,7 +65,7 @@ export function QuoteForm() {
             type="email"
             value={form.email}
             onChange={(event) => updateField("email", event.target.value)}
-            placeholder="hello@ceged.hu"
+            placeholder="hello@vallalkozasod.hu"
           />
         </div>
         <div className="field">
@@ -84,7 +83,7 @@ export function QuoteForm() {
             id="company"
             value={form.company}
             onChange={(event) => updateField("company", event.target.value)}
-            placeholder="ProjectEdge"
+            placeholder="Saját márkád vagy céged"
           />
         </div>
         <div className="field">
@@ -119,39 +118,26 @@ export function QuoteForm() {
             onChange={(event) => updateField("budget", event.target.value)}
           >
             <option value="not-sure">Még nem tudom</option>
+            <option value="100k-300k">100 000 - 300 000 Ft</option>
             <option value="300k-600k">300 000 - 600 000 Ft</option>
             <option value="600k-1m">600 000 - 1 000 000 Ft</option>
             <option value="1m-2m">1 000 000 - 2 000 000 Ft</option>
             <option value="2m-plus">2 000 000 Ft felett</option>
           </select>
         </div>
-        <div className="field">
-          <label htmlFor="timeline">Ideális indulás *</label>
-          <select
-            id="timeline"
-            required
-            value={form.timeline}
-            onChange={(event) => updateField("timeline", event.target.value)}
-          >
-            <option value="asap">Minél hamarabb</option>
-            <option value="1-2 months">1-2 hónapon belül</option>
-            <option value="quarter">Ebben a negyedévben</option>
-            <option value="planning">Még tervezési fázis</option>
-          </select>
-        </div>
         <div className="field full">
-          <label htmlFor="goals">Mit kell elérnie az oldalnak? *</label>
+          <label htmlFor="goals">Mi lenne a legfontosabb változás? *</label>
           <textarea
             id="goals"
             required
             value={form.goals}
             onChange={(event) => updateField("goals", event.target.value)}
-            placeholder="Több ajánlatkérés, prémiumabb márkaérzet, gyorsabb ügyfélszerzés, automatizált folyamatok..."
+            placeholder="Például: több megkeresés, profibb első benyomás, gyorsabb oldal, jobb ajánlatkérő, meglévő weboldal rendbetétele..."
           />
         </div>
       </div>
       <button className="button primary" disabled={status === "loading"} type="submit">
-        {status === "loading" ? "Küldés..." : "Ajánlatkérés elküldése"}
+        {status === "loading" ? "Küldés..." : "Elküldöm az igényt"}
       </button>
       <p className={`form-status ${status === "success" ? "success" : ""} ${status === "error" ? "error" : ""}`}>
         {message}
