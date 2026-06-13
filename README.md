@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProjectEdge Studio
 
-## Getting Started
+Premium ProjectEdge website and lead-management system for `projectedge.hu`.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router
+- Vercel deployment
+- Supabase Postgres, Auth and Row Level Security
+- Custom CSS based on the palette `#F5F5F5`, `#76ABAE`, `#303841`, `#FF5722`
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required environment variables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The service role key is reserved for future server-only automations. Never expose it in client code.
 
-## Learn More
+## Supabase setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Open the Supabase SQL editor.
+2. Run `supabase/migrations/001_projectedge_crm.sql`.
+3. Create an admin user in Supabase Auth.
+4. Add the admin user to `public.admin_users`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Example:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+insert into public.admin_users (user_id, email, full_name)
+values (
+  'AUTH_USER_UUID_HERE',
+  'admin@projectedge.hu',
+  'ProjectEdge Admin'
+);
+```
 
-## Deploy on Vercel
+## Vercel setup
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Connect this repository to the existing Vercel project.
+2. Add the same environment variables in Vercel Project Settings.
+3. Push to `main`.
+4. Vercel will deploy the new `www.projectedge.hu` production site.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Pages
+
+- `/` public premium business website
+- `/api/quote` public quote request endpoint
+- `/admin` Supabase Auth login
+- `/admin/dashboard` quote request and lead management
+
+## Keep the old project
+
+Before replacing the current production code, archive the old implementation in Git:
+
+```bash
+git checkout -b archive/trading-platform
+git push origin archive/trading-platform
+git checkout main
+```
+
+Then merge or replace `main` with this new ProjectEdge Studio code.
