@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MotionVars } from "@/components/MotionVars";
+import { SupportWidget } from "@/components/SupportWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body>
         <MotionVars />
         {children}
+        <SupportWidget />
       </body>
     </html>
   );

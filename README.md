@@ -31,8 +31,9 @@ The service role key is reserved for future server-only automations. Never expos
 
 1. Open the Supabase SQL editor.
 2. Run `supabase/migrations/001_projectedge_crm.sql`.
-3. Create an admin user in Supabase Auth.
-4. Add the admin user to `public.admin_users`.
+3. Run `supabase/migrations/002_support_tickets.sql`.
+4. Create an admin user in Supabase Auth.
+5. Add the admin user to `public.admin_users`.
 
 Example:
 
@@ -56,8 +57,15 @@ values (
 
 - `/` public premium business website
 - `/api/quote` public quote request endpoint
+- `/api/tickets` public support ticket endpoint
 - `/admin` Supabase Auth login
-- `/admin/dashboard` quote request and lead management
+- `/admin/dashboard` quote request and support ticket management
+
+## Admin flow
+
+The public site does not show the admin link. Open `/admin` directly, sign in with the Supabase Auth user added to `public.admin_users`, then manage quote requests and support tickets from `/admin/dashboard`.
+
+Quote requests are saved to `quote_requests`. Bottom-right support widget messages are saved to `support_tickets`.
 
 ## Keep the old project
 

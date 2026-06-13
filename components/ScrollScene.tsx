@@ -31,11 +31,6 @@ export function ScrollScene() {
           <span className="device-line two" />
           <span className="device-chip" />
         </div>
-        <div className="device device-card">
-          <span />
-          <strong>Lead</strong>
-          <em>qualified</em>
-        </div>
         <div className="device device-panel">
           <span />
           <span />
