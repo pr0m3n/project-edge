@@ -1,3 +1,25 @@
+create extension if not exists pgcrypto;
+
+create or replace function public.set_updated_at()
+returns trigger as $projectedge$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$projectedge$ language plpgsql;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $projectedge$
+  select exists (
+    select 1 from public.admin_users
+    where user_id = auth.uid()
+  );
+$projectedge$;
+
 create table if not exists public.support_tickets (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -10,6 +32,9 @@ create table if not exists public.support_tickets (
   source text not null default 'projectedge.hu',
   admin_reply text
 );
+
+grant insert on public.support_tickets to anon;
+grant select, insert, update, delete on public.support_tickets to authenticated;
 
 drop trigger if exists support_tickets_set_updated_at on public.support_tickets;
 create trigger support_tickets_set_updated_at
