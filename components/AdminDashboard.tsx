@@ -64,6 +64,25 @@ type ClientProject = {
   offer_status: string | null;
   offer_sent_at: string | null;
   client_decision_note: string | null;
+  brief_data: any;
+  last_modified_at: string | null;
+  last_modified_by: string | null;
+  last_modified_by_name: string | null;
+  delete_requested: boolean;
+  delete_requested_at: string | null;
+  status_before_delete_request: string | null;
+  deposit_amount: number | null;
+  payment_status: "unpaid" | "deposit_paid" | "fully_paid";
+  contract_accepted: boolean;
+  contract_accepted_at: string | null;
+  milestones: Array<{ title: string; done: boolean }> | null;
+  feedback_round: number;
+  feedback_notes: string | null;
+  handover_checklist: Array<{ title: string; done: boolean }> | null;
+  maintenance_option: string | null;
+  client_rating: number | null;
+  client_review: string | null;
+  reference_permitted: boolean;
 };
 
 type ClientTicket = {
@@ -98,11 +117,14 @@ const projectStatuses = [
   ["request_received", "Igény beérkezett"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat elküldve"],
+  ["deposit_pending", "Foglaló fizetésre vár"],
+  ["contract_pending", "Szerződés aláírásra vár"],
   ["in_progress", "Kivitelezés"],
   ["review", "Átnézés"],
   ["launched", "Élesítve"],
   ["paused", "Szünetel"],
-  ["closed", "Lezárva"]
+  ["closed", "Lezárva"],
+  ["deletion_pending", "Törlés jóváhagyásra vár"]
 ];
 
 const projectStatusLabel = Object.fromEntries(projectStatuses);
@@ -111,6 +133,8 @@ const projectFlow = [
   ["request_received", "Igény"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
+  ["deposit_pending", "Foglaló"],
+  ["contract_pending", "Szerződés"],
   ["in_progress", "Építés"],
   ["review", "Review"],
   ["launched", "Éles"]
@@ -190,6 +214,11 @@ export function AdminDashboard() {
   const [clientTicketReplies, setClientTicketReplies] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+
+  // Upgraded flow states
+  const [changeLogs, setChangeLogs] = useState<Record<string, any[]>>({});
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState<Record<string, string>>({});
+  const [newHandoverTitle, setNewHandoverTitle] = useState<Record<string, string>>({});
 
   const stats = useMemo(() => {
     return {
@@ -307,12 +336,23 @@ export function AdminDashboard() {
       return groups;
     }, {});
 
+    const { data: logsData } = await supabase
+      .from("project_change_logs")
+      .select("*")
+      .order("changed_at", { ascending: false });
+
+    const groupedLogs = (logsData ?? []).reduce<Record<string, any[]>>((groups, item) => {
+      groups[item.project_id] = [...(groups[item.project_id] ?? []), item];
+      return groups;
+    }, {});
+
     setLeads(data ?? []);
     setTickets(ticketData ?? []);
     setTicketMessages(groupedMessages);
     setClientProjects(clientProjectError ? [] : clientProjectData ?? []);
     setClientTickets(clientTicketError ? [] : clientTicketData ?? []);
     setClientTicketMessages(groupedClientMessages);
+    setChangeLogs(groupedLogs);
     setLoading(false);
   }
 
@@ -342,24 +382,7 @@ export function AdminDashboard() {
 
   async function updateClientProject(
     id: string,
-    patch: Partial<
-      Pick<
-        ClientProject,
-        | "status"
-        | "next_step"
-        | "admin_notes"
-        | "offer_title"
-        | "offer_summary"
-        | "offer_scope"
-        | "offer_timeline"
-        | "offer_deliverables"
-        | "offer_price"
-        | "offer_currency"
-        | "offer_note"
-        | "offer_status"
-        | "offer_sent_at"
-      >
-    >
+    patch: Partial<ClientProject>
   ) {
     const { error } = await supabase.from("client_projects").update(patch).eq("id", id);
 
@@ -370,6 +393,32 @@ export function AdminDashboard() {
 
     setClientProjects((current) => current.map((project) => (project.id === id ? { ...project, ...patch } : project)));
     setMessage("Ügyfélprojekt mentve.");
+  }
+
+  async function approveDeletion(project: ClientProject) {
+    const { error } = await supabase.from("client_projects").delete().eq("id", project.id);
+    if (error) {
+      setMessage("Nem sikerült jóváhagyni a törlést.");
+    } else {
+      setMessage("Projekt véglegesen törölve.");
+      loadLeads();
+    }
+  }
+
+  async function rejectDeletion(project: ClientProject) {
+    const prevStatus = project.status_before_delete_request || "planning";
+    const { error } = await supabase.from("client_projects").update({
+      status: prevStatus,
+      delete_requested: false,
+      next_step: `Törlési kérelem elutasítva. Projekt visszaállítva a(z) "${projectStatusLabel[prevStatus] || prevStatus}" fázisba.`
+    }).eq("id", project.id);
+
+    if (error) {
+      setMessage("Nem sikerült elutasítani a törlést.");
+    } else {
+      setMessage("Törlési kérelem elutasítva.");
+      loadLeads();
+    }
   }
 
   function primeOffer(project: ClientProject) {
@@ -715,12 +764,30 @@ export function AdminDashboard() {
             ].filter(([, value]) => Boolean(value));
 
             return (
-            <article className="admin-project-card" key={project.id}>
+            <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+              {project.delete_requested && (
+                <div style={{ background: '#721C24', border: '1px solid #F5C6CB', color: '#F8D7DA', padding: '16px', borderRadius: '18px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '15px' }}>ÜGYFÉL TÖRLÉSI KÉRELMET NYÚJTOTT BE!</strong>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>Kérés ideje: {project.delete_requested_at ? new Date(project.delete_requested_at).toLocaleString('hu-HU') : 'nem ismert'}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="button primary" style={{ background: '#DC3545', borderColor: '#DC3545', minHeight: 'auto', padding: '8px 14px' }} onClick={() => approveDeletion(project)}>Törlés jóváhagyása</button>
+                    <button className="button secondary" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', minHeight: 'auto', padding: '8px 14px' }} onClick={() => rejectDeletion(project)}>Elutasítás</button>
+                  </div>
+                </div>
+              )}
+
               <header className="admin-project-top">
                 <div>
                   <span className="status-pill">{projectStatusLabel[project.status] ?? project.status}</span>
                   <h3>{project.title}</h3>
                   <p>{brief["Cél"] || project.goals}</p>
+                  {project.last_modified_at && (
+                    <small style={{ color: 'rgba(255,255,255,0.5)', display: 'block', marginTop: '6px', fontStyle: 'italic' }}>
+                      Utoljára módosítva: {new Date(project.last_modified_at).toLocaleString('hu-HU')} ({project.last_modified_by_name || 'Felhasználó'})
+                    </small>
+                  )}
                 </div>
                 <div className="admin-project-contact">
                   <strong>{project.contact_name || "Ügyfél"}</strong>
@@ -772,6 +839,26 @@ export function AdminDashboard() {
                 </div>
               </section>
 
+              {(() => {
+                const logs = changeLogs[project.id] ?? [];
+                if (logs.length === 0) return null;
+                return (
+                  <section style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '18px', padding: '16px', display: 'grid', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brief változások előzménye ({logs.length})</span>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'grid', gap: '6px', fontSize: '13px' }}>
+                      {logs.map((log) => (
+                        <div key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
+                          <span style={{ color: '#76ABAE' }}>{new Date(log.changed_at).toLocaleString('hu-HU')}</span> · <strong>{log.changed_by_name}</strong> - <em>{log.field_name}:</em>
+                          <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: '2px', paddingLeft: '8px' }}>
+                            <span style={{ textDecoration: 'line-through' }}>{log.old_value}</span> &rarr; <span style={{ color: '#fff' }}>{log.new_value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })()}
+
               <div className="admin-workflow" aria-label="Projekt folyamat">
                 {projectFlow.map(([value, label]) => (
                   <span className={project.status === value ? "active" : ""} key={value}>
@@ -807,6 +894,114 @@ export function AdminDashboard() {
                   <button className="button secondary" onClick={() => primeOffer(project)} type="button">
                     Ajánlat sablon előkészítése
                   </button>
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
+                    <strong>Kivitelezési Mérföldkövek ({project.milestones?.length || 0})</strong>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                      {project.milestones?.map((ms, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '8px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="checkbox"
+                              checked={ms.done}
+                              onChange={(e) => {
+                                const updated = [...(project.milestones || [])];
+                                updated[idx] = { ...updated[idx], done: e.target.checked };
+                                updateClientProject(project.id, { milestones: updated });
+                              }}
+                            />
+                            <span style={{ textDecoration: ms.done ? 'line-through' : 'none', color: ms.done ? 'rgba(255,255,255,0.4)' : '#fff' }}>{ms.title}</span>
+                          </label>
+                          <button
+                            type="button"
+                            style={{ background: 'none', border: 'none', color: '#FF5722', cursor: 'pointer', padding: 0 }}
+                            onClick={() => {
+                              const updated = (project.milestones || []).filter((_, i) => i !== idx);
+                              updateClientProject(project.id, { milestones: updated });
+                            }}
+                          >
+                            Törlés
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
+                        placeholder="Új mérföldkő..."
+                        value={newMilestoneTitle[project.id] ?? ""}
+                        onChange={(e) => setNewMilestoneTitle({ ...newMilestoneTitle, [project.id]: e.target.value })}
+                      />
+                      <button
+                        className="button primary"
+                        style={{ minHeight: 'auto', padding: '6px 12px' }}
+                        type="button"
+                        onClick={() => {
+                          const title = newMilestoneTitle[project.id]?.trim();
+                          if (!title) return;
+                          const updated = [...(project.milestones || []), { title, done: false }];
+                          updateClientProject(project.id, { milestones: updated });
+                          setNewMilestoneTitle({ ...newMilestoneTitle, [project.id]: "" });
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
+                    <strong>Átadási checklist ({project.handover_checklist?.length || 0})</strong>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                      {project.handover_checklist?.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '8px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="checkbox"
+                              checked={item.done}
+                              onChange={(e) => {
+                                const updated = [...(project.handover_checklist || [])];
+                                updated[idx] = { ...updated[idx], done: e.target.checked };
+                                updateClientProject(project.id, { handover_checklist: updated });
+                              }}
+                            />
+                            <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'rgba(255,255,255,0.4)' : '#fff' }}>{item.title}</span>
+                          </label>
+                          <button
+                            type="button"
+                            style={{ background: 'none', border: 'none', color: '#FF5722', cursor: 'pointer', padding: 0 }}
+                            onClick={() => {
+                              const updated = (project.handover_checklist || []).filter((_, i) => i !== idx);
+                              updateClientProject(project.id, { handover_checklist: updated });
+                            }}
+                          >
+                            Törlés
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
+                        placeholder="Új átadási pont..."
+                        value={newHandoverTitle[project.id] ?? ""}
+                        onChange={(e) => setNewHandoverTitle({ ...newHandoverTitle, [project.id]: e.target.value })}
+                      />
+                      <button
+                        className="button primary"
+                        style={{ minHeight: 'auto', padding: '6px 12px' }}
+                        type="button"
+                        onClick={() => {
+                          const title = newHandoverTitle[project.id]?.trim();
+                          if (!title) return;
+                          const updated = [...(project.handover_checklist || []), { title, done: false }];
+                          updateClientProject(project.id, { handover_checklist: updated });
+                          setNewHandoverTitle({ ...newHandoverTitle, [project.id]: "" });
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </section>
 
                 <section className="admin-offer-builder">
@@ -872,6 +1067,15 @@ export function AdminDashboard() {
                       ))}
                     </div>
                   ) : null}
+
+                  {project.client_rating && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', fontSize: '14px' }}>
+                      <strong style={{ color: '#76ABAE' }}>Kliens Értékelése:</strong>
+                      <div style={{ fontSize: '16px', color: '#FF9800', margin: '4px 0' }}>{"★".repeat(project.client_rating)}</div>
+                      {project.client_review && <p style={{ fontStyle: 'italic', margin: 0 }}>"{project.client_review}"</p>}
+                      <small style={{ color: 'rgba(255,255,255,0.5)' }}>Referencia engedélyezve: {project.reference_permitted ? "Igen" : "Nem"}</small>
+                    </div>
+                  )}
                 </section>
               </div>
             </article>
