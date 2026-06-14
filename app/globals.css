@@ -1358,6 +1358,10 @@ p {
   color: var(--paper);
 }
 
+.portal-resend {
+  justify-self: stretch;
+}
+
 .portal-header {
   align-items: center;
   display: flex;

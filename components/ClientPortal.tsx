@@ -85,6 +85,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketRatingComment, setTicketRatingComment] = useState("");
   const [notice, setNotice] = useState("");
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const activeTicket = useMemo(
@@ -261,7 +262,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     const { data, error } = await supabase.auth.signUp({
       email: authForm.email,
-      password: authForm.password
+      password: authForm.password,
+      options: {
+        data: {
+          full_name: authForm.name || authForm.email
+        },
+        emailRedirectTo: `${window.location.origin}/ugyfelkapu/dashboard`
+      }
     });
 
     if (error) {
@@ -282,7 +289,31 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
-    setNotice("Fiók kész. Nézd meg az emailedet a megerősítéshez, utána beléphetsz.");
+    setCanResendConfirmation(true);
+    setNotice("Fiók kész. Ha az email megerősítés be van kapcsolva Supabase-ben, kapsz egy megerősítő emailt. Nézd meg a Spam/Promóciók mappát is.");
+  }
+
+  async function resendConfirmation() {
+    if (!authForm.email) {
+      setNotice("Írd be az email címedet, és újraküldöm a megerősítést.");
+      return;
+    }
+
+    setNotice("Megerősítő email újraküldése...");
+    const { error } = await supabase.auth.resend({
+      email: authForm.email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/ugyfelkapu/dashboard`
+      },
+      type: "signup"
+    });
+
+    if (error) {
+      setNotice("Nem sikerült újraküldeni. Supabase-ben ellenőrizd az Auth email beállításokat vagy próbáld később.");
+      return;
+    }
+
+    setNotice("Elküldtem újra a megerősítő emailt. Nézd meg a Spam/Promóciók mappát is.");
   }
 
   async function createProject(event: FormEvent<HTMLFormElement>) {
@@ -465,6 +496,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <button className="button primary" type="submit">
             {mode === "login" ? "Belépés" : "Fiók létrehozása"}
           </button>
+          {mode === "register" && canResendConfirmation ? (
+            <button className="button secondary portal-resend" onClick={resendConfirmation} type="button">
+              Megerősítő email újraküldése
+            </button>
+          ) : null}
           <p className="form-status">{notice}</p>
         </form>
       </section>
