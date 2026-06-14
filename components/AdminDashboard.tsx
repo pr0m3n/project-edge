@@ -642,7 +642,6 @@ export function AdminDashboard() {
       return;
     }
 
-    const ticket = clientTickets.find((t) => t.id === ticketId);
     if (ticket) {
       await triggerNotification(
         ticket.user_id,
