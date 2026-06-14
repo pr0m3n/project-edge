@@ -1357,8 +1357,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     if (project.status === "closed") {
       return (
         <article className="project-status-card detailed compact-closed" key={project.id} style={{
-          background: "rgba(255, 255, 255, 0.02)",
-          border: "1px solid rgba(255, 255, 255, 0.06)",
+          background: "rgba(48, 56, 65, 0.02)",
+          border: "1px solid rgba(48, 56, 65, 0.08)",
           padding: "16px 20px",
           borderRadius: "20px",
           display: "flex",
@@ -1367,8 +1367,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
             <div>
-              <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
-              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+              <strong style={{ fontSize: "16px", color: "var(--ink)" }}>{project.title}</strong>
+              <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
                 {project.project_type} · {project.company || "Cégnév nélkül"}
               </div>
             </div>
@@ -1385,22 +1385,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           </div>
           
           {project.client_rating ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
-              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Értékelésed:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>
+              <span style={{ fontSize: "13px", color: "var(--muted)" }}>Értékelésed:</span>
               <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(project.client_rating)}</div>
               {project.client_review && (
-                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+                <span style={{ fontSize: "13px", color: "var(--ink)", opacity: 0.8, fontStyle: "italic" }}>
                   - "{project.client_review}"
                 </span>
               )}
             </div>
           ) : (
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
+            <div style={{ borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>
               <form onSubmit={(e) => {
                 e.preventDefault();
                 submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference);
               }} style={{ display: "grid", gap: "10px" }}>
-                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Kérlek értékeld a közös munkát:</span>
+                <span style={{ fontSize: "13px", color: "var(--muted)" }}>Kérlek értékeld a közös munkát:</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   {[1, 2, 3, 4, 5].map((val) => (
                     <button
@@ -1424,7 +1424,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                  <label style={{ display: "flex", gap: "6px", alignItems: "center", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
+                  <label style={{ display: "flex", gap: "6px", alignItems: "center", cursor: "pointer", fontSize: "12px", color: "var(--muted)" }}>
                     <input type="checkbox" checked={reviewForm.reference} onChange={(e) => setReviewForm({ ...reviewForm, reference: e.target.checked })} />
                     <span>Engedélyezem referenciaként</span>
                   </label>

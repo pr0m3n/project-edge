@@ -331,6 +331,18 @@ export function AdminDashboard() {
       return;
     }
 
+    const { data: adminCheck, error: adminCheckError } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("user_id", sessionData.session.user.id)
+      .maybeSingle();
+
+    if (adminCheckError || !adminCheck) {
+      await supabase.auth.signOut();
+      window.location.href = "/admin?error=unauthorized";
+      return;
+    }
+
     const { data, error } = await supabase
       .from("quote_requests")
       .select("*")
@@ -564,6 +576,12 @@ export function AdminDashboard() {
   }
 
   async function sendTicketReply(ticketId: string) {
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (ticket?.status === "closed") {
+      setMessage("Lezárt ticketre nem lehet választ küldeni.");
+      return;
+    }
+
     const body = ticketReplies[ticketId]?.trim();
     if (!body) {
       return;
@@ -593,6 +611,12 @@ export function AdminDashboard() {
   }
 
   async function sendClientTicketReply(ticketId: string) {
+    const ticket = clientTickets.find((t) => t.id === ticketId);
+    if (ticket?.status === "closed") {
+      setMessage("Lezárt ticketre nem lehet választ küldeni.");
+      return;
+    }
+
     const body = clientTicketReplies[ticketId]?.trim();
     if (!body) {
       return;
@@ -959,13 +983,15 @@ export function AdminDashboard() {
                   onChange={(event) =>
                     setTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
                   }
-                  placeholder="Írd ide a válaszod, majd küldd el..."
+                  disabled={ticket.status === "closed"}
+                  placeholder={ticket.status === "closed" ? "Ez a ticket lezárva." : "Írd ide a válaszod, majd küldd el..."}
                   style={{ minHeight: 110 }}
                 />
                 <button
                   className="button primary admin-reply-button"
                   onClick={() => sendTicketReply(ticket.id)}
                   type="button"
+                  disabled={ticket.status === "closed" || !ticketReplies[ticket.id]?.trim()}
                 >
                   Válasz küldése
                 </button>
@@ -1478,13 +1504,15 @@ export function AdminDashboard() {
                   onChange={(event) =>
                     setClientTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
                   }
-                  placeholder="Válasz az ügyfélkapuba..."
+                  disabled={ticket.status === "closed"}
+                  placeholder={ticket.status === "closed" ? "Ez a ticket lezárva." : "Válasz az ügyfélkapuba..."}
                   style={{ minHeight: 110 }}
                 />
                 <button
                   className="button primary admin-reply-button"
                   onClick={() => sendClientTicketReply(ticket.id)}
                   type="button"
+                  disabled={ticket.status === "closed" || !clientTicketReplies[ticket.id]?.trim()}
                 >
                   Válasz küldése
                 </button>

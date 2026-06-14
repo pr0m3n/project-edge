@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export function AdminLogin() {
@@ -9,16 +9,37 @@ export function AdminLogin() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "unauthorized") {
+      setMessage("Nincs jogosultságod az admin felület eléréséhez. Jelentkezz be admin fiókkal.");
+    }
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("Beléptetés...");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
+    if (error || !authData.user) {
       setLoading(false);
       setMessage("Nem sikerült belépni. Ellenőrizd az emailt és a jelszót.");
+      return;
+    }
+
+    // Verify if user is in admin_users
+    const { data: adminCheck, error: adminCheckError } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+
+    if (adminCheckError || !adminCheck) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setMessage("Ez a felhasználó nem rendelkezik adminisztrátori jogosultsággal.");
       return;
     }
 
