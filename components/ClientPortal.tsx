@@ -1860,7 +1860,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </p>
           </div>
           <form className="portal-card" onSubmit={submitForgotPassword}>
-            <h2 style={{ fontSize: '18px', color: '#fff', marginBottom: '16px' }}>Elfelejtett jelszó</h2>
+            <h2 style={{ fontSize: '18px', color: 'var(--ink)', marginBottom: '16px' }}>Elfelejtett jelszó</h2>
             <div className="field">
               <label htmlFor="forgot-email">Regisztrált email cím</label>
               <input
@@ -2066,21 +2066,25 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               key={value}
               onClick={() => setActiveTab(value as any)}
               type="button"
-              style={{ position: "relative" }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px"
+              }}
             >
-              {label}
+              <span>{label}</span>
               {unreadCount > 0 && (
                 <span style={{
-                  position: "absolute",
-                  top: "-4px",
-                  right: "-4px",
                   backgroundColor: "#76ABAE",
                   color: "#222831",
                   borderRadius: "9999px",
                   padding: "2px 6px",
                   fontSize: "10px",
                   fontWeight: "bold",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                  lineHeight: "1",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  marginLeft: "2px"
                 }}>
                   {unreadCount}
                 </span>
@@ -2669,16 +2673,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
             <div className="account-list" style={{ display: "grid", gap: "12px", padding: "12px 0" }}>
               <div>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Email</span>
-                <strong style={{ color: "#fff", fontSize: "15px" }}>{email}</strong>
+                <span style={{ fontSize: "11px", color: "var(--muted)", display: "block", textTransform: "uppercase" }}>Email</span>
+                <strong style={{ color: "var(--ink)", fontSize: "15px" }}>{email}</strong>
               </div>
               <div>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Projektek száma</span>
-                <strong style={{ color: "#fff", fontSize: "15px" }}>{projects.length} db</strong>
+                <span style={{ fontSize: "11px", color: "var(--muted)", display: "block", textTransform: "uppercase" }}>Projektek száma</span>
+                <strong style={{ color: "var(--ink)", fontSize: "15px" }}>{projects.length} db</strong>
               </div>
               <div>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Support ticketek</span>
-                <strong style={{ color: "#fff", fontSize: "15px" }}>{tickets.length} db</strong>
+                <span style={{ fontSize: "11px", color: "var(--muted)", display: "block", textTransform: "uppercase" }}>Support ticketek</span>
+                <strong style={{ color: "var(--ink)", fontSize: "15px" }}>{tickets.length} db</strong>
               </div>
             </div>
             <button className="button secondary" onClick={signOut} type="button" style={{ marginTop: "16px", width: "100%" }}>
@@ -2736,16 +2740,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <small style={{ color: "rgba(220, 53, 69, 0.6)" }}>Visszafordíthatatlan művelet</small>
             </div>
             <form onSubmit={deleteAccount} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: "1.4" }}>
+              <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: "1.4" }}>
                 A fiók törlésével minden projektbrief, ajánlat, ticket és adat véglegesen törlődik a rendszerből.
               </p>
               <div className="field" style={{ margin: 0 }}>
-                <label htmlFor="settings-delete" style={{ color: "rgba(255,255,255,0.6)" }}>Megerősítéshez írd be: TÖRLÉS</label>
+                <label htmlFor="settings-delete" style={{ color: "var(--muted)" }}>Megerősítéshez írd be: TÖRLÉS</label>
                 <input
                   id="settings-delete"
                   type="text"
                   placeholder="TÖRLÉS"
-                  style={{ border: "1px solid rgba(220, 53, 69, 0.2)", background: "rgba(0,0,0,0.2)" }}
+                  style={{ border: "1px solid rgba(220, 53, 69, 0.25)", background: "var(--white)", color: "var(--ink)" }}
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                 />
@@ -2778,7 +2782,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <small>{notifications.length} db értesítés</small>
             </div>
             {notifications.length === 0 ? (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted)" }}>
                 Nincs még értesítésed.
               </div>
             ) : (
@@ -2788,8 +2792,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     key={n.id}
                     onClick={() => markNotificationAsRead(n.id, n.link)}
                     style={{
-                      background: n.read ? "rgba(255,255,255,0.02)" : "rgba(118, 171, 174, 0.08)",
-                      border: n.read ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(118, 171, 174, 0.25)",
+                      background: n.read ? "rgba(48, 56, 65, 0.02)" : "rgba(118, 171, 174, 0.08)",
+                      border: n.read ? "1px solid rgba(48, 56, 65, 0.06)" : "1px solid rgba(118, 171, 174, 0.25)",
                       borderRadius: "16px",
                       padding: "16px",
                       cursor: "pointer",
@@ -2819,9 +2823,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         backgroundColor: "#76ABAE"
                       }} />
                     )}
-                    <strong style={{ color: n.read ? "#fff" : "#76ABAE", fontSize: "15px", paddingRight: "20px" }}>{n.title}</strong>
-                    <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.7)", lineHeight: "1.4" }}>{n.message}</p>
-                    <small style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", marginTop: "6px" }}>
+                    <strong style={{ color: n.read ? "var(--ink)" : "#76ABAE", fontSize: "15px", paddingRight: "20px" }}>{n.title}</strong>
+                    <p style={{ margin: 0, fontSize: "14px", color: "rgba(48, 56, 65, 0.7)", lineHeight: "1.4" }}>{n.message}</p>
+                    <small style={{ color: "rgba(48, 56, 65, 0.4)", fontSize: "11px", marginTop: "6px" }}>
                       {new Date(n.created_at).toLocaleString("hu-HU")}
                     </small>
                   </div>

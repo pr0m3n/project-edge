@@ -1643,12 +1643,18 @@ p {
   border-radius: 999px;
   display: grid;
   gap: 6px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-bottom: 20px;
   padding: 7px;
   position: sticky;
   top: 14px;
   z-index: 20;
+}
+
+@media (max-width: 800px) {
+  .portal-dashboard-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .portal-dashboard-tabs button {

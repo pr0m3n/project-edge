@@ -598,17 +598,22 @@ export function AdminDashboard() {
       return;
     }
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const adminUserId = sessionData?.session?.user?.id;
+
     const { data, error } = await supabase
       .from("client_ticket_messages")
       .insert({
         ticket_id: ticketId,
         sender: "admin",
-        body
+        body,
+        user_id: adminUserId
       })
       .select("*")
       .single();
 
     if (error || !data) {
+      console.error("Hiba az ügyfélkapus válasz küldésekor:", error);
       setMessage("Nem sikerült elküldeni az ügyfélkapus választ.");
       return;
     }
