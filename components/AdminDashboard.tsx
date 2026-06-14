@@ -439,7 +439,7 @@ export function AdminDashboard() {
 
       {message ? <p className="form-status" style={{ color: "#f5f5f5" }}>{message}</p> : null}
 
-      <h2 className="admin-section-title">Ajánlatkérések</h2>
+      <h2 className="admin-section-title">Korábbi érdeklődések</h2>
       <div className="lead-table">
         <div className="lead-row header">
           <span>Érdeklődő</span>
@@ -454,8 +454,8 @@ export function AdminDashboard() {
           </div>
         ) : leads.length === 0 ? (
           <div className="lead-row">
-            <strong>Még nincs ajánlatkérés.</strong>
-            <span>Amint valaki kitölti a főoldali űrlapot, itt fog megjelenni.</span>
+            <strong>Nincs korábbi érdeklődés.</strong>
+            <span>Az új projektek már az ügyfélkapun keresztül érkeznek.</span>
           </div>
         ) : (
           leads.map((lead) => (

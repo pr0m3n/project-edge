@@ -28,9 +28,9 @@ export function AdminLogin() {
   return (
     <form className="admin-card" onSubmit={submit}>
       <p className="section-kicker">ProjectEdge Admin</p>
-      <h1 style={{ fontSize: 42, lineHeight: 1 }}>Lead központ</h1>
+      <h1 style={{ fontSize: 42, lineHeight: 1 }}>Admin központ</h1>
       <p className="section-copy" style={{ color: "rgba(245,245,245,.72)" }}>
-        Jelentkezz be a beérkező ajánlatkérések, ügyfelek és projektek kezeléséhez.
+        Jelentkezz be az ügyfelek, projektek, ticketek és státuszok kezeléséhez.
       </p>
       <div className="form-grid" style={{ gridTemplateColumns: "1fr", marginTop: 24 }}>
         <div className="field">

@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 const workTypes = [
   ["Céges weboldal", "Amikor fontos, hogy az első benyomás komolyabb legyen, mint egy sima bemutatkozó oldal."],
   ["Landing page", "Egy ajánlat, egy cél, egy tiszta út. Kampányhoz, induláshoz vagy gyors teszthez."],
-  ["Webes rendszer", "Ajánlatkérő, belépés, adatbázis, admin. Akkor jó, ha már folyamatot is kell kezelni."],
+  ["Webes rendszer", "Belépés, adatbázis, admin, ticketek és dashboard. Akkor jó, ha már folyamatot is kell kezelni."],
   ["Redesign", "Nem nulláról kezdünk, hanem a meglévő oldalból hozzuk ki azt, amit eddig nem tudott."]
 ];
 
@@ -31,7 +31,7 @@ export default function WorkPage() {
       </section>
       <section className="cta-band">
         <h2>Ha van egy ötleted vagy meglévő oldalad, abból már el lehet indulni.</h2>
-        <Link className="button primary" href="/ajanlatkeres">
+        <Link className="button primary" href="/ugyfelkapu">
           Beszéljünk róla
         </Link>
       </section>

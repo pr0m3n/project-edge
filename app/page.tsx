@@ -17,10 +17,10 @@ const paths = [
     copy: "Rövid egyeztetések, látható haladás, nincs felesleges kör. Mindig tudod, épp min dolgozunk."
   },
   {
-    href: "/ajanlatkeres",
+    href: "/ugyfelkapu",
     eyebrow: "03 / Indítás",
-    title: "Írd le pár mondatban, hol tartasz most.",
-    copy: "Lehet új oldal, redesign, gyorsítás vagy csak egy jobb ajánlatkérő. Visszajelzek, merre érdemes indulni."
+    title: "Indíts projektet saját ügyfél dashboardból.",
+    copy: "Belépés után ticketet nyithatsz, projektet indíthatsz, és később visszanézed az összes előzményt."
   }
 ];
 
@@ -43,12 +43,12 @@ export default function Home() {
               <span>Dolgozik.</span>
             </h1>
             <p className="hero-lead">
-              Olyan weboldalakat építek, ahol a látvány, a szöveg és az ajánlatkérés egy irányba
+              Olyan weboldalakat építek, ahol a látvány, a szöveg és az ügyfélszerzés egy irányba
               dolgozik. Ha már van oldalad, rendbe rakjuk. Ha nincs, felépítjük úgy, hogy ne kelljen
               fél év múlva újrakezdeni.
             </p>
             <div className="hero-command">
-              <Link className="button primary" href="/ajanlatkeres">
+              <Link className="button primary" href="/ugyfelkapu">
                 Projekt indítása
               </Link>
               <Link className="button spectral" href="/szolgaltatasok">

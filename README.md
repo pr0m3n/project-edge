@@ -56,16 +56,18 @@ values (
 ## Pages
 
 - `/` public premium business website
-- `/api/quote` public quote request endpoint
+- `/ugyfelkapu` client login and registration
+- `/ugyfelkapu/dashboard` authenticated client dashboard
+- `/api/quote` disabled legacy quote endpoint
 - `/api/tickets` public support ticket endpoint
 - `/admin` Supabase Auth login
-- `/admin/dashboard` quote request and support ticket management
+- `/admin/dashboard` client project, support ticket, and legacy lead management
 
 ## Admin flow
 
-The public site does not show the admin link. Open `/admin` directly, sign in with the Supabase Auth user added to `public.admin_users`, then manage quote requests and support tickets from `/admin/dashboard`.
+The public site does not show the admin link. Open `/admin` directly, sign in with the Supabase Auth user added to `public.admin_users`, then manage client projects and support tickets from `/admin/dashboard`.
 
-Quote requests are saved to `quote_requests`.
+Public quote requests are disabled. New projects should start through `/ugyfelkapu`, where authenticated clients can create projects and tickets.
 
 The bottom-right support widget creates a chat-style ticket in `support_tickets` and stores the conversation in `support_ticket_messages`. The visitor can reopen the same browser and continue the conversation. Admin replies are sent from `/admin/dashboard`.
 
