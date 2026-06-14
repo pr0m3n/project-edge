@@ -66,7 +66,11 @@ const initialTicket = {
   subject: ""
 };
 
-export function ClientPortal() {
+type ClientPortalProps = {
+  view?: "auth" | "dashboard";
+};
+
+export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [authForm, setAuthForm] = useState({ email: "", name: "", password: "" });
   const [userId, setUserId] = useState("");
@@ -92,12 +96,22 @@ export function ClientPortal() {
     supabase.auth.getSession().then(({ data }) => {
       const sessionUser = data.session?.user;
       if (!sessionUser) {
+        if (view === "dashboard") {
+          window.location.href = "/ugyfelkapu";
+          return;
+        }
+
         setLoading(false);
         return;
       }
 
       setUserId(sessionUser.id);
       setEmail(sessionUser.email ?? "");
+      if (view === "auth") {
+        window.location.href = "/ugyfelkapu/dashboard";
+        return;
+      }
+
       loadPortal();
     });
 
@@ -106,18 +120,26 @@ export function ClientPortal() {
       setUserId(sessionUser?.id ?? "");
       setEmail(sessionUser?.email ?? "");
       if (sessionUser) {
+        if (view === "auth") {
+          window.location.href = "/ugyfelkapu/dashboard";
+          return;
+        }
+
         loadPortal();
       } else {
         setProjects([]);
         setTickets([]);
         setMessages({});
+        if (view === "dashboard") {
+          window.location.href = "/ugyfelkapu";
+        }
       }
     });
 
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     if (!userId) {
@@ -231,7 +253,9 @@ export function ClientPortal() {
 
       if (error) {
         setNotice("Nem sikerült belépni. Ellenőrizd az emailt és a jelszót.");
+        return;
       }
+      window.location.href = "/ugyfelkapu/dashboard";
       return;
     }
 
@@ -253,7 +277,12 @@ export function ClientPortal() {
       });
     }
 
-    setNotice(data.session ? "Fiók kész, beléptél." : "Fiók kész. Nézd meg az emailedet a megerősítéshez.");
+    if (data.session) {
+      window.location.href = "/ugyfelkapu/dashboard";
+      return;
+    }
+
+    setNotice("Fiók kész. Nézd meg az emailedet a megerősítéshez, utána beléphetsz.");
   }
 
   async function createProject(event: FormEvent<HTMLFormElement>) {
@@ -379,7 +408,7 @@ export function ClientPortal() {
     setNotice("");
   }
 
-  if (!userId) {
+  if (view === "auth") {
     return (
       <section className="portal-auth">
         <div className="portal-auth-copy">
@@ -442,12 +471,24 @@ export function ClientPortal() {
     );
   }
 
+  if (!userId) {
+    return (
+      <section className="client-portal">
+        <div className="portal-card">
+          <p className="micro-label">Ügyfél dashboard</p>
+          <h1>Átirányítás...</h1>
+          <p>Ha nem vagy bejelentkezve, visszaviszünk a belépéshez.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="client-portal">
       <header className="portal-header">
         <div>
-          <p className="micro-label">Ügyfélkapu</p>
-          <h1>Projektközpont</h1>
+          <p className="micro-label">Ügyfél dashboard</p>
+          <h1>Dashboard</h1>
           <p>{email}</p>
         </div>
         <button className="button secondary" onClick={signOut} type="button">

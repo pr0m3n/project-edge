@@ -5,7 +5,7 @@ export default function ClientPortalPage() {
   return (
     <main className="site-shell portal-page">
       <SiteNav />
-      <ClientPortal />
+      <ClientPortal view="auth" />
     </main>
   );
 }
