@@ -1004,7 +1004,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="wizard-actions">
