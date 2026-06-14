@@ -1042,6 +1042,10 @@ p {
   min-width: min(100%, 280px);
 }
 
+.quote-portal-link {
+  margin-top: 28px;
+}
+
 .form-status {
   color: var(--muted);
   font-weight: 850;
@@ -1248,6 +1252,11 @@ p {
   min-height: 42px;
 }
 
+.client-project-card .ticket-conversation {
+  display: grid;
+  gap: 12px;
+}
+
 .lead-row:not(:last-child) {
   border-bottom: 1px solid var(--line);
 }
@@ -1269,6 +1278,290 @@ p {
   font-weight: 950;
   padding: 6px 10px;
   width: fit-content;
+}
+
+.portal-page {
+  background:
+    radial-gradient(circle at 78% 16%, rgba(255, 87, 34, 0.34), transparent 24%),
+    radial-gradient(circle at 18% 78%, rgba(118, 171, 174, 0.24), transparent 28%),
+    var(--ink);
+  color: var(--paper);
+  min-height: 100vh;
+  padding: 132px clamp(16px, 5vw, 76px) 76px;
+}
+
+.portal-auth,
+.client-portal {
+  margin: 0 auto;
+  max-width: 1240px;
+}
+
+.portal-auth {
+  align-items: center;
+  display: grid;
+  gap: clamp(30px, 6vw, 90px);
+  grid-template-columns: 0.9fr 0.72fr;
+  min-height: calc(100vh - 210px);
+}
+
+.portal-auth-copy h1,
+.portal-header h1 {
+  font-size: clamp(48px, 7vw, 92px);
+  line-height: 0.92;
+}
+
+.portal-auth-copy p:not(.micro-label),
+.portal-header p {
+  color: rgba(245, 245, 245, 0.72);
+  font-size: 20px;
+  line-height: 1.65;
+  margin-top: 22px;
+}
+
+.portal-card {
+  background:
+    linear-gradient(145deg, rgba(245, 245, 245, 0.98), rgba(245, 245, 245, 0.9)),
+    var(--paper);
+  border: 1px solid rgba(245, 245, 245, 0.22);
+  border-radius: 30px;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.2);
+  color: var(--ink);
+  display: grid;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 34px);
+}
+
+.portal-tabs {
+  background: rgba(48, 56, 65, 0.08);
+  border-radius: 999px;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 6px;
+}
+
+.portal-tabs button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 950;
+  min-height: 44px;
+}
+
+.portal-tabs button.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.portal-header {
+  align-items: center;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 34px;
+}
+
+.portal-notice {
+  background: rgba(245, 245, 245, 0.1);
+  border: 1px solid rgba(245, 245, 245, 0.16);
+  border-radius: 18px;
+  color: rgba(245, 245, 245, 0.82);
+  font-weight: 850;
+  margin-bottom: 22px;
+  padding: 14px 16px;
+}
+
+.portal-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  margin-top: 22px;
+}
+
+.portal-grid.tickets {
+  grid-template-columns: minmax(320px, 0.65fr) minmax(0, 1.35fr);
+}
+
+.portal-card-head {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.portal-card-head span {
+  background: var(--ember);
+  border-radius: 50%;
+  color: var(--white);
+  display: grid;
+  font-weight: 950;
+  height: 42px;
+  place-items: center;
+  width: 42px;
+}
+
+.portal-card-head h2 {
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1;
+}
+
+.portal-form,
+.project-list {
+  display: grid;
+  gap: 14px;
+}
+
+.project-status-card {
+  background: var(--white);
+  border: 1px solid rgba(48, 56, 65, 0.1);
+  border-radius: 22px;
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.project-status-card div {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.project-status-card strong {
+  font-size: 20px;
+}
+
+.project-status-card span {
+  background: rgba(118, 171, 174, 0.18);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.project-status-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ticket-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(170px, 0.42fr) minmax(0, 1fr);
+}
+
+.ticket-list {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+}
+
+.ticket-list button {
+  background: rgba(48, 56, 65, 0.06);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  color: var(--ink);
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  text-align: left;
+}
+
+.ticket-list button.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.ticket-list span,
+.portal-chat-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.ticket-list button.active span {
+  color: rgba(245, 245, 245, 0.72);
+}
+
+.portal-chat {
+  background:
+    linear-gradient(180deg, rgba(118, 171, 174, 0.08), transparent),
+    var(--white);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 24px;
+  display: grid;
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.portal-chat-head {
+  align-items: center;
+  border-bottom: 1px solid rgba(48, 56, 65, 0.08);
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.portal-chat-messages {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 18px;
+}
+
+.portal-bubble {
+  border-radius: 18px;
+  display: grid;
+  gap: 5px;
+  line-height: 1.5;
+  max-width: min(78%, 420px);
+  overflow-wrap: anywhere;
+  padding: 12px 14px;
+  width: fit-content;
+}
+
+.portal-bubble span {
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.portal-bubble.customer {
+  background: var(--ink);
+  color: var(--paper);
+  justify-self: end;
+}
+
+.portal-bubble.admin {
+  background: rgba(118, 171, 174, 0.18);
+  color: var(--ink);
+  justify-self: start;
+}
+
+.portal-reply {
+  border-top: 1px solid rgba(48, 56, 65, 0.08);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.portal-reply textarea {
+  min-height: 92px;
+}
+
+.portal-rating {
+  border-top: 1px solid rgba(48, 56, 65, 0.08);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.portal-rating textarea {
+  min-height: 80px;
 }
 
 .support-widget {
@@ -1586,6 +1879,18 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .portal-auth,
+  .portal-grid,
+  .portal-grid.tickets,
+  .ticket-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .lead-row.header {
     display: none;
   }
@@ -1638,6 +1943,48 @@ p {
   .route-page {
     padding-left: 14px;
     padding-right: 14px;
+  }
+
+  .portal-page {
+    padding: 108px 14px 58px;
+  }
+
+  .portal-auth {
+    min-height: auto;
+  }
+
+  .portal-auth-copy h1,
+  .portal-header h1 {
+    font-size: clamp(42px, 14vw, 62px);
+  }
+
+  .portal-auth-copy p:not(.micro-label),
+  .portal-header p {
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .portal-card {
+    border-radius: 24px;
+    padding: 18px;
+  }
+
+  .project-status-card div,
+  .portal-chat-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .portal-chat {
+    min-height: 380px;
+  }
+
+  .portal-chat-messages {
+    max-height: 320px;
+  }
+
+  .portal-bubble {
+    max-width: 86%;
   }
 
   .route-intro h1,

@@ -3,7 +3,8 @@ import Link from "next/link";
 const links = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
   { href: "/folyamat", label: "Folyamat" },
-  { href: "/munkak", label: "Munkák" }
+  { href: "/munkak", label: "Munkák" },
+  { href: "/ugyfelkapu", label: "Ügyfélkapu" }
 ];
 
 export function SiteNav() {
@@ -22,7 +23,7 @@ export function SiteNav() {
           </Link>
         ))}
       </div>
-      <Link className="nav-cta" href="/ajanlatkeres">
+      <Link className="nav-cta" href="/ugyfelkapu">
         Projekt indítása
       </Link>
     </nav>

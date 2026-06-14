@@ -1,5 +1,6 @@
 import { QuoteForm } from "@/components/QuoteForm";
 import { SiteNav } from "@/components/SiteNav";
+import Link from "next/link";
 
 export default function QuotePage() {
   return (
@@ -17,6 +18,9 @@ export default function QuotePage() {
             <strong>Mi történik utána?</strong>
             <span>Átnézem, válaszolok, és megmondom, szerintem mi lenne a legésszerűbb első lépés.</span>
           </div>
+          <Link className="button secondary quote-portal-link" href="/ugyfelkapu">
+            Belépős projektindítást szeretnék
+          </Link>
         </aside>
         <QuoteForm />
       </section>

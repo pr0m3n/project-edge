@@ -115,7 +115,7 @@ export function SupportWidget() {
     });
   }, [messages, open]);
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/ugyfelkapu")) {
     return null;
   }
 
