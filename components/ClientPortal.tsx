@@ -219,7 +219,7 @@ type ClientPortalProps = {
 
 export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "statuses" | "support" | "account">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "statuses" | "support" | "account" | "notifications">("overview");
   const [authForm, setAuthForm] = useState({ email: "", name: "", password: "" });
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -252,6 +252,160 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [modificationRequestText, setModificationRequestText] = useState("");
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  async function triggerNotification(
+    targetUserId: string | null,
+    targetEmail: string | null,
+    title: string,
+    message: string,
+    link: string
+  ) {
+    try {
+      await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: targetUserId,
+          email: targetEmail,
+          title,
+          message,
+          link
+        })
+      });
+    } catch (err) {
+      console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
+    }
+  }
+
+  async function markNotificationAsRead(id: string, link?: string | null) {
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    if (link) {
+      if (link.includes("#statuses")) {
+        setActiveTab("statuses");
+      } else if (link.includes("#support")) {
+        setActiveTab("support");
+      } else if (link.includes("#projects")) {
+        setActiveTab("projects");
+      } else if (link.includes("#account")) {
+        setActiveTab("account");
+      } else if (link.includes("#notifications")) {
+        setActiveTab("notifications");
+      } else {
+        setActiveTab("overview");
+      }
+    }
+  }
+
+  async function markAllNotificationsAsRead() {
+    if (!userId) return;
+    await supabase.from("notifications").update({ read: true }).eq("user_id", userId);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }
+
+  async function updateProfileName(e: FormEvent) {
+    e.preventDefault();
+    if (!profileName.trim()) {
+      setNotice("A név nem lehet üres.");
+      return;
+    }
+    setNotice("Módosítás...");
+    const { error: profileError } = await supabase
+      .from("client_profiles")
+      .update({ full_name: profileName.trim(), updated_at: new Date().toISOString() })
+      .eq("id", userId);
+    if (profileError) {
+      setNotice(`Nem sikerült a név frissítése: ${profileError.message}`);
+      return;
+    }
+    const { error: authError } = await supabase.auth.updateUser({
+      data: { full_name: profileName.trim() }
+    });
+    if (authError) {
+      setNotice(`Név frissítve az adatbázisban, de a munkamenetben nem: ${authError.message}`);
+    } else {
+      setNotice("Profilnév sikeresen frissítve!");
+    }
+  }
+
+  async function updatePassword(e: FormEvent) {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setNotice("A jelszónak legalább 6 karakterből kell állnia.");
+      return;
+    }
+    setNotice("Módosítás...");
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      setNotice(`Jelszócsere sikertelen: ${error.message}`);
+    } else {
+      setNewPassword("");
+      setNotice("A jelszavad sikeresen megváltozott!");
+    }
+  }
+
+  async function deleteAccount(e: FormEvent) {
+    e.preventDefault();
+    if (deleteConfirmText !== "TÖRLÉS") {
+      setNotice("Kérjük, írd be a 'TÖRLÉS' szót a megerősítéshez.");
+      return;
+    }
+    setNotice("Fiók törlése folyamatban...");
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) {
+      setNotice("Nincs aktív munkamenet.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/delete-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        }
+      });
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        setNotice("Fiókod sikeresen törölve lett. Kijelentkeztetés...");
+        await triggerNotification(
+          null,
+          "admin@projectedge.hu",
+          "Fiók törölve",
+          `Az ügyfél (${email}) véglegesen törölte a fiókját a rendszerből.`,
+          "/admin"
+        );
+        setTimeout(() => {
+          supabase.auth.signOut().then(() => {
+            window.location.href = "/ugyfelkapu";
+          });
+        }, 1500);
+      } else {
+        setNotice(`Sikertelen törlés: ${resData.error || "Ismeretlen hiba"}`);
+      }
+    } catch (err: any) {
+      setNotice(`Hiba történt a törlés során: ${err.message}`);
+    }
+  }
+
+  async function submitForgotPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNotice("Visszaállító link küldése...");
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+      redirectTo: `${window.location.origin}/ugyfelkapu/dashboard?reset=true`
+    });
+    if (error) {
+      setNotice(`Hiba: ${error.message}`);
+    } else {
+      setNotice("A jelszóvisszaállító linket elküldtük az email címedre!");
+      setForgotPasswordEmail("");
+    }
+  }
 
   const activeTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === activeTicketId) ?? tickets[0],
@@ -266,6 +420,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
 
   useEffect(() => {
+    // Check if recovery link is used
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (hash.includes("type=recovery") || search.includes("reset=true")) {
+        setActiveTab("account");
+        setNotice("Kérjük, állíts be egy új jelszót a 'Jelszó módosítása' résznél.");
+      }
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       const sessionUser = data.session?.user;
       if (!sessionUser) {
@@ -363,6 +527,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           });
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          filter: `user_id=eq.${userId}`,
+          schema: "public",
+          table: "notifications"
+        },
+        () => loadPortal(true)
+      )
       .subscribe();
 
     return () => {
@@ -375,11 +549,17 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setLoading(true);
     }
 
-    const [{ data: projectData, error: projectError }, { data: ticketData, error: ticketError }] =
-      await Promise.all([
-        supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
-        supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false })
-      ]);
+    const [
+      { data: projectData, error: projectError },
+      { data: ticketData, error: ticketError },
+      { data: profileData },
+      { data: notificationData }
+    ] = await Promise.all([
+      supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
+      supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }),
+      supabase.from("client_profiles").select("full_name").eq("id", userId).maybeSingle(),
+      supabase.from("notifications").select("*").order("created_at", { ascending: false })
+    ]);
 
     if (projectError || ticketError) {
       setNotice("Nem sikerült betölteni az ügyfélkaput. Lehet, hogy a Supabase SQL még nincs lefuttatva.");
@@ -410,6 +590,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setProjects(projectData ?? []);
     setTickets(ticketData ?? []);
     setMessages(grouped);
+    setProfileName(profileData?.full_name ?? "");
+    setNotifications(notificationData ?? []);
     setActiveTicketId((current) => current || ticketData?.[0]?.id || "");
     setLoading(false);
   }
@@ -538,6 +720,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Új projekt brief",
+      `Új projekt brief érkezett: "${projectForm.title}" az ügyféltől (${email}).`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Brief sikeresen beküldve",
+      `A(z) "${projectForm.title}" projekt briefét sikeresen rögzítettük. Az adminisztrátor hamarosan elkészíti az ajánlatot.`,
+      "/ugyfelkapu/dashboard#projects"
+    );
+
     setProjectForm(initialProject);
     setProjectSubmitted(true);
     setSubmittedProjectTitle(projectForm.title);
@@ -658,6 +856,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       await supabase.from("project_change_logs").insert(logs);
     }
 
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Brief módosítva",
+      `Az ügyfél (${email}) módosította a briefet a(z) "${project.title}" projektben. Változások száma: ${logs.length}.`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Brief módosítva",
+      `Sikeresen elmentetted a brief módosításokat a(z) "${editForm.title}" projektben.`,
+      "/ugyfelkapu/dashboard#projects"
+    );
+
     setEditingBriefProjectId(null);
     setNotice("Brief sikeresen módosítva.");
     loadPortal(true);
@@ -677,6 +891,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elfogadni az ajánlatot.");
     } else {
       setNotice("Ajánlat elfogadva. Foglaló fizetés szükséges.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Ajánlat elfogadva",
+        `Az ügyfél (${email}) elfogadta a(z) "${project.title}" projekt ajánlatát. Foglaló fizetésre vár.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Ajánlat elfogadva",
+        `Elfogadtad a(z) "${project.title}" projekt ajánlatát. Kérjük, fizesd be a foglalót a fejlesztés elindításához.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -714,6 +942,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       }
     });
 
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Ajánlat módosítási kérelem",
+      `Az ügyfél (${email}) módosításokat kért a(z) "${project.title}" projekt ajánlatához.`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Ajánlat módosítási igény elküldve",
+      `A(z) "${project.title}" projekt ajánlat módosítási kérését elküldtük az adminisztrátornak.`,
+      "/ugyfelkapu/dashboard#statuses"
+    );
+
     setShowModificationRequestProjectId(null);
     setModificationRequestText("");
     setNotice("Módosítási kérés rögzítve.");
@@ -731,6 +975,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elutasítani az ajánlatot.");
     } else {
       setNotice("Ajánlat elutasítva.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Ajánlat elutasítva",
+        `Az ügyfél (${email}) elutasította a(z) "${project.title}" projekt ajánlatát.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Ajánlat elutasítva",
+        `Elutasítottad a(z) "${project.title}" projekt ajánlatát.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -760,6 +1018,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setShowStripeModalProjectId(null);
       setStripeForm({ card: "", exp: "", cvc: "", name: "" });
       setNotice("Foglaló sikeresen rendezve.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Foglaló befizetve",
+        `Az ügyfél (${email}) befizette a foglalót a(z) "${project.title}" projekthez. Szerződés aláírásra vár.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Foglaló sikeresen kifizetve",
+        `A(z) "${project.title}" projekt foglalója beérkezett. Kérjük, olvasd el és írd alá a szerződést.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -777,6 +1049,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     } else {
       setContractChecked(false);
       setNotice("Szerződés aláírva, a kivitelezés megkezdődik.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Szerződés aláírva",
+        `Az ügyfél (${email}) elfogadta a szerződést a(z) "${project.title}" projekthez. A fejlesztés indulhat!`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Szerződés aláírva",
+        `Aláírtad a szerződést a(z) "${project.title}" projekthez. Megkezdjük a kivitelezést.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -815,6 +1101,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       }
     });
 
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Javítási visszajelzés",
+      `Az ügyfél (${email}) elküldte a(z) ${nextRound}. kör visszajelzését a(z) "${project.title}" projekthez.`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Visszajelzés beküldve",
+      `Elküldtük a(z) ${nextRound}. körös módosítási igényeidet a(z) "${project.title}" projekthez.`,
+      "/ugyfelkapu/dashboard#statuses"
+    );
+
     setFeedbackRoundNote("");
     setNotice("Módosítási igények elküldve.");
     loadPortal(true);
@@ -832,6 +1134,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
       setNotice("Döntésedet elmentettük. A projekt lezárult.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Karbantartási döntés",
+        `Az ügyfél (${email}) döntött a karbantartásról a(z) "${project.title}" projektnél: ${option === 'accepted' ? 'KÉRI' : 'NEM KÉRI'}.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Projekt sikeresen lezárva",
+        `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -847,6 +1163,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elmenteni az értékelést.");
     } else {
       setNotice("Köszönjük az értékelést és a visszajelzést!");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Új értékelés érkezett",
+        `Az ügyfél (${email}) értékelte a(z) "${project.title}" projektet: ${rating}/5 csillag.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Értékelés rögzítve",
+        `Köszönjük, hogy értékelted a(z) "${project.title}" projektet!`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -867,6 +1197,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült kezdeményezni a törlést.");
     } else {
       setNotice("Törlési kérelem elküldve.");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Projekt törlési kérelem",
+        `Az ügyfél (${email}) kezdeményezte a(z) "${project.title}" projekt törlését. Jóváhagyás szükséges.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Törlési kérelem elküldve",
+        `Kezdeményezted a(z) "${project.title}" projekt törlését/megszakítását.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       loadPortal(true);
     }
   }
@@ -907,6 +1251,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Új support ticket",
+      `Új support ticketet nyitott az ügyfél (${email}): "${ticketForm.subject}".`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Support ticket megnyitva",
+      `Sikeresen megnyitottad a(z) "${ticketForm.subject}" tárgyú support ticketet.`,
+      "/ugyfelkapu/dashboard#support"
+    );
+
     setTicketForm(initialTicket);
     setActiveTicketId(ticket.id);
     setNotice("Ticket megnyitva.");
@@ -930,6 +1290,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elküldeni az üzenetet.");
       return;
     }
+
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Új ticket üzenet",
+      `Új üzenet érkezett az ügyféltől (${email}) a(z) "${activeTicket.subject}" tickethez.`,
+      "/admin"
+    );
+
+    await triggerNotification(
+      userId,
+      email,
+      "Üzenet elküldve",
+      `Sikeresen elküldted az üzenetedet a(z) "${activeTicket.subject}" support tickethez.`,
+      "/ugyfelkapu/dashboard#support"
+    );
 
     setReply("");
   }
@@ -977,6 +1353,89 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ["Karakter", brief["Vizuális karakter"]],
       ["Prioritás", brief["Prioritás"]]
     ].filter(([, value]) => Boolean(value));
+
+    if (project.status === "closed") {
+      return (
+        <article className="project-status-card detailed compact-closed" key={project.id} style={{
+          background: "rgba(255, 255, 255, 0.02)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+          padding: "16px 20px",
+          borderRadius: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+            <div>
+              <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+                {project.project_type} · {project.company || "Cégnév nélkül"}
+              </div>
+            </div>
+            <span style={{
+              background: "rgba(118, 171, 174, 0.15)",
+              color: "#76ABAE",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "bold"
+            }}>
+              Lezárva
+            </span>
+          </div>
+          
+          {project.client_rating ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
+              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Értékelésed:</span>
+              <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(project.client_rating)}</div>
+              {project.client_review && (
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+                  - "{project.client_review}"
+                </span>
+              )}
+            </div>
+          ) : (
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference);
+              }} style={{ display: "grid", gap: "10px" }}>
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Kérlek értékeld a közös munkát:</span>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                      type="button"
+                      key={val}
+                      style={{ fontSize: "20px", background: "none", border: "none", cursor: "pointer", color: reviewForm.rating >= val ? "#FF9800" : "#ccc", padding: 0 }}
+                      onClick={() => setReviewForm({ ...reviewForm, rating: val })}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <textarea
+                    id={`review-comment-${project.id}`}
+                    required
+                    style={{ fontSize: "13px", padding: "8px 12px", borderRadius: "10px", minHeight: "60px" }}
+                    placeholder="Írd le tapasztalataidat..."
+                    value={reviewForm.review}
+                    onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })}
+                  />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                  <label style={{ display: "flex", gap: "6px", alignItems: "center", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
+                    <input type="checkbox" checked={reviewForm.reference} onChange={(e) => setReviewForm({ ...reviewForm, reference: e.target.checked })} />
+                    <span>Engedélyezem referenciaként</span>
+                  </label>
+                  <button className="button primary" type="submit" style={{ fontSize: "12px", padding: "6px 12px", minHeight: "auto", borderRadius: "8px" }}>Értékelés</button>
+                </div>
+              </form>
+            </div>
+          )}
+        </article>
+      );
+    }
 
     return (
       <article className={`project-status-card detailed ${expanded ? "expanded" : ""}`} key={project.id}>
@@ -1390,6 +1849,44 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   if (view === "auth") {
+    if (showForgotPassword) {
+      return (
+        <section className="portal-auth">
+          <div className="portal-auth-copy">
+            <p className="micro-label">Ügyfélkapu</p>
+            <h1>Jelszó visszaállítása</h1>
+            <p>
+              Add meg a regisztrált email címedet, és elküldünk egy linket, amellyel bejelentkezés nélkül beállíthatsz egy új jelszót.
+            </p>
+          </div>
+          <form className="portal-card" onSubmit={submitForgotPassword}>
+            <h2 style={{ fontSize: '18px', color: '#fff', marginBottom: '16px' }}>Elfelejtett jelszó</h2>
+            <div className="field">
+              <label htmlFor="forgot-email">Regisztrált email cím</label>
+              <input
+                id="forgot-email"
+                required
+                type="email"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                placeholder="hello@vallalkozasod.hu"
+              />
+            </div>
+            <button className="button primary" type="submit">Visszaállító link küldése</button>
+            <button
+              className="button secondary"
+              type="button"
+              style={{ marginTop: '12px' }}
+              onClick={() => { setShowForgotPassword(false); setNotice(""); }}
+            >
+              Vissza a bejelentkezéshez
+            </button>
+            <p className="form-status">{notice}</p>
+          </form>
+        </section>
+      );
+    }
+
     return (
       <section className="portal-auth">
         <div className="portal-auth-copy">
@@ -1402,10 +1899,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         </div>
         <form className="portal-card" onSubmit={submitAuth}>
           <div className="portal-tabs">
-            <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")} type="button">
+            <button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setNotice(""); }} type="button">
               Belépés
             </button>
-            <button className={mode === "register" ? "active" : ""} onClick={() => setMode("register")} type="button">
+            <button className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setNotice(""); }} type="button">
               Regisztráció
             </button>
           </div>
@@ -1442,34 +1939,57 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 value={authForm.password}
                 onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
                 placeholder="Legalább 6 karakter"
-                style={{ width: '100%', paddingRight: '60px' }}
+                style={{ width: '100%', paddingRight: '50px' }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: '6px',
+                  right: '12px',
                   background: 'none',
                   border: 'none',
                   color: 'var(--muted)',
                   cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  padding: '8px',
+                  padding: '4px',
                   height: '100%',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   zIndex: 2
                 }}
                 aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
               >
-                {showPassword ? "Elrejt" : "Mutat"}
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
               </button>
             </div>
+            {mode === "register" && (
+              <small style={{ display: 'block', marginTop: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: '1.3' }}>
+                A Supabase jelszószabályai szerint legalább 6 karakter hosszú jelszó megadása kötelező.
+              </small>
+            )}
           </div>
+          {mode === "login" && (
+            <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(true); setNotice(""); }}
+                style={{ background: 'none', border: 'none', color: '#76ABAE', cursor: 'pointer', fontSize: '13px', padding: 0 }}
+              >
+                Elfelejtetted a jelszavad?
+              </button>
+            </div>
+          )}
           <button className="button primary" type="submit">
             {mode === "login" ? "Belépés" : "Fiók létrehozása"}
           </button>
@@ -1536,17 +2056,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           ["projects", "Projektek"],
           ["statuses", "Státuszok"],
           ["support", "Support"],
+          ["notifications", "Értesítések"],
           ["account", "Fiók"]
-        ].map(([value, label]) => (
-          <button
-            className={activeTab === value ? "active" : ""}
-            key={value}
-            onClick={() => setActiveTab(value as typeof activeTab)}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
+        ].map(([value, label]) => {
+          const unreadCount = value === "notifications" ? notifications.filter((n) => !n.read).length : 0;
+          return (
+            <button
+              className={activeTab === value ? "active" : ""}
+              key={value}
+              onClick={() => setActiveTab(value as any)}
+              type="button"
+              style={{ position: "relative" }}
+            >
+              {label}
+              {unreadCount > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "-4px",
+                  right: "-4px",
+                  backgroundColor: "#76ABAE",
+                  color: "#222831",
+                  borderRadius: "9999px",
+                  padding: "2px 6px",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                }}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {activeTab === "overview" ? (
@@ -2120,30 +2661,173 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ) : null}
 
       {activeTab === "account" ? (
-        <div className="portal-dashboard-grid account">
-          <section className="portal-panel hero">
-            <div>
-              <p className="micro-label dark">Fiók</p>
-              <h2>Ez a privát ügyfélterületed.</h2>
-              <p>Innen indítod a projekteket, itt maradnak meg a ticket előzmények, és ide érkeznek a státuszfrissítések.</p>
-            </div>
-            <button className="button secondary" onClick={signOut} type="button">
-              Kilépés
-            </button>
-          </section>
-          <section className="portal-panel">
+        <div className="portal-dashboard-grid account" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+          <section className="portal-panel" style={{ height: "fit-content" }}>
             <div className="portal-panel-head">
               <span>Fiókadatok</span>
               <small>Supabase Auth</small>
             </div>
-            <div className="account-list">
-              <span>Email</span>
-              <strong>{email}</strong>
-              <span>Projektek</span>
-              <strong>{projects.length}</strong>
-              <span>Ticketek</span>
-              <strong>{tickets.length}</strong>
+            <div className="account-list" style={{ display: "grid", gap: "12px", padding: "12px 0" }}>
+              <div>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Email</span>
+                <strong style={{ color: "#fff", fontSize: "15px" }}>{email}</strong>
+              </div>
+              <div>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Projektek száma</span>
+                <strong style={{ color: "#fff", fontSize: "15px" }}>{projects.length} db</strong>
+              </div>
+              <div>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "block", textTransform: "uppercase" }}>Support ticketek</span>
+                <strong style={{ color: "#fff", fontSize: "15px" }}>{tickets.length} db</strong>
+              </div>
             </div>
+            <button className="button secondary" onClick={signOut} type="button" style={{ marginTop: "16px", width: "100%" }}>
+              Kilépés a fiókból
+            </button>
+          </section>
+
+          <section className="portal-panel" style={{ height: "fit-content" }}>
+            <div className="portal-panel-head">
+              <span>Profil szerkesztése</span>
+              <small>Megjelenítendő név</small>
+            </div>
+            <form onSubmit={updateProfileName} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
+              <div className="field" style={{ margin: 0 }}>
+                <label htmlFor="settings-name">Teljes név</label>
+                <input
+                  id="settings-name"
+                  type="text"
+                  placeholder="Kovács Anna"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                />
+              </div>
+              <button className="button primary" type="submit" style={{ width: "100%" }}>
+                Név mentése
+              </button>
+            </form>
+          </section>
+
+          <section className="portal-panel" style={{ height: "fit-content" }}>
+            <div className="portal-panel-head">
+              <span>Jelszó módosítása</span>
+              <small>Biztonsági frissítés</small>
+            </div>
+            <form onSubmit={updatePassword} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
+              <div className="field" style={{ margin: 0 }}>
+                <label htmlFor="settings-password">Új jelszó</label>
+                <input
+                  id="settings-password"
+                  type="password"
+                  placeholder="Legalább 6 karakter"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <button className="button primary" type="submit" style={{ width: "100%" }}>
+                Jelszó megváltoztatása
+              </button>
+            </form>
+          </section>
+
+          <section className="portal-panel" style={{ height: "fit-content", border: "1px solid rgba(220, 53, 69, 0.25)", background: "rgba(220, 53, 69, 0.02)" }}>
+            <div className="portal-panel-head">
+              <span style={{ color: "#FF7676" }}>Fiók törlése</span>
+              <small style={{ color: "rgba(220, 53, 69, 0.6)" }}>Visszafordíthatatlan művelet</small>
+            </div>
+            <form onSubmit={deleteAccount} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
+              <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: "1.4" }}>
+                A fiók törlésével minden projektbrief, ajánlat, ticket és adat véglegesen törlődik a rendszerből.
+              </p>
+              <div className="field" style={{ margin: 0 }}>
+                <label htmlFor="settings-delete" style={{ color: "rgba(255,255,255,0.6)" }}>Megerősítéshez írd be: TÖRLÉS</label>
+                <input
+                  id="settings-delete"
+                  type="text"
+                  placeholder="TÖRLÉS"
+                  style={{ border: "1px solid rgba(220, 53, 69, 0.2)", background: "rgba(0,0,0,0.2)" }}
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                />
+              </div>
+              <button className="button primary" type="submit" style={{ width: "100%", background: "#DC3545", borderColor: "#DC3545" }}>
+                Fiók végleges törlése
+              </button>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === "notifications" ? (
+        <div className="portal-dashboard-grid notifications">
+          <section className="portal-panel hero">
+            <div>
+              <p className="micro-label dark">Értesítések</p>
+              <h2>Kövesd nyomon a projektjeid alakulását.</h2>
+              <p>Minden státuszváltozásról, új ajánlatról, ticket válaszról és rendszerműveletről itt kapsz értesítést.</p>
+            </div>
+            {notifications.some((n) => !n.read) && (
+              <button className="button secondary" onClick={markAllNotificationsAsRead} type="button">
+                Összes olvasottnak jelölése
+              </button>
+            )}
+          </section>
+          <section className="portal-panel">
+            <div className="portal-panel-head">
+              <span>Értesítések előzménye</span>
+              <small>{notifications.length} db értesítés</small>
+            </div>
+            {notifications.length === 0 ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+                Nincs még értesítésed.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "12px", padding: "12px 0" }}>
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => markNotificationAsRead(n.id, n.link)}
+                    style={{
+                      background: n.read ? "rgba(255,255,255,0.02)" : "rgba(118, 171, 174, 0.08)",
+                      border: n.read ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(118, 171, 174, 0.25)",
+                      borderRadius: "16px",
+                      padding: "16px",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    {!n.read && (
+                      <span style={{
+                        position: "absolute",
+                        top: "16px",
+                        right: "16px",
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#76ABAE"
+                      }} />
+                    )}
+                    <strong style={{ color: n.read ? "#fff" : "#76ABAE", fontSize: "15px", paddingRight: "20px" }}>{n.title}</strong>
+                    <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.7)", lineHeight: "1.4" }}>{n.message}</p>
+                    <small style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", marginTop: "6px" }}>
+                      {new Date(n.created_at).toLocaleString("hu-HU")}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       ) : null}

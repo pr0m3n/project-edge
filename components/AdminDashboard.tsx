@@ -220,6 +220,71 @@ export function AdminDashboard() {
   const [newMilestoneTitle, setNewMilestoneTitle] = useState<Record<string, string>>({});
   const [newHandoverTitle, setNewHandoverTitle] = useState<Record<string, string>>({});
 
+  // Phase 2 state variables
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
+
+  const uniqueClients = useMemo(() => {
+    const clientsMap = new Map<string, { name: string; email: string }>();
+    clientProjects.forEach((p) => {
+      if (p.user_id) {
+        clientsMap.set(p.user_id, {
+          name: p.contact_name || p.contact_email || "Névtelen Ügyfél",
+          email: p.contact_email || ""
+        });
+      }
+    });
+    clientTickets.forEach((t) => {
+      if (t.user_id) {
+        if (!clientsMap.has(t.user_id)) {
+          clientsMap.set(t.user_id, {
+            name: t.contact_name || t.contact_email || "Névtelen Ügyfél",
+            email: t.contact_email || ""
+          });
+        }
+      }
+    });
+    return Array.from(clientsMap.entries()).map(([userId, info]) => ({
+      userId,
+      ...info
+    }));
+  }, [clientProjects, clientTickets]);
+
+  const filteredProjects = useMemo(() => {
+    if (selectedClientFilter === "all") return clientProjects;
+    return clientProjects.filter((p) => p.user_id === selectedClientFilter);
+  }, [clientProjects, selectedClientFilter]);
+
+  const filteredTickets = useMemo(() => {
+    if (selectedClientFilter === "all") return clientTickets;
+    return clientTickets.filter((t) => t.user_id === selectedClientFilter);
+  }, [clientTickets, selectedClientFilter]);
+
+  async function triggerNotification(
+    targetUserId: string | null,
+    targetEmail: string | null,
+    title: string,
+    message: string,
+    link: string
+  ) {
+    try {
+      await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: targetUserId,
+          email: targetEmail,
+          title,
+          message,
+          link
+        })
+      });
+    } catch (err) {
+      console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
+    }
+  }
+
   const stats = useMemo(() => {
     return {
       total: leads.length,
@@ -285,6 +350,11 @@ export function AdminDashboard() {
       .from("client_tickets")
       .select("*")
       .order("last_message_at", { ascending: false });
+
+    const { data: notificationData } = await supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error || ticketError) {
       setMessage("Nem sikerült betölteni a leadeket. Ellenőrizd az admin jogosultságot és az RLS szabályokat.");
@@ -353,6 +423,7 @@ export function AdminDashboard() {
     setClientTickets(clientTicketError ? [] : clientTicketData ?? []);
     setClientTicketMessages(groupedClientMessages);
     setChangeLogs(groupedLogs);
+    setNotifications(notificationData ?? []);
     setLoading(false);
   }
 
@@ -391,6 +462,27 @@ export function AdminDashboard() {
       return;
     }
 
+    const project = clientProjects.find((p) => p.id === id);
+    if (project) {
+      if (patch.status && patch.status !== project.status) {
+        await triggerNotification(
+          project.user_id,
+          project.contact_email,
+          "Projekt státusz módosult",
+          `A(z) "${project.title}" projekt státusza megváltozott: ${projectStatusLabel[patch.status] || patch.status}.`,
+          "/ugyfelkapu/dashboard#statuses"
+        );
+      } else if (patch.next_step && patch.next_step !== project.next_step) {
+        await triggerNotification(
+          project.user_id,
+          project.contact_email,
+          "Következő lépés módosult",
+          `Új feladat/következő lépés lett kijelölve a(z) "${project.title}" projektben: ${patch.next_step}`,
+          "/ugyfelkapu/dashboard#statuses"
+        );
+      }
+    }
+
     setClientProjects((current) => current.map((project) => (project.id === id ? { ...project, ...patch } : project)));
     setMessage("Ügyfélprojekt mentve.");
   }
@@ -400,6 +492,13 @@ export function AdminDashboard() {
     if (error) {
       setMessage("Nem sikerült jóváhagyni a törlést.");
     } else {
+      await triggerNotification(
+        project.user_id,
+        project.contact_email,
+        "Projekt törlése jóváhagyva",
+        `A(z) "${project.title}" projekt törlési kérelmét az adminisztrátor jóváhagyta.`,
+        "/ugyfelkapu/dashboard#projects"
+      );
       setMessage("Projekt véglegesen törölve.");
       loadLeads();
     }
@@ -416,6 +515,13 @@ export function AdminDashboard() {
     if (error) {
       setMessage("Nem sikerült elutasítani a törlést.");
     } else {
+      await triggerNotification(
+        project.user_id,
+        project.contact_email,
+        "Projekt törlése elutasítva",
+        `A(z) "${project.title}" projekt törlési kérelmét az adminisztrátor elutasította. A projekt visszaállt "${projectStatusLabel[prevStatus] || prevStatus}" státuszba.`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
       setMessage("Törlési kérelem elutasítva.");
       loadLeads();
     }
@@ -507,6 +613,17 @@ export function AdminDashboard() {
       return;
     }
 
+    const ticket = clientTickets.find((t) => t.id === ticketId);
+    if (ticket) {
+      await triggerNotification(
+        ticket.user_id,
+        ticket.contact_email,
+        "Új válasz érkezett a ticketedre",
+        `Az adminisztrátor válaszolt a support ticketedre: "${ticket.subject}".`,
+        "/ugyfelkapu/dashboard#support"
+      );
+    }
+
     addClientTicketMessage(data);
     setClientTicketReplies((current) => ({ ...current, [ticketId]: "" }));
     setClientTickets((current) =>
@@ -593,6 +710,15 @@ export function AdminDashboard() {
           addClientTicketMessage(payload.new as TicketMessage);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications"
+        },
+        () => loadLeads()
+      )
       .subscribe();
 
     return () => {
@@ -610,9 +736,115 @@ export function AdminDashboard() {
             {stats.total} lead összesen, {stats.fresh} új, {stats.won} nyert, {stats.tickets} nyitott ticket.
           </p>
         </div>
-        <button className="button ghost" onClick={signOut} style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)" }}>
-          Kilépés
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "50%",
+                width: "44px",
+                height: "44px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                position: "relative",
+                transition: "all 0.2s ease",
+                color: "#fff"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+              type="button"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {notifications.filter((n) => !n.read).length > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "-2px",
+                  right: "-2px",
+                  backgroundColor: "#76ABAE",
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%"
+                }} />
+              )}
+            </button>
+            
+            {showNotificationsDropdown && (
+              <div style={{
+                position: "absolute",
+                top: "52px",
+                right: 0,
+                width: "360px",
+                background: "#1C1E22",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "16px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                zIndex: 1000,
+                padding: "16px",
+                display: "grid",
+                gap: "12px",
+                maxHeight: "400px",
+                overflowY: "auto"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "8px" }}>
+                  <strong style={{ color: "#fff", fontSize: "15px" }}>Értesítések ({notifications.filter((n) => !n.read).length})</strong>
+                  {notifications.some((n) => !n.read) && (
+                    <button
+                      onClick={async () => {
+                        await supabase.from("notifications").update({ read: true }).is("user_id", null);
+                        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+                      }}
+                      style={{ background: "none", border: "none", color: "#76ABAE", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
+                      type="button"
+                    >
+                      Mind olvasott
+                    </button>
+                  )}
+                </div>
+                
+                {notifications.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "20px 0" }}>Nincsenek értesítések.</p>
+                ) : (
+                  <div style={{ display: "grid", gap: "8px" }}>
+                    {notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={async () => {
+                          await supabase.from("notifications").update({ read: true }).eq("id", n.id);
+                          setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)));
+                        }}
+                        style={{
+                          background: n.read ? "transparent" : "rgba(118, 171, 174, 0.05)",
+                          border: n.read ? "1px solid transparent" : "1px solid rgba(118, 171, 174, 0.15)",
+                          padding: "10px",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          display: "grid",
+                          gap: "2px"
+                        }}
+                      >
+                        <span style={{ color: n.read ? "#fff" : "#76ABAE", fontWeight: "bold" }}>{n.title}</span>
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "12px" }}>{n.message}</p>
+                        <small style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px", marginTop: "4px" }}>{new Date(n.created_at).toLocaleString("hu-HU")}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <button className="button ghost" onClick={signOut} style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)" }}>
+            Kilépés
+          </button>
+        </div>
       </header>
 
       {message ? <p className="form-status" style={{ color: "#f5f5f5" }}>{message}</p> : null}
@@ -738,19 +970,126 @@ export function AdminDashboard() {
         )}
       </div>
 
+      <div style={{
+        background: "rgba(255, 255, 255, 0.02)",
+        border: "1px solid rgba(255, 255, 255, 0.05)",
+        borderRadius: "20px",
+        padding: "20px",
+        margin: "24px 0",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "16px"
+      }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Ügyfél alapú szűrés</h3>
+          <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Szűrd le a projekt és support táblákat egy adott ügyfélre.</p>
+        </div>
+        <select
+          value={selectedClientFilter}
+          onChange={(e) => setSelectedClientFilter(e.target.value)}
+          style={{
+            minWidth: "220px",
+            padding: "10px 14px",
+            borderRadius: "12px",
+            background: "#25282F",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "#fff",
+            fontSize: "14px",
+            fontWeight: "bold",
+            outline: "none"
+          }}
+        >
+          <option value="all">Minden ügyfél ({uniqueClients.length})</option>
+          {uniqueClients.map((c) => (
+            <option key={c.userId} value={c.userId}>{c.name} ({c.email})</option>
+          ))}
+        </select>
+      </div>
+
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
       <div className="admin-project-board">
         {loading ? (
           <div className="ticket-card">
             <strong>Betöltés...</strong>
           </div>
-        ) : clientProjects.length === 0 ? (
+        ) : filteredProjects.length === 0 ? (
           <div className="ticket-card">
             <strong>Még nincs ügyfélkapus projekt.</strong>
             <span>A regisztrált ügyfelek projektindításai itt jelennek meg.</span>
           </div>
         ) : (
-          clientProjects.map((project) => {
+          filteredProjects.map((project) => {
+            if (project.status === "closed") {
+              const rating = project.client_rating;
+              const review = project.client_review;
+              return (
+                <article className="admin-project-card compact-closed" key={project.id} style={{
+                  background: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  padding: "16px 20px",
+                  borderRadius: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
+                        <span style={{
+                          background: "rgba(118, 171, 174, 0.15)",
+                          color: "#76ABAE",
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          fontWeight: "bold"
+                        }}>
+                          Lezárva
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                        Típus: <strong>{project.project_type}</strong> · Cégnév: <strong>{project.company || "Nincs cégnév"}</strong>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: "13px" }}>
+                      <strong>{project.contact_name || "Ügyfél"}</strong>
+                      {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "#76ABAE", fontSize: "12px" }}>{project.contact_email}</a> : null}
+                    </div>
+                  </div>
+
+                  {rating ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
+                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Ügyfél értékelése:</span>
+                      <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(rating)}</div>
+                      {review && (
+                        <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+                          - "{review}"
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+                      Még nem érkezett értékelés az ügyféltől.
+                    </div>
+                  )}
+
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                    <select
+                      value={project.status}
+                      onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+                      style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "6px", background: "#25282F", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                    >
+                      {projectStatuses.map(([val, lbl]) => (
+                        <option key={val} value={val}>{lbl}</option>
+                      ))}
+                    </select>
+                  </div>
+                </article>
+              );
+            }
+
             const brief = parseBrief(project.goals);
             const palette = paletteByName(brief["Színirány"]);
             const briefFields = [
@@ -1090,13 +1429,13 @@ export function AdminDashboard() {
           <div className="ticket-card">
             <strong>Betöltés...</strong>
           </div>
-        ) : clientTickets.length === 0 ? (
+        ) : filteredTickets.length === 0 ? (
           <div className="ticket-card">
             <strong>Még nincs ügyfélkapus ticket.</strong>
             <span>A bejelentkezett ügyfelek kérdései itt jelennek meg.</span>
           </div>
         ) : (
-          clientTickets.map((ticket) => (
+          filteredTickets.map((ticket) => (
             <article className="ticket-card" key={ticket.id}>
               <div className="ticket-person">
                 <span className="status-pill">{ticket.status}</span>
