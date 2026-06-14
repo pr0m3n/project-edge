@@ -1638,8 +1638,11 @@ p {
 }
 
 .portal-dashboard-tabs {
-  background: rgba(245, 245, 245, 0.12);
-  border: 1px solid rgba(245, 245, 245, 0.14);
+  background: rgba(30, 38, 49, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
   border-radius: 999px;
   display: grid;
   gap: 6px;

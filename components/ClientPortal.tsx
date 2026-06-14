@@ -309,6 +309,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }
 
+  async function deleteReadNotifications() {
+    if (!userId) return;
+    const { error } = await supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", userId)
+      .eq("read", true);
+
+    if (error) {
+      setNotice("Nem sikerült törölni az értesítéseket.");
+      return;
+    }
+    setNotifications((current) => current.filter((n) => !n.read));
+  }
+
   async function updateProfileName(e: FormEvent) {
     e.preventDefault();
     if (!profileName.trim()) {
@@ -558,7 +573,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
       supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }),
       supabase.from("client_profiles").select("full_name").eq("id", userId).maybeSingle(),
-      supabase.from("notifications").select("*").order("created_at", { ascending: false })
+      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20)
     ]);
 
     if (projectError || ticketError) {
@@ -1259,14 +1274,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       "/admin"
     );
 
-    await triggerNotification(
-      userId,
-      email,
-      "Support ticket megnyitva",
-      `Sikeresen megnyitottad a(z) "${ticketForm.subject}" tárgyú support ticketet.`,
-      "/ugyfelkapu/dashboard#support"
-    );
-
     setTicketForm(initialTicket);
     setActiveTicketId(ticket.id);
     setNotice("Ticket megnyitva.");
@@ -1297,14 +1304,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       "Új ticket üzenet",
       `Új üzenet érkezett az ügyféltől (${email}) a(z) "${activeTicket.subject}" tickethez.`,
       "/admin"
-    );
-
-    await triggerNotification(
-      userId,
-      email,
-      "Üzenet elküldve",
-      `Sikeresen elküldted az üzenetedet a(z) "${activeTicket.subject}" support tickethez.`,
-      "/ugyfelkapu/dashboard#support"
     );
 
     setReply("");
@@ -2770,11 +2769,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <h2>Kövesd nyomon a projektjeid alakulását.</h2>
               <p>Minden státuszváltozásról, új ajánlatról, ticket válaszról és rendszerműveletről itt kapsz értesítést.</p>
             </div>
-            {notifications.some((n) => !n.read) && (
-              <button className="button secondary" onClick={markAllNotificationsAsRead} type="button">
-                Összes olvasottnak jelölése
-              </button>
-            )}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+              {notifications.some((n) => !n.read) && (
+                <button className="button secondary" onClick={markAllNotificationsAsRead} type="button" style={{ minHeight: "auto", padding: "8px 14px", fontSize: "13px" }}>
+                  Összes olvasottnak jelölése
+                </button>
+              )}
+              {notifications.some((n) => n.read) && (
+                <button className="button secondary" onClick={deleteReadNotifications} type="button" style={{ minHeight: "auto", padding: "8px 14px", fontSize: "13px", color: "#FF7676", borderColor: "rgba(255, 118, 118, 0.2)" }}>
+                  Olvasottak törlése
+                </button>
+              )}
+            </div>
           </section>
           <section className="portal-panel">
             <div className="portal-panel-head">
