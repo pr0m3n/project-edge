@@ -1257,6 +1257,178 @@ p {
   gap: 12px;
 }
 
+.admin-project-board {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-project-card {
+  background:
+    linear-gradient(135deg, rgba(118, 171, 174, 0.14), transparent 42%),
+    var(--white);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.16);
+  color: var(--ink);
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.admin-project-top {
+  align-items: start;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
+}
+
+.admin-project-top h3 {
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 0.96;
+  margin: 10px 0;
+}
+
+.admin-project-top p,
+.admin-control-panel textarea,
+.admin-offer-builder textarea {
+  line-height: 1.5;
+}
+
+.admin-project-contact {
+  background: rgba(48, 56, 65, 0.06);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 22px;
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+}
+
+.admin-project-contact a,
+.admin-project-facts a {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-project-facts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-project-facts div {
+  background: rgba(245, 245, 245, 0.72);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  padding: 14px;
+}
+
+.admin-project-facts span,
+.admin-price-row span,
+.admin-deliverable-preview span,
+.project-brief-card span,
+.client-offer-card span,
+.project-offer-mini span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.admin-workflow,
+.project-progress-line {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-workflow span,
+.project-progress-line span {
+  background: rgba(48, 56, 65, 0.06);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  padding: 10px;
+  text-align: center;
+}
+
+.admin-workflow span.active,
+.project-progress-line span.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.admin-project-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+}
+
+.admin-control-panel,
+.admin-offer-builder {
+  background: rgba(245, 245, 245, 0.78);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 24px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.admin-control-panel textarea {
+  min-height: 112px;
+}
+
+.admin-offer-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-offer-grid textarea {
+  min-height: 108px;
+}
+
+.admin-offer-grid textarea:nth-of-type(3),
+.admin-offer-grid textarea:nth-of-type(4) {
+  min-height: 88px;
+}
+
+.admin-price-row {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 0.45fr) auto auto;
+}
+
+.admin-price-row label {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-price-row strong {
+  background: rgba(255, 87, 34, 0.12);
+  border-radius: 999px;
+  color: var(--ember);
+  padding: 13px 16px;
+  white-space: nowrap;
+}
+
+.admin-deliverable-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-deliverable-preview span {
+  background: rgba(118, 171, 174, 0.18);
+  border-radius: 999px;
+  padding: 8px 10px;
+}
+
 .lead-row:not(:last-child) {
   border-bottom: 1px solid var(--line);
 }
@@ -1584,6 +1756,51 @@ p {
   grid-column: 1 / -1;
 }
 
+.portal-form.split > .button {
+  grid-column: 1 / -1;
+}
+
+.brief-step {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(255, 87, 34, 0.12), transparent 54%),
+    rgba(48, 56, 65, 0.05);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 20px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding: 14px;
+}
+
+.brief-step.full {
+  grid-column: 1 / -1;
+}
+
+.brief-step > span {
+  background: var(--ember);
+  border-radius: 50%;
+  color: var(--white);
+  display: grid;
+  font-weight: 950;
+  height: 44px;
+  place-items: center;
+  width: 44px;
+}
+
+.brief-step strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.brief-step p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .portal-empty-state {
   background: rgba(48, 56, 65, 0.05);
   border: 1px dashed rgba(48, 56, 65, 0.18);
@@ -1687,18 +1904,41 @@ p {
   padding: 18px;
 }
 
-.project-status-card div {
+.project-status-card > div:first-child,
+.project-status-head {
   align-items: start;
   display: flex;
   gap: 12px;
   justify-content: space-between;
 }
 
+.project-status-card.detailed {
+  background:
+    linear-gradient(135deg, rgba(255, 87, 34, 0.1), transparent 36%),
+    var(--white);
+  border-radius: 28px;
+  gap: 16px;
+  padding: 22px;
+}
+
 .project-status-card strong {
   font-size: 20px;
 }
 
-.project-status-card span {
+.project-status-head strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.project-status-head small {
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.project-status-card > div:first-child > span,
+.project-status-head > span {
   background: rgba(118, 171, 174, 0.18);
   border-radius: 999px;
   color: var(--ink);
@@ -1711,6 +1951,112 @@ p {
 .project-status-card p {
   color: var(--muted);
   line-height: 1.5;
+}
+
+.project-brief-card,
+.project-awaiting-offer,
+.project-offer-mini {
+  background: rgba(48, 56, 65, 0.05);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.project-brief-card p,
+.project-awaiting-offer p {
+  color: var(--ink);
+}
+
+.project-offer-mini {
+  background: rgba(255, 87, 34, 0.1);
+  border-color: rgba(255, 87, 34, 0.18);
+}
+
+.project-offer-mini strong {
+  color: var(--ember);
+  font-size: 26px;
+}
+
+.project-offer-mini small {
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.client-offer-card {
+  background:
+    linear-gradient(135deg, rgba(118, 171, 174, 0.16), transparent 44%),
+    rgba(245, 245, 245, 0.88);
+  border: 1px solid rgba(48, 56, 65, 0.1);
+  border-radius: 24px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.client-offer-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.client-offer-header h3 {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.client-offer-header strong {
+  background: var(--ink);
+  border-radius: 999px;
+  color: var(--paper);
+  padding: 12px 16px;
+  white-space: nowrap;
+}
+
+.client-offer-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.client-offer-grid div {
+  background: var(--white);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.client-offer-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.client-offer-list li {
+  background: var(--white);
+  border-radius: 14px;
+  font-weight: 850;
+  padding: 11px 13px;
+}
+
+.client-offer-list li::before {
+  color: var(--ember);
+  content: "✓";
+  font-weight: 950;
+  margin-right: 8px;
+}
+
+.client-offer-note {
+  border-left: 4px solid var(--ember);
+  color: var(--ink) !important;
+  padding-left: 12px;
 }
 
 .ticket-layout {
@@ -2146,6 +2492,20 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .admin-project-top,
+  .admin-project-grid,
+  .admin-project-facts,
+  .admin-offer-grid,
+  .admin-price-row,
+  .client-offer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-workflow,
+  .project-progress-line {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .portal-auth,
   .portal-command-center,
   .portal-dashboard-grid,
@@ -2292,9 +2652,16 @@ p {
   }
 
   .project-status-card div,
+  .project-status-head,
+  .client-offer-header,
   .portal-chat-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .client-offer-header strong,
+  .admin-price-row strong {
+    width: fit-content;
   }
 
   .portal-chat {

@@ -53,6 +53,17 @@ type ClientProject = {
   status: string;
   next_step: string | null;
   admin_notes: string | null;
+  offer_title: string | null;
+  offer_summary: string | null;
+  offer_scope: string | null;
+  offer_timeline: string | null;
+  offer_deliverables: string | null;
+  offer_price: number | null;
+  offer_currency: string | null;
+  offer_note: string | null;
+  offer_status: string | null;
+  offer_sent_at: string | null;
+  client_decision_note: string | null;
 };
 
 type ClientTicket = {
@@ -93,6 +104,48 @@ const projectStatuses = [
   ["paused", "Szünetel"],
   ["closed", "Lezárva"]
 ];
+
+const projectStatusLabel = Object.fromEntries(projectStatuses);
+
+const projectFlow = [
+  ["request_received", "Igény"],
+  ["planning", "Tervezés"],
+  ["offer_sent", "Ajánlat"],
+  ["in_progress", "Építés"],
+  ["review", "Review"],
+  ["launched", "Éles"]
+];
+
+const defaultOfferDeliverables = [
+  "Stratégiai irány és oldalstruktúra",
+  "Egyedi, reszponzív felület",
+  "Frontend fejlesztés és alap animációk",
+  "Supabase alapú adatkezelés / admin háttér",
+  "Élesítés Vercelen, domain beállításokkal"
+].join("\n");
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("hu-HU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(new Date(value));
+}
+
+function formatPrice(value: number | null, currency = "Ft") {
+  if (!value) {
+    return "Nincs ár megadva";
+  }
+
+  return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
+}
+
+function splitLines(value: string | null) {
+  return (value ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -255,7 +308,27 @@ export function AdminDashboard() {
     setMessage("Ticket mentve.");
   }
 
-  async function updateClientProject(id: string, patch: Partial<Pick<ClientProject, "status" | "next_step" | "admin_notes">>) {
+  async function updateClientProject(
+    id: string,
+    patch: Partial<
+      Pick<
+        ClientProject,
+        | "status"
+        | "next_step"
+        | "admin_notes"
+        | "offer_title"
+        | "offer_summary"
+        | "offer_scope"
+        | "offer_timeline"
+        | "offer_deliverables"
+        | "offer_price"
+        | "offer_currency"
+        | "offer_note"
+        | "offer_status"
+        | "offer_sent_at"
+      >
+    >
+  ) {
     const { error } = await supabase.from("client_projects").update(patch).eq("id", id);
 
     if (error) {
@@ -265,6 +338,30 @@ export function AdminDashboard() {
 
     setClientProjects((current) => current.map((project) => (project.id === id ? { ...project, ...patch } : project)));
     setMessage("Ügyfélprojekt mentve.");
+  }
+
+  function primeOffer(project: ClientProject) {
+    updateClientProject(project.id, {
+      offer_currency: project.offer_currency || "Ft",
+      offer_deliverables: project.offer_deliverables || defaultOfferDeliverables,
+      offer_status: project.offer_status || "draft",
+      offer_summary:
+        project.offer_summary ||
+        "Egy átgondolt, konverzióra és későbbi bővíthetőségre épített webes rendszer, nem csak egy új design.",
+      offer_title: project.offer_title || `${project.title} - részletes ajánlat`,
+      offer_timeline: project.offer_timeline || "Első ütem: tervezés és design. Második ütem: fejlesztés, tesztelés és élesítés.",
+      status: "planning",
+      next_step: project.next_step || "Átnézem a briefet és összerakom a részletes ajánlatot a dashboardodban."
+    });
+  }
+
+  function sendProjectOffer(project: ClientProject) {
+    updateClientProject(project.id, {
+      offer_status: "sent",
+      offer_sent_at: new Date().toISOString(),
+      status: "offer_sent",
+      next_step: "Elkészült a részletes ajánlat. Nézd át a projektednél a tételeket, az ütemezést és az árat."
+    });
   }
 
   async function updateClientTicket(id: string, patch: Partial<Pick<ClientTicket, "status">>) {
@@ -561,7 +658,7 @@ export function AdminDashboard() {
       </div>
 
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
-      <div className="ticket-inbox">
+      <div className="admin-project-board">
         {loading ? (
           <div className="ticket-card">
             <strong>Betöltés...</strong>
@@ -573,41 +670,140 @@ export function AdminDashboard() {
           </div>
         ) : (
           clientProjects.map((project) => (
-            <article className="ticket-card client-project-card" key={project.id}>
-              <div className="ticket-person">
-                <span className="status-pill">{project.status}</span>
-                <strong>{project.title}</strong>
-                <p>{project.contact_name || "Ügyfél"}</p>
-                {project.contact_email ? <a href={`mailto:${project.contact_email}`}>{project.contact_email}</a> : null}
-                <p>{project.company || "Nincs cégnév"}</p>
-                {project.website ? <a href={project.website}>{project.website}</a> : null}
+            <article className="admin-project-card" key={project.id}>
+              <header className="admin-project-top">
+                <div>
+                  <span className="status-pill">{projectStatusLabel[project.status] ?? project.status}</span>
+                  <h3>{project.title}</h3>
+                  <p>{project.goals}</p>
+                </div>
+                <div className="admin-project-contact">
+                  <strong>{project.contact_name || "Ügyfél"}</strong>
+                  {project.contact_email ? <a href={`mailto:${project.contact_email}`}>{project.contact_email}</a> : null}
+                  <span>{project.company || "Nincs cégnév"}</span>
+                </div>
+              </header>
+
+              <div className="admin-project-facts">
+                <div>
+                  <span>Típus</span>
+                  <strong>{project.project_type}</strong>
+                </div>
+                <div>
+                  <span>Büdzsé</span>
+                  <strong>{project.budget || "Nincs megadva"}</strong>
+                </div>
+                <div>
+                  <span>Weboldal</span>
+                  {project.website ? <a href={project.website}>{project.website}</a> : <strong>Nincs</strong>}
+                </div>
+                <div>
+                  <span>Beküldve</span>
+                  <strong>{formatDate(project.created_at)}</strong>
+                </div>
               </div>
-              <div className="ticket-conversation">
-                <strong>{project.project_type}</strong>
-                <p>{project.goals}</p>
-                <span className="status-pill">{project.budget || "nincs megadva"}</span>
+
+              <div className="admin-workflow" aria-label="Projekt folyamat">
+                {projectFlow.map(([value, label]) => (
+                  <span className={project.status === value ? "active" : ""} key={value}>
+                    {label}
+                  </span>
+                ))}
               </div>
-              <div className="ticket-actions">
-                <select
-                  value={project.status}
-                  onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-                >
-                  {projectStatuses.map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-                <textarea
-                  defaultValue={project.next_step ?? ""}
-                  onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
-                  placeholder="Következő lépés, amit az ügyfél lát..."
-                  style={{ minHeight: 92 }}
-                />
-                <textarea
-                  defaultValue={project.admin_notes ?? ""}
-                  onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
-                  placeholder="Belső jegyzet..."
-                  style={{ minHeight: 92 }}
-                />
+
+              <div className="admin-project-grid">
+                <section className="admin-control-panel">
+                  <div className="portal-panel-head">
+                    <span>Projekt irányítás</span>
+                    <small>Ügyfél ezt látja</small>
+                  </div>
+                  <select
+                    value={project.status}
+                    onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+                  >
+                    {projectStatuses.map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <textarea
+                    defaultValue={project.next_step ?? ""}
+                    onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
+                    placeholder="Következő lépés, amit az ügyfél a dashboardban lát..."
+                  />
+                  <textarea
+                    defaultValue={project.admin_notes ?? ""}
+                    onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
+                    placeholder="Belső jegyzet, csak neked..."
+                  />
+                  <button className="button secondary" onClick={() => primeOffer(project)} type="button">
+                    Ajánlat sablon előkészítése
+                  </button>
+                </section>
+
+                <section className="admin-offer-builder">
+                  <div className="portal-panel-head">
+                    <span>Ajánlatépítő</span>
+                    <small>{project.offer_status === "sent" ? "Elküldve" : "Vázlat"}</small>
+                  </div>
+                  <div className="admin-offer-grid">
+                    <input
+                      defaultValue={project.offer_title ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_title: event.target.value })}
+                      placeholder="Ajánlat címe"
+                    />
+                    <input
+                      defaultValue={project.offer_timeline ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_timeline: event.target.value })}
+                      placeholder="Ütemezés, például: 3-5 hét"
+                    />
+                    <textarea
+                      defaultValue={project.offer_summary ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_summary: event.target.value })}
+                      placeholder="Rövid, emberi összefoglaló: mit kap és miért ez a jó irány?"
+                    />
+                    <textarea
+                      defaultValue={project.offer_scope ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_scope: event.target.value })}
+                      placeholder="Scope: oldalak, funkciók, admin, integrációk..."
+                    />
+                    <textarea
+                      defaultValue={project.offer_deliverables ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_deliverables: event.target.value })}
+                      placeholder="Tételek soronként. Példa: Egyedi főoldal&#10;Admin dashboard&#10;Supabase adatkezelés"
+                    />
+                    <textarea
+                      defaultValue={project.offer_note ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { offer_note: event.target.value })}
+                      placeholder="Megjegyzés az árhoz, fizetéshez vagy következő lépéshez..."
+                    />
+                  </div>
+                  <div className="admin-price-row">
+                    <label>
+                      <span>Ajánlati ár</span>
+                      <input
+                        defaultValue={project.offer_price ?? ""}
+                        inputMode="numeric"
+                        onBlur={(event) =>
+                          updateClientProject(project.id, {
+                            offer_price: event.target.value ? Number(event.target.value) : null
+                          })
+                        }
+                        placeholder="350000"
+                      />
+                    </label>
+                    <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+                    <button className="button primary" onClick={() => sendProjectOffer(project)} type="button">
+                      Ajánlat elküldése
+                    </button>
+                  </div>
+                  {splitLines(project.offer_deliverables).length ? (
+                    <div className="admin-deliverable-preview">
+                      {splitLines(project.offer_deliverables).slice(0, 5).map((item) => (
+                        <span key={item}>{item}</span>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
               </div>
             </article>
           ))

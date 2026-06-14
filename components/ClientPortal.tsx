@@ -16,6 +16,17 @@ type Project = {
   status: string;
   next_step: string | null;
   created_at: string;
+  offer_title: string | null;
+  offer_summary: string | null;
+  offer_scope: string | null;
+  offer_timeline: string | null;
+  offer_deliverables: string | null;
+  offer_price: number | null;
+  offer_currency: string | null;
+  offer_note: string | null;
+  offer_status: string | null;
+  offer_sent_at: string | null;
+  client_decision_note: string | null;
 };
 
 type Ticket = {
@@ -52,10 +63,15 @@ const statusLabels: Record<string, string> = {
 };
 
 const initialProject = {
+  audience: "",
   budget: "not-sure",
   company: "",
+  features: "",
   goals: "",
+  pages: "",
   projectType: "premium-business-site",
+  priority: "quality",
+  style: "",
   title: "",
   website: ""
 };
@@ -65,6 +81,34 @@ const initialTicket = {
   projectId: "",
   subject: ""
 };
+
+const projectFlow = [
+  ["request_received", "Brief"],
+  ["planning", "Tervezés"],
+  ["offer_sent", "Ajánlat"],
+  ["in_progress", "Építés"],
+  ["review", "Átnézés"],
+  ["launched", "Élesítés"]
+];
+
+function splitLines(value: string | null) {
+  return (value ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatPrice(value: number | null, currency = "Ft") {
+  if (!value) {
+    return "Egyeztetés alapján";
+  }
+
+  return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
+}
+
+function hasOffer(project: Project) {
+  return project.offer_status === "sent" || Boolean(project.offer_title || project.offer_price || project.offer_summary);
+}
 
 type ClientPortalProps = {
   view?: "auth" | "dashboard";
@@ -327,12 +371,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     setNotice("Projekt mentése...");
+    const detailedGoals = [
+      `Cél: ${projectForm.goals}`,
+      projectForm.audience ? `Célközönség / vásárlók: ${projectForm.audience}` : "",
+      projectForm.pages ? `Fontos oldalak: ${projectForm.pages}` : "",
+      projectForm.features ? `Kért funkciók: ${projectForm.features}` : "",
+      projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
+      `Prioritás: ${projectForm.priority}`
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
     const { error } = await supabase.from("client_projects").insert({
       budget: projectForm.budget,
       company: projectForm.company || null,
       contact_email: email,
       contact_name: authForm.name || email,
-      goals: projectForm.goals,
+      goals: detailedGoals,
       project_type: projectForm.projectType,
       title: projectForm.title,
       user_id: userId,
@@ -599,6 +654,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <span>{statusLabels[latestProject.status] ?? latestProject.status}</span>
                 </div>
                 <p>{latestProject.next_step || "Átnézés alatt. Hamarosan megjelenik itt a következő lépés."}</p>
+                {hasOffer(latestProject) ? (
+                  <div className="project-offer-mini">
+                    <span>Aktív ajánlat</span>
+                    <strong>{formatPrice(latestProject.offer_price, latestProject.offer_currency || "Ft")}</strong>
+                    <small>{latestProject.offer_title || "Részletes ajánlat elérhető a Projektek fülön."}</small>
+                  </div>
+                ) : null}
               </article>
             ) : (
               <div className="portal-empty-state">
@@ -639,9 +701,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <section className="portal-panel form-panel">
             <div className="portal-panel-head">
               <span>Új projekt</span>
-              <small>Belépett ügyfélként indítod</small>
+              <small>Lépésenkénti brief</small>
             </div>
             <form className="portal-form split" onSubmit={createProject}>
+              <div className="brief-step full">
+                <span>01</span>
+                <div>
+                  <strong>Alapadatok</strong>
+                  <p>Mi a projekt neve, milyen típusú munka, és van-e már meglévő oldal?</p>
+                </div>
+              </div>
               <div className="field">
                 <label htmlFor="project-title">Projekt neve</label>
                 <input
@@ -698,6 +767,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <option value="1m-plus">1 000 000 Ft felett</option>
                 </select>
               </div>
+              <div className="brief-step full">
+                <span>02</span>
+                <div>
+                  <strong>Cél és közönség</strong>
+                  <p>Innen derül ki, mire kell optimalizálni az oldalt: bizalomra, leadre, értékesítésre vagy működésre.</p>
+                </div>
+              </div>
               <div className="field full">
                 <label htmlFor="project-goals">Mit szeretnél elérni?</label>
                 <textarea
@@ -707,6 +783,70 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
                   placeholder="Írd le röviden a helyzetet, a célt és ami most zavar."
                 />
+              </div>
+              <div className="field full">
+                <label htmlFor="project-audience">Kiknek szól az oldal?</label>
+                <textarea
+                  id="project-audience"
+                  value={projectForm.audience}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, audience: event.target.value }))}
+                  placeholder="Például: helyi vállalkozók, prémium ügyfelek, visszatérő vásárlók, B2B döntéshozók..."
+                />
+              </div>
+              <div className="brief-step full">
+                <span>03</span>
+                <div>
+                  <strong>Felépítés és funkciók</strong>
+                  <p>Minél konkrétabb, annál pontosabb ajánlatot tudok adni.</p>
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="project-pages">Fontos oldalak</label>
+                <textarea
+                  id="project-pages"
+                  value={projectForm.pages}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
+                  placeholder="Főoldal, szolgáltatások, árak, referencia, kapcsolat, ügyfélkapu..."
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="project-features">Funkciók</label>
+                <textarea
+                  id="project-features"
+                  value={projectForm.features}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
+                  placeholder="Ajánlatkérés, admin, chat, fizetés, időpontfoglalás, automatizáció..."
+                />
+              </div>
+              <div className="brief-step full">
+                <span>04</span>
+                <div>
+                  <strong>Stílus és döntési szempont</strong>
+                  <p>Ez segít eldönteni, hogy inkább gyors, látványos, technikailag erős vagy hosszabb távon bővíthető irány kell.</p>
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="project-style">Milyen hangulatot szeretnél?</label>
+                <textarea
+                  id="project-style"
+                  value={projectForm.style}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, style: event.target.value }))}
+                  placeholder="Modern, prémium, letisztult, merész, tech, elegáns, barátságos..."
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="project-priority">Mi a legfontosabb?</label>
+                <select
+                  id="project-priority"
+                  value={projectForm.priority}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, priority: event.target.value }))}
+                >
+                  <option value="quality">Minőség és prémium megjelenés</option>
+                  <option value="conversion">Több érdeklődő / jobb konverzió</option>
+                  <option value="speed">Gyors indulás</option>
+                  <option value="automation">Automatizált folyamatok</option>
+                  <option value="scalable">Később bővíthető rendszer</option>
+                </select>
               </div>
               <button className="button primary" type="submit">
                 Projektkérés küldése
@@ -728,12 +868,61 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 </div>
               ) : null}
               {projects.map((project) => (
-                <article className="project-status-card" key={project.id}>
-                  <div>
-                    <strong>{project.title}</strong>
+                <article className="project-status-card detailed" key={project.id}>
+                  <div className="project-status-head">
+                    <div>
+                      <strong>{project.title}</strong>
+                      <small>{project.project_type} · {project.budget || "büdzsé nélkül"}</small>
+                    </div>
                     <span>{statusLabels[project.status] ?? project.status}</span>
                   </div>
+                  <div className="project-progress-line">
+                    {projectFlow.map(([value, label]) => (
+                      <span className={project.status === value ? "active" : ""} key={value}>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                   <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
+                  <div className="project-brief-card">
+                    <span>Beküldött brief</span>
+                    <p>{project.goals}</p>
+                  </div>
+                  {hasOffer(project) ? (
+                    <section className="client-offer-card">
+                      <div className="client-offer-header">
+                        <div>
+                          <span>Részletes ajánlat</span>
+                          <h3>{project.offer_title || `${project.title} ajánlat`}</h3>
+                        </div>
+                        <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+                      </div>
+                      {project.offer_summary ? <p>{project.offer_summary}</p> : null}
+                      <div className="client-offer-grid">
+                        <div>
+                          <span>Mit tartalmaz?</span>
+                          <p>{project.offer_scope || "A részletes scope hamarosan megjelenik itt."}</p>
+                        </div>
+                        <div>
+                          <span>Ütemezés</span>
+                          <p>{project.offer_timeline || "Az ütemezést az ajánlat véglegesítésekor pontosítjuk."}</p>
+                        </div>
+                      </div>
+                      {splitLines(project.offer_deliverables).length ? (
+                        <ul className="client-offer-list">
+                          {splitLines(project.offer_deliverables).map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {project.offer_note ? <p className="client-offer-note">{project.offer_note}</p> : null}
+                    </section>
+                  ) : (
+                    <div className="project-awaiting-offer">
+                      <strong>Ajánlat előkészítés alatt</strong>
+                      <p>Ha megvan az irány, itt fogod látni a bontást, az ütemezést és az árat.</p>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
