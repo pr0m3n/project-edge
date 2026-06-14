@@ -69,10 +69,12 @@ const initialProject = {
   features: "",
   goals: "",
   pages: "",
+  palette: "edge",
   projectType: "premium-business-site",
   priority: "quality",
   style: "",
   title: "",
+  vibe: "premium",
   website: ""
 };
 
@@ -90,6 +92,44 @@ const projectFlow = [
   ["review", "Átnézés"],
   ["launched", "Élesítés"]
 ];
+
+const briefSteps = [
+  "Alapok",
+  "Vágyott eredmény",
+  "Oldalak és funkciók",
+  "Vizuális irány",
+  "Összegzés"
+];
+
+const projectTypeOptions: Array<[string, string, string]> = [
+  ["premium-business-site", "Prémium céges weboldal", "Bemutatkozás, bizalomépítés, ajánlatkérés."],
+  ["redesign", "Meglévő oldal fejlesztése", "Van már alap, de jobb szerkezet és design kell."],
+  ["web-app", "Webapp / admin rendszer", "Belépés, adatkezelés, dashboard, folyamatok."],
+  ["client-portal", "Ügyfélkapu / dashboard", "Privát ügyfélfelület, státuszok, ticketek."],
+  ["care-plan", "Karbantartás és növekedés", "Folyamatos javítás, mérés, fejlesztés."]
+];
+
+const vibeOptions: Array<[string, string, string]> = [
+  ["premium", "Prémium", "Nagy kontraszt, erős első benyomás, drágább érzet."],
+  ["clean", "Letisztult", "Sok levegő, egyszerű döntések, gyors megértés."],
+  ["bold", "Merész", "Nagy tipó, karakteres blokkok, emlékezetes oldal."],
+  ["friendly", "Barátságos", "Közvetlenebb hang, puhább ritmus, könnyű kapcsolatfelvétel."]
+];
+
+const paletteOptions: Array<[string, string, string[]]> = [
+  ["edge", "ProjectEdge", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]],
+  ["mono", "Monokróm tech", ["#F7F7F2", "#D9E2DF", "#20242A", "#111111"]],
+  ["warm", "Meleg prémium", ["#FFF7EF", "#E8C6A4", "#32302F", "#E6532E"]],
+  ["fresh", "Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]]
+];
+
+const priorityLabels: Record<string, string> = {
+  automation: "Automatizált folyamatok",
+  conversion: "Több érdeklődő / jobb konverzió",
+  quality: "Minőség és prémium megjelenés",
+  scalable: "Később bővíthető rendszer",
+  speed: "Gyors indulás"
+};
 
 function splitLines(value: string | null) {
   return (value ?? "")
@@ -124,6 +164,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, TicketMessage[]>>({});
   const [projectForm, setProjectForm] = useState(initialProject);
+  const [projectStep, setProjectStep] = useState(0);
   const [ticketForm, setTicketForm] = useState(initialTicket);
   const [activeTicketId, setActiveTicketId] = useState("");
   const [reply, setReply] = useState("");
@@ -140,6 +181,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   const openTickets = tickets.filter((ticket) => ticket.status === "open").length;
   const latestProject = projects[0];
+  const selectedProjectType = projectTypeOptions.find(([value]) => value === projectForm.projectType) ?? projectTypeOptions[0];
+  const selectedVibe = vibeOptions.find(([value]) => value === projectForm.vibe) ?? vibeOptions[0];
+  const selectedPalette = paletteOptions.find(([value]) => value === projectForm.palette) ?? paletteOptions[0];
+  const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -370,6 +415,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
+    if (!projectForm.title.trim()) {
+      setProjectStep(0);
+      setNotice("Adj nevet a projektnek, hogy el tudjam menteni.");
+      return;
+    }
+
+    if (!projectForm.goals.trim()) {
+      setProjectStep(1);
+      setNotice("Írd le röviden, mit szeretnél elérni az oldallal.");
+      return;
+    }
+
     setNotice("Projekt mentése...");
     const detailedGoals = [
       `Cél: ${projectForm.goals}`,
@@ -377,7 +434,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       projectForm.pages ? `Fontos oldalak: ${projectForm.pages}` : "",
       projectForm.features ? `Kért funkciók: ${projectForm.features}` : "",
       projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
-      `Prioritás: ${projectForm.priority}`
+      `Vizuális karakter: ${selectedVibe[1]}`,
+      `Színirány: ${selectedPalette[1]}`,
+      `Prioritás: ${priorityLabels[projectForm.priority] ?? projectForm.priority}`
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -400,6 +459,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     setProjectForm(initialProject);
+    setProjectStep(0);
     setNotice("Projektkérés elküldve. Itt fogod látni a státuszát.");
     loadPortal(true);
   }
@@ -697,169 +757,322 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ) : null}
 
       {activeTab === "projects" ? (
-        <div className="portal-dashboard-grid projects">
-          <section className="portal-panel form-panel">
-            <div className="portal-panel-head">
-              <span>Új projekt</span>
-              <small>Lépésenkénti brief</small>
+        <div className="project-studio-layout">
+          <section className="project-wizard-card">
+            <div className="wizard-topline">
+              <div>
+                <span>Projekt brief</span>
+                <h2>{briefSteps[projectStep]}</h2>
+              </div>
+              <strong>{briefProgress}%</strong>
             </div>
-            <form className="portal-form split" onSubmit={createProject}>
-              <div className="brief-step full">
-                <span>01</span>
-                <div>
-                  <strong>Alapadatok</strong>
-                  <p>Mi a projekt neve, milyen típusú munka, és van-e már meglévő oldal?</p>
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="project-title">Projekt neve</label>
-                <input
-                  id="project-title"
-                  required
-                  value={projectForm.title}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, title: event.target.value }))}
-                  placeholder="Új weboldal / redesign / ügyfélkapu"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="project-company">Cég / márka</label>
-                <input
-                  id="project-company"
-                  value={projectForm.company}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))}
-                  placeholder="Vállalkozás neve"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="project-website">Jelenlegi weboldal</label>
-                <input
-                  id="project-website"
-                  value={projectForm.website}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="project-type">Projekt típusa</label>
-                <select
-                  id="project-type"
-                  value={projectForm.projectType}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, projectType: event.target.value }))}
+            <div className="wizard-progress">
+              {briefSteps.map((step, index) => (
+                <button
+                  className={index === projectStep ? "active" : index < projectStep ? "done" : ""}
+                  key={step}
+                  onClick={() => setProjectStep(index)}
+                  type="button"
                 >
-                  <option value="premium-business-site">Prémium céges weboldal</option>
-                  <option value="redesign">Meglévő oldal fejlesztése</option>
-                  <option value="web-app">Webapp / admin rendszer</option>
-                  <option value="client-portal">Ügyfélkapu / dashboard</option>
-                  <option value="care-plan">Karbantartás és növekedés</option>
-                </select>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  {step}
+                </button>
+              ))}
+            </div>
+            <form className="wizard-form" onSubmit={createProject}>
+              <div className="wizard-slide" key={projectStep}>
+                {projectStep === 0 ? (
+                  <>
+                    <div className="wizard-visual foundation">
+                      <div className="mini-browser">
+                        <span />
+                        <span />
+                        <span />
+                        <strong>{projectForm.company || "Márkád"}</strong>
+                      </div>
+                      <div className="floating-card one">Landing</div>
+                      <div className="floating-card two">Admin</div>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-title">Mi legyen a projekt neve?</label>
+                      <input
+                        id="project-title"
+                        required
+                        value={projectForm.title}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, title: event.target.value }))}
+                        placeholder="Például: új weboldal, redesign, ügyfélkapu..."
+                      />
+                    </div>
+                    <div className="wizard-two">
+                      <div className="field">
+                        <label htmlFor="project-company">Cég / márka</label>
+                        <input
+                          id="project-company"
+                          value={projectForm.company}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))}
+                          placeholder="Vállalkozás neve"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="project-website">Van már weboldal?</label>
+                        <input
+                          id="project-website"
+                          value={projectForm.website}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                    <div className="choice-grid">
+                      {projectTypeOptions.map(([value, label, description]) => (
+                        <button
+                          className={projectForm.projectType === value ? "selected" : ""}
+                          key={value}
+                          onClick={() => setProjectForm((current) => ({ ...current, projectType: value }))}
+                          type="button"
+                        >
+                          <strong>{label}</strong>
+                          <span>{description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+
+                {projectStep === 1 ? (
+                  <>
+                    <div className="wizard-visual goals">
+                      <div className="goal-orbit">
+                        <span>Lead</span>
+                        <span>Bizalom</span>
+                        <span>Rendszer</span>
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-goals">Mit szeretnél, hogy az oldal elérjen?</label>
+                      <textarea
+                        id="project-goals"
+                        required
+                        value={projectForm.goals}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
+                        placeholder="Írd le emberien: mi most a gond, mi lenne a jó eredmény, miben kéne segítenie az oldalnak?"
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-audience">Kiknek készül?</label>
+                      <textarea
+                        id="project-audience"
+                        value={projectForm.audience}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, audience: event.target.value }))}
+                        placeholder="Például: helyi vállalkozók, prémium ügyfelek, B2B döntéshozók, visszatérő vásárlók..."
+                      />
+                    </div>
+                    <div className="choice-grid compact">
+                      {Object.entries(priorityLabels).map(([value, label]) => (
+                        <button
+                          className={projectForm.priority === value ? "selected" : ""}
+                          key={value}
+                          onClick={() => setProjectForm((current) => ({ ...current, priority: value }))}
+                          type="button"
+                        >
+                          <strong>{label}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+
+                {projectStep === 2 ? (
+                  <>
+                    <div className="wizard-visual structure">
+                      <div>Főoldal</div>
+                      <div>Ajánlatkérés</div>
+                      <div>Admin</div>
+                      <div>Automatizmus</div>
+                    </div>
+                    <div className="wizard-two">
+                      <div className="field">
+                        <label htmlFor="project-pages">Milyen oldalak kellenek?</label>
+                        <textarea
+                          id="project-pages"
+                          value={projectForm.pages}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
+                          placeholder="Főoldal, szolgáltatások, árak, referenciák, kapcsolat, blog, ügyfélkapu..."
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="project-features">Milyen funkciókat szeretnél?</label>
+                        <textarea
+                          id="project-features"
+                          value={projectForm.features}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
+                          placeholder="Ajánlatkérés, admin, chat, fizetés, időpontfoglalás, CRM, email automatizmus..."
+                        />
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-budget">Mekkora kerettel gondolkodsz?</label>
+                      <select
+                        id="project-budget"
+                        value={projectForm.budget}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, budget: event.target.value }))}
+                      >
+                        <option value="not-sure">Még nem tudom</option>
+                        <option value="100k-300k">100 000 - 300 000 Ft</option>
+                        <option value="300k-600k">300 000 - 600 000 Ft</option>
+                        <option value="600k-1m">600 000 - 1 000 000 Ft</option>
+                        <option value="1m-plus">1 000 000 Ft felett</option>
+                      </select>
+                    </div>
+                  </>
+                ) : null}
+
+                {projectStep === 3 ? (
+                  <>
+                    <div className="wizard-visual style-lab">
+                      <div className={`style-card ${projectForm.vibe}`}>
+                        <span>{selectedVibe[1]}</span>
+                        <strong>{projectForm.company || "Márka"}</strong>
+                        <p>{selectedVibe[2]}</p>
+                      </div>
+                    </div>
+                    <div className="choice-grid">
+                      {vibeOptions.map(([value, label, description]) => (
+                        <button
+                          className={projectForm.vibe === value ? "selected" : ""}
+                          key={value}
+                          onClick={() => setProjectForm((current) => ({ ...current, vibe: value }))}
+                          type="button"
+                        >
+                          <strong>{label}</strong>
+                          <span>{description}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="palette-grid">
+                      {paletteOptions.map(([value, label, colors]) => (
+                        <button
+                          className={projectForm.palette === value ? "selected" : ""}
+                          key={value}
+                          onClick={() => setProjectForm((current) => ({ ...current, palette: value }))}
+                          type="button"
+                        >
+                          <strong>{label}</strong>
+                          <span>
+                            {colors.map((color) => (
+                              <i key={color} style={{ background: color }} />
+                            ))}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista?</label>
+                      <textarea
+                        id="project-style"
+                        value={projectForm.style}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, style: event.target.value }))}
+                        placeholder="Például: sötét prémium, nagy tipó, kevés stock fotó, animált 3D, ne legyen túl corporate..."
+                      />
+                    </div>
+                  </>
+                ) : null}
+
+                {projectStep === 4 ? (
+                  <div className="wizard-summary">
+                    <div className="summary-hero">
+                      <span>Beküldés előtt</span>
+                      <h3>{projectForm.title || "Új projekt"}</h3>
+                      <p>{projectForm.goals || "A cél még nincs megadva."}</p>
+                    </div>
+                    <div className="summary-grid">
+                      <div>
+                        <span>Projekt típusa</span>
+                        <strong>{selectedProjectType[1]}</strong>
+                      </div>
+                      <div>
+                        <span>Stílus</span>
+                        <strong>{selectedVibe[1]}</strong>
+                      </div>
+                      <div>
+                        <span>Paletta</span>
+                        <strong>{selectedPalette[1]}</strong>
+                      </div>
+                      <div>
+                        <span>Büdzsé</span>
+                        <strong>{projectForm.budget}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="field">
-                <label htmlFor="project-budget">Büdzsé</label>
-                <select
-                  id="project-budget"
-                  value={projectForm.budget}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, budget: event.target.value }))}
+
+              <div className="wizard-actions">
+                <button
+                  className="button secondary"
+                  disabled={projectStep === 0}
+                  onClick={() => setProjectStep((current) => Math.max(0, current - 1))}
+                  type="button"
                 >
-                  <option value="not-sure">Még nem tudom</option>
-                  <option value="100k-300k">100 000 - 300 000 Ft</option>
-                  <option value="300k-600k">300 000 - 600 000 Ft</option>
-                  <option value="600k-1m">600 000 - 1 000 000 Ft</option>
-                  <option value="1m-plus">1 000 000 Ft felett</option>
-                </select>
+                  Vissza
+                </button>
+                {projectStep < briefSteps.length - 1 ? (
+                  <button
+                    className="button primary"
+                    onClick={() => setProjectStep((current) => Math.min(briefSteps.length - 1, current + 1))}
+                    type="button"
+                  >
+                    Következő
+                  </button>
+                ) : (
+                  <button className="button primary" type="submit">
+                    Projektkérés küldése
+                  </button>
+                )}
               </div>
-              <div className="brief-step full">
-                <span>02</span>
-                <div>
-                  <strong>Cél és közönség</strong>
-                  <p>Innen derül ki, mire kell optimalizálni az oldalt: bizalomra, leadre, értékesítésre vagy működésre.</p>
-                </div>
-              </div>
-              <div className="field full">
-                <label htmlFor="project-goals">Mit szeretnél elérni?</label>
-                <textarea
-                  id="project-goals"
-                  required
-                  value={projectForm.goals}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
-                  placeholder="Írd le röviden a helyzetet, a célt és ami most zavar."
-                />
-              </div>
-              <div className="field full">
-                <label htmlFor="project-audience">Kiknek szól az oldal?</label>
-                <textarea
-                  id="project-audience"
-                  value={projectForm.audience}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, audience: event.target.value }))}
-                  placeholder="Például: helyi vállalkozók, prémium ügyfelek, visszatérő vásárlók, B2B döntéshozók..."
-                />
-              </div>
-              <div className="brief-step full">
-                <span>03</span>
-                <div>
-                  <strong>Felépítés és funkciók</strong>
-                  <p>Minél konkrétabb, annál pontosabb ajánlatot tudok adni.</p>
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="project-pages">Fontos oldalak</label>
-                <textarea
-                  id="project-pages"
-                  value={projectForm.pages}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
-                  placeholder="Főoldal, szolgáltatások, árak, referencia, kapcsolat, ügyfélkapu..."
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="project-features">Funkciók</label>
-                <textarea
-                  id="project-features"
-                  value={projectForm.features}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
-                  placeholder="Ajánlatkérés, admin, chat, fizetés, időpontfoglalás, automatizáció..."
-                />
-              </div>
-              <div className="brief-step full">
-                <span>04</span>
-                <div>
-                  <strong>Stílus és döntési szempont</strong>
-                  <p>Ez segít eldönteni, hogy inkább gyors, látványos, technikailag erős vagy hosszabb távon bővíthető irány kell.</p>
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="project-style">Milyen hangulatot szeretnél?</label>
-                <textarea
-                  id="project-style"
-                  value={projectForm.style}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, style: event.target.value }))}
-                  placeholder="Modern, prémium, letisztult, merész, tech, elegáns, barátságos..."
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="project-priority">Mi a legfontosabb?</label>
-                <select
-                  id="project-priority"
-                  value={projectForm.priority}
-                  onChange={(event) => setProjectForm((current) => ({ ...current, priority: event.target.value }))}
-                >
-                  <option value="quality">Minőség és prémium megjelenés</option>
-                  <option value="conversion">Több érdeklődő / jobb konverzió</option>
-                  <option value="speed">Gyors indulás</option>
-                  <option value="automation">Automatizált folyamatok</option>
-                  <option value="scalable">Később bővíthető rendszer</option>
-                </select>
-              </div>
-              <button className="button primary" type="submit">
-                Projektkérés küldése
-              </button>
             </form>
           </section>
 
-          <section className="portal-panel">
-            <div className="portal-panel-head">
-              <span>Projekt státuszok</span>
-              <small>{projects.length} projekt</small>
-            </div>
-            <div className="project-list refined">
+          <aside className="project-brief-preview">
+            <section className="live-brief-card">
+              <div className="live-brief-head">
+                <span>Élő brief</span>
+                <strong>{briefProgress}% kész</strong>
+              </div>
+              <h3>{projectForm.title || "A projekt neve ide kerül"}</h3>
+              <p>{projectForm.goals || "Ahogy válaszolsz, itt épül össze az anyag, amiből ajánlatot tudok adni."}</p>
+              <div className="live-brief-tags">
+                <span>{selectedProjectType[1]}</span>
+                <span>{selectedVibe[1]}</span>
+                <span>{priorityLabels[projectForm.priority]}</span>
+              </div>
+              <div className="live-palette">
+                {selectedPalette[2].map((color) => (
+                  <i key={color} style={{ background: color }} />
+                ))}
+              </div>
+              <div className="live-brief-list">
+                <div>
+                  <span>Célközönség</span>
+                  <strong>{projectForm.audience || "Még nincs megadva"}</strong>
+                </div>
+                <div>
+                  <span>Oldalak</span>
+                  <strong>{projectForm.pages || "Később pontosítjuk"}</strong>
+                </div>
+                <div>
+                  <span>Funkciók</span>
+                  <strong>{projectForm.features || "Később pontosítjuk"}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="portal-panel compact-projects">
+              <div className="portal-panel-head">
+                <span>Projekt státuszok</span>
+                <small>{projects.length} projekt</small>
+              </div>
+              <div className="project-list refined">
               {loading ? <p>Betöltés...</p> : null}
               {!loading && projects.length === 0 ? (
                 <div className="portal-empty-state">
@@ -925,8 +1138,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   )}
                 </article>
               ))}
-            </div>
-          </section>
+              </div>
+            </section>
+          </aside>
         </div>
       ) : null}
 
