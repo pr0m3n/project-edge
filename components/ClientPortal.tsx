@@ -825,7 +825,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <section className="portal-panel">
             <div className="portal-panel-head">
               <span>Legutóbbi projekt</span>
-              <button onClick={() => setActiveTab("projects")} type="button">Megnyitás</button>
+              <button onClick={() => setActiveTab("statuses")} type="button">Megnyitás</button>
             </div>
             {latestProject ? (
               <article className="project-status-card featured">
