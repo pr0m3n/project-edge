@@ -37,6 +37,10 @@ export function AdminLogin() {
       .maybeSingle();
 
     if (adminCheckError || !adminCheck) {
+      console.log("Nem sikerült belépni, mert az admin_users tábla üres, vagy ez a felhasználó hiányzik belőle.");
+      console.log("A bejelentkezett felhasználó UUID-ja (ezt kell beillesztened az admin_users táblába):", authData.user.id);
+      console.log(`Futtasd ezt az SQL-t a Supabase SQL editorában:\n\nINSERT INTO public.admin_users (user_id, email, full_name) VALUES ('${authData.user.id}', '${authData.user.email}', 'Admin');`);
+      
       await supabase.auth.signOut();
       setLoading(false);
       setMessage("Ez a felhasználó nem rendelkezik adminisztrátori jogosultsággal.");
