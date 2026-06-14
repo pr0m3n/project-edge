@@ -992,7 +992,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <strong>{project.title}</strong>
             <small>{project.project_type} · {project.budget || "büdzsé nélkül"}</small>
           </div>
-          <span>{statusLabels[project.status] ?? project.status}</span>
         </div>
         <div className="project-progress-line">
           {projectFlow.map(([value, label]) => (
