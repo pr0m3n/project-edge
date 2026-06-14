@@ -1325,6 +1325,27 @@ p {
   padding: 14px;
 }
 
+.admin-brief-visual {
+  background:
+    linear-gradient(135deg, rgba(255, 87, 34, 0.1), transparent 46%),
+    rgba(245, 245, 245, 0.72);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 24px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(220px, 0.34fr);
+  padding: 14px;
+}
+
+.admin-brief-highlight p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.admin-brief-grid {
+  grid-column: 1 / -1;
+}
+
 .admin-project-facts span,
 .admin-price-row span,
 .admin-deliverable-preview span,
@@ -1622,7 +1643,7 @@ p {
   border-radius: 999px;
   display: grid;
   gap: 6px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-bottom: 20px;
   padding: 7px;
   position: sticky;
@@ -1755,6 +1776,44 @@ p {
   grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.62fr);
 }
 
+.status-page-panel {
+  background:
+    radial-gradient(circle at 82% 6%, rgba(255, 87, 34, 0.16), transparent 30%),
+    linear-gradient(145deg, rgba(245, 245, 245, 0.98), rgba(245, 245, 245, 0.92));
+  border: 1px solid rgba(245, 245, 245, 0.18);
+  border-radius: 32px;
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.18);
+  color: var(--ink);
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 4vw, 38px);
+}
+
+.status-page-head {
+  align-items: end;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.status-page-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.status-page-head h2 {
+  font-size: clamp(36px, 5vw, 72px);
+  line-height: 0.92;
+  margin-top: 8px;
+}
+
+.status-page-grid {
+  display: grid;
+  gap: 18px;
+}
+
 .project-wizard-card,
 .live-brief-card {
   background:
@@ -1841,6 +1900,58 @@ p {
 .wizard-form {
   display: grid;
   gap: 18px;
+}
+
+.wizard-success {
+  animation: wizard-slide-in 280ms ease both;
+  background:
+    linear-gradient(135deg, rgba(118, 171, 174, 0.18), transparent 44%),
+    var(--ink);
+  border-radius: 28px;
+  color: var(--paper);
+  display: grid;
+  gap: 16px;
+  min-height: 520px;
+  place-content: center;
+  padding: clamp(24px, 5vw, 54px);
+}
+
+.success-mark {
+  background: var(--ember);
+  border-radius: 50%;
+  box-shadow: 0 18px 46px rgba(255, 87, 34, 0.3);
+  display: grid;
+  font-size: 30px;
+  font-weight: 950;
+  height: 72px;
+  place-items: center;
+  width: 72px;
+}
+
+.wizard-success span {
+  color: var(--aqua);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.wizard-success h3 {
+  font-size: clamp(42px, 7vw, 86px);
+  line-height: 0.88;
+}
+
+.wizard-success p {
+  color: rgba(245, 245, 245, 0.74);
+  font-size: 18px;
+  line-height: 1.55;
+  max-width: 680px;
+}
+
+.wizard-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .wizard-slide {
@@ -2405,6 +2516,19 @@ p {
   padding: 22px;
 }
 
+.project-status-card.expanded {
+  border-radius: 30px;
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.project-status-card.expanded .project-status-head strong {
+  font-size: clamp(34px, 5vw, 62px);
+}
+
+.project-status-card.expanded .project-brief-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .project-status-card strong {
   font-size: 20px;
 }
@@ -2446,6 +2570,68 @@ p {
   display: grid;
   gap: 8px;
   padding: 14px;
+}
+
+.project-brief-visual {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.34fr);
+}
+
+.project-brief-main,
+.project-brief-palette,
+.project-brief-grid div,
+.admin-brief-highlight,
+.admin-brief-palette,
+.admin-brief-grid div {
+  background: rgba(48, 56, 65, 0.05);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.project-brief-main span,
+.project-brief-palette span,
+.project-brief-grid span,
+.admin-brief-highlight span,
+.admin-brief-palette span,
+.admin-brief-grid span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.project-brief-main strong,
+.project-brief-grid strong,
+.admin-brief-highlight strong,
+.admin-brief-grid strong {
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.project-brief-palette div,
+.admin-brief-palette div {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.project-brief-palette i,
+.admin-brief-palette i {
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(48, 56, 65, 0.12);
+  display: block;
+  height: 30px;
+}
+
+.project-brief-grid,
+.admin-brief-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .project-brief-card p,
@@ -2979,10 +3165,14 @@ p {
   .admin-project-top,
   .admin-project-grid,
   .admin-project-facts,
+  .admin-brief-visual,
   .admin-offer-grid,
   .admin-price-row,
   .client-offer-grid,
   .project-studio-layout,
+  .project-brief-visual,
+  .project-brief-grid,
+  .admin-brief-grid,
   .wizard-two,
   .choice-grid.compact {
     grid-template-columns: 1fr;

@@ -124,6 +124,21 @@ const defaultOfferDeliverables = [
   "Élesítés Vercelen, domain beállításokkal"
 ].join("\n");
 
+const adminPaletteOptions: Array<[string, string[]]> = [
+  ["ProjectEdge", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]],
+  ["Monokróm tech", ["#F7F7F2", "#D9E2DF", "#20242A", "#111111"]],
+  ["Meleg prémium", ["#FFF7EF", "#E8C6A4", "#32302F", "#E6532E"]],
+  ["Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]],
+  ["Luxus sötét", ["#F4EFE7", "#C6A15B", "#1E2329", "#0E1116"]],
+  ["Editorial", ["#FAF7F0", "#D8D0C5", "#2F343B", "#B94D3A"]],
+  ["Electric tech", ["#F8FAFF", "#8DE3FF", "#2630FF", "#111827"]],
+  ["Organikus", ["#FAF8EF", "#BFD7B5", "#36594C", "#D96C3B"]],
+  ["Rose premium", ["#FFF7F8", "#E8B4BC", "#332B31", "#C44569"]],
+  ["Blueprint", ["#F3F8FF", "#9DB7D6", "#1D3557", "#457B9D"]],
+  ["Sunset", ["#FFF1E6", "#F7B267", "#2B2D42", "#F25C54"]],
+  ["Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]]
+];
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("hu-HU", {
     day: "2-digit",
@@ -145,6 +160,23 @@ function splitLines(value: string | null) {
     .split("\n")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseBrief(value: string | null) {
+  const pairs = splitLines(value).map((line) => {
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex === -1) {
+      return ["Megjegyzés", line] as const;
+    }
+
+    return [line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim()] as const;
+  });
+
+  return Object.fromEntries(pairs) as Record<string, string>;
+}
+
+function paletteByName(name?: string) {
+  return adminPaletteOptions.find(([label]) => label === name)?.[1] ?? adminPaletteOptions[0][1];
 }
 
 export function AdminDashboard() {
@@ -669,13 +701,26 @@ export function AdminDashboard() {
             <span>A regisztrált ügyfelek projektindításai itt jelennek meg.</span>
           </div>
         ) : (
-          clientProjects.map((project) => (
+          clientProjects.map((project) => {
+            const brief = parseBrief(project.goals);
+            const palette = paletteByName(brief["Színirány"]);
+            const briefFields = [
+              ["Cél", brief["Cél"]],
+              ["Célközönség", brief["Célközönség / vásárlók"]],
+              ["Oldalak", brief["Fontos oldalak"]],
+              ["Funkciók", brief["Kért funkciók"]],
+              ["Stílus", brief["Stílus / hangulat"]],
+              ["Karakter", brief["Vizuális karakter"]],
+              ["Prioritás", brief["Prioritás"]]
+            ].filter(([, value]) => Boolean(value));
+
+            return (
             <article className="admin-project-card" key={project.id}>
               <header className="admin-project-top">
                 <div>
                   <span className="status-pill">{projectStatusLabel[project.status] ?? project.status}</span>
                   <h3>{project.title}</h3>
-                  <p>{project.goals}</p>
+                  <p>{brief["Cél"] || project.goals}</p>
                 </div>
                 <div className="admin-project-contact">
                   <strong>{project.contact_name || "Ügyfél"}</strong>
@@ -702,6 +747,30 @@ export function AdminDashboard() {
                   <strong>{formatDate(project.created_at)}</strong>
                 </div>
               </div>
+
+              <section className="admin-brief-visual">
+                <div className="admin-brief-highlight">
+                  <span>Vizuális irány</span>
+                  <strong>{brief["Vizuális karakter"] || "Nincs megadva"}</strong>
+                  <p>{brief["Stílus / hangulat"] || "Az ügyfél nem adott külön stílus megjegyzést."}</p>
+                </div>
+                <div className="admin-brief-palette">
+                  <span>{brief["Színirány"] || "Színpaletta"}</span>
+                  <div>
+                    {palette.map((color) => (
+                      <i key={color} style={{ background: color }} />
+                    ))}
+                  </div>
+                </div>
+                <div className="admin-brief-grid">
+                  {briefFields.map(([label, value]) => (
+                    <div key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
               <div className="admin-workflow" aria-label="Projekt folyamat">
                 {projectFlow.map(([value, label]) => (
@@ -806,7 +875,8 @@ export function AdminDashboard() {
                 </section>
               </div>
             </article>
-          ))
+          );
+          })
         )}
       </div>
 

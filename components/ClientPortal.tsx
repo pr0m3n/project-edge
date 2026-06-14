@@ -120,7 +120,15 @@ const paletteOptions: Array<[string, string, string[]]> = [
   ["edge", "ProjectEdge", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]],
   ["mono", "Monokróm tech", ["#F7F7F2", "#D9E2DF", "#20242A", "#111111"]],
   ["warm", "Meleg prémium", ["#FFF7EF", "#E8C6A4", "#32302F", "#E6532E"]],
-  ["fresh", "Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]]
+  ["fresh", "Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]],
+  ["luxury", "Luxus sötét", ["#F4EFE7", "#C6A15B", "#1E2329", "#0E1116"]],
+  ["editorial", "Editorial", ["#FAF7F0", "#D8D0C5", "#2F343B", "#B94D3A"]],
+  ["electric", "Electric tech", ["#F8FAFF", "#8DE3FF", "#2630FF", "#111827"]],
+  ["nature", "Organikus", ["#FAF8EF", "#BFD7B5", "#36594C", "#D96C3B"]],
+  ["rose", "Rose premium", ["#FFF7F8", "#E8B4BC", "#332B31", "#C44569"]],
+  ["blueprint", "Blueprint", ["#F3F8FF", "#9DB7D6", "#1D3557", "#457B9D"]],
+  ["sunset", "Sunset", ["#FFF1E6", "#F7B267", "#2B2D42", "#F25C54"]],
+  ["minimal", "Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]]
 ];
 
 const priorityLabels: Record<string, string> = {
@@ -150,13 +158,30 @@ function hasOffer(project: Project) {
   return project.offer_status === "sent" || Boolean(project.offer_title || project.offer_price || project.offer_summary);
 }
 
+function parseBrief(value: string | null) {
+  const pairs = splitLines(value).map((line) => {
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex === -1) {
+      return ["Megjegyzés", line] as const;
+    }
+
+    return [line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim()] as const;
+  });
+
+  return Object.fromEntries(pairs) as Record<string, string>;
+}
+
+function paletteByName(name?: string) {
+  return paletteOptions.find(([, label]) => label === name)?.[2] ?? paletteOptions[0][2];
+}
+
 type ClientPortalProps = {
   view?: "auth" | "dashboard";
 };
 
 export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "support" | "account">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "statuses" | "support" | "account">("overview");
   const [authForm, setAuthForm] = useState({ email: "", name: "", password: "" });
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -165,6 +190,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [messages, setMessages] = useState<Record<string, TicketMessage[]>>({});
   const [projectForm, setProjectForm] = useState(initialProject);
   const [projectStep, setProjectStep] = useState(0);
+  const [projectSubmitted, setProjectSubmitted] = useState(false);
+  const [submittedProjectTitle, setSubmittedProjectTitle] = useState("");
   const [ticketForm, setTicketForm] = useState(initialTicket);
   const [activeTicketId, setActiveTicketId] = useState("");
   const [reply, setReply] = useState("");
@@ -459,8 +486,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     setProjectForm(initialProject);
-    setProjectStep(0);
-    setNotice("Projektkérés elküldve. Itt fogod látni a státuszát.");
+    setProjectSubmitted(true);
+    setSubmittedProjectTitle(projectForm.title);
+    setNotice("Elmentettük és elküldtük a tervet. Hamarosan jelentkezünk a következő lépésekkel.");
     loadPortal(true);
   }
 
@@ -556,6 +584,97 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   async function signOut() {
     await supabase.auth.signOut();
     setNotice("");
+  }
+
+  function renderProjectCard(project: Project, expanded = false) {
+    const brief = parseBrief(project.goals);
+    const palette = paletteByName(brief["Színirány"]);
+    const briefFields = [
+      ["Cél", brief["Cél"]],
+      ["Célközönség", brief["Célközönség / vásárlók"]],
+      ["Oldalak", brief["Fontos oldalak"]],
+      ["Funkciók", brief["Kért funkciók"]],
+      ["Stílus", brief["Stílus / hangulat"]],
+      ["Karakter", brief["Vizuális karakter"]],
+      ["Prioritás", brief["Prioritás"]]
+    ].filter(([, value]) => Boolean(value));
+
+    return (
+      <article className={`project-status-card detailed ${expanded ? "expanded" : ""}`} key={project.id}>
+        <div className="project-status-head">
+          <div>
+            <strong>{project.title}</strong>
+            <small>{project.project_type} · {project.budget || "büdzsé nélkül"}</small>
+          </div>
+          <span>{statusLabels[project.status] ?? project.status}</span>
+        </div>
+        <div className="project-progress-line">
+          {projectFlow.map(([value, label]) => (
+            <span className={project.status === value ? "active" : ""} key={value}>
+              {label}
+            </span>
+          ))}
+        </div>
+        <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
+        <div className="project-brief-visual">
+          <div className="project-brief-main">
+            <span>Beküldött terv</span>
+            <strong>{brief["Cél"] || project.goals}</strong>
+          </div>
+          <div className="project-brief-palette">
+            <span>{brief["Színirány"] || "Színirány"}</span>
+            <div>
+              {palette.map((color) => (
+                <i key={color} style={{ background: color }} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="project-brief-grid">
+          {briefFields.map(([label, value]) => (
+            <div key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          ))}
+        </div>
+        {hasOffer(project) ? (
+          <section className="client-offer-card">
+            <div className="client-offer-header">
+              <div>
+                <span>Részletes ajánlat</span>
+                <h3>{project.offer_title || `${project.title} ajánlat`}</h3>
+              </div>
+              <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+            </div>
+            {project.offer_summary ? <p>{project.offer_summary}</p> : null}
+            <div className="client-offer-grid">
+              <div>
+                <span>Mit tartalmaz?</span>
+                <p>{project.offer_scope || "A részletes scope hamarosan megjelenik itt."}</p>
+              </div>
+              <div>
+                <span>Ütemezés</span>
+                <p>{project.offer_timeline || "Az ütemezést az ajánlat véglegesítésekor pontosítjuk."}</p>
+              </div>
+            </div>
+            {splitLines(project.offer_deliverables).length ? (
+              <ul className="client-offer-list">
+                {splitLines(project.offer_deliverables).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {project.offer_note ? <p className="client-offer-note">{project.offer_note}</p> : null}
+          </section>
+        ) : (
+          <div className="project-awaiting-offer">
+            <strong>Ajánlat előkészítés alatt</strong>
+            <p>Ha megvan az irány, itt fogod látni a bontást, az ütemezést és az árat.</p>
+          </div>
+        )}
+      </article>
+    );
   }
 
   if (view === "auth") {
@@ -676,6 +795,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         {[
           ["overview", "Áttekintés"],
           ["projects", "Projektek"],
+          ["statuses", "Státuszok"],
           ["support", "Support"],
           ["account", "Fiók"]
         ].map(([value, label]) => (
@@ -762,25 +882,52 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <div className="wizard-topline">
               <div>
                 <span>Projekt brief</span>
-                <h2>{briefSteps[projectStep]}</h2>
+                <h2>{projectSubmitted ? "Terv elküldve" : briefSteps[projectStep]}</h2>
               </div>
-              <strong>{briefProgress}%</strong>
+              <strong>{projectSubmitted ? "Kész" : `${briefProgress}%`}</strong>
             </div>
-            <div className="wizard-progress">
-              {briefSteps.map((step, index) => (
-                <button
-                  className={index === projectStep ? "active" : index < projectStep ? "done" : ""}
-                  key={step}
-                  onClick={() => setProjectStep(index)}
-                  type="button"
-                >
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  {step}
-                </button>
-              ))}
-            </div>
-            <form className="wizard-form" onSubmit={createProject}>
-              <div className="wizard-slide" key={projectStep}>
+            {projectSubmitted ? (
+              <div className="wizard-success">
+                <div className="success-mark">✓</div>
+                <span>Elmentettük és elküldtük</span>
+                <h3>{submittedProjectTitle || "A projektterv"}</h3>
+                <p>
+                  Köszönöm, megkaptam a briefet. Átnézem a célokat, a funkciókat és a vizuális irányt,
+                  majd a következő lépéseket és az ajánlatot itt fogod látni a dashboardban.
+                </p>
+                <div className="wizard-success-actions">
+                  <button className="button primary" onClick={() => setActiveTab("statuses")} type="button">
+                    Státusz megnyitása
+                  </button>
+                  <button
+                    className="button secondary"
+                    onClick={() => {
+                      setProjectSubmitted(false);
+                      setProjectStep(0);
+                    }}
+                    type="button"
+                  >
+                    Új projekt indítása
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="wizard-progress">
+                  {briefSteps.map((step, index) => (
+                    <button
+                      className={index === projectStep ? "active" : index < projectStep ? "done" : ""}
+                      key={step}
+                      onClick={() => setProjectStep(index)}
+                      type="button"
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      {step}
+                    </button>
+                  ))}
+                </div>
+                <form className="wizard-form" onSubmit={createProject}>
+                  <div className="wizard-slide" key={projectStep}>
                 {projectStep === 0 ? (
                   <>
                     <div className="wizard-visual foundation">
@@ -1007,30 +1154,32 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 ) : null}
               </div>
 
-              <div className="wizard-actions">
-                <button
-                  className="button secondary"
-                  disabled={projectStep === 0}
-                  onClick={() => setProjectStep((current) => Math.max(0, current - 1))}
-                  type="button"
-                >
-                  Vissza
-                </button>
-                {projectStep < briefSteps.length - 1 ? (
-                  <button
-                    className="button primary"
-                    onClick={() => setProjectStep((current) => Math.min(briefSteps.length - 1, current + 1))}
-                    type="button"
-                  >
-                    Következő
-                  </button>
-                ) : (
-                  <button className="button primary" type="submit">
-                    Projektkérés küldése
-                  </button>
-                )}
-              </div>
-            </form>
+                  <div className="wizard-actions">
+                    <button
+                      className="button secondary"
+                      disabled={projectStep === 0}
+                      onClick={() => setProjectStep((current) => Math.max(0, current - 1))}
+                      type="button"
+                    >
+                      Vissza
+                    </button>
+                    {projectStep < briefSteps.length - 1 ? (
+                      <button
+                        className="button primary"
+                        onClick={() => setProjectStep((current) => Math.min(briefSteps.length - 1, current + 1))}
+                        type="button"
+                      >
+                        Következő
+                      </button>
+                    ) : (
+                      <button className="button primary" type="submit">
+                        Projektkérés küldése
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </>
+            )}
           </section>
 
           <aside className="project-brief-preview">
@@ -1073,75 +1222,42 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <small>{projects.length} projekt</small>
               </div>
               <div className="project-list refined">
-              {loading ? <p>Betöltés...</p> : null}
-              {!loading && projects.length === 0 ? (
-                <div className="portal-empty-state">
-                  <strong>Még nincs projekted.</strong>
-                  <p>Az első projektkérés után itt jelenik meg a státusz és a következő lépés.</p>
-                </div>
-              ) : null}
-              {projects.map((project) => (
-                <article className="project-status-card detailed" key={project.id}>
-                  <div className="project-status-head">
-                    <div>
-                      <strong>{project.title}</strong>
-                      <small>{project.project_type} · {project.budget || "büdzsé nélkül"}</small>
-                    </div>
-                    <span>{statusLabels[project.status] ?? project.status}</span>
+                {loading ? <p>Betöltés...</p> : null}
+                {!loading && projects.length === 0 ? (
+                  <div className="portal-empty-state">
+                    <strong>Még nincs projekted.</strong>
+                    <p>Az első projektkérés után itt jelenik meg a státusz és a következő lépés.</p>
                   </div>
-                  <div className="project-progress-line">
-                    {projectFlow.map(([value, label]) => (
-                      <span className={project.status === value ? "active" : ""} key={value}>
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                  <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
-                  <div className="project-brief-card">
-                    <span>Beküldött brief</span>
-                    <p>{project.goals}</p>
-                  </div>
-                  {hasOffer(project) ? (
-                    <section className="client-offer-card">
-                      <div className="client-offer-header">
-                        <div>
-                          <span>Részletes ajánlat</span>
-                          <h3>{project.offer_title || `${project.title} ajánlat`}</h3>
-                        </div>
-                        <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
-                      </div>
-                      {project.offer_summary ? <p>{project.offer_summary}</p> : null}
-                      <div className="client-offer-grid">
-                        <div>
-                          <span>Mit tartalmaz?</span>
-                          <p>{project.offer_scope || "A részletes scope hamarosan megjelenik itt."}</p>
-                        </div>
-                        <div>
-                          <span>Ütemezés</span>
-                          <p>{project.offer_timeline || "Az ütemezést az ajánlat véglegesítésekor pontosítjuk."}</p>
-                        </div>
-                      </div>
-                      {splitLines(project.offer_deliverables).length ? (
-                        <ul className="client-offer-list">
-                          {splitLines(project.offer_deliverables).map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {project.offer_note ? <p className="client-offer-note">{project.offer_note}</p> : null}
-                    </section>
-                  ) : (
-                    <div className="project-awaiting-offer">
-                      <strong>Ajánlat előkészítés alatt</strong>
-                      <p>Ha megvan az irány, itt fogod látni a bontást, az ütemezést és az árat.</p>
-                    </div>
-                  )}
-                </article>
-              ))}
+                ) : null}
+                {projects.map((project) => renderProjectCard(project))}
               </div>
             </section>
           </aside>
         </div>
+      ) : null}
+
+      {activeTab === "statuses" ? (
+        <section className="status-page-panel">
+          <div className="status-page-head">
+            <div>
+              <span>Projekt státuszok</span>
+              <h2>Innen látod nagyban, hol tartunk.</h2>
+            </div>
+            <button className="button primary" onClick={() => setActiveTab("projects")} type="button">
+              Új projekt brief
+            </button>
+          </div>
+          <div className="status-page-grid">
+            {loading ? <p>Betöltés...</p> : null}
+            {!loading && projects.length === 0 ? (
+              <div className="portal-empty-state">
+                <strong>Még nincs projekted.</strong>
+                <p>Indíts egy projekt briefet, és itt látod majd a státuszt, a tennivalókat és az ajánlatot.</p>
+              </div>
+            ) : null}
+            {projects.map((project) => renderProjectCard(project, true))}
+          </div>
+        </section>
       ) : null}
 
       {activeTab === "support" ? (
