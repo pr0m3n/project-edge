@@ -1955,22 +1955,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               </div>
             </section>
 
-            <section className="portal-panel compact-projects">
-              <div className="portal-panel-head">
-                <span>Projekt státuszok</span>
-                <small>{projects.length} projekt</small>
-              </div>
-              <div className="project-list refined">
-                {loading ? <p>Betöltés...</p> : null}
-                {!loading && projects.length === 0 ? (
-                  <div className="portal-empty-state">
-                    <strong>Még nincs projekted.</strong>
-                    <p>Az első projektkérés után itt jelenik meg a státusz és a következő lépés.</p>
-                  </div>
-                ) : null}
-                {projects.map((project) => renderProjectCard(project))}
-              </div>
-            </section>
           </aside>
         </div>
       ) : null}
