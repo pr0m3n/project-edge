@@ -2153,7 +2153,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <small style={{ color: 'rgba(255,255,255,0.4)' }}>{project.company || "Cégnév nélkül"}</small>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', display: 'flex', justifycontent: 'space-between', alignitems: 'center', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Fizetendő összeg (Foglaló):</span>
                 <strong style={{ fontSize: '20px', color: '#76ABAE' }}>{formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</strong>
               </div>
