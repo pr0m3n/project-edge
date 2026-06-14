@@ -251,6 +251,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [reviewForm, setReviewForm] = useState({ rating: 5, review: "", reference: false });
   const [modificationRequestText, setModificationRequestText] = useState("");
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const activeTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === activeTicketId) ?? tickets[0],
@@ -443,7 +444,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     });
 
     if (error) {
-      setNotice("Nem sikerült létrehozni a fiókot. Próbálj erősebb jelszót vagy másik emailt.");
+      setNotice(`Nem sikerült létrehozni a fiókot: ${error.message}`);
       return;
     }
 
@@ -1431,17 +1432,44 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               placeholder="hello@vallalkozasod.hu"
             />
           </div>
-          <div className="field">
+          <div className="field" style={{ position: 'relative' }}>
             <label htmlFor="client-password">Jelszó</label>
-            <input
-              id="client-password"
-              required
-              minLength={6}
-              type="password"
-              value={authForm.password}
-              onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
-              placeholder="Legalább 6 karakter"
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+              <input
+                id="client-password"
+                required
+                minLength={6}
+                type={showPassword ? "text" : "password"}
+                value={authForm.password}
+                onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
+                placeholder="Legalább 6 karakter"
+                style={{ width: '100%', paddingRight: '60px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  padding: '8px',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  zIndex: 2
+                }}
+                aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
+              >
+                {showPassword ? "Elrejt" : "Mutat"}
+              </button>
+            </div>
           </div>
           <button className="button primary" type="submit">
             {mode === "login" ? "Belépés" : "Fiók létrehozása"}
