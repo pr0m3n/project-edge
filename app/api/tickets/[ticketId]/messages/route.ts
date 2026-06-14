@@ -36,13 +36,17 @@ export async function POST(request: Request, { params }: Params) {
   const supabase = createServerSupabaseClient();
   const { data: ticket, error: ticketError } = await supabase
     .from("support_tickets")
-    .select("id, visitor_token")
+    .select("id, visitor_token, status")
     .eq("id", ticketId)
     .eq("visitor_token", token)
     .single();
 
   if (ticketError || !ticket) {
     return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
+  }
+
+  if (ticket.status === "closed") {
+    return NextResponse.json({ error: "Ticket is closed." }, { status: 409 });
   }
 
   const { data: message, error: messageError } = await supabase

@@ -35,6 +35,8 @@ create table public.support_tickets (
   status text not null default 'open'
     check (status in ('open', 'answered', 'closed')),
   source text not null default 'projectedge.hu',
+  rating integer check (rating between 1 and 5),
+  rating_comment text,
   admin_reply text
 );
 
@@ -58,7 +60,7 @@ begin
     last_message_at = now(),
     status = case
       when new.sender = 'admin' then 'answered'
-      when status = 'closed' then 'open'
+      when new.sender = 'customer' then 'open'
       else status
     end
   where id = new.ticket_id;
@@ -85,6 +87,9 @@ grant select, insert, update, delete on public.support_ticket_messages to authen
 alter table public.support_tickets enable row level security;
 alter table public.support_ticket_messages enable row level security;
 
+alter table public.support_tickets replica identity full;
+alter table public.support_ticket_messages replica identity full;
+
 drop policy if exists "Visitors can create support tickets" on public.support_tickets;
 create policy "Visitors can create support tickets"
 on public.support_tickets for insert
@@ -101,6 +106,13 @@ drop policy if exists "Admins can manage support tickets" on public.support_tick
 create policy "Admins can manage support tickets"
 on public.support_tickets for all
 to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Visitors can rate closed support tickets" on public.support_tickets;
+create policy "Visitors can rate closed support tickets"
+on public.support_tickets for update
+to anon
 using (true)
 with check (true);
 
@@ -122,5 +134,29 @@ on public.support_ticket_messages for all
 to authenticated
 using (true)
 with check (true);
+
+do $projectedge_realtime$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'support_tickets'
+  ) then
+    alter publication supabase_realtime add table public.support_tickets;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'support_ticket_messages'
+  ) then
+    alter publication supabase_realtime add table public.support_ticket_messages;
+  end if;
+end;
+$projectedge_realtime$;
 
 notify pgrst, 'reload schema';

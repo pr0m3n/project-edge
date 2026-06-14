@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
 type ChatMessage = {
   id: string;
@@ -17,6 +18,8 @@ type StoredTicket = {
   token: string;
 };
 
+type TicketState = "open" | "answered" | "closed";
+
 const initialForm = {
   name: "",
   email: "",
@@ -31,8 +34,12 @@ export function SupportWidget() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [reply, setReply] = useState("");
+  const [rating, setRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
   const [ticket, setTicket] = useState<StoredTicket | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [ticketStatus, setTicketStatus] = useState<TicketState>("open");
+  const [hasRated, setHasRated] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
 
@@ -55,8 +62,50 @@ export function SupportWidget() {
     }
 
     loadMessages(ticket);
-    const interval = window.setInterval(() => loadMessages(ticket, true), 12000);
-    return () => window.clearInterval(interval);
+    const fallbackInterval = window.setInterval(() => loadMessages(ticket, true), 30000);
+    const channel = supabase
+      .channel(`support-ticket-${ticket.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          filter: `ticket_id=eq.${ticket.id}`,
+          schema: "public",
+          table: "support_ticket_messages"
+        },
+        (payload) => {
+          const nextMessage = payload.new as ChatMessage;
+          setMessages((current) =>
+            current.some((message) => message.id === nextMessage.id) ? current : [...current, nextMessage]
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          filter: `id=eq.${ticket.id}`,
+          schema: "public",
+          table: "support_tickets"
+        },
+        (payload) => {
+          const nextTicket = payload.new as {
+            rating?: number | null;
+            rating_comment?: string | null;
+            status?: TicketState;
+          };
+          if (nextTicket.status) {
+            setTicketStatus(nextTicket.status);
+          }
+          setHasRated(Boolean(nextTicket.rating || nextTicket.rating_comment));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.clearInterval(fallbackInterval);
+      supabase.removeChannel(channel);
+    };
   }, [ticket, open]);
 
   useEffect(() => {
@@ -91,6 +140,8 @@ export function SupportWidget() {
 
     const data = await response.json();
     setMessages(data.messages ?? []);
+    setTicketStatus(data.ticket?.status ?? "open");
+    setHasRated(Boolean(data.ticket?.rating || data.ticket?.ratingComment));
     if (!silent) {
       setStatus("idle");
     }
@@ -124,6 +175,8 @@ export function SupportWidget() {
     window.localStorage.setItem(storageKey, JSON.stringify(nextTicket));
     setTicket(nextTicket);
     setMessages(data.messages ?? []);
+    setTicketStatus(data.ticket.status ?? "open");
+    setHasRated(false);
     setForm(initialForm);
     setStatus("success");
     setNotice("Megkaptam. Itt tudjuk folytatni a beszélgetést.");
@@ -158,10 +211,44 @@ export function SupportWidget() {
     setNotice("");
   }
 
+  async function submitRating(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ticket || !rating) {
+      setNotice("Válassz egy értékelést 1 és 5 között.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+    const response = await fetch(`/api/tickets/${ticket.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        rating,
+        ratingComment,
+        token: ticket.token
+      })
+    });
+
+    if (!response.ok) {
+      setStatus("error");
+      setNotice("Nem sikerült menteni az értékelést.");
+      return;
+    }
+
+    setHasRated(true);
+    setStatus("success");
+    setNotice("Köszönöm a visszajelzést.");
+  }
+
   function resetConversation() {
     window.localStorage.removeItem(storageKey);
     setTicket(null);
     setMessages([]);
+    setTicketStatus("open");
+    setRating(0);
+    setRatingComment("");
+    setHasRated(false);
     setNotice("");
     setStatus("idle");
   }
@@ -183,7 +270,7 @@ export function SupportWidget() {
           {ticket ? (
             <>
               <div className="chat-meta">
-                <span>{ticket.name}</span>
+                <span>{ticket.name} · {ticketStatus === "closed" ? "lezárva" : "aktív"}</span>
                 <button onClick={resetConversation} type="button">Új kérdés</button>
               </div>
               <div className="chat-messages" ref={messagesRef}>
@@ -199,15 +286,46 @@ export function SupportWidget() {
               </div>
               <form className="chat-reply" onSubmit={sendReply}>
                 <textarea
+                  disabled={ticketStatus === "closed"}
                   required
                   value={reply}
                   onChange={(event) => setReply(event.target.value)}
-                  placeholder="Írd ide a válaszod..."
+                  placeholder={ticketStatus === "closed" ? "Ez a beszélgetés lezárva." : "Írd ide a válaszod..."}
                 />
-                <button className="button primary" disabled={status === "loading"} type="submit">
+                <button className="button primary" disabled={status === "loading" || ticketStatus === "closed"} type="submit">
                   Küldés
                 </button>
               </form>
+              {ticketStatus === "closed" ? (
+                <form className="support-rating" onSubmit={submitRating}>
+                  <strong>{hasRated ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
+                  {!hasRated ? (
+                    <>
+                      <div className="rating-row" role="radiogroup" aria-label="Ügyfélszolgálat értékelése">
+                        {[1, 2, 3, 4, 5].map((value) => (
+                          <button
+                            aria-label={`${value} csillag`}
+                            className={rating >= value ? "active" : ""}
+                            key={value}
+                            onClick={() => setRating(value)}
+                            type="button"
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={ratingComment}
+                        onChange={(event) => setRatingComment(event.target.value)}
+                        placeholder="Pár szóban megírhatod, mi volt jó vagy min javítsak."
+                      />
+                      <button className="button secondary" disabled={status === "loading"} type="submit">
+                        Értékelés küldése
+                      </button>
+                    </>
+                  ) : null}
+                </form>
+              ) : null}
             </>
           ) : (
             <form onSubmit={startConversation}>

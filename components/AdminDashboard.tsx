@@ -24,6 +24,8 @@ type Ticket = {
   name: string;
   email: string;
   message: string;
+  rating: number | null;
+  rating_comment: string | null;
   status: string;
   admin_reply: string | null;
 };
@@ -67,6 +69,20 @@ export function AdminDashboard() {
       tickets: tickets.filter((ticket) => ticket.status === "open").length
     };
   }, [leads, tickets]);
+
+  function addTicketMessage(message: TicketMessage) {
+    setTicketMessages((current) => {
+      const messages = current[message.ticket_id] ?? [];
+      if (messages.some((item) => item.id === message.id)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [message.ticket_id]: [...messages, message]
+      };
+    });
+  }
 
   async function loadLeads() {
     setLoading(true);
@@ -164,10 +180,7 @@ export function AdminDashboard() {
       return;
     }
 
-    setTicketMessages((current) => ({
-      ...current,
-      [ticketId]: [...(current[ticketId] ?? []), data]
-    }));
+    addTicketMessage(data);
     setTicketReplies((current) => ({ ...current, [ticketId]: "" }));
     setTickets((current) =>
       current.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "answered" } : ticket))
@@ -182,6 +195,53 @@ export function AdminDashboard() {
 
   useEffect(() => {
     loadLeads();
+
+    const channel = supabase
+      .channel("projectedge-admin-support")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_tickets"
+        },
+        (payload) => {
+          const nextTicket = payload.new as Ticket;
+          setTickets((current) =>
+            current.some((ticket) => ticket.id === nextTicket.id) ? current : [nextTicket, ...current]
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "support_tickets"
+        },
+        (payload) => {
+          const nextTicket = payload.new as Ticket;
+          setTickets((current) =>
+            current.map((ticket) => (ticket.id === nextTicket.id ? { ...ticket, ...nextTicket } : ticket))
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "support_ticket_messages"
+        },
+        (payload) => {
+          addTicketMessage(payload.new as TicketMessage);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -275,6 +335,12 @@ export function AdminDashboard() {
                 <span className="status-pill">{ticket.status}</span>
                 <strong>{ticket.name}</strong>
                 <a href={`mailto:${ticket.email}`}>{ticket.email}</a>
+                {ticket.rating ? (
+                  <div className="ticket-rating">
+                    <span>{"★".repeat(ticket.rating)}</span>
+                    {ticket.rating_comment ? <p>{ticket.rating_comment}</p> : null}
+                  </div>
+                ) : null}
               </div>
               <div className="ticket-conversation">
                 <div className="admin-chat-thread">
