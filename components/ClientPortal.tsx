@@ -72,6 +72,7 @@ type ClientPortalProps = {
 
 export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "support" | "account">("overview");
   const [authForm, setAuthForm] = useState({ email: "", name: "", password: "" });
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -92,6 +93,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     () => tickets.find((ticket) => ticket.id === activeTicketId) ?? tickets[0],
     [activeTicketId, tickets]
   );
+
+  const openTickets = tickets.filter((ticket) => ticket.status === "open").length;
+  const latestProject = projects[0];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -524,246 +528,383 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       <header className="portal-header">
         <div>
           <p className="micro-label">Ügyfél dashboard</p>
-          <h1>Dashboard</h1>
-          <p>{email}</p>
+          <h1>ProjectEdge dashboard</h1>
+          <p>Projektindítás, státusz, support és előzmények egyetlen privát felületen.</p>
         </div>
-        <button className="button secondary" onClick={signOut} type="button">
-          Kilépés
-        </button>
+        <div className="portal-user-chip">
+          <span>{email}</span>
+          <button onClick={signOut} type="button">Kilépés</button>
+        </div>
       </header>
 
       {notice ? <p className="portal-notice">{notice}</p> : null}
 
-      <div className="portal-grid">
-        <section className="portal-card">
-          <div className="portal-card-head">
-            <span>01</span>
-            <h2>Új projekt indítása</h2>
-          </div>
-          <form className="portal-form" onSubmit={createProject}>
-            <div className="field">
-              <label htmlFor="project-title">Projekt neve</label>
-              <input
-                id="project-title"
-                required
-                value={projectForm.title}
-                onChange={(event) => setProjectForm((current) => ({ ...current, title: event.target.value }))}
-                placeholder="Új weboldal / redesign / ügyfélkapu"
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="project-company">Cég / márka</label>
-              <input
-                id="project-company"
-                value={projectForm.company}
-                onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))}
-                placeholder="Vállalkozás neve"
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="project-website">Jelenlegi weboldal</label>
-              <input
-                id="project-website"
-                value={projectForm.website}
-                onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="project-type">Projekt típusa</label>
-              <select
-                id="project-type"
-                value={projectForm.projectType}
-                onChange={(event) => setProjectForm((current) => ({ ...current, projectType: event.target.value }))}
-              >
-                <option value="premium-business-site">Prémium céges weboldal</option>
-                <option value="redesign">Meglévő oldal fejlesztése</option>
-                <option value="web-app">Webapp / admin rendszer</option>
-                <option value="client-portal">Ügyfélkapu / dashboard</option>
-                <option value="care-plan">Karbantartás és növekedés</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="project-budget">Büdzsé</label>
-              <select
-                id="project-budget"
-                value={projectForm.budget}
-                onChange={(event) => setProjectForm((current) => ({ ...current, budget: event.target.value }))}
-              >
-                <option value="not-sure">Még nem tudom</option>
-                <option value="100k-300k">100 000 - 300 000 Ft</option>
-                <option value="300k-600k">300 000 - 600 000 Ft</option>
-                <option value="600k-1m">600 000 - 1 000 000 Ft</option>
-                <option value="1m-plus">1 000 000 Ft felett</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="project-goals">Mit szeretnél elérni?</label>
-              <textarea
-                id="project-goals"
-                required
-                value={projectForm.goals}
-                onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
-                placeholder="Írd le röviden a helyzetet, a célt és ami most zavar."
-              />
-            </div>
-            <button className="button primary" type="submit">
-              Projektkérés küldése
-            </button>
-          </form>
-        </section>
+      <section className="portal-command-center">
+        <article>
+          <span>Aktív projektek</span>
+          <strong>{projects.length}</strong>
+          <p>{latestProject ? `${latestProject.title} · ${statusLabels[latestProject.status] ?? latestProject.status}` : "Indítsd el az első projektet."}</p>
+        </article>
+        <article>
+          <span>Nyitott ticketek</span>
+          <strong>{openTickets}</strong>
+          <p>{openTickets ? "Van aktív egyeztetés." : "Nincs megválaszolatlan kérdés."}</p>
+        </article>
+        <article>
+          <span>Következő lépés</span>
+          <strong>{latestProject ? "Folyamatban" : "Brief"}</strong>
+          <p>{latestProject?.next_step || "Írd le röviden, mit építsünk vagy javítsunk."}</p>
+        </article>
+      </section>
 
-        <section className="portal-card">
-          <div className="portal-card-head">
-            <span>02</span>
-            <h2>Projekt státuszok</h2>
-          </div>
-          <div className="project-list">
-            {loading ? <p>Betöltés...</p> : null}
-            {!loading && projects.length === 0 ? <p>Még nincs projekted.</p> : null}
-            {projects.map((project) => (
-              <article className="project-status-card" key={project.id}>
+      <nav className="portal-dashboard-tabs" aria-label="Dashboard fülek">
+        {[
+          ["overview", "Áttekintés"],
+          ["projects", "Projektek"],
+          ["support", "Support"],
+          ["account", "Fiók"]
+        ].map(([value, label]) => (
+          <button
+            className={activeTab === value ? "active" : ""}
+            key={value}
+            onClick={() => setActiveTab(value as typeof activeTab)}
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === "overview" ? (
+        <div className="portal-dashboard-grid">
+          <section className="portal-panel hero">
+            <div>
+              <p className="micro-label dark">Projektindítás</p>
+              <h2>Indítsd el a következő munkát egy rövid briefből.</h2>
+              <p>Nem kell kész specifikáció. Elég, ha leírod a célt, a jelenlegi helyzetet és mi lenne jó eredmény.</p>
+            </div>
+            <button className="button primary" onClick={() => setActiveTab("projects")} type="button">
+              Projekt indítása
+            </button>
+          </section>
+          <section className="portal-panel">
+            <div className="portal-panel-head">
+              <span>Legutóbbi projekt</span>
+              <button onClick={() => setActiveTab("projects")} type="button">Megnyitás</button>
+            </div>
+            {latestProject ? (
+              <article className="project-status-card featured">
                 <div>
-                  <strong>{project.title}</strong>
-                  <span>{statusLabels[project.status] ?? project.status}</span>
+                  <strong>{latestProject.title}</strong>
+                  <span>{statusLabels[latestProject.status] ?? latestProject.status}</span>
                 </div>
-                <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
+                <p>{latestProject.next_step || "Átnézés alatt. Hamarosan megjelenik itt a következő lépés."}</p>
               </article>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <div className="portal-grid tickets">
-        <section className="portal-card">
-          <div className="portal-card-head">
-            <span>03</span>
-            <h2>Új ticket</h2>
-          </div>
-          <form className="portal-form" onSubmit={createTicket}>
-            <div className="field">
-              <label htmlFor="ticket-project">Kapcsolódó projekt</label>
-              <select
-                id="ticket-project"
-                value={ticketForm.projectId}
-                onChange={(event) => setTicketForm((current) => ({ ...current, projectId: event.target.value }))}
-              >
-                <option value="">Általános kérdés</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>{project.title}</option>
-                ))}
-              </select>
+            ) : (
+              <div className="portal-empty-state">
+                <strong>Még nincs projekted.</strong>
+                <p>A projektindítás után itt látod a státuszt, a következő lépést és minden kapcsolódó ticketet.</p>
+              </div>
+            )}
+          </section>
+          <section className="portal-panel">
+            <div className="portal-panel-head">
+              <span>Support</span>
+              <button onClick={() => setActiveTab("support")} type="button">Ticketek</button>
             </div>
-            <div className="field">
-              <label htmlFor="ticket-subject">Tárgy</label>
-              <input
-                id="ticket-subject"
-                required
-                value={ticketForm.subject}
-                onChange={(event) => setTicketForm((current) => ({ ...current, subject: event.target.value }))}
-                placeholder="Például: kérdés a kezdésről"
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="ticket-body">Üzenet</label>
-              <textarea
-                id="ticket-body"
-                required
-                value={ticketForm.body}
-                onChange={(event) => setTicketForm((current) => ({ ...current, body: event.target.value }))}
-                placeholder="Írd le, miben segítsek."
-              />
-            </div>
-            <button className="button primary" type="submit">
-              Ticket megnyitása
-            </button>
-          </form>
-        </section>
-
-        <section className="portal-card ticket-history">
-          <div className="portal-card-head">
-            <span>04</span>
-            <h2>Ticket előzmények</h2>
-          </div>
-          <div className="ticket-layout">
-            <div className="ticket-list">
-              {tickets.length === 0 ? <p>Még nincs ticketed.</p> : null}
-              {tickets.map((ticket) => (
-                <button
-                  className={activeTicket?.id === ticket.id ? "active" : ""}
-                  key={ticket.id}
-                  onClick={() => setActiveTicketId(ticket.id)}
-                  type="button"
-                >
+            <div className="portal-mini-list">
+              {tickets.slice(0, 3).map((ticket) => (
+                <button key={ticket.id} onClick={() => { setActiveTicketId(ticket.id); setActiveTab("support"); }} type="button">
                   <strong>{ticket.subject}</strong>
                   <span>{statusLabels[ticket.status] ?? ticket.status}</span>
                 </button>
               ))}
+              {tickets.length === 0 ? <p>Nincs ticket előzményed. Kérdés esetén a Support fülön tudsz írni.</p> : null}
             </div>
-            <div className="portal-chat">
-              {activeTicket ? (
-                <>
-                  <div className="portal-chat-head">
-                    <strong>{activeTicket.subject}</strong>
-                    <span>{statusLabels[activeTicket.status] ?? activeTicket.status}</span>
+          </section>
+          <section className="portal-panel muted">
+            <span>Mit kapsz itt?</span>
+            <ul>
+              <li>Projektállapot és következő lépés</li>
+              <li>Ticket előzmények és privát chat</li>
+              <li>Adminból frissített státuszok</li>
+              <li>Lezárt ticket után értékelés</li>
+            </ul>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === "projects" ? (
+        <div className="portal-dashboard-grid projects">
+          <section className="portal-panel form-panel">
+            <div className="portal-panel-head">
+              <span>Új projekt</span>
+              <small>Belépett ügyfélként indítod</small>
+            </div>
+            <form className="portal-form split" onSubmit={createProject}>
+              <div className="field">
+                <label htmlFor="project-title">Projekt neve</label>
+                <input
+                  id="project-title"
+                  required
+                  value={projectForm.title}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, title: event.target.value }))}
+                  placeholder="Új weboldal / redesign / ügyfélkapu"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="project-company">Cég / márka</label>
+                <input
+                  id="project-company"
+                  value={projectForm.company}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))}
+                  placeholder="Vállalkozás neve"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="project-website">Jelenlegi weboldal</label>
+                <input
+                  id="project-website"
+                  value={projectForm.website}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="project-type">Projekt típusa</label>
+                <select
+                  id="project-type"
+                  value={projectForm.projectType}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, projectType: event.target.value }))}
+                >
+                  <option value="premium-business-site">Prémium céges weboldal</option>
+                  <option value="redesign">Meglévő oldal fejlesztése</option>
+                  <option value="web-app">Webapp / admin rendszer</option>
+                  <option value="client-portal">Ügyfélkapu / dashboard</option>
+                  <option value="care-plan">Karbantartás és növekedés</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="project-budget">Büdzsé</label>
+                <select
+                  id="project-budget"
+                  value={projectForm.budget}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, budget: event.target.value }))}
+                >
+                  <option value="not-sure">Még nem tudom</option>
+                  <option value="100k-300k">100 000 - 300 000 Ft</option>
+                  <option value="300k-600k">300 000 - 600 000 Ft</option>
+                  <option value="600k-1m">600 000 - 1 000 000 Ft</option>
+                  <option value="1m-plus">1 000 000 Ft felett</option>
+                </select>
+              </div>
+              <div className="field full">
+                <label htmlFor="project-goals">Mit szeretnél elérni?</label>
+                <textarea
+                  id="project-goals"
+                  required
+                  value={projectForm.goals}
+                  onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
+                  placeholder="Írd le röviden a helyzetet, a célt és ami most zavar."
+                />
+              </div>
+              <button className="button primary" type="submit">
+                Projektkérés küldése
+              </button>
+            </form>
+          </section>
+
+          <section className="portal-panel">
+            <div className="portal-panel-head">
+              <span>Projekt státuszok</span>
+              <small>{projects.length} projekt</small>
+            </div>
+            <div className="project-list refined">
+              {loading ? <p>Betöltés...</p> : null}
+              {!loading && projects.length === 0 ? (
+                <div className="portal-empty-state">
+                  <strong>Még nincs projekted.</strong>
+                  <p>Az első projektkérés után itt jelenik meg a státusz és a következő lépés.</p>
+                </div>
+              ) : null}
+              {projects.map((project) => (
+                <article className="project-status-card" key={project.id}>
+                  <div>
+                    <strong>{project.title}</strong>
+                    <span>{statusLabels[project.status] ?? project.status}</span>
                   </div>
-                  <div className="portal-chat-messages">
-                    {(messages[activeTicket.id] ?? []).map((item) => (
-                      <div className={`portal-bubble ${item.sender}`} key={item.id}>
-                        <span>{item.sender === "admin" ? "ProjectEdge" : "Te"}</span>
-                        <p>{item.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <form className="portal-reply" onSubmit={sendReply}>
-                    <textarea
-                      disabled={activeTicket.status === "closed"}
-                      value={reply}
-                      onChange={(event) => setReply(event.target.value)}
-                      placeholder={activeTicket.status === "closed" ? "Ez a ticket lezárva." : "Válasz írása..."}
-                    />
-                    <button className="button primary" disabled={activeTicket.status === "closed"} type="submit">
-                      Küldés
-                    </button>
-                  </form>
-                  {activeTicket.status === "closed" ? (
-                    <form className="portal-rating" onSubmit={submitTicketRating}>
-                      <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
-                      {!activeTicket.rating ? (
-                        <>
-                          <div className="rating-row" role="radiogroup" aria-label="Ticket értékelése">
-                            {[1, 2, 3, 4, 5].map((value) => (
-                              <button
-                                aria-label={`${value} csillag`}
-                                className={ticketRating >= value ? "active" : ""}
-                                key={value}
-                                onClick={() => setTicketRating(value)}
-                                type="button"
-                              >
-                                ★
-                              </button>
-                            ))}
-                          </div>
-                          <textarea
-                            value={ticketRatingComment}
-                            onChange={(event) => setTicketRatingComment(event.target.value)}
-                            placeholder="Pár szóban leírhatod, milyen volt a segítség."
-                          />
-                          <button className="button secondary" type="submit">
-                            Értékelés küldése
-                          </button>
-                        </>
-                      ) : null}
+                  <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === "support" ? (
+        <div className="portal-dashboard-grid support">
+          <section className="portal-panel form-panel">
+            <div className="portal-panel-head">
+              <span>Új support ticket</span>
+              <small>Privát beszélgetés</small>
+            </div>
+            <form className="portal-form" onSubmit={createTicket}>
+              <div className="field">
+                <label htmlFor="ticket-project">Kapcsolódó projekt</label>
+                <select
+                  id="ticket-project"
+                  value={ticketForm.projectId}
+                  onChange={(event) => setTicketForm((current) => ({ ...current, projectId: event.target.value }))}
+                >
+                  <option value="">Általános kérdés</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="ticket-subject">Tárgy</label>
+                <input
+                  id="ticket-subject"
+                  required
+                  value={ticketForm.subject}
+                  onChange={(event) => setTicketForm((current) => ({ ...current, subject: event.target.value }))}
+                  placeholder="Például: kérdés a kezdésről"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="ticket-body">Üzenet</label>
+                <textarea
+                  id="ticket-body"
+                  required
+                  value={ticketForm.body}
+                  onChange={(event) => setTicketForm((current) => ({ ...current, body: event.target.value }))}
+                  placeholder="Írd le, miben segítsek."
+                />
+              </div>
+              <button className="button primary" type="submit">
+                Ticket megnyitása
+              </button>
+            </form>
+          </section>
+
+          <section className="portal-panel ticket-history">
+            <div className="portal-panel-head">
+              <span>Ticket előzmények</span>
+              <small>{tickets.length} beszélgetés</small>
+            </div>
+            <div className="ticket-layout">
+              <div className="ticket-list">
+                {tickets.length === 0 ? <p>Még nincs ticketed.</p> : null}
+                {tickets.map((ticket) => (
+                  <button
+                    className={activeTicket?.id === ticket.id ? "active" : ""}
+                    key={ticket.id}
+                    onClick={() => setActiveTicketId(ticket.id)}
+                    type="button"
+                  >
+                    <strong>{ticket.subject}</strong>
+                    <span>{statusLabels[ticket.status] ?? ticket.status}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="portal-chat">
+                {activeTicket ? (
+                  <>
+                    <div className="portal-chat-head">
+                      <strong>{activeTicket.subject}</strong>
+                      <span>{statusLabels[activeTicket.status] ?? activeTicket.status}</span>
+                    </div>
+                    <div className="portal-chat-messages">
+                      {(messages[activeTicket.id] ?? []).map((item) => (
+                        <div className={`portal-bubble ${item.sender}`} key={item.id}>
+                          <span>{item.sender === "admin" ? "ProjectEdge" : "Te"}</span>
+                          <p>{item.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <form className="portal-reply" onSubmit={sendReply}>
+                      <textarea
+                        disabled={activeTicket.status === "closed"}
+                        value={reply}
+                        onChange={(event) => setReply(event.target.value)}
+                        placeholder={activeTicket.status === "closed" ? "Ez a ticket lezárva." : "Válasz írása..."}
+                      />
+                      <button className="button primary" disabled={activeTicket.status === "closed"} type="submit">
+                        Küldés
+                      </button>
                     </form>
-                  ) : null}
-                </>
-              ) : (
-                <p>Válassz egy ticketet.</p>
-              )}
+                    {activeTicket.status === "closed" ? (
+                      <form className="portal-rating" onSubmit={submitTicketRating}>
+                        <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
+                        {!activeTicket.rating ? (
+                          <>
+                            <div className="rating-row" role="radiogroup" aria-label="Ticket értékelése">
+                              {[1, 2, 3, 4, 5].map((value) => (
+                                <button
+                                  aria-label={`${value} csillag`}
+                                  className={ticketRating >= value ? "active" : ""}
+                                  key={value}
+                                  onClick={() => setTicketRating(value)}
+                                  type="button"
+                                >
+                                  ★
+                                </button>
+                              ))}
+                            </div>
+                            <textarea
+                              value={ticketRatingComment}
+                              onChange={(event) => setTicketRatingComment(event.target.value)}
+                              placeholder="Pár szóban leírhatod, milyen volt a segítség."
+                            />
+                            <button className="button secondary" type="submit">
+                              Értékelés küldése
+                            </button>
+                          </>
+                        ) : null}
+                      </form>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="portal-empty-state">
+                    <strong>Válassz vagy nyiss ticketet.</strong>
+                    <p>Itt fog megjelenni a teljes beszélgetési előzmény.</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === "account" ? (
+        <div className="portal-dashboard-grid account">
+          <section className="portal-panel hero">
+            <div>
+              <p className="micro-label dark">Fiók</p>
+              <h2>Ez a privát ügyfélterületed.</h2>
+              <p>Innen indítod a projekteket, itt maradnak meg a ticket előzmények, és ide érkeznek a státuszfrissítések.</p>
+            </div>
+            <button className="button secondary" onClick={signOut} type="button">
+              Kilépés
+            </button>
+          </section>
+          <section className="portal-panel">
+            <div className="portal-panel-head">
+              <span>Fiókadatok</span>
+              <small>Supabase Auth</small>
+            </div>
+            <div className="account-list">
+              <span>Email</span>
+              <strong>{email}</strong>
+              <span>Projektek</span>
+              <strong>{projects.length}</strong>
+              <span>Ticketek</span>
+              <strong>{tickets.length}</strong>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
