@@ -3629,3 +3629,349 @@ p {
     max-width: 82%;
   }
 }
+
+/* ===========================================================================
+   Shared feedback primitives: toasts, confirm dialog, skeleton, offline
+   =========================================================================== */
+
+.toast-stack {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: min(380px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--soft-line);
+  background: rgba(17, 23, 28, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: var(--white);
+  box-shadow: 0 18px 50px rgba(17, 23, 28, 0.35);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  animation: toast-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--aqua);
+}
+
+.toast-success .toast-dot {
+  background: var(--aqua);
+}
+
+.toast-error .toast-dot {
+  background: var(--ember);
+}
+
+.toast-info .toast-dot {
+  background: #8aa0a8;
+}
+
+.toast-message {
+  flex: 1;
+}
+
+.toast-close {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.toast:hover .toast-close {
+  opacity: 1;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 23, 28, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: confirm-fade 0.2s ease;
+}
+
+.confirm-card {
+  width: min(440px, 100%);
+  background: var(--white);
+  color: var(--ink);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  animation: confirm-pop 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-card h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.confirm-card p {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.button.confirm-danger {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+}
+
+.button.confirm-danger:hover {
+  background: #c12a3a;
+  border-color: #c12a3a;
+}
+
+@keyframes confirm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confirm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(48, 56, 65, 0.08);
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* Dark surfaces (admin) get a lighter base + sweep */
+.admin-dashboard .skeleton-shimmer {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-dashboard .skeleton-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4200;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #dc3545;
+  box-shadow: 0 8px 30px rgba(220, 53, 69, 0.35);
+}
+
+/* Visual project stepper */
+.project-stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 4px 0 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.stepper-node {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.stepper-node::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.stepper-node:first-child::before {
+  display: none;
+}
+
+.stepper-dot {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--white);
+  border: 2px solid var(--line);
+  color: var(--muted);
+  transition: all 0.25s ease;
+}
+
+.stepper-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.stepper-node.done .stepper-dot {
+  background: var(--aqua);
+  border-color: var(--aqua);
+  color: #fff;
+}
+
+.stepper-node.done::before {
+  background: var(--aqua);
+}
+
+.stepper-node.active .stepper-dot {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(118, 171, 174, 0.18);
+}
+
+.stepper-node.active .stepper-label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.project-deadline-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(118, 171, 174, 0.1);
+  border: 1px solid rgba(118, 171, 174, 0.25);
+  font-size: 13px;
+}
+
+.project-deadline-chip span {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.project-deadline-chip strong {
+  color: var(--ink);
+}
+
+.portal-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(118, 171, 174, 0.16), rgba(118, 171, 174, 0.04));
+  border: 1px solid rgba(118, 171, 174, 0.28);
+}
+
+.portal-welcome-text {
+  max-width: 640px;
+}
+
+.portal-welcome h2 {
+  margin: 8px 0 10px;
+  font-size: 26px;
+  color: var(--ink);
+}
+
+.portal-welcome p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}

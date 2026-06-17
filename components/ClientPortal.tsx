@@ -2,6 +2,29 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import {
+  useToasts,
+  ToastStack,
+  useConfirm,
+  Skeleton,
+  useOnline,
+  OfflineBanner,
+  type ToastKind
+} from "@/components/ui/feedback";
+
+function noticeKind(message: string): ToastKind {
+  if (/nem sikerült|hiba|sikertelen|nem lehet|nincs aktív/i.test(message)) {
+    return "error";
+  }
+  if (
+    /sikeres|elfogadva|elmentett|elküldt|elküldve|mentve|kész|köszön|rögzítve|létrejött|létrehoz|megnyitva|frissítve|megváltozott|törölve|aláírva|rendezve/i.test(
+      message
+    )
+  ) {
+    return "success";
+  }
+  return "info";
+}
 
 type Project = {
   id: string;
@@ -63,6 +86,7 @@ type Project = {
   staging_url: string | null;
   final_payment_paid: boolean;
   final_payment_paid_at: string | null;
+  estimated_deadline: string | null;
 };
 
 type Ticket = {
@@ -270,6 +294,58 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [profileName, setProfileName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const { toasts, pushToast, dismissToast } = useToasts();
+  const { confirm, confirmModal } = useConfirm();
+  const online = useOnline();
+
+  // Mirror logged-in (dashboard) notices into transient toasts. Auth screens
+  // keep their inline form-status message. Transient "...folyamatban" notices
+  // (ending with "...") are skipped to avoid double toasts.
+  useEffect(() => {
+    if (!userId || !notice || notice.endsWith("...")) {
+      return;
+    }
+    pushToast(notice, noticeKind(notice));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notice, userId]);
+
+  // Brief draft persistence: keep the half-filled wizard across reloads so an
+  // interrupted brief is never lost. Cleared on successful submit.
+  const draftKey = userId ? `pe-brief-draft-${userId}` : "";
+  const draftRestored = useMemo(() => ({ done: false }), [userId]);
+
+  useEffect(() => {
+    if (!draftKey || draftRestored.done || projectSubmitted) return;
+    draftRestored.done = true;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          setProjectForm((current) => ({ ...current, ...parsed }));
+        }
+      }
+    } catch {
+      /* ignore corrupt draft */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || projectSubmitted) return;
+    const isEmpty = JSON.stringify(projectForm) === JSON.stringify(initialProject);
+    try {
+      if (isEmpty) {
+        window.localStorage.removeItem(draftKey);
+      } else {
+        window.localStorage.setItem(draftKey, JSON.stringify(projectForm));
+      }
+    } catch {
+      /* storage unavailable (private mode) — ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectForm, draftKey, projectSubmitted]);
 
   async function triggerNotification(
     targetUserId: string | null,
@@ -766,6 +842,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       "/ugyfelkapu/dashboard#projects"
     );
 
+    try {
+      if (draftKey) window.localStorage.removeItem(draftKey);
+    } catch {
+      /* ignore */
+    }
     setProjectForm(initialProject);
     setProjectSubmitted(true);
     setSubmittedProjectTitle(projectForm.title);
@@ -995,6 +1076,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function declineOffer(project: Project) {
+    const ok = await confirm({
+      title: "Biztosan elutasítod az ajánlatot?",
+      message: "Ezzel a projekt lezárul. A döntés később már nem visszavonható az ügyfélkapun keresztül.",
+      confirmLabel: "Igen, elutasítom",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
     setNotice("Ajánlat elutasítása...");
     const { error } = await supabase.from("client_projects").update({
       status: "closed",
@@ -1153,6 +1242,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function selectMaintenance(project: Project, option: string) {
+    if (option === "declined") {
+      const ok = await confirm({
+        title: "Lezárjuk karbantartás nélkül?",
+        message: "A projekt lezárul, és nem aktiváljuk a folyamatos karbantartási csomagot. Később bármikor kérheted emailben.",
+        confirmLabel: "Igen, lezárhatjuk",
+        cancelLabel: "Mégse",
+        danger: true
+      });
+      if (!ok) return;
+    }
     setNotice("Karbantartási igény mentése...");
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: option,
@@ -1211,9 +1310,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function requestProjectDeletion(project: Project) {
-    if (!confirm("Biztosan törölni szeretnéd a projektet? Ez jóváhagyásra vár az adminisztrátornál.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Projekt törlése / megszakítása",
+      message: "Biztosan törölni szeretnéd a projektet? A kérelem az adminisztrátor jóváhagyására vár, és a projekt addig „Törlés jóváhagyásra vár” állapotba kerül.",
+      confirmLabel: "Törlés kezdeményezése",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
     setNotice("Törlés kezdeményezése...");
     const { error } = await supabase.from("client_projects").update({
       status: "deletion_pending",
@@ -1465,13 +1569,43 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <small>{project.project_type} · {project.budget || "büdzsé nélkül"}</small>
           </div>
         </div>
-        <div className="project-progress-line">
-          {projectFlow.map(([value, label]) => (
-            <span className={project.status === value ? "active" : ""} key={value}>
-              {label}
-            </span>
-          ))}
-        </div>
+        {(() => {
+          const currentIndex = projectFlow.findIndex(([value]) => value === project.status);
+          return (
+            <div className="project-stepper" aria-label="Projekt folyamat">
+              {projectFlow.map(([value, label], index) => {
+                const state =
+                  currentIndex === -1
+                    ? "upcoming"
+                    : index < currentIndex
+                    ? "done"
+                    : index === currentIndex
+                    ? "active"
+                    : "upcoming";
+                return (
+                  <div className={`stepper-node ${state}`} key={value}>
+                    <span className="stepper-dot">{state === "done" ? "✓" : index + 1}</span>
+                    <span className="stepper-label">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+        {project.estimated_deadline && project.status !== "launched" && project.status !== "closed" && (
+          <div className="project-deadline-chip">
+            <span>Tervezett átadás</span>
+            <strong>
+              {new Date(project.estimated_deadline).toLocaleDateString("hu-HU", {
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+              })}
+            </strong>
+          </div>
+        )}
+
         <p>{project.next_step || "Amint átnéztem, itt jelenik meg a következő lépés."}</p>
 
         {project.last_modified_at && (
@@ -2066,7 +2200,25 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         </div>
       </header>
 
-      {notice ? <p className="portal-notice">{notice}</p> : null}
+      <OfflineBanner online={online} />
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
+      {confirmModal}
+
+      {!loading && projects.length === 0 && !projectSubmitted && (
+        <div className="portal-welcome">
+          <div className="portal-welcome-text">
+            <span className="micro-label">Üdvözlünk a fedélzeten</span>
+            <h2>Örülünk, hogy itt vagy{profileName ? `, ${profileName}` : ""}!</h2>
+            <p>
+              Indítsd el az első projekt briefedet pár perc alatt. Onnantól minden itt fut össze:
+              az ajánlat, a fizetés, a fejlesztési mérföldkövek, az előnézeti link és a support — egy helyen.
+            </p>
+          </div>
+          <button className="button primary" type="button" onClick={() => setActiveTab("projects")}>
+            Projekt brief indítása →
+          </button>
+        </div>
+      )}
 
       <section className="portal-command-center">
         <article>
@@ -2552,7 +2704,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </button>
           </div>
           <div className="status-page-grid">
-            {loading ? <p>Betöltés...</p> : null}
+            {loading ? (
+              <>
+                {[0, 1].map((i) => (
+                  <div key={i} className="project-status-card detailed" style={{ display: 'grid', gap: '14px' }}>
+                    <Skeleton height={14} width="40%" />
+                    <Skeleton height={26} width="70%" />
+                    <Skeleton height={10} radius={999} />
+                    <Skeleton height={64} radius={18} />
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <Skeleton height={38} width={140} radius={14} />
+                      <Skeleton height={38} width={120} radius={14} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : null}
             {!loading && projects.length === 0 ? (
               <div className="portal-empty-state">
                 <strong>Még nincs projekted.</strong>

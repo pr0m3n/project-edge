@@ -2,6 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import {
+  useToasts,
+  ToastStack,
+  useConfirm,
+  Skeleton,
+  useOnline,
+  OfflineBanner,
+  type ToastKind
+} from "@/components/ui/feedback";
+
+function messageKind(text: string): ToastKind {
+  if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
+    return "error";
+  }
+  if (/mentve|elküldve|törölve|jóváhagyva|elutasítva|kész|rögzítve/i.test(text)) {
+    return "success";
+  }
+  return "info";
+}
+
+const TICKET_STALE_MS = 48 * 60 * 60 * 1000;
 
 type Lead = {
   id: string;
@@ -86,6 +107,7 @@ type ClientProject = {
   staging_url: string | null;
   final_payment_paid: boolean;
   final_payment_paid_at: string | null;
+  estimated_deadline: string | null;
 };
 
 type ClientTicket = {
@@ -247,6 +269,18 @@ export function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showArchive, setShowArchive] = useState(false);
+
+  const { toasts, pushToast, dismissToast } = useToasts();
+  const { confirm, confirmModal } = useConfirm();
+  const online = useOnline();
+
+  useEffect(() => {
+    if (!message || message.endsWith("...")) return;
+    pushToast(message, messageKind(message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message]);
 
   const uniqueClients = useMemo(() => {
     const clientsMap = new Map<string, { name: string; email: string }>();
@@ -275,14 +309,36 @@ export function AdminDashboard() {
   }, [clientProjects, clientTickets]);
 
   const filteredProjects = useMemo(() => {
-    if (selectedClientFilter === "all") return clientProjects;
-    return clientProjects.filter((p) => p.user_id === selectedClientFilter);
-  }, [clientProjects, selectedClientFilter]);
+    const query = searchQuery.trim().toLowerCase();
+    return clientProjects.filter((p) => {
+      if (selectedClientFilter !== "all" && p.user_id !== selectedClientFilter) return false;
+      if (!query) return true;
+      return [p.title, p.contact_name, p.contact_email, p.company, p.project_type, p.goals]
+        .filter(Boolean)
+        .some((field) => (field as string).toLowerCase().includes(query));
+    });
+  }, [clientProjects, selectedClientFilter, searchQuery]);
+
+  const activeProjects = useMemo(
+    () => filteredProjects.filter((p) => p.status !== "closed"),
+    [filteredProjects]
+  );
+
+  const archivedProjects = useMemo(
+    () => filteredProjects.filter((p) => p.status === "closed"),
+    [filteredProjects]
+  );
 
   const filteredTickets = useMemo(() => {
-    if (selectedClientFilter === "all") return clientTickets;
-    return clientTickets.filter((t) => t.user_id === selectedClientFilter);
-  }, [clientTickets, selectedClientFilter]);
+    const query = searchQuery.trim().toLowerCase();
+    return clientTickets.filter((t) => {
+      if (selectedClientFilter !== "all" && t.user_id !== selectedClientFilter) return false;
+      if (!query) return true;
+      return [t.subject, t.contact_name, t.contact_email]
+        .filter(Boolean)
+        .some((field) => (field as string).toLowerCase().includes(query));
+    });
+  }, [clientTickets, selectedClientFilter, searchQuery]);
 
   async function triggerNotification(
     targetUserId: string | null,
@@ -331,6 +387,57 @@ export function AdminDashboard() {
     });
   }
 
+  function mergeClientProject(payload: { eventType: string; new: any; old: any }) {
+    if (payload.eventType === "DELETE") {
+      const removedId = payload.old?.id;
+      if (removedId) {
+        setClientProjects((current) => current.filter((p) => p.id !== removedId));
+      }
+      return;
+    }
+    const row = payload.new as ClientProject;
+    if (!row?.id) return;
+    setClientProjects((current) =>
+      current.some((p) => p.id === row.id)
+        ? current.map((p) => (p.id === row.id ? { ...p, ...row } : p))
+        : [row, ...current]
+    );
+  }
+
+  function mergeClientTicket(payload: { eventType: string; new: any; old: any }) {
+    if (payload.eventType === "DELETE") {
+      const removedId = payload.old?.id;
+      if (removedId) {
+        setClientTickets((current) => current.filter((t) => t.id !== removedId));
+      }
+      return;
+    }
+    const row = payload.new as ClientTicket;
+    if (!row?.id) return;
+    setClientTickets((current) =>
+      current.some((t) => t.id === row.id)
+        ? current.map((t) => (t.id === row.id ? { ...t, ...row } : t))
+        : [row, ...current]
+    );
+  }
+
+  function mergeNotification(payload: { eventType: string; new: any; old: any }) {
+    if (payload.eventType === "DELETE") {
+      const removedId = payload.old?.id;
+      if (removedId) {
+        setNotifications((current) => current.filter((n) => n.id !== removedId));
+      }
+      return;
+    }
+    const row = payload.new;
+    if (!row?.id) return;
+    setNotifications((current) =>
+      current.some((n) => n.id === row.id)
+        ? current.map((n) => (n.id === row.id ? { ...n, ...row } : n))
+        : [row, ...current]
+    );
+  }
+
   function addClientTicketMessage(message: TicketMessage) {
     setClientTicketMessages((current) => {
       const messages = current[message.ticket_id] ?? [];
@@ -345,8 +452,10 @@ export function AdminDashboard() {
     });
   }
 
-  async function loadLeads() {
-    setLoading(true);
+  async function loadLeads(silent = false) {
+    if (!silent) {
+      setLoading(true);
+    }
     const { data: sessionData } = await supabase.auth.getSession();
 
     if (!sessionData.session) {
@@ -523,6 +632,14 @@ export function AdminDashboard() {
   }
 
   async function approveDeletion(project: ClientProject) {
+    const ok = await confirm({
+      title: "Projekt végleges törlése",
+      message: `A(z) "${project.title}" projekt és minden adata véglegesen törlődik. Ez a művelet nem visszavonható.`,
+      confirmLabel: "Végleges törlés",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
     const { error } = await supabase.from("client_projects").delete().eq("id", project.id);
     if (error) {
       setMessage("Nem sikerült jóváhagyni a törlést.");
@@ -534,8 +651,8 @@ export function AdminDashboard() {
         `A(z) "${project.title}" projekt törlési kérelmét az adminisztrátor jóváhagyta.`,
         "/ugyfelkapu/dashboard#projects"
       );
+      setClientProjects((current) => current.filter((p) => p.id !== project.id));
       setMessage("Projekt véglegesen törölve.");
-      loadLeads();
     }
   }
 
@@ -557,8 +674,14 @@ export function AdminDashboard() {
         `A(z) "${project.title}" projekt törlési kérelmét az adminisztrátor elutasította. A projekt visszaállt "${projectStatusLabel[prevStatus] || prevStatus}" státuszba.`,
         "/ugyfelkapu/dashboard#statuses"
       );
+      setClientProjects((current) =>
+        current.map((p) =>
+          p.id === project.id
+            ? { ...p, status: prevStatus, delete_requested: false, next_step: `Törlési kérelem elutasítva. Projekt visszaállítva a(z) "${projectStatusLabel[prevStatus] || prevStatus}" fázisba.` }
+            : p
+        )
+      );
       setMessage("Törlési kérelem elutasítva.");
-      loadLeads();
     }
   }
 
@@ -739,7 +862,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "client_projects"
         },
-        () => loadLeads()
+        (payload) => mergeClientProject(payload as any)
       )
       .on(
         "postgres_changes",
@@ -748,7 +871,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "client_tickets"
         },
-        () => loadLeads()
+        (payload) => mergeClientTicket(payload as any)
       )
       .on(
         "postgres_changes",
@@ -768,7 +891,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "notifications"
         },
-        () => loadLeads()
+        (payload) => mergeNotification(payload as any)
       )
       .subscribe();
 
@@ -776,6 +899,75 @@ export function AdminDashboard() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  function renderClosedProjectCard(project: ClientProject) {
+    const rating = project.client_rating;
+    const review = project.client_review;
+    return (
+      <article className="admin-project-card compact-closed" key={project.id} style={{
+        background: "rgba(255, 255, 255, 0.02)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        padding: "16px 20px",
+        borderRadius: "20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
+              <span style={{
+                background: "rgba(118, 171, 174, 0.15)",
+                color: "#76ABAE",
+                padding: "2px 8px",
+                borderRadius: "6px",
+                fontSize: "11px",
+                fontWeight: "bold"
+              }}>
+                Lezárva
+              </span>
+            </div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+              Típus: <strong>{project.project_type}</strong> · Cégnév: <strong>{project.company || "Nincs cégnév"}</strong>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: "13px" }}>
+            <strong>{project.contact_name || "Ügyfél"}</strong>
+            {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "#76ABAE", fontSize: "12px" }}>{project.contact_email}</a> : null}
+          </div>
+        </div>
+
+        {rating ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Ügyfél értékelése:</span>
+            <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(rating)}</div>
+            {review && (
+              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+                - "{review}"
+              </span>
+            )}
+          </div>
+        ) : (
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+            Még nem érkezett értékelés az ügyféltől.
+          </div>
+        )}
+
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+          <select
+            value={project.status}
+            onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+            style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "6px", background: "#25282F", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          >
+            {allowedStatusOptions(project.status).map(([val, lbl]) => (
+              <option key={val} value={val}>{lbl}</option>
+            ))}
+          </select>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <div className="admin-dashboard">
@@ -898,7 +1090,9 @@ export function AdminDashboard() {
         </div>
       </header>
 
-      {message ? <p className="form-status" style={{ color: "#f5f5f5" }}>{message}</p> : null}
+      <OfflineBanner online={online} />
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
+      {confirmModal}
 
       <h2 className="admin-section-title">Korábbi érdeklődések</h2>
       <div className="lead-table">
@@ -1036,111 +1230,85 @@ export function AdminDashboard() {
         gap: "16px"
       }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Ügyfél alapú szűrés</h3>
-          <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Szűrd le a projekt és support táblákat egy adott ügyfélre.</p>
+          <h3 style={{ margin: 0, fontSize: "18px", color: "#fff" }}>Keresés és szűrés</h3>
+          <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>Keress projekt címre, névre, emailre, vagy szűrj egy adott ügyfélre.</p>
         </div>
-        <select
-          value={selectedClientFilter}
-          onChange={(e) => setSelectedClientFilter(e.target.value)}
-          style={{
-            minWidth: "220px",
-            padding: "10px 14px",
-            borderRadius: "12px",
-            background: "#25282F",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fff",
-            fontSize: "14px",
-            fontWeight: "bold",
-            outline: "none"
-          }}
-        >
-          <option value="all">Minden ügyfél ({uniqueClients.length})</option>
-          {uniqueClients.map((c) => (
-            <option key={c.userId} value={c.userId}>{c.name} ({c.email})</option>
-          ))}
-        </select>
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ position: "relative" }}>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Keresés…"
+              style={{
+                minWidth: "240px",
+                padding: "10px 36px 10px 14px",
+                borderRadius: "12px",
+                background: "#25282F",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fff",
+                fontSize: "14px",
+                outline: "none"
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Keresés törlése"
+                style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "16px" }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <select
+            value={selectedClientFilter}
+            onChange={(e) => setSelectedClientFilter(e.target.value)}
+            style={{
+              minWidth: "220px",
+              padding: "10px 14px",
+              borderRadius: "12px",
+              background: "#25282F",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#fff",
+              fontSize: "14px",
+              fontWeight: "bold",
+              outline: "none"
+            }}
+          >
+            <option value="all">Minden ügyfél ({uniqueClients.length})</option>
+            {uniqueClients.map((c) => (
+              <option key={c.userId} value={c.userId}>{c.name} ({c.email})</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
       <div className="admin-project-board">
         {loading ? (
+          <>
+            {[0, 1].map((i) => (
+              <div key={i} className="admin-project-card" style={{ display: "grid", gap: "16px" }}>
+                <Skeleton height={14} width="30%" />
+                <Skeleton height={28} width="60%" />
+                <Skeleton height={56} radius={16} />
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <Skeleton height={40} width={160} radius={14} />
+                  <Skeleton height={40} width={120} radius={14} />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : activeProjects.length === 0 ? (
           <div className="ticket-card">
-            <strong>Betöltés...</strong>
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div className="ticket-card">
-            <strong>Még nincs ügyfélkapus projekt.</strong>
-            <span>A regisztrált ügyfelek projektindításai itt jelennek meg.</span>
+            <strong>{searchQuery ? "Nincs találat a keresésre." : "Nincs aktív ügyfélkapus projekt."}</strong>
+            <span>{searchQuery ? "Próbálj más kulcsszót, vagy töröld a keresést." : "A regisztrált ügyfelek projektindításai itt jelennek meg. A lezárt projektek az Archív szekcióban vannak."}</span>
           </div>
         ) : (
-          filteredProjects.map((project) => {
+          activeProjects.map((project) => {
             if (project.status === "closed") {
-              const rating = project.client_rating;
-              const review = project.client_review;
-              return (
-                <article className="admin-project-card compact-closed" key={project.id} style={{
-                  background: "rgba(255, 255, 255, 0.02)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                  padding: "16px 20px",
-                  borderRadius: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px"
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
-                        <span style={{
-                          background: "rgba(118, 171, 174, 0.15)",
-                          color: "#76ABAE",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                          fontSize: "11px",
-                          fontWeight: "bold"
-                        }}>
-                          Lezárva
-                        </span>
-                      </div>
-                      <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
-                        Típus: <strong>{project.project_type}</strong> · Cégnév: <strong>{project.company || "Nincs cégnév"}</strong>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: "13px" }}>
-                      <strong>{project.contact_name || "Ügyfél"}</strong>
-                      {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "#76ABAE", fontSize: "12px" }}>{project.contact_email}</a> : null}
-                    </div>
-                  </div>
-
-                  {rating ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
-                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Ügyfél értékelése:</span>
-                      <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(rating)}</div>
-                      {review && (
-                        <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
-                          - "{review}"
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
-                      Még nem érkezett értékelés az ügyféltől.
-                    </div>
-                  )}
-
-                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                    <select
-                      value={project.status}
-                      onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-                      style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "6px", background: "#25282F", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-                    >
-                      {allowedStatusOptions(project.status).map(([val, lbl]) => (
-                        <option key={val} value={val}>{lbl}</option>
-                      ))}
-                    </select>
-                  </div>
-                </article>
-              );
+              return renderClosedProjectCard(project);
             }
 
             const brief = parseBrief(project.goals);
@@ -1293,6 +1461,19 @@ export function AdminDashboard() {
                       defaultValue={project.staging_url ?? ""}
                       onBlur={(event) => updateClientProject(project.id, { staging_url: event.target.value || null })}
                       placeholder="https://project-edge-xyz.vercel.app"
+                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
+                    />
+                  </div>
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '14px' }}>Tervezett átadás dátuma</strong>
+                      <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>Az ügyfél a státusz alatt látja</small>
+                    </div>
+                    <input
+                      type="date"
+                      defaultValue={project.estimated_deadline ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { estimated_deadline: event.target.value || null })}
                       style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
                     />
                   </div>
@@ -1519,6 +1700,29 @@ export function AdminDashboard() {
         )}
       </div>
 
+      {!loading && archivedProjects.length > 0 && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginTop: "32px", flexWrap: "wrap" }}>
+            <h2 className="admin-section-title" style={{ margin: 0 }}>
+              Archív (lezárt projektek) · {archivedProjects.length}
+            </h2>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={() => setShowArchive((v) => !v)}
+              style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)", minHeight: "auto", padding: "8px 16px", fontSize: "13px" }}
+            >
+              {showArchive ? "Elrejtés" : "Megnyitás"}
+            </button>
+          </div>
+          {showArchive && (
+            <div className="admin-project-board" style={{ marginTop: "16px" }}>
+              {archivedProjects.map((project) => renderClosedProjectCard(project))}
+            </div>
+          )}
+        </>
+      )}
+
       <h2 className="admin-section-title">Ügyfélkapus ticketek</h2>
       <div className="ticket-inbox">
         {loading ? (
@@ -1531,10 +1735,19 @@ export function AdminDashboard() {
             <span>A bejelentkezett ügyfelek kérdései itt jelennek meg.</span>
           </div>
         ) : (
-          filteredTickets.map((ticket) => (
-            <article className="ticket-card" key={ticket.id}>
+          filteredTickets.map((ticket) => {
+            const waitingMs = Date.now() - new Date(ticket.last_message_at).getTime();
+            const isStale = ticket.status === "open" && waitingMs > TICKET_STALE_MS;
+            const waitingHours = Math.floor(waitingMs / (60 * 60 * 1000));
+            return (
+            <article className="ticket-card" key={ticket.id} style={isStale ? { borderColor: "rgba(220,53,69,0.5)" } : undefined}>
               <div className="ticket-person">
                 <span className="status-pill">{ticket.status}</span>
+                {isStale && (
+                  <span style={{ background: "rgba(220,53,69,0.15)", color: "#ff8a96", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold" }}>
+                    Válaszra vár · {waitingHours} órája
+                  </span>
+                )}
                 <strong>{ticket.subject}</strong>
                 <p>{ticket.contact_name || "Ügyfél"}</p>
                 {ticket.contact_email ? <a href={`mailto:${ticket.contact_email}`}>{ticket.contact_email}</a> : null}
@@ -1583,7 +1796,8 @@ export function AdminDashboard() {
                 </button>
               </div>
             </article>
-          ))
+            );
+          })
         )}
       </div>
     </div>
