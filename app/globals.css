@@ -4040,6 +4040,31 @@ p {
   color: var(--muted);
 }
 
+/* Labelled fields in the admin control panel + offer builder */
+.admin-offer-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-field > span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.admin-field textarea {
+  min-height: 84px;
+}
+
+.admin-control-panel .admin-field textarea {
+  min-height: 96px;
+}
+
 /* Admin phase "chapter" transition */
 .chapter-in {
   animation: chapter-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;

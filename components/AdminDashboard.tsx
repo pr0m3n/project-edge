@@ -1616,24 +1616,33 @@ export function AdminDashboard() {
                       {showAll ? "Csak a fázis" : "Minden vezérlő"}
                     </button>
                   </div>
-                  <select
-                    value={project.status}
-                    onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-                  >
-                    {allowedStatusOptions(project.status).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                  <textarea
-                    defaultValue={project.next_step ?? ""}
-                    onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
-                    placeholder="Következő lépés, amit az ügyfél a dashboardban lát..."
-                  />
-                  <textarea
-                    defaultValue={project.admin_notes ?? ""}
-                    onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
-                    placeholder="Belső jegyzet, csak neked..."
-                  />
+                  <label className="admin-field">
+                    <span>Fázis (státusz)</span>
+                    <select
+                      value={project.status}
+                      onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+                    >
+                      {allowedStatusOptions(project.status).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="admin-field">
+                    <span>Következő lépés — ezt az ügyfél látja</span>
+                    <textarea
+                      defaultValue={project.next_step ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
+                      placeholder="pl. Nézd át az ajánlatot, és jelezd, ha indulhatunk."
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>Belső jegyzet — csak te látod</span>
+                    <textarea
+                      defaultValue={project.admin_notes ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
+                      placeholder="Privát emlékeztető magadnak..."
+                    />
+                  </label>
 
                   {showBuild && (
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
@@ -1819,37 +1828,55 @@ export function AdminDashboard() {
                     <span>Ajánlatépítő</span>
                     <small>{project.offer_status === "sent" ? "Elküldve" : "Vázlat"}</small>
                   </div>
-                  <div className="admin-offer-grid">
-                    <input
-                      defaultValue={project.offer_title ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_title: event.target.value })}
-                      placeholder="Ajánlat címe"
-                    />
-                    <input
-                      defaultValue={project.offer_timeline ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_timeline: event.target.value })}
-                      placeholder="Ütemezés, például: 3-5 hét"
-                    />
-                    <textarea
-                      defaultValue={project.offer_summary ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_summary: event.target.value })}
-                      placeholder="Rövid, emberi összefoglaló: mit kap és miért ez a jó irány?"
-                    />
-                    <textarea
-                      defaultValue={project.offer_scope ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_scope: event.target.value })}
-                      placeholder="Scope: oldalak, funkciók, admin, integrációk..."
-                    />
-                    <textarea
-                      defaultValue={project.offer_deliverables ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_deliverables: event.target.value })}
-                      placeholder="Tételek soronként. Példa: Egyedi főoldal&#10;Admin dashboard&#10;Supabase adatkezelés"
-                    />
-                    <textarea
-                      defaultValue={project.offer_note ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { offer_note: event.target.value })}
-                      placeholder="Megjegyzés az árhoz, fizetéshez vagy következő lépéshez..."
-                    />
+                  <div className="admin-offer-fields">
+                    <label className="admin-field">
+                      <span>Ajánlat címe</span>
+                      <input
+                        defaultValue={project.offer_title ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_title: event.target.value })}
+                        placeholder="pl. Feri weboldala – részletes ajánlat"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Ütemezés</span>
+                      <input
+                        defaultValue={project.offer_timeline ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_timeline: event.target.value })}
+                        placeholder="pl. 3–5 hét"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Rövid összefoglaló</span>
+                      <textarea
+                        defaultValue={project.offer_summary ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_summary: event.target.value })}
+                        placeholder="Mit kap az ügyfél, és miért ez a jó irány neki?"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Mit tartalmaz</span>
+                      <textarea
+                        defaultValue={project.offer_scope ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_scope: event.target.value })}
+                        placeholder="Oldalak, funkciók, admin, integrációk..."
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Tételek (soronként egy)</span>
+                      <textarea
+                        defaultValue={project.offer_deliverables ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_deliverables: event.target.value })}
+                        placeholder="Egyedi főoldal&#10;Admin dashboard&#10;Supabase adatkezelés"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Megjegyzés (opcionális)</span>
+                      <textarea
+                        defaultValue={project.offer_note ?? ""}
+                        onBlur={(event) => updateClientProject(project.id, { offer_note: event.target.value })}
+                        placeholder="Ár, fizetés vagy következő lépés megjegyzés..."
+                      />
+                    </label>
                   </div>
                   <div className="admin-price-row">
                     <label>
