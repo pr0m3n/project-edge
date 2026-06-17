@@ -271,6 +271,7 @@ export function AdminDashboard() {
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
+  const [showAllControls, setShowAllControls] = useState<Record<string, boolean>>({});
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -1042,13 +1043,17 @@ export function AdminDashboard() {
     const isAdmin = guide.who === "admin";
 
     return (
-      <div style={{
-        borderRadius: "18px",
-        padding: "18px 20px",
-        margin: "0 0 18px",
-        background: isAdmin ? "rgba(118,171,174,0.1)" : "rgba(255,255,255,0.03)",
-        border: isAdmin ? "1px solid rgba(118,171,174,0.4)" : "1px solid rgba(255,255,255,0.08)"
-      }}>
+      <div
+        key={project.status}
+        className="admin-guide chapter-in"
+        style={{
+          borderRadius: "18px",
+          padding: "18px 20px",
+          margin: "0 0 4px",
+          background: isAdmin ? "rgba(118,171,174,0.16)" : "rgba(48,56,65,0.05)",
+          border: isAdmin ? "1px solid rgba(118,171,174,0.5)" : "1px solid var(--line)"
+        }}
+      >
         <span style={{
           display: "inline-block",
           fontSize: "11px",
@@ -1058,13 +1063,13 @@ export function AdminDashboard() {
           padding: "3px 10px",
           borderRadius: "999px",
           marginBottom: "8px",
-          background: isAdmin ? "#76ABAE" : "rgba(255,255,255,0.08)",
-          color: isAdmin ? "#0E1116" : "rgba(255,255,255,0.6)"
+          background: isAdmin ? "#76ABAE" : "rgba(48,56,65,0.1)",
+          color: isAdmin ? "#0E1116" : "var(--muted)"
         }}>
           {isAdmin ? (guide.step ? `${guide.step} · Rajtad a sor` : "Rajtad a sor") : "⏳ Ügyfélre vár"}
         </span>
-        <strong style={{ display: "block", fontSize: "16px", color: "#fff", marginBottom: "4px" }}>{guide.headline}</strong>
-        <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{guide.detail}</p>
+        <strong style={{ display: "block", fontSize: "17px", color: "var(--ink)", marginBottom: "4px" }}>{guide.headline}</strong>
+        <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: 1.5 }}>{guide.detail}</p>
         {guide.actions && guide.actions.length > 0 && (
           <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
             {guide.actions.map((action) => (
@@ -1072,10 +1077,10 @@ export function AdminDashboard() {
                 key={action.label}
                 type="button"
                 className={`button ${action.variant === "secondary" ? "secondary" : "primary"}`}
-                style={{ minHeight: "auto", padding: "10px 16px", fontSize: "13px", ...(action.variant === "secondary" ? { color: "#fff", borderColor: "rgba(255,255,255,0.3)" } : {}) }}
+                style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px" }}
                 onClick={action.onClick}
               >
-                {action.label}
+                {action.variant === "secondary" ? action.label : `${action.label} →`}
               </button>
             ))}
           </div>
@@ -1438,6 +1443,13 @@ export function AdminDashboard() {
               ["Prioritás", brief["Prioritás"]]
             ].filter(([, value]) => Boolean(value));
 
+            const showAll = !!showAllControls[project.id];
+            const s = project.status;
+            const showPrepare = showAll || s === "request_received" || s === "planning";
+            const showOffer = showAll || ["request_received", "planning", "offer_sent", "deposit_pending", "contract_pending"].includes(s);
+            const showBuild = showAll || ["in_progress", "review", "launched"].includes(s);
+            const showHandover = showAll || ["review", "launched"].includes(s);
+
             return (
             <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
               {project.delete_requested && (
@@ -1520,14 +1532,14 @@ export function AdminDashboard() {
                 const logs = changeLogs[project.id] ?? [];
                 if (logs.length === 0) return null;
                 return (
-                  <section style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '18px', padding: '16px', display: 'grid', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brief változások előzménye ({logs.length})</span>
+                  <section style={{ background: 'rgba(48,56,65,0.03)', border: '1px solid var(--line)', borderRadius: '18px', padding: '16px', display: 'grid', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brief változások előzménye ({logs.length})</span>
                     <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'grid', gap: '6px', fontSize: '13px' }}>
                       {logs.map((log) => (
-                        <div key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
-                          <span style={{ color: '#76ABAE' }}>{new Date(log.changed_at).toLocaleString('hu-HU')}</span> · <strong>{log.changed_by_name}</strong> - <em>{log.field_name}:</em>
-                          <div style={{ color: 'rgba(255,255,255,0.5)', marginTop: '2px', paddingLeft: '8px' }}>
-                            <span style={{ textDecoration: 'line-through' }}>{log.old_value}</span> &rarr; <span style={{ color: '#fff' }}>{log.new_value}</span>
+                        <div key={log.id} style={{ borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                          <span style={{ color: '#5f9296' }}>{new Date(log.changed_at).toLocaleString('hu-HU')}</span> · <strong>{log.changed_by_name}</strong> - <em>{log.field_name}:</em>
+                          <div style={{ color: 'var(--muted)', marginTop: '2px', paddingLeft: '8px' }}>
+                            <span style={{ textDecoration: 'line-through' }}>{log.old_value}</span> &rarr; <span style={{ color: 'var(--ink)' }}>{log.new_value}</span>
                           </div>
                         </div>
                       ))}
@@ -1544,11 +1556,17 @@ export function AdminDashboard() {
                 ))}
               </div>
 
-              <div className="admin-project-grid">
+              <div className="admin-project-grid chapter-in" key={project.status}>
                 <section className="admin-control-panel">
                   <div className="portal-panel-head">
                     <span>Projekt irányítás</span>
-                    <small>Ügyfél ezt látja</small>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllControls((prev) => ({ ...prev, [project.id]: !prev[project.id] }))}
+                      style={{ background: "none", border: "none", color: "var(--aqua)", cursor: "pointer", fontSize: "12px", fontWeight: 700, padding: 0 }}
+                    >
+                      {showAll ? "Csak a fázis" : "Minden vezérlő"}
+                    </button>
                   </div>
                   <select
                     value={project.status}
@@ -1569,37 +1587,41 @@ export function AdminDashboard() {
                     placeholder="Belső jegyzet, csak neked..."
                   />
 
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {showBuild && (
+                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                       <strong style={{ fontSize: '14px' }}>Staging / előnézeti URL</strong>
-                      <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>Az ügyfél ezt látja a dashboardján</small>
+                      <small style={{ color: 'var(--muted)', fontSize: '11px' }}>Az ügyfél ezt látja a dashboardján</small>
                     </div>
                     <input
                       defaultValue={project.staging_url ?? ""}
                       onBlur={(event) => updateClientProject(project.id, { staging_url: event.target.value || null })}
                       placeholder="https://project-edge-xyz.vercel.app"
-                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
+                      style={{ background: 'var(--white)', border: '1px solid var(--line)', color: 'var(--ink)', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
                     />
                   </div>
+                  )}
 
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {showBuild && (
+                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                       <strong style={{ fontSize: '14px' }}>Tervezett átadás dátuma</strong>
-                      <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>Az ügyfél a státusz alatt látja</small>
+                      <small style={{ color: 'var(--muted)', fontSize: '11px' }}>Az ügyfél a státusz alatt látja</small>
                     </div>
                     <input
                       type="date"
                       defaultValue={project.estimated_deadline ?? ""}
                       onBlur={(event) => updateClientProject(project.id, { estimated_deadline: event.target.value || null })}
-                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
+                      style={{ background: 'var(--white)', border: '1px solid var(--line)', color: 'var(--ink)', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
                     />
                   </div>
+                  )}
 
                   {project.payment_status === "deposit_paid" && (
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                         <strong style={{ fontSize: '14px' }}>Végső fizetés</strong>
-                        <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                        <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
                           Hátralék: {formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")}
                         </small>
                       </div>
@@ -1624,15 +1646,18 @@ export function AdminDashboard() {
                     </div>
                   )}
 
+                  {showPrepare && (
                   <button className="button secondary" onClick={() => primeOffer(project)} type="button">
                     Ajánlat sablon előkészítése
                   </button>
+                  )}
 
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
+                  {showBuild && (
+                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
                     <strong>Kivitelezési Mérföldkövek ({project.milestones?.length || 0})</strong>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {project.milestones?.map((ms, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '8px' }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(48,56,65,0.05)', padding: '6px 10px', borderRadius: '8px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
                             <input
                               type="checkbox"
@@ -1643,7 +1668,7 @@ export function AdminDashboard() {
                                 updateClientProject(project.id, { milestones: updated });
                               }}
                             />
-                            <span style={{ textDecoration: ms.done ? 'line-through' : 'none', color: ms.done ? 'rgba(255,255,255,0.4)' : '#fff' }}>{ms.title}</span>
+                            <span style={{ textDecoration: ms.done ? 'line-through' : 'none', color: ms.done ? 'var(--muted)' : 'var(--ink)' }}>{ms.title}</span>
                           </label>
                           <button
                             type="button"
@@ -1660,7 +1685,7 @@ export function AdminDashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
-                        style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
+                        style={{ background: 'var(--white)', border: '1px solid var(--line)', color: 'var(--ink)', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
                         placeholder="Új mérföldkő..."
                         value={newMilestoneTitle[project.id] ?? ""}
                         onChange={(e) => setNewMilestoneTitle({ ...newMilestoneTitle, [project.id]: e.target.value })}
@@ -1681,12 +1706,14 @@ export function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+                  )}
 
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
+                  {showHandover && (
+                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
                     <strong>Átadási checklist ({project.handover_checklist?.length || 0})</strong>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {project.handover_checklist?.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '8px' }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(48,56,65,0.05)', padding: '6px 10px', borderRadius: '8px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
                             <input
                               type="checkbox"
@@ -1697,7 +1724,7 @@ export function AdminDashboard() {
                                 updateClientProject(project.id, { handover_checklist: updated });
                               }}
                             />
-                            <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'rgba(255,255,255,0.4)' : '#fff' }}>{item.title}</span>
+                            <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--muted)' : 'var(--ink)' }}>{item.title}</span>
                           </label>
                           <button
                             type="button"
@@ -1714,7 +1741,7 @@ export function AdminDashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
-                        style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
+                        style={{ background: 'var(--white)', border: '1px solid var(--line)', color: 'var(--ink)', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
                         placeholder="Új átadási pont..."
                         value={newHandoverTitle[project.id] ?? ""}
                         onChange={(e) => setNewHandoverTitle({ ...newHandoverTitle, [project.id]: e.target.value })}
@@ -1735,8 +1762,10 @@ export function AdminDashboard() {
                       </button>
                     </div>
                   </div>
+                  )}
                 </section>
 
+                {showOffer && (
                 <section className="admin-offer-builder">
                   <div className="portal-panel-head">
                     <span>Ajánlatépítő</span>
@@ -1802,14 +1831,15 @@ export function AdminDashboard() {
                   ) : null}
 
                   {project.client_rating && (
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '16px', fontSize: '14px' }}>
+                    <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '16px', fontSize: '14px' }}>
                       <strong style={{ color: '#76ABAE' }}>Kliens Értékelése:</strong>
                       <div style={{ fontSize: '16px', color: '#FF9800', margin: '4px 0' }}>{"★".repeat(project.client_rating)}</div>
                       {project.client_review && <p style={{ fontStyle: 'italic', margin: 0 }}>"{project.client_review}"</p>}
-                      <small style={{ color: 'rgba(255,255,255,0.5)' }}>Referencia engedélyezve: {project.reference_permitted ? "Igen" : "Nem"}</small>
+                      <small style={{ color: 'var(--muted)' }}>Referencia engedélyezve: {project.reference_permitted ? "Igen" : "Nem"}</small>
                     </div>
                   )}
                 </section>
+                )}
               </div>
             </article>
           );
