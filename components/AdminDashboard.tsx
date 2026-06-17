@@ -969,6 +969,121 @@ export function AdminDashboard() {
     );
   }
 
+  function renderProjectGuide(project: ClientProject) {
+    type GuideAction = { label: string; onClick: () => void; variant?: "primary" | "secondary" };
+    type Guide = { who: "admin" | "client"; step?: string; headline: string; detail: string; actions?: GuideAction[] };
+
+    const guides: Record<string, Guide> = {
+      request_received: {
+        who: "admin",
+        step: "1. lépés",
+        headline: "Ajánlat előkészítése",
+        detail: "Új igény érkezett. Olvasd át a briefet lent, majd egy kattintással készítsd elő az ajánlat vázát — ezután az Ajánlatépítőben tudod kitölteni.",
+        actions: [{ label: "Ajánlat vázának előkészítése", onClick: () => primeOffer(project) }]
+      },
+      planning: {
+        who: "admin",
+        step: "2. lépés",
+        headline: "Ajánlat összeállítása és küldése",
+        detail: "Töltsd ki jobb oldalt az Ajánlatépítőt (cím, ütemezés, scope, tételek, ár), majd küldd el az ügyfélnek. Elküldés után az ügyfélé a döntés.",
+        actions: [{ label: "Ajánlat elküldése az ügyfélnek", onClick: () => sendProjectOffer(project) }]
+      },
+      offer_sent: {
+        who: "client",
+        headline: "Ajánlat elfogadására vár",
+        detail: "Elküldted az ajánlatot. Az ügyfél most dönt: elfogadja, módosítást kér, vagy elutasítja. Neked most nincs teendőd — jelezni fog a rendszer, ha lépett."
+      },
+      deposit_pending: {
+        who: "client",
+        headline: "Foglaló befizetésére vár",
+        detail: "Az ügyfél elfogadta az ajánlatot. Most a foglaló (előleg) befizetésére vársz. Amint befizette, a szerződés következik."
+      },
+      contract_pending: {
+        who: "client",
+        headline: "Szerződés aláírására vár",
+        detail: "A foglaló rendben. Az ügyfél a szerződés elfogadására vár — amint aláírta, automatikusan indul a fejlesztési szakasz."
+      },
+      in_progress: {
+        who: "admin",
+        step: "3. lépés",
+        headline: "Fejlesztés",
+        detail: "Folyik a munka. Frissítsd a mérföldköveket, oszd meg a staging (előnézeti) linket és a tervezett átadás dátumát. Ha kész egy átnézhető verzió, küldd átnézésre.",
+        actions: [{ label: "Küldés átnézésre", onClick: () => updateClientProject(project.id, { status: "review", next_step: "Elkészült egy átnézhető verzió. Kérlek nézd át, és jelezd a visszajelzésed." }) }]
+      },
+      review: {
+        who: "client",
+        headline: "Átnézésre és visszajelzésre vár",
+        detail: "Az ügyfél átnézi a munkát (max 2 visszajelzési kör). Ha javítottad a kért módosításokat, küldd vissza átnézésre — vagy ha minden rendben, élesítsd az oldalt.",
+        actions: [
+          { label: "Élesítés (kész)", onClick: () => updateClientProject(project.id, { status: "launched", next_step: "Elkészült és élesítettük az oldalt! Köszönjük a bizalmat." }) },
+          { label: "Vissza fejlesztésre", variant: "secondary", onClick: () => updateClientProject(project.id, { status: "in_progress", next_step: "A visszajelzésed alapján dolgozom a kért módosításokon." }) }
+        ]
+      },
+      launched: {
+        who: "admin",
+        step: "4. lépés",
+        headline: "Átadás és zárás",
+        detail: "Az oldal él. Töltsd ki az átadási checklistet, és jelöld a végső fizetést, ha beérkezett. Az ügyfél ezután dönt a karbantartásról, ami lezárja a projektet.",
+      },
+      paused: {
+        who: "admin",
+        headline: "A projekt szünetel",
+        detail: "A fenti státusz-választóval tudod újraindítani (Kivitelezés vagy Átnézés), ha folytatódik a munka."
+      },
+      deletion_pending: {
+        who: "admin",
+        headline: "Törlési kérelem elbírálása",
+        detail: "Az ügyfél törlést kért. A fenti piros sávban tudod jóváhagyni (végleges törlés) vagy elutasítani (visszaáll az előző fázisba)."
+      }
+    };
+
+    const guide = guides[project.status];
+    if (!guide) return null;
+    const isAdmin = guide.who === "admin";
+
+    return (
+      <div style={{
+        borderRadius: "18px",
+        padding: "18px 20px",
+        margin: "0 0 18px",
+        background: isAdmin ? "rgba(118,171,174,0.1)" : "rgba(255,255,255,0.03)",
+        border: isAdmin ? "1px solid rgba(118,171,174,0.4)" : "1px solid rgba(255,255,255,0.08)"
+      }}>
+        <span style={{
+          display: "inline-block",
+          fontSize: "11px",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          padding: "3px 10px",
+          borderRadius: "999px",
+          marginBottom: "8px",
+          background: isAdmin ? "#76ABAE" : "rgba(255,255,255,0.08)",
+          color: isAdmin ? "#0E1116" : "rgba(255,255,255,0.6)"
+        }}>
+          {isAdmin ? (guide.step ? `${guide.step} · Rajtad a sor` : "Rajtad a sor") : "⏳ Ügyfélre vár"}
+        </span>
+        <strong style={{ display: "block", fontSize: "16px", color: "#fff", marginBottom: "4px" }}>{guide.headline}</strong>
+        <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{guide.detail}</p>
+        {guide.actions && guide.actions.length > 0 && (
+          <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
+            {guide.actions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className={`button ${action.variant === "secondary" ? "secondary" : "primary"}`}
+                style={{ minHeight: "auto", padding: "10px 16px", fontSize: "13px", ...(action.variant === "secondary" ? { color: "#fff", borderColor: "rgba(255,255,255,0.3)" } : {}) }}
+                onClick={action.onClick}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="admin-dashboard">
       <header className="admin-header">
@@ -1355,6 +1470,8 @@ export function AdminDashboard() {
                   <span>{project.company || "Nincs cégnév"}</span>
                 </div>
               </header>
+
+              {renderProjectGuide(project)}
 
               <div className="admin-project-facts">
                 <div>
