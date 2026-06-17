@@ -3976,6 +3976,70 @@ p {
   line-height: 1.6;
 }
 
+/* Admin single-project wizard: project switcher tabs (on dark page) */
+.admin-project-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-project-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 245, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font: inherit;
+}
+
+.admin-project-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.admin-project-tab.active {
+  background: var(--aqua);
+  border-color: var(--aqua);
+  color: #0e1116;
+}
+
+.admin-project-tab-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-project-tab-phase {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* Admin wizard navigation bar (inside the light project card) */
+.admin-wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 4px;
+}
+
+.admin-wizard-step {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
 /* Admin phase "chapter" transition */
 .chapter-in {
   animation: chapter-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;

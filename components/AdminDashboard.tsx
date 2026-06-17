@@ -272,6 +272,7 @@ export function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [showAllControls, setShowAllControls] = useState<Record<string, boolean>>({});
+  const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -329,6 +330,9 @@ export function AdminDashboard() {
     () => filteredProjects.filter((p) => p.status === "closed"),
     [filteredProjects]
   );
+
+  const wizardProject =
+    activeProjects.find((p) => p.id === wizardProjectId) ?? activeProjects[0] ?? null;
 
   const filteredTickets = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -970,6 +974,45 @@ export function AdminDashboard() {
     );
   }
 
+  // Forward step labels + the proper side-effecting transition per phase.
+  const wizardNextLabel: Record<string, string> = {
+    request_received: "Ajánlat előkészítése",
+    planning: "Ajánlat elküldése",
+    offer_sent: "Tovább: Foglaló fázis",
+    deposit_pending: "Tovább: Szerződés fázis",
+    contract_pending: "Fejlesztés indítása",
+    in_progress: "Küldés átnézésre",
+    review: "Élesítés"
+  };
+
+  function wizardNext(project: ClientProject) {
+    switch (project.status) {
+      case "request_received":
+        primeOffer(project);
+        break;
+      case "planning":
+        sendProjectOffer(project);
+        break;
+      case "offer_sent":
+        updateClientProject(project.id, { status: "deposit_pending" });
+        break;
+      case "deposit_pending":
+        updateClientProject(project.id, { status: "contract_pending" });
+        break;
+      case "contract_pending":
+        updateClientProject(project.id, { status: "in_progress", next_step: "Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást." });
+        break;
+      case "in_progress":
+        updateClientProject(project.id, { status: "review", next_step: "Elkészült egy átnézhető verzió. Kérlek nézd át, és jelezd a visszajelzésed." });
+        break;
+      case "review":
+        updateClientProject(project.id, { status: "launched", next_step: "Elkészült és élesítettük az oldalt! Köszönjük a bizalmat." });
+        break;
+      default:
+        break;
+    }
+  }
+
   function renderProjectGuide(project: ClientProject) {
     type GuideAction = { label: string; onClick: () => void; variant?: "primary" | "secondary" };
     type Guide = { who: "admin" | "client"; step?: string; headline: string; detail: string; actions?: GuideAction[] };
@@ -1070,21 +1113,6 @@ export function AdminDashboard() {
         </span>
         <strong style={{ display: "block", fontSize: "17px", color: "var(--ink)", marginBottom: "4px" }}>{guide.headline}</strong>
         <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: 1.5 }}>{guide.detail}</p>
-        {guide.actions && guide.actions.length > 0 && (
-          <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
-            {guide.actions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className={`button ${action.variant === "secondary" ? "secondary" : "primary"}`}
-                style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px" }}
-                onClick={action.onClick}
-              >
-                {action.variant === "secondary" ? action.label : `${action.label} →`}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
@@ -1405,6 +1433,26 @@ export function AdminDashboard() {
       </div>
 
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
+
+      {!loading && activeProjects.length > 0 && (
+        <div className="admin-project-switcher">
+          {activeProjects.map((project) => {
+            const isActive = wizardProject?.id === project.id;
+            return (
+              <button
+                key={project.id}
+                type="button"
+                className={`admin-project-tab ${isActive ? "active" : ""}`}
+                onClick={() => setWizardProjectId(project.id)}
+              >
+                <span className="admin-project-tab-title">{project.title}</span>
+                <span className="admin-project-tab-phase">{projectStatusLabel[project.status] ?? project.status}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="admin-project-board">
         {loading ? (
           <>
@@ -1426,7 +1474,7 @@ export function AdminDashboard() {
             <span>{searchQuery ? "Próbálj más kulcsszót, vagy töröld a keresést." : "A regisztrált ügyfelek projektindításai itt jelennek meg. A lezárt projektek az Archív szekcióban vannak."}</span>
           </div>
         ) : (
-          activeProjects.map((project) => {
+          (wizardProject ? [wizardProject] : []).map((project) => {
             if (project.status === "closed") {
               return renderClosedProjectCard(project);
             }
@@ -1841,6 +1889,38 @@ export function AdminDashboard() {
                 </section>
                 )}
               </div>
+
+              {(() => {
+                const idx = projectFlow.findIndex(([v]) => v === project.status);
+                if (idx === -1) return null;
+                const prev = idx > 0 ? projectFlow[idx - 1] : null;
+                const nextLabel = wizardNextLabel[project.status];
+                return (
+                  <div className="admin-wizard-nav">
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={!prev}
+                      style={{ minHeight: "auto", padding: "10px 16px", fontSize: "13px", opacity: prev ? 1 : 0.4 }}
+                      onClick={() => prev && updateClientProject(project.id, { status: prev[0] })}
+                    >
+                      ← {prev ? prev[1] : "Első fázis"}
+                    </button>
+                    <span className="admin-wizard-step">
+                      {idx + 1} / {projectFlow.length} · {projectFlow[idx][1]}
+                    </span>
+                    <button
+                      type="button"
+                      className="button primary"
+                      disabled={!nextLabel}
+                      style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px", opacity: nextLabel ? 1 : 0.4 }}
+                      onClick={() => nextLabel && wizardNext(project)}
+                    >
+                      {nextLabel ? `${nextLabel} →` : "Utolsó fázis"}
+                    </button>
+                  </div>
+                );
+              })()}
             </article>
           );
           })
