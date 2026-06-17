@@ -83,6 +83,9 @@ type ClientProject = {
   client_rating: number | null;
   client_review: string | null;
   reference_permitted: boolean;
+  staging_url: string | null;
+  final_payment_paid: boolean;
+  final_payment_paid_at: string | null;
 };
 
 type ClientTicket = {
@@ -128,6 +131,26 @@ const projectStatuses = [
 ];
 
 const projectStatusLabel = Object.fromEntries(projectStatuses);
+
+// Melyik státuszból hova lehet lépni (kényszer)
+const allowedNextStatuses: Record<string, string[]> = {
+  request_received: ["planning", "paused", "closed"],
+  planning:         ["offer_sent", "request_received", "paused", "closed"],
+  offer_sent:       ["deposit_pending", "planning", "paused", "closed"],
+  deposit_pending:  ["contract_pending", "offer_sent"],
+  contract_pending: ["in_progress", "deposit_pending"],
+  in_progress:      ["review", "paused"],
+  review:           ["in_progress", "launched"],
+  launched:         ["closed"],
+  paused:           ["in_progress", "review", "closed"],
+  closed:           ["in_progress"],
+  deletion_pending: ["planning", "closed"]
+};
+
+function allowedStatusOptions(current: string) {
+  const allowed = allowedNextStatuses[current] ?? [];
+  return projectStatuses.filter(([val]) => val === current || allowed.includes(val));
+}
 
 const projectFlow = [
   ["request_received", "Igény"],
@@ -1111,7 +1134,7 @@ export function AdminDashboard() {
                       onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
                       style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "6px", background: "#25282F", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
                     >
-                      {projectStatuses.map(([val, lbl]) => (
+                      {allowedStatusOptions(project.status).map(([val, lbl]) => (
                         <option key={val} value={val}>{lbl}</option>
                       ))}
                     </select>
@@ -1246,7 +1269,7 @@ export function AdminDashboard() {
                     value={project.status}
                     onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
                   >
-                    {projectStatuses.map(([value, label]) => (
+                    {allowedStatusOptions(project.status).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
@@ -1260,6 +1283,49 @@ export function AdminDashboard() {
                     onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
                     placeholder="Belső jegyzet, csak neked..."
                   />
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '14px' }}>Staging / előnézeti URL</strong>
+                      <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>Az ügyfél ezt látja a dashboardján</small>
+                    </div>
+                    <input
+                      defaultValue={project.staging_url ?? ""}
+                      onBlur={(event) => updateClientProject(project.id, { staging_url: event.target.value || null })}
+                      placeholder="https://project-edge-xyz.vercel.app"
+                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '12px', fontSize: '13px' }}
+                    />
+                  </div>
+
+                  {project.payment_status === "deposit_paid" && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '14px' }}>Végső fizetés</strong>
+                        <small style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                          Hátralék: {formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")}
+                        </small>
+                      </div>
+                      {project.final_payment_paid ? (
+                        <div style={{ background: 'rgba(118,171,174,0.1)', border: '1px solid rgba(118,171,174,0.2)', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', color: '#76ABAE' }}>
+                          ✓ Végső fizetés beérkezett — {project.final_payment_paid_at ? new Date(project.final_payment_paid_at).toLocaleDateString('hu-HU') : ''}
+                        </div>
+                      ) : (
+                        <button
+                          className="button secondary"
+                          type="button"
+                          style={{ color: '#76ABAE', borderColor: 'rgba(118,171,174,0.3)', fontSize: '13px', minHeight: 'auto', padding: '10px 16px' }}
+                          onClick={() => updateClientProject(project.id, {
+                            final_payment_paid: true,
+                            final_payment_paid_at: new Date().toISOString(),
+                            payment_status: "fully_paid"
+                          })}
+                        >
+                          Végső fizetés beérkezett ✓
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   <button className="button secondary" onClick={() => primeOffer(project)} type="button">
                     Ajánlat sablon előkészítése
                   </button>

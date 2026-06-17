@@ -4,7 +4,7 @@ import { SupportWidget } from "@/components/SupportWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ProjectEdge | Premium weboldalak es digitális rendszerek",
+  title: "ProjectEdge | Prémium weboldalak és digitális rendszerek",
   description:
     "ProjectEdge prémium weboldalakat, ügyfélkapukat és üzleti admin felületeket épít növekedésre kész vállalkozásoknak.",
   metadataBase: new URL("https://www.projectedge.hu"),
@@ -15,7 +15,22 @@ export const metadata: Metadata = {
     url: "https://www.projectedge.hu",
     siteName: "ProjectEdge",
     locale: "hu_HU",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "ProjectEdge – Prémium weboldalak és digitális rendszerek"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ProjectEdge | Weboldalak, amelyek üzletet építenek",
+    description:
+      "Egyedi weboldal készítés, ügyfél dashboard, admin rendszerek és Supabase alapú üzleti automatizáció.",
+    images: ["/og-image.png"]
   }
 };
 

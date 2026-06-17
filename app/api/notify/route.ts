@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       emailLog = "No target email provided, skipped sending email.";
     }
     
-    return NextResponse.json({ success: true, emailSent, emailLog });
+    return NextResponse.json({ success: true, emailSent });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

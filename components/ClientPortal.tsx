@@ -60,6 +60,9 @@ type Project = {
   client_rating: number | null;
   client_review: string | null;
   reference_permitted: boolean;
+  staging_url: string | null;
+  final_payment_paid: boolean;
+  final_payment_paid_at: string | null;
 };
 
 type Ticket = {
@@ -176,6 +179,15 @@ const priorityLabels: Record<string, string> = {
   scalable: "Később bővíthető rendszer",
   speed: "Gyors indulás"
 };
+
+function escHtml(value: string | null | undefined) {
+  return (value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function splitLines(value: string | null) {
   return (value ?? "")
@@ -464,7 +476,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         return;
       }
 
-      loadPortal();
+      loadPortal(false, sessionUser.id);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -477,7 +489,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           return;
         }
 
-        loadPortal();
+        loadPortal(false, sessionUser.id);
       } else {
         setProjects([]);
         setTickets([]);
@@ -559,11 +571,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     };
   }, [userId]);
 
-  async function loadPortal(silent = false) {
+  async function loadPortal(silent = false, uid?: string) {
     if (!silent) {
       setLoading(true);
     }
 
+    const resolvedUid = uid ?? userId;
     const [
       { data: projectData, error: projectError },
       { data: ticketData, error: ticketError },
@@ -572,7 +585,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     ] = await Promise.all([
       supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
       supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }),
-      supabase.from("client_profiles").select("full_name").eq("id", userId).maybeSingle(),
+      resolvedUid
+        ? supabase.from("client_profiles").select("full_name").eq("id", resolvedUid).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
       supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20)
     ]);
 
@@ -721,7 +736,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       budget: projectForm.budget,
       company: projectForm.company || null,
       contact_email: email,
-      contact_name: authForm.name || email,
+      contact_name: profileName || email,
       goals: detailedGoals,
       project_type: projectForm.projectType,
       title: projectForm.title,
@@ -943,7 +958,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     await supabase.from("client_tickets").insert({
       user_id: userId,
       project_id: project.id,
-      contact_name: authForm.name || email,
+      contact_name: profileName || email,
       contact_email: email,
       subject: `${project.title} - Ajánlat módosítási igény`
     }).select().single().then(async ({ data: ticket }) => {
@@ -1102,7 +1117,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     await supabase.from("client_tickets").insert({
       user_id: userId,
       project_id: project.id,
-      contact_name: authForm.name || email,
+      contact_name: profileName || email,
       contact_email: email,
       subject: `${project.title} - ${nextRound}. kör visszajelzés`
     }).select().single().then(async ({ data: ticket }) => {
@@ -1142,7 +1157,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: option,
       status: "closed",
-      payment_status: "fully_paid",
       next_step: "Projekt sikeresen lezárva. Köszönjük az együttműködést!"
     }).eq("id", project.id);
     if (error) {
@@ -1241,7 +1255,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       .from("client_tickets")
       .insert({
         contact_email: email,
-        contact_name: authForm.name || email,
+        contact_name: profileName || email,
         project_id: ticketForm.projectId || null,
         subject: ticketForm.subject,
         user_id: userId
@@ -1646,43 +1660,30 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <button className="button secondary" type="button" onClick={() => {
                 const win = window.open("", "_blank");
                 if (win) {
-                  win.document.write(`
-                    <html>
-                      <head>
-                        <title>Szerződés - ${project.title}</title>
-                        <style>
-                          body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-                          h1, h2, h3 { color: #111; }
-                          .signature { margin-top: 50px; display: flex; justify-content: space-between; }
-                        </style>
-                      </head>
-                      <body>
-                        <h2 style="text-align: center;">VÁLLALKOZÁSI SZERZŐDÉS</h2>
-                        <p>Kelt: ${new Date().toLocaleDateString('hu-HU')}</p>
-                        <p><strong>Vállalkozó:</strong> ProjectEdge Digital Build Studio</p>
-                        <p><strong>Megrendelő:</strong> ${project.company || "Megrendelő"} (${project.contact_name}, ${project.contact_email})</p>
-                        <hr/>
-                        <h3>1. A szerződés tárgya</h3>
-                        <p>Megrendelő megrendeli a Vállalkozótól a "${project.title}" elnevezésű weboldalt / digitális rendszert.</p>
-                        <h3>2. Scope és funkciók</h3>
-                        <p>${(project.offer_scope || "Egyedi weboldal").replace(/\n/g, '<br/>')}</p>
-                        <h3>3. Határidő és ütemezés</h3>
-                        <p>${project.offer_timeline || "Megállapodás szerint."}</p>
-                        <h3>4. Vállalkozói díj</h3>
-                        <p>Összesen: ${formatPrice(project.offer_price, project.offer_currency || "Ft")}</p>
-                        <p>Kifizetett foglaló: ${formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</p>
-                        <p>Hátralék: ${formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")}</p>
-                        <div class="signature">
-                          <div>Vállalkozó: ProjectEdge</div>
-                          <div>Megrendelő: Digitálisan elfogadva</div>
-                        </div>
-                        <script>window.print();</script>
-                      </body>
-                    </html>
-                  `);
+                  const scopeHtml = escHtml(project.offer_scope || "Egyedi weboldal").replace(/\n/g, "<br/>");
+                  win.document.write(
+                    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Szerződés – ${escHtml(project.title)}</title>` +
+                    `<style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6}h1,h2,h3{color:#111}.signature{margin-top:50px;display:flex;justify-content:space-between}</style></head>` +
+                    `<body>` +
+                    `<h2 style="text-align:center">VÁLLALKOZÁSI SZERZŐDÉS</h2>` +
+                    `<p>Kelt: ${new Date().toLocaleDateString("hu-HU")}</p>` +
+                    `<p><strong>Vállalkozó:</strong> ProjectEdge Digital Build Studio</p>` +
+                    `<p><strong>Megrendelő:</strong> ${escHtml(project.company || "Megrendelő")} (${escHtml(project.contact_name)}, ${escHtml(project.contact_email)})</p>` +
+                    `<hr/>` +
+                    `<h3>1. A szerződés tárgya</h3>` +
+                    `<p>Megrendelő megrendeli a Vállalkozótól a &ldquo;${escHtml(project.title)}&rdquo; elnevezésű weboldalt / digitális rendszert.</p>` +
+                    `<h3>2. Scope és funkciók</h3><p>${scopeHtml}</p>` +
+                    `<h3>3. Határidő és ütemezés</h3><p>${escHtml(project.offer_timeline || "Megállapodás szerint.")}</p>` +
+                    `<h3>4. Vállalkozói díj</h3>` +
+                    `<p>Összesen: ${escHtml(formatPrice(project.offer_price, project.offer_currency || "Ft"))}</p>` +
+                    `<p>Kifizetett foglaló: ${escHtml(formatPrice(project.deposit_amount, project.offer_currency || "Ft"))}</p>` +
+                    `<p>Hátralék: ${escHtml(formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft"))}</p>` +
+                    `<div class="signature"><div>Vállalkozó: ProjectEdge</div><div>Megrendelő: Digitálisan elfogadva</div></div>` +
+                    `<script>window.print();<\/script></body></html>`
+                  );
                   win.document.close();
                 }
-              }}>Szerződés letöltése / Nyomtatása</button>
+              }}>Szerződés nyomtatása</button>
             </div>
 
             <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px' }}>
@@ -1693,6 +1694,24 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <button className="button primary" disabled={!contractChecked} type="button" onClick={() => acceptContract(project)}>
               Szerződés elfogadása & Kivitelezés indítása
             </button>
+          </div>
+        )}
+
+        {project.staging_url && (project.status === "in_progress" || project.status === "review") && (
+          <div style={{ background: 'rgba(118, 171, 174, 0.06)', border: '1px solid rgba(118, 171, 174, 0.2)', padding: '16px 20px', borderRadius: '18px', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>Előnézeti link</span>
+              <span style={{ fontSize: '13px', color: 'var(--ink)' }}>Az aktuális fejlesztési verzió — még nem éles.</span>
+            </div>
+            <a
+              href={project.staging_url}
+              target="_blank"
+              rel="noreferrer"
+              className="button primary"
+              style={{ fontSize: '13px', minHeight: 'auto', padding: '10px 18px', whiteSpace: 'nowrap' }}
+            >
+              Előnézet megnyitása →
+            </a>
           </div>
         )}
 
@@ -1768,6 +1787,24 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               </div>
             )}
             
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>Végső fizetés (70%)</span>
+                {project.final_payment_paid ? (
+                  <span style={{ fontWeight: '700', color: '#76ABAE', fontSize: '14px' }}>
+                    Befizetve — köszönjük!
+                    {project.final_payment_paid_at && (
+                      <span style={{ fontWeight: '400', color: 'var(--muted)', marginLeft: '8px', fontSize: '12px' }}>
+                        {new Date(project.final_payment_paid_at).toLocaleDateString("hu-HU")}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span style={{ fontWeight: '700', color: '#FF9800', fontSize: '14px' }}>Függőben — hamarosan kapod a számlát</span>
+                )}
+              </div>
+            </div>
+
             <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px', display: 'grid', gap: '8px' }}>
               <strong>Karbantartási és támogatási ajánlat:</strong>
               <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.4', color: 'var(--muted)' }}>Havonta figyeljük az oldal sebességét, kezeljük a frissítéseket, mentéseket, és 1 óra fejlesztési keretet biztosítunk.</p>
@@ -2024,7 +2061,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <p>Projektindítás, státusz, support és előzmények egyetlen privát felületen.</p>
         </div>
         <div className="portal-user-chip">
-          <span>{email}</span>
+          <span>{profileName || email}</span>
           <button onClick={signOut} type="button">Kilépés</button>
         </div>
       </header>
