@@ -4065,19 +4065,75 @@ p {
   min-height: 96px;
 }
 
-/* Admin phase "chapter" transition */
+/* Admin phase "chapter"/window transition — slides the next window in */
 .chapter-in {
-  animation: chapter-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: chapter-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes chapter-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(40px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
+  }
+}
+
+/* Single-column focused wizard stage (no more two-column jumping) */
+.admin-project-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Collapsible "Brief / details / advanced" blocks inside the wizard card */
+.admin-collapse {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(245, 245, 245, 0.5);
+  overflow: hidden;
+}
+
+.admin-collapse > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-collapse > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapse > summary::before {
+  content: "▸";
+  color: var(--aqua);
+  transition: transform 0.2s ease;
+}
+
+.admin-collapse[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.admin-collapse > summary + * {
+  padding: 0 18px 18px;
+}
+
+.admin-collapse[open] {
+  animation: chapter-fade 0.3s ease both;
+}
+
+@keyframes chapter-fade {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
   }
 }
 

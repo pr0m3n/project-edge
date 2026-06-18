@@ -1534,6 +1534,9 @@ export function AdminDashboard() {
 
               {renderProjectGuide(project)}
 
+              <details className="admin-collapse">
+                <summary>Brief és részletek megtekintése</summary>
+                <div style={{ display: "grid", gap: "16px" }}>
               <div className="admin-project-facts">
                 <div>
                   <span>Típus</span>
@@ -1596,6 +1599,8 @@ export function AdminDashboard() {
                   </section>
                 );
               })()}
+                </div>
+              </details>
 
               <div className="admin-workflow" aria-label="Projekt folyamat">
                 {projectFlow.map(([value, label]) => (
@@ -1617,33 +1622,38 @@ export function AdminDashboard() {
                       {showAll ? "Csak a fázis" : "Minden vezérlő"}
                     </button>
                   </div>
-                  <label className="admin-field">
-                    <span>Fázis (státusz)</span>
-                    <select
-                      value={project.status}
-                      onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-                    >
-                      {allowedStatusOptions(project.status).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="admin-field">
-                    <span>Következő lépés — ezt az ügyfél látja</span>
-                    <textarea
-                      defaultValue={project.next_step ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
-                      placeholder="pl. Nézd át az ajánlatot, és jelezd, ha indulhatunk."
-                    />
-                  </label>
-                  <label className="admin-field">
-                    <span>Belső jegyzet — csak te látod</span>
-                    <textarea
-                      defaultValue={project.admin_notes ?? ""}
-                      onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
-                      placeholder="Privát emlékeztető magadnak..."
-                    />
-                  </label>
+                  <details className="admin-collapse">
+                    <summary>Haladó: kézi státusz, üzenet az ügyfélnek, belső jegyzet</summary>
+                    <div style={{ display: "grid", gap: "12px" }}>
+                      <label className="admin-field">
+                        <span>Fázis (kézi átállítás)</span>
+                        <select
+                          value={project.status}
+                          onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+                        >
+                          {allowedStatusOptions(project.status).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="admin-field">
+                        <span>Következő lépés — ezt az ügyfél látja</span>
+                        <textarea
+                          defaultValue={project.next_step ?? ""}
+                          onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value })}
+                          placeholder="A Tovább gomb automatikusan kitölti — itt felülírhatod."
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Belső jegyzet — csak te látod</span>
+                        <textarea
+                          defaultValue={project.admin_notes ?? ""}
+                          onBlur={(event) => updateClientProject(project.id, { admin_notes: event.target.value })}
+                          placeholder="Privát emlékeztető magadnak..."
+                        />
+                      </label>
+                    </div>
+                  </details>
 
                   {showBuild && (
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
@@ -1937,15 +1947,36 @@ export function AdminDashboard() {
                     <span className="admin-wizard-step">
                       {idx + 1} / {projectFlow.length} · {projectFlow[idx][1]}
                     </span>
-                    <button
-                      type="button"
-                      className="button primary"
-                      disabled={!nextLabel}
-                      style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px", opacity: nextLabel ? 1 : 0.4 }}
-                      onClick={() => nextLabel && wizardNext(project)}
-                    >
-                      {nextLabel ? `${nextLabel} →` : "Utolsó fázis"}
-                    </button>
+                    {project.status === "launched" ? (
+                      <button
+                        type="button"
+                        className="button primary"
+                        style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px" }}
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Projekt lezárása",
+                            message: "Lezárod a projektet? Az ügyfélnél „Lezárva" állapotba kerül, és az Archívba kerül. Értékelést ezután is adhat.",
+                            confirmLabel: "Igen, lezárom",
+                            cancelLabel: "Mégse"
+                          });
+                          if (ok) {
+                            updateClientProject(project.id, { status: "closed", next_step: "Projekt sikeresen lezárva. Köszönjük az együttműködést!" });
+                          }
+                        }}
+                      >
+                        Projekt lezárása ✓
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button primary"
+                        disabled={!nextLabel}
+                        style={{ minHeight: "auto", padding: "10px 18px", fontSize: "13px", opacity: nextLabel ? 1 : 0.4 }}
+                        onClick={() => nextLabel && wizardNext(project)}
+                      >
+                        {nextLabel ? `${nextLabel} →` : "Utolsó fázis"}
+                      </button>
+                    )}
                   </div>
                 );
               })()}
