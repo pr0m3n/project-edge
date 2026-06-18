@@ -1955,7 +1955,7 @@ export function AdminDashboard() {
                         onClick={async () => {
                           const ok = await confirm({
                             title: "Projekt lezárása",
-                            message: "Lezárod a projektet? Az ügyfélnél „Lezárva" állapotba kerül, és az Archívba kerül. Értékelést ezután is adhat.",
+                            message: "Lezárod a projektet? Az ügyfélnél Lezárva állapotba kerül, és az Archívba kerül. Értékelést ezután is adhat.",
                             confirmLabel: "Igen, lezárom",
                             cancelLabel: "Mégse"
                           });
