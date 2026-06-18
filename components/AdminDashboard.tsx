@@ -273,6 +273,7 @@ export function AdminDashboard() {
   const [showArchive, setShowArchive] = useState(false);
   const [showAllControls, setShowAllControls] = useState<Record<string, boolean>>({});
   const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
+  const [showClosedTickets, setShowClosedTickets] = useState(false);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -1977,19 +1978,37 @@ export function AdminDashboard() {
         </>
       )}
 
-      <h2 className="admin-section-title">Ügyfélkapus ticketek</h2>
-      <div className="ticket-inbox">
+      {(() => {
+        const openTickets = filteredTickets.filter((t) => t.status !== "closed");
+        const closedCount = filteredTickets.length - openTickets.length;
+        const visibleTickets = showClosedTickets ? filteredTickets : openTickets;
+        return (
+      <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <h2 className="admin-section-title" style={{ margin: 0 }}>Ügyfélkapus ticketek</h2>
+        {closedCount > 0 && (
+          <button
+            type="button"
+            className="button ghost"
+            onClick={() => setShowClosedTickets((v) => !v)}
+            style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)", minHeight: "auto", padding: "8px 16px", fontSize: "13px" }}
+          >
+            {showClosedTickets ? `Lezártak elrejtése (${closedCount})` : `Lezártak mutatása (${closedCount})`}
+          </button>
+        )}
+      </div>
+      <div className="ticket-inbox" style={{ marginTop: "16px" }}>
         {loading ? (
           <div className="ticket-card">
             <strong>Betöltés...</strong>
           </div>
-        ) : filteredTickets.length === 0 ? (
+        ) : visibleTickets.length === 0 ? (
           <div className="ticket-card">
-            <strong>Még nincs ügyfélkapus ticket.</strong>
-            <span>A bejelentkezett ügyfelek kérdései itt jelennek meg.</span>
+            <strong>{filteredTickets.length === 0 ? "Még nincs ügyfélkapus ticket." : "Nincs nyitott ticket."}</strong>
+            <span>{filteredTickets.length === 0 ? "A bejelentkezett ügyfelek kérdései itt jelennek meg." : "Minden ticket lezárva. A lezártakat a fenti gombbal nézheted meg."}</span>
           </div>
         ) : (
-          filteredTickets.map((ticket) => {
+          visibleTickets.map((ticket) => {
             const waitingMs = Date.now() - new Date(ticket.last_message_at).getTime();
             const isStale = ticket.status === "open" && waitingMs > TICKET_STALE_MS;
             const waitingHours = Math.floor(waitingMs / (60 * 60 * 1000));
@@ -2031,29 +2050,39 @@ export function AdminDashboard() {
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
-                <textarea
-                  value={clientTicketReplies[ticket.id] ?? ""}
-                  onChange={(event) =>
-                    setClientTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
-                  }
-                  disabled={ticket.status === "closed"}
-                  placeholder={ticket.status === "closed" ? "Ez a ticket lezárva." : "Válasz az ügyfélkapuba..."}
-                  style={{ minHeight: 110 }}
-                />
-                <button
-                  className="button primary admin-reply-button"
-                  onClick={() => sendClientTicketReply(ticket.id)}
-                  type="button"
-                  disabled={ticket.status === "closed" || !clientTicketReplies[ticket.id]?.trim()}
-                >
-                  Válasz küldése
-                </button>
+                {ticket.status === "closed" ? (
+                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>
+                    Lezárva. Ha újra kell nyitni, állítsd „Nyitott"-ra fent.
+                  </p>
+                ) : (
+                  <>
+                    <textarea
+                      value={clientTicketReplies[ticket.id] ?? ""}
+                      onChange={(event) =>
+                        setClientTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
+                      }
+                      placeholder="Válasz az ügyfélkapuba..."
+                      style={{ minHeight: 110 }}
+                    />
+                    <button
+                      className="button primary admin-reply-button"
+                      onClick={() => sendClientTicketReply(ticket.id)}
+                      type="button"
+                      disabled={!clientTicketReplies[ticket.id]?.trim()}
+                    >
+                      Válasz küldése
+                    </button>
+                  </>
+                )}
               </div>
             </article>
             );
           })
         )}
       </div>
+      </>
+        );
+      })()}
     </div>
   );
 }

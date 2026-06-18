@@ -2813,17 +2813,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         </div>
                       ))}
                     </div>
-                    <form className="portal-reply" onSubmit={sendReply}>
-                      <textarea
-                        disabled={activeTicket.status === "closed"}
-                        value={reply}
-                        onChange={(event) => setReply(event.target.value)}
-                        placeholder={activeTicket.status === "closed" ? "Ez a ticket lezárva." : "Válasz írása..."}
-                      />
-                      <button className="button primary" disabled={activeTicket.status === "closed"} type="submit">
-                        Küldés
-                      </button>
-                    </form>
+                    {activeTicket.status !== "closed" && (
+                      <form className="portal-reply" onSubmit={sendReply}>
+                        <textarea
+                          value={reply}
+                          onChange={(event) => setReply(event.target.value)}
+                          placeholder="Válasz írása..."
+                        />
+                        <button className="button primary" type="submit">
+                          Küldés
+                        </button>
+                      </form>
+                    )}
+                    {activeTicket.status === "closed" ? (
+                      <div style={{ textAlign: "center", color: "var(--muted)", fontSize: "13px", padding: "8px 0" }}>
+                        Ez a ticket lezárva — új kérdéshez nyiss új ticketet.
+                      </div>
+                    ) : null}
                     {activeTicket.status === "closed" ? (
                       <form className="portal-rating" onSubmit={submitTicketRating}>
                         <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
@@ -2973,23 +2979,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <h2>Kövesd nyomon a projektjeid alakulását.</h2>
               <p>Minden státuszváltozásról, új ajánlatról, ticket válaszról és rendszerműveletről itt kapsz értesítést.</p>
             </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
-              {notifications.some((n) => !n.read) && (
-                <button className="button secondary" onClick={markAllNotificationsAsRead} type="button" style={{ minHeight: "auto", padding: "8px 14px", fontSize: "13px" }}>
-                  Összes olvasottnak jelölése
-                </button>
-              )}
-              {notifications.some((n) => n.read) && (
-                <button className="button secondary" onClick={deleteReadNotifications} type="button" style={{ minHeight: "auto", padding: "8px 14px", fontSize: "13px", color: "#FF7676", borderColor: "rgba(255, 118, 118, 0.2)" }}>
-                  Olvasottak törlése
-                </button>
-              )}
-            </div>
           </section>
           <section className="portal-panel">
-            <div className="portal-panel-head">
+            <div className="portal-panel-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--white)", flexWrap: "wrap", gap: "10px" }}>
               <span>Értesítések előzménye</span>
-              <small>{notifications.length} db értesítés</small>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                {notifications.some((n) => !n.read) && (
+                  <button className="button secondary" onClick={markAllNotificationsAsRead} type="button" style={{ minHeight: "auto", padding: "7px 12px", fontSize: "12px" }}>
+                    Mind olvasott
+                  </button>
+                )}
+                {notifications.some((n) => n.read) && (
+                  <button className="button secondary" onClick={deleteReadNotifications} type="button" style={{ minHeight: "auto", padding: "7px 12px", fontSize: "12px", color: "#FF7676", borderColor: "rgba(255, 118, 118, 0.25)" }}>
+                    Olvasottak törlése
+                  </button>
+                )}
+                <small style={{ color: "var(--muted)" }}>{notifications.length} db</small>
+              </div>
             </div>
             {notifications.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted)" }}>
