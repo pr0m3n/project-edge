@@ -279,6 +279,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [editingBriefProjectId, setEditingBriefProjectId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(initialProject);
   const [showStripeModalProjectId, setShowStripeModalProjectId] = useState<string | null>(null);
+  const [stripeMode, setStripeMode] = useState<"deposit" | "final">("deposit");
   const [stripeForm, setStripeForm] = useState({ card: "", exp: "", cvc: "", name: "" });
   const [stripeError, setStripeError] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
@@ -1155,6 +1156,49 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
   }
 
+  async function payFinal(project: Project) {
+    setStripeLoading(true);
+    setStripeError("");
+
+    if (!stripeForm.card.trim() || !stripeForm.exp.trim() || !stripeForm.cvc.trim() || !stripeForm.name.trim()) {
+      setStripeError("Minden mezőt ki kell tölteni.");
+      setStripeLoading(false);
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const { error } = await supabase.from("client_projects").update({
+      final_payment_paid: true,
+      final_payment_paid_at: new Date().toISOString(),
+      payment_status: "fully_paid"
+    }).eq("id", project.id);
+
+    setStripeLoading(false);
+    if (error) {
+      setStripeError("A fizetés feldolgozása sikertelen volt.");
+    } else {
+      setShowStripeModalProjectId(null);
+      setStripeForm({ card: "", exp: "", cvc: "", name: "" });
+      setNotice("Hátralék sikeresen rendezve. Köszönjük!");
+      await triggerNotification(
+        null,
+        "admin@projectedge.hu",
+        "Végső fizetés beérkezett",
+        `Az ügyfél (${email}) kifizette a hátralékot a(z) "${project.title}" projekthez.`,
+        "/admin"
+      );
+      await triggerNotification(
+        userId,
+        email,
+        "Hátralék kifizetve",
+        `A(z) "${project.title}" projekt hátraléka beérkezett. Köszönjük az együttműködést!`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
+      loadPortal(true);
+    }
+  }
+
   async function acceptContract(project: Project) {
     setNotice("Szerződés elfogadása...");
     const { error } = await supabase.from("client_projects").update({
@@ -1770,7 +1814,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <strong style={{ color: '#FF5722' }}>Foglalóra vár</strong>
               </div>
             </div>
-            <button className="button primary" style={{ width: 'fit-content', marginTop: '8px' }} type="button" onClick={() => { setShowStripeModalProjectId(project.id); setStripeError(""); }}>
+            <button className="button primary" style={{ width: 'fit-content', marginTop: '8px' }} type="button" onClick={() => { setStripeMode("deposit"); setShowStripeModalProjectId(project.id); setStripeError(""); }}>
               Fizetés Stripe-al
             </button>
           </div>
@@ -1934,9 +1978,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     )}
                   </span>
                 ) : (
-                  <span style={{ fontWeight: '700', color: '#FF9800', fontSize: '14px' }}>Függőben — hamarosan kapod a számlát</span>
+                  <span style={{ fontWeight: '700', color: '#FF9800', fontSize: '14px' }}>Függőben</span>
                 )}
               </div>
+              {!project.final_payment_paid && (
+                <button
+                  className="button primary"
+                  type="button"
+                  style={{ minHeight: 'auto', padding: '10px 18px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                  onClick={() => { setStripeMode("final"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
+                >
+                  Hátralék kifizetése ({formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")})
+                </button>
+              )}
             </div>
 
             <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px', display: 'grid', gap: '8px' }}>
@@ -3054,6 +3108,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       {showStripeModalProjectId && (() => {
         const project = projects.find(p => p.id === showStripeModalProjectId);
         if (!project) return null;
+        const payAmount = stripeMode === "final"
+          ? (project.offer_price ?? 0) - (project.deposit_amount ?? 0)
+          : (project.deposit_amount ?? 0);
+        const payLabel = stripeMode === "final" ? "Hátralék (70%)" : "Foglaló";
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)', padding: '16px' }}>
             <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '440px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '20px' }}>
@@ -3069,8 +3127,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               </div>
 
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Fizetendő összeg (Foglaló):</span>
-                <strong style={{ fontSize: '20px', color: '#76ABAE' }}>{formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</strong>
+                <span>Fizetendő összeg ({payLabel}):</span>
+                <strong style={{ fontSize: '20px', color: '#76ABAE' }}>{formatPrice(payAmount, project.offer_currency || "Ft")}</strong>
               </div>
 
               {stripeError && (
@@ -3079,7 +3137,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 </div>
               )}
 
-              <form onSubmit={(e) => { e.preventDefault(); payDeposit(project); }} style={{ display: 'grid', gap: '14px' }}>
+              <form onSubmit={(e) => { e.preventDefault(); stripeMode === "final" ? payFinal(project) : payDeposit(project); }} style={{ display: 'grid', gap: '14px' }}>
                 <div className="field">
                   <label htmlFor="stripe-name" style={{ color: 'rgba(255,255,255,0.6)' }}>Kártyabirtokos neve</label>
                   <input
@@ -3155,7 +3213,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   {stripeLoading ? (
                     <span>Fizetés folyamatban...</span>
                   ) : (
-                    <span>Fizetés {formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</span>
+                    <span>Fizetés {formatPrice(payAmount, project.offer_currency || "Ft")}</span>
                   )}
                 </button>
               </form>
