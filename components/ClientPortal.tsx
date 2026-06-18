@@ -943,6 +943,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     } else {
       const brief = parseBrief(project.goals);
       setEditForm({
+        ...initialProject,
         audience: brief["Célközönség"] || brief["Célközönség / vásárlók"] || "",
         budget: project.budget || "not-sure",
         company: project.company || "",
