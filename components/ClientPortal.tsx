@@ -138,7 +138,24 @@ const initialProject = {
   style: "",
   title: "",
   vibe: "premium",
-  website: ""
+  website: "",
+  // Anyagok és hozzáférések (5. lépés)
+  domainStatus: "",
+  domainName: "",
+  hostingAccess: "",
+  existingPlatform: "",
+  wpAccess: "",
+  logoStatus: "",
+  wantLogoDesign: "",
+  brandColors: "",
+  fontPreference: "",
+  contentSource: "studio",
+  photoSource: "",
+  socialLinks: "",
+  contactEmail: "",
+  contactPhone: "",
+  analyticsAccess: "",
+  billingDetails: ""
 };
 
 const initialTicket = {
@@ -163,6 +180,7 @@ const briefSteps = [
   "Vágyott eredmény",
   "Oldalak és funkciók",
   "Vizuális irány",
+  "Anyagok és hozzáférések",
   "Összegzés"
 ];
 
@@ -202,6 +220,36 @@ const priorityLabels: Record<string, string> = {
   quality: "Minőség és prémium megjelenés",
   scalable: "Később bővíthető rendszer",
   speed: "Gyors indulás"
+};
+
+const hostingAccessLabels: Record<string, string> = {
+  yes: "tud hozzáférést adni",
+  later: "hozzáférés később",
+  unknown: "nem tudja, hol van"
+};
+
+const platformLabels: Record<string, string> = {
+  wordpress: "WordPress",
+  wix: "Wix / Squarespace",
+  custom: "egyedi fejlesztés",
+  other: "egyéb / nem tudja"
+};
+
+const wpAccessLabels: Record<string, string> = {
+  yes: "tud admin hozzáférést adni",
+  no: "nincs hozzáférés, de a tartalmat elküldi"
+};
+
+const logoLabels: Record<string, string> = {
+  vector: "van, vektoros",
+  raster: "van, csak képként",
+  none: "nincs logó"
+};
+
+const analyticsLabels: Record<string, string> = {
+  yes: "van, tud hozzáférést adni",
+  setup: "nincs, de szeretne mérést",
+  no: "nincs / nem fontos"
 };
 
 function escHtml(value: string | null | undefined) {
@@ -796,6 +844,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     setNotice("Projekt mentése...");
+
+    const domainLine = projectForm.domainStatus === "have"
+      ? `Domain: ${projectForm.domainName || "saját domain"}${hostingAccessLabels[projectForm.hostingAccess] ? ` (${hostingAccessLabels[projectForm.hostingAccess]})` : ""}`
+      : projectForm.domainStatus === "need"
+        ? "Domain: még nincs — segítséget kér a regisztrációhoz"
+        : "";
+    const platformLine = projectForm.website.trim() && projectForm.existingPlatform
+      ? `Jelenlegi rendszer: ${platformLabels[projectForm.existingPlatform] ?? projectForm.existingPlatform}${projectForm.existingPlatform === "wordpress" && wpAccessLabels[projectForm.wpAccess] ? ` — ${wpAccessLabels[projectForm.wpAccess]}` : ""}`
+      : "";
+    const logoLine = projectForm.logoStatus
+      ? `Logó: ${logoLabels[projectForm.logoStatus]}${projectForm.logoStatus === "none" && projectForm.wantLogoDesign ? ` — ${projectForm.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}` : ""}`
+      : "";
+
     const detailedGoals = [
       `Cél: ${projectForm.goals}`,
       projectForm.audience ? `Célközönség / vásárlók: ${projectForm.audience}` : "",
@@ -804,7 +865,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
       `Vizuális karakter: ${selectedVibe[1]}`,
       `Színirány: ${selectedPalette[1]}`,
-      `Prioritás: ${priorityLabels[projectForm.priority] ?? projectForm.priority}`
+      `Prioritás: ${priorityLabels[projectForm.priority] ?? projectForm.priority}`,
+      domainLine,
+      platformLine,
+      logoLine,
+      projectForm.brandColors ? `Márkaszín: ${projectForm.brandColors}` : "",
+      projectForm.fontPreference ? `Betűtípus: ${projectForm.fontPreference}` : "",
+      `Szövegek: ${projectForm.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
+      projectForm.photoSource ? `Képek: ${projectForm.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
+      projectForm.contactEmail ? `Kapcsolati email: ${projectForm.contactEmail}` : "",
+      projectForm.contactPhone ? `Telefon: ${projectForm.contactPhone}` : "",
+      projectForm.socialLinks ? `Közösségi linkek: ${projectForm.socialLinks}` : "",
+      analyticsLabels[projectForm.analyticsAccess] ? `Analytics: ${analyticsLabels[projectForm.analyticsAccess]}` : "",
+      projectForm.billingDetails ? `Számlázási adatok: ${projectForm.billingDetails}` : ""
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -2652,6 +2725,276 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 ) : null}
 
                 {projectStep === 4 ? (
+                  <>
+                    <div className="wizard-visual assets">
+                      <div className="asset-chip">Domain</div>
+                      <div className="asset-chip">Logó</div>
+                      <div className="asset-chip">Szövegek</div>
+                      <div className="asset-chip">Hozzáférés</div>
+                    </div>
+                    <p className="wizard-hint">
+                      Ezekre azért van szükségem, hogy gördülékenyen tudjunk indulni. Amit most nem
+                      tudsz, nyugodtan hagyd üresen — később is pótolható.
+                    </p>
+
+                    {/* Domain */}
+                    <div className="field">
+                      <label>Domain (a weboldal címe)</label>
+                      <div className="choice-grid compact">
+                        <button
+                          className={projectForm.domainStatus === "have" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, domainStatus: "have" }))}
+                          type="button"
+                        >
+                          <strong>Van saját domainem</strong>
+                        </button>
+                        <button
+                          className={projectForm.domainStatus === "need" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, domainStatus: "need" }))}
+                          type="button"
+                        >
+                          <strong>Még nincs, segítsetek</strong>
+                        </button>
+                      </div>
+                    </div>
+                    {projectForm.domainStatus === "have" ? (
+                      <div className="wizard-two">
+                        <div className="field">
+                          <label htmlFor="domain-name">Mi a domain neve?</label>
+                          <input
+                            id="domain-name"
+                            value={projectForm.domainName}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, domainName: event.target.value }))}
+                            placeholder="vallalkozas.hu"
+                          />
+                        </div>
+                        <div className="field">
+                          <label htmlFor="hosting-access">Tárhely / domain hozzáférés</label>
+                          <select
+                            id="hosting-access"
+                            value={projectForm.hostingAccess}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, hostingAccess: event.target.value }))}
+                          >
+                            <option value="">Válassz...</option>
+                            <option value="yes">Tudok hozzáférést adni</option>
+                            <option value="later">Később megoldjuk</option>
+                            <option value="unknown">Nem tudom, hol van</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : null}
+                    {projectForm.domainStatus === "need" ? (
+                      <p className="branch-note">Rendben — segítünk a domain kiválasztásában, regisztrációjában és a beállításában.</p>
+                    ) : null}
+
+                    {/* Meglévő oldal — csak ha megadott weboldalt */}
+                    {projectForm.website.trim() ? (
+                      <div className="field">
+                        <label>Min fut a jelenlegi oldalad?</label>
+                        <div className="choice-grid compact">
+                          {[
+                            ["wordpress", "WordPress"],
+                            ["wix", "Wix / Squarespace"],
+                            ["custom", "Egyedi fejlesztés"],
+                            ["other", "Nem tudom / egyéb"]
+                          ].map(([value, label]) => (
+                            <button
+                              key={value}
+                              className={projectForm.existingPlatform === value ? "selected" : ""}
+                              onClick={() => setProjectForm((current) => ({ ...current, existingPlatform: value }))}
+                              type="button"
+                            >
+                              <strong>{label}</strong>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {projectForm.website.trim() && projectForm.existingPlatform === "wordpress" ? (
+                      <div className="field">
+                        <label htmlFor="wp-access">Tudsz WordPress admin hozzáférést adni? (a tartalom átemeléséhez)</label>
+                        <select
+                          id="wp-access"
+                          value={projectForm.wpAccess}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, wpAccess: event.target.value }))}
+                        >
+                          <option value="">Válassz...</option>
+                          <option value="yes">Igen, tudok adni (akár csak olvasásra)</option>
+                          <option value="no">Nem, de a tartalmat elküldöm</option>
+                        </select>
+                      </div>
+                    ) : null}
+
+                    {/* Logó */}
+                    <div className="field">
+                      <label>Van logód?</label>
+                      <div className="choice-grid compact">
+                        {[
+                          ["vector", "Van, vektoros (ai/svg/pdf)"],
+                          ["raster", "Van, csak kép (jpg/png)"],
+                          ["none", "Nincs logóm"]
+                        ].map(([value, label]) => (
+                          <button
+                            key={value}
+                            className={projectForm.logoStatus === value ? "selected" : ""}
+                            onClick={() => setProjectForm((current) => ({ ...current, logoStatus: value }))}
+                            type="button"
+                          >
+                            <strong>{label}</strong>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {projectForm.logoStatus === "none" ? (
+                      <div className="field">
+                        <label>Kérsz logótervezést?</label>
+                        <div className="choice-grid compact">
+                          <button
+                            className={projectForm.wantLogoDesign === "yes" ? "selected" : ""}
+                            onClick={() => setProjectForm((current) => ({ ...current, wantLogoDesign: "yes" }))}
+                            type="button"
+                          >
+                            <strong>Igen, kérek</strong>
+                            <span>Külön díjas extra, az ajánlatban jelezzük.</span>
+                          </button>
+                          <button
+                            className={projectForm.wantLogoDesign === "no" ? "selected" : ""}
+                            onClick={() => setProjectForm((current) => ({ ...current, wantLogoDesign: "no" }))}
+                            type="button"
+                          >
+                            <strong>Egyelőre nem</strong>
+                            <span>Szöveges márkanévvel is el tudunk indulni.</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Arculat */}
+                    <div className="wizard-two">
+                      <div className="field">
+                        <label htmlFor="brand-colors">Van márkaszíned / színkódod?</label>
+                        <input
+                          id="brand-colors"
+                          value={projectForm.brandColors}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
+                          placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="font-pref">Betűtípus preferencia?</label>
+                        <input
+                          id="font-pref"
+                          value={projectForm.fontPreference}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
+                          placeholder="Például: modern groteszk, elegáns serif — vagy hagyd ránk"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Szövegek */}
+                    <div className="field">
+                      <label>A szövegeket ki írja?</label>
+                      <div className="choice-grid compact">
+                        <button
+                          className={projectForm.contentSource === "studio" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, contentSource: "studio" }))}
+                          type="button"
+                        >
+                          <strong>Írjátok meg ti</strong>
+                          <span>Benne van az árban — vázlatból dolgozunk.</span>
+                        </button>
+                        <button
+                          className={projectForm.contentSource === "client" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, contentSource: "client" }))}
+                          type="button"
+                        >
+                          <strong>Megírom én</strong>
+                          <span>Kész szövegeket adok az oldalakhoz.</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Képek */}
+                    <div className="field">
+                      <label>Képek, fotók?</label>
+                      <div className="choice-grid compact">
+                        <button
+                          className={projectForm.photoSource === "own" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, photoSource: "own" }))}
+                          type="button"
+                        >
+                          <strong>Vannak saját képeim</strong>
+                        </button>
+                        <button
+                          className={projectForm.photoSource === "help" ? "selected" : ""}
+                          onClick={() => setProjectForm((current) => ({ ...current, photoSource: "help" }))}
+                          type="button"
+                        >
+                          <strong>Kérek stock / segítséget</strong>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Kapcsolat + közösségi */}
+                    <div className="wizard-two">
+                      <div className="field">
+                        <label htmlFor="contact-email">Megjelenő kapcsolati email</label>
+                        <input
+                          id="contact-email"
+                          value={projectForm.contactEmail}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, contactEmail: event.target.value }))}
+                          placeholder="info@vallalkozas.hu"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="contact-phone">Megjelenő telefonszám</label>
+                        <input
+                          id="contact-phone"
+                          value={projectForm.contactPhone}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, contactPhone: event.target.value }))}
+                          placeholder="+36 ..."
+                        />
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="social-links">Közösségi oldalak linkjei</label>
+                      <textarea
+                        id="social-links"
+                        value={projectForm.socialLinks}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, socialLinks: event.target.value }))}
+                        placeholder="Facebook, Instagram, LinkedIn, Google Cégprofil..."
+                      />
+                    </div>
+
+                    {/* Analytics */}
+                    <div className="field">
+                      <label htmlFor="analytics-access">Van Google Analytics / mérés a régi oldalon?</label>
+                      <select
+                        id="analytics-access"
+                        value={projectForm.analyticsAccess}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, analyticsAccess: event.target.value }))}
+                      >
+                        <option value="">Válassz...</option>
+                        <option value="yes">Van, tudok hozzáférést adni</option>
+                        <option value="setup">Nincs, de szeretnék mérést</option>
+                        <option value="no">Nincs / nem fontos</option>
+                      </select>
+                    </div>
+
+                    {/* Számlázás */}
+                    <div className="field">
+                      <label htmlFor="billing-details">Számlázási adatok (a szerződéshez / számlához)</label>
+                      <textarea
+                        id="billing-details"
+                        value={projectForm.billingDetails}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, billingDetails: event.target.value }))}
+                        placeholder="Cégnév, adószám, székhely cím — vagy magánszemély esetén név és cím"
+                      />
+                    </div>
+                  </>
+                ) : null}
+
+                {projectStep === 5 ? (
                   <div className="wizard-summary">
                     <div className="summary-hero">
                       <span>Beküldés előtt</span>

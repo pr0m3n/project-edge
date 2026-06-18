@@ -1492,6 +1492,22 @@ export function AdminDashboard() {
               ["Prioritás", brief["Prioritás"]]
             ].filter(([, value]) => Boolean(value));
 
+            // Anyagok és hozzáférések — az 5. brief lépésből
+            const assetFields = [
+              ["Domain", brief["Domain"]],
+              ["Jelenlegi rendszer", brief["Jelenlegi rendszer"]],
+              ["Logó", brief["Logó"]],
+              ["Márkaszín", brief["Márkaszín"]],
+              ["Betűtípus", brief["Betűtípus"]],
+              ["Szövegek", brief["Szövegek"]],
+              ["Képek", brief["Képek"]],
+              ["Kapcsolati email", brief["Kapcsolati email"]],
+              ["Telefon", brief["Telefon"]],
+              ["Közösségi linkek", brief["Közösségi linkek"]],
+              ["Analytics", brief["Analytics"]],
+              ["Számlázási adatok", brief["Számlázási adatok"]]
+            ].filter(([, value]) => Boolean(value));
+
             const showAll = !!showAllControls[project.id];
             const s = project.status;
             const showPrepare = showAll || s === "request_received" || s === "planning";
@@ -1579,6 +1595,20 @@ export function AdminDashboard() {
                   ))}
                 </div>
               </section>
+
+              {assetFields.length > 0 ? (
+                <section className="admin-assets-block">
+                  <span className="admin-assets-title">Anyagok és hozzáférések</span>
+                  <div className="admin-brief-grid">
+                    {assetFields.map(([label, value]) => (
+                      <div key={label}>
+                        <span>{label}</span>
+                        <strong>{value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               {(() => {
                 const logs = changeLogs[project.id] ?? [];

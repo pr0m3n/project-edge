@@ -8,16 +8,75 @@ const services = [
   ["Admin háttér", "Egyszerű felület a beérkező ügyfeleknek, státuszoknak, ticketeknek és jegyzeteknek. Később tovább automatizálható."]
 ];
 
+// Ügyféltípus → megoldás → mire használjuk → kb. ár
+const solutions: Array<{
+  type: string;
+  who: string;
+  stack: string;
+  price: string;
+}> = [
+  {
+    type: "Most indulsz / kell egy szép bemutatkozó",
+    who: "Egyéni vállalkozó, szabadúszó, helyi szolgáltató, aki egy gyors, meggyőző oldalt szeretne.",
+    stack: "Egyoldalas vagy néhány aloldalas landing — Next.js + Vercel tárhely. Nincs felesleges rendszer mögötte.",
+    price: "150 000 – 300 000 Ft"
+  },
+  {
+    type: "Komoly céges weboldal több aloldallal",
+    who: "Működő vállalkozás, aki bizalmat épít, ajánlatot kér és kitűnik a versenytársak közül.",
+    stack: "Egyedi prémium oldal — Next.js + Vercel, igény szerint ügyfélkapuval és ajánlatkérő folyamattal.",
+    price: "400 000 – 800 000 Ft"
+  },
+  {
+    type: "Már van WordPress oldalad",
+    who: "Van működő oldalad, de lassú, elavult vagy nem hoz ügyfelet — vagy csak frissítés kell.",
+    stack: "Megnézzük, mi van benne. Ha jó az alap, marad a WordPress és csak felújítjuk. Ha gátol, átültetjük modern rendszerre — a tartalmat áthozzuk.",
+    price: "120 000 – 350 000 Ft"
+  },
+  {
+    type: "Webshop kell",
+    who: "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel.",
+    stack: "Bevált webshop-alapra építünk (Shopify / WooCommerce) — nem találunk fel mindent újra, hogy neked biztonságos és karbantartható maradjon.",
+    price: "Egyedi ajánlat"
+  },
+  {
+    type: "Egyedi rendszer, ügyfélkapu, admin",
+    who: "Belépés, adatkezelés, dashboard, foglalás, automatizált folyamatok kellenek.",
+    stack: "Egyedi webapp — Next.js + Supabase (adatbázis, belépés, jogosultság) + Vercel. Pont ilyen a ProjectEdge ügyfélkapu is.",
+    price: "800 000 Ft-tól"
+  },
+  {
+    type: "Folyamatos karbantartás és növekedés",
+    who: "Kész oldalad van, de kell, aki figyel rá: frissítés, mérés, apró fejlesztések.",
+    stack: "Havi csomag — biztonsági frissítések, mentés, mérés, kisebb módosítások, havi riport.",
+    price: "25 000 – 60 000 Ft / hó"
+  }
+];
+
+const bring = [
+  ["Domain", "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítünk regisztrálni."],
+  ["Tárhely-hozzáférés", "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük."],
+  ["Logó", "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)."],
+  ["Színek, betűtípus", "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, ránk bízhatod."],
+  ["Szövegek", "A szövegeket nálunk az ár tartalmazza — vázlatból megírjuk. Ha te írod, azt is szívesen átvesszük."],
+  ["Képek", "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldjuk."],
+  ["Közösségi linkek", "Facebook, Instagram, LinkedIn, Google Cégprofil — amit ki szeretnél tenni."],
+  ["Kapcsolat", "A megjelenő email és telefonszám, ahol az ügyfeleid elérnek."],
+  ["Analytics", "Ha van Google Analytics a régi oldalon, a hozzáférés segít megérteni a számokat. Ha nincs, beállítjuk."],
+  ["Számlázási adatok", "A szerződéshez és a számlához: cégnév, adószám, székhely — vagy magánszemély adatai."]
+];
+
 export default function ServicesPage() {
   return (
     <main className="site-shell light-page">
       <SiteNav />
       <section className="page-hero compact">
         <p className="micro-label dark">Szolgáltatások</p>
-        <h1>Nem minden cégnek ugyanaz az oldal kell.</h1>
+        <h1>Bármilyen vállalkozás vagy, van rá válaszunk.</h1>
         <p>
           Van, ahol egy gyors, jól megírt landing elég. Máshol kell ügyfélkapu, admin felület,
-          több aloldal vagy teljes újratervezés. Először ezt tisztázzuk.
+          több aloldal vagy teljes újratervezés. Ha van már WordPress oldalad, azt sem dobjuk ki
+          feleslegesen. Először mindig azt tisztázzuk, neked melyik a jó.
         </p>
       </section>
 
@@ -29,6 +88,56 @@ export default function ServicesPage() {
             <p>{copy}</p>
           </article>
         ))}
+      </section>
+
+      <section className="solutions-section">
+        <div className="solutions-head">
+          <p className="micro-label dark">Megoldás minden helyzetre</p>
+          <h2>Megnézzük, hol tartasz — és pontosan azt ajánljuk, ami kell.</h2>
+          <p>
+            Nem akarunk rád tukmálni egy drága rendszert, ha egy szép landing is elég. Az alábbi
+            sávok tájékoztató jellegűek — a pontos árat a brief alapján adjuk meg.
+          </p>
+        </div>
+        <div className="solutions-grid">
+          {solutions.map((item) => (
+            <article className="solution-card" key={item.type}>
+              <h3>{item.type}</h3>
+              <p className="solution-who">{item.who}</p>
+              <div className="solution-stack">
+                <span>Mit használunk</span>
+                <p>{item.stack}</p>
+              </div>
+              <div className="solution-price">
+                <span>Kb. ár</span>
+                <strong>{item.price}</strong>
+              </div>
+            </article>
+          ))}
+        </div>
+        <p className="solutions-note">
+          Az árak tájékoztató jellegűek, bruttó nagyságrendek a magyar piacon. A végleges ajánlat a
+          projekt terjedelmétől függ — ezért kezdünk mindig egy rövid briefel.
+        </p>
+      </section>
+
+      <section className="bring-section">
+        <div className="bring-head">
+          <p className="micro-label dark">Mit hozz magaddal</p>
+          <h2>Ezeket kérdezzük meg induláskor.</h2>
+          <p>
+            A brief kitöltésekor ezekre kérdezünk rá — de nyugodtan kezdj neki akkor is, ha még nincs
+            meg minden. Amit nem tudsz, később pótolható, és sok mindenben segítünk.
+          </p>
+        </div>
+        <div className="bring-grid">
+          {bring.map(([title, copy]) => (
+            <div className="bring-item" key={title}>
+              <strong>{title}</strong>
+              <span>{copy}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="cta-band">

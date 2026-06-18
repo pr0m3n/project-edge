@@ -4142,3 +4142,198 @@ p {
     animation: none;
   }
 }
+
+/* ── Szolgáltatások: megoldás-mátrix + ársávok ── */
+.solutions-section {
+  margin: 64px auto 0;
+  max-width: 1280px;
+  padding: 0 6vw;
+}
+
+.solutions-head {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 36px;
+  max-width: 720px;
+}
+
+.solutions-head h2 {
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.04;
+}
+
+.solutions-head p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.solutions-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.solution-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+}
+
+.solution-card h3 {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.solution-who {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.solution-stack {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  padding-top: 16px;
+}
+
+.solution-stack span,
+.solution-price span {
+  color: var(--aqua);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.solution-stack p {
+  color: var(--ink);
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.solution-price {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.solution-price strong {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.solutions-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 28px;
+  max-width: 720px;
+}
+
+/* ── Szolgáltatások: mit hozz magaddal ── */
+.bring-section {
+  margin: 72px auto 0;
+  max-width: 1280px;
+  padding: 0 6vw;
+}
+
+.bring-head {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 32px;
+  max-width: 720px;
+}
+
+.bring-head h2 {
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.04;
+}
+
+.bring-head p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.bring-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.bring-item {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--aqua);
+  border-radius: 18px;
+  display: grid;
+  gap: 6px;
+  padding: 20px 22px;
+}
+
+.bring-item strong {
+  font-size: 16px;
+}
+
+.bring-item span {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── Brief 5. lépés: anyagok és hozzáférések ── */
+.wizard-hint {
+  background: rgba(118, 171, 174, 0.1);
+  border: 1px solid rgba(118, 171, 174, 0.25);
+  border-radius: 14px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 14px 16px;
+}
+
+.branch-note {
+  background: rgba(118, 171, 174, 0.12);
+  border-radius: 12px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 14px;
+}
+
+.wizard-visual.assets {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.asset-chip {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  padding: 12px 22px;
+}
+
+/* ── Admin: anyagok és hozzáférések blokk ── */
+.admin-assets-block {
+  background: rgba(118, 171, 174, 0.06);
+  border: 1px solid rgba(118, 171, 174, 0.22);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.admin-assets-title {
+  color: #5f9296;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
