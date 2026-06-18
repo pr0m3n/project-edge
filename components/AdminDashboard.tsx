@@ -1087,7 +1087,7 @@ export function AdminDashboard() {
 
     return (
       <div
-        key={project.status}
+        key={`guide-${project.id}-${project.status}`}
         className="admin-guide chapter-in"
         style={{
           borderRadius: "18px",
@@ -1604,7 +1604,7 @@ export function AdminDashboard() {
                 ))}
               </div>
 
-              <div className="admin-project-grid chapter-in" key={project.status}>
+              <div className="admin-project-grid chapter-in" key={`grid-${project.id}-${project.status}`}>
                 <section className="admin-control-panel">
                   <div className="portal-panel-head">
                     <span>Projekt irányítás</span>
