@@ -5,8 +5,8 @@ const steps = [
   [
     "01",
     "Átbeszéljük",
-    "Egy rövid hívás vagy a brief alapján átnézzük, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Nem a technikáról beszélünk, hanem az üzletedről.",
-    "kb. 30 perc",
+    "Az ügyfélkapun kitöltött brief alapján átnézem, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Hívás nélkül is megy — de ha jobban szereted, beszélhetünk is.",
+    "hívás nélkül is",
     "💬"
   ],
   [

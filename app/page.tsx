@@ -199,6 +199,28 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="no-call">
+        <div>
+          <p className="micro-label">Ügyfélkapu</p>
+          <h2>Hívás és emailezgetés nélkül, az elejétől a végéig.</h2>
+          <p className="nc-copy">
+            Nem kell időpontot egyeztetni, telefonálgatni vagy e-mailekben kutakodni. Az
+            ügyfélkapun elindítod a projektet, kitöltöd a briefet, követed a haladást, fizetsz és
+            kérdezel — akkor, amikor neked kényelmes. A teljes weboldal online elintézhető.
+          </p>
+          <Link className="button primary" href="/ugyfelkapu">
+            Indítás az ügyfélkapun
+          </Link>
+        </div>
+        <ul className="nc-list">
+          <li>Nincs kötelező telefonhívás</li>
+          <li>Nincs időpont-egyeztetés</li>
+          <li>Minden egy helyen: brief, státusz, fizetés</li>
+          <li>Kérdés bármikor, ticketen</li>
+          <li>A saját idődben haladsz</li>
+        </ul>
+      </section>
+
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>

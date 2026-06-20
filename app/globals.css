@@ -4799,9 +4799,7 @@ p {
   scrollbar-width: none;
 }
 
-.cap-rail::before,
-.cap-rail::after {
-  content: "";
+.cap-spacer {
   flex: 0 0 clamp(18px, 5vw, 76px);
 }
 
@@ -4909,6 +4907,7 @@ p {
   background:
     radial-gradient(circle at 70% 20%, rgba(118, 171, 174, 0.18), transparent 55%),
     var(--paper);
+  overflow: visible;
   perspective: 850px;
 }
 
@@ -5434,5 +5433,98 @@ p {
 
   .proc-step::before {
     transform: scaleY(1);
+  }
+}
+
+/* ── Showcase záró-megjegyzés ── */
+.cap-note {
+  color: rgba(48, 56, 65, 0.6);
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.6;
+  margin: 18px auto 0;
+  max-width: 760px;
+  padding: 0 clamp(18px, 5vw, 76px);
+  text-align: center;
+}
+
+.cap-note b {
+  color: var(--ink);
+}
+
+.dark-page .cap-note {
+  color: rgba(245, 245, 245, 0.6);
+}
+
+.dark-page .cap-note b {
+  color: var(--paper);
+}
+
+/* ── "Hívás nélkül" értékajánlat-sáv ── */
+.no-call {
+  align-items: center;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 87, 34, 0.22), transparent 45%),
+    var(--ink);
+  border-radius: 34px;
+  color: var(--paper);
+  display: grid;
+  gap: clamp(28px, 5vw, 64px);
+  grid-template-columns: 1.15fr 1fr;
+  margin: clamp(48px, 9vw, 110px) auto;
+  overflow: hidden;
+  padding: clamp(36px, 6vw, 76px);
+  position: relative;
+  width: min(1280px, calc(100% - clamp(36px, 10vw, 152px)));
+}
+
+.no-call h2 {
+  font-size: clamp(30px, 4.4vw, 60px);
+  line-height: 1;
+}
+
+.no-call .nc-copy {
+  color: rgba(245, 245, 245, 0.74);
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.7;
+  margin: 18px 0 26px;
+}
+
+.no-call .micro-label {
+  color: var(--aqua);
+}
+
+.nc-list {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nc-list li {
+  align-items: center;
+  display: flex;
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 850;
+  gap: 14px;
+}
+
+.nc-list li::before {
+  align-items: center;
+  background: var(--ember);
+  border-radius: 50%;
+  color: var(--white);
+  content: "✓";
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 15px;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+@media (max-width: 880px) {
+  .no-call {
+    grid-template-columns: 1fr;
   }
 }
