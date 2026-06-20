@@ -165,7 +165,13 @@ export default function Home() {
 
       <section className="founder-section">
         <div className="founder-card">
-          <span className="founder-monogram">PB</span>
+          <div className="founder-name">
+            <span className="founder-tag">// ProjectEdge</span>
+            <span className="founder-hi">
+              Szia, <span className="founder-wave" aria-hidden="true">👋</span>
+            </span>
+            <b>Patrik vagyok.</b>
+          </div>
           <div className="founder-badge">
             <strong>Boczán Patrik</strong>
             <span>alapító · fejlesztő · ProjectEdge</span>

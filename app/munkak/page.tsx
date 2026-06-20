@@ -3,48 +3,67 @@ import { SiteNav } from "@/components/SiteNav";
 
 const capabilities = [
   {
-    cls: "cap-aurora",
+    dark: true,
+    fx: "fx-aurora",
     eyebrow: "Háttér / motion",
-    title: "Élő aurora háttér",
-    copy: "Lágyan mozgó színátmenetek, amelyek karaktert adnak anélkül, hogy elvonnák a figyelmet a szövegről.",
-    demo: null
+    title: "Aurora háttér",
+    copy: "Lágyan mozgó színátmenetek, amelyek karaktert adnak — finoman, a szöveg zavarása nélkül.",
+    stage: null
   },
   {
-    cls: "cap-tilt",
+    dark: false,
+    fx: "fx-tilt",
     eyebrow: "Interakció",
-    title: "3D dőlés hoverre",
-    copy: "Vidd fölé az egered. A kártyák térbe fordulnak — apró részlet, ami prémium érzetet ad.",
-    demo: <div className="cap-chip" aria-hidden="true" />
+    title: "3D mélység",
+    copy: "Vidd fölé az egered: a kártya térbe fordul, az elemei rétegekben mozognak.",
+    stage: (
+      <div className="tilt-card">
+        <span className="tilt-chip" />
+        <span className="tilt-bar" />
+        <span className="tilt-bar short" />
+      </div>
+    )
   },
   {
-    cls: "cap-spotlight",
-    eyebrow: "Kurzor-effekt",
-    title: "Reflektorfény",
-    copy: "A fény követi az egeret az egész oldalon. Mozgasd a kurzort ezen a kártyán.",
-    demo: null
+    dark: true,
+    fx: "fx-scan",
+    eyebrow: "Felület",
+    title: "Holografikus fény",
+    copy: "Folyamatosan átsuhanó fénypászta egy finom pontrácson.",
+    stage: null
   },
   {
-    cls: "cap-gtext",
+    dark: false,
+    fx: "fx-gtext",
     eyebrow: "Tipográfia",
-    title: "Animált szövegszín",
-    copy: "Folyamatosan áramló színátmenet a kiemelt címeken.",
-    demo: <div className="cap-big">Edge.</div>
+    title: "Élő gradiens cím",
+    copy: "Áramló színátmenet a kiemelt szavakon, folyamatos mozgásban.",
+    stage: <span className="gword">Edge.</span>
   },
   {
-    cls: "cap-glow",
+    dark: true,
+    fx: "fx-glow",
     eyebrow: "Hangsúly",
-    title: "Pulzáló fény",
-    copy: "Finom, ismétlődő glow, ami a fontos pontokra húzza a szemet.",
-    demo: <div className="cap-orb" aria-hidden="true" />
+    title: "Fénygyűrűk",
+    copy: "Pulzáló fény, ami a fontos pontokra húzza a szemet.",
+    stage: (
+      <div className="glow-wrap">
+        <span className="glow-core" />
+        <span className="glow-ring" />
+        <span className="glow-ring" />
+        <span className="glow-ring" />
+      </div>
+    )
   },
   {
-    cls: "cap-marq",
-    eyebrow: "Mozgó sáv",
-    title: "Végtelen futószalag",
-    copy: "Logók, kulcsszavak vagy ajánlatok folyamatos mozgásban.",
-    demo: (
-      <div className="cap-strip">
-        <span>GYORS · EGYEDI · MEGBÍZHATÓ · GYORS · EGYEDI · MEGBÍZHATÓ ·&nbsp;</span>
+    dark: true,
+    fx: "fx-border",
+    eyebrow: "Keret",
+    title: "Forgó gradiens-keret",
+    copy: "Lassan forgó, színes fénykeret egy sötét kártya körül.",
+    stage: (
+      <div className="bcard">
+        <span>Edge</span>
       </div>
     )
   }
@@ -143,18 +162,20 @@ export default function WorkPage() {
           <p className="micro-label dark">Mire vagyok képes</p>
           <h2>Effektek, amiket az oldaladba építhetek.</h2>
           <p>
-            Ezek nem képek — élő elemek, itt a böngésződben. Pont ezekből rakom össze azt a
+            Ezek nem képek — élő, mozgó elemek, itt a böngésződben. Pont ezekből rakom össze azt a
             karaktert, amitől egy oldal emlékezetes marad.
           </p>
         </div>
         <p className="cap-hint">← Húzd oldalra a kártyákat →</p>
         <div className="cap-rail">
           {capabilities.map((cap) => (
-            <article className={`cap-card ${cap.cls}`} key={cap.title}>
-              <span className="cap-eyebrow">{cap.eyebrow}</span>
-              <h3>{cap.title}</h3>
-              <p>{cap.copy}</p>
-              {cap.demo ? <div className="cap-demo">{cap.demo}</div> : null}
+            <article className={`cap-card ${cap.dark ? "dark" : ""}`} key={cap.title}>
+              <div className={`cap-stage ${cap.fx}`}>{cap.stage}</div>
+              <div className="cap-caption">
+                <span className="cap-eyebrow">{cap.eyebrow}</span>
+                <h3>{cap.title}</h3>
+                <p>{cap.copy}</p>
+              </div>
             </article>
           ))}
         </div>
