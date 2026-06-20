@@ -1162,17 +1162,21 @@ p {
 .cta-band {
   align-items: center;
   background:
-    linear-gradient(135deg, rgba(118, 171, 174, 0.13), transparent),
-    rgba(255, 255, 255, 0.58);
+    radial-gradient(circle at 88% 18%, rgba(255, 87, 34, 0.16), transparent 40%),
+    linear-gradient(135deg, rgba(118, 171, 174, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.62);
   border: 1px solid var(--line);
   border-radius: 34px;
+  box-shadow: 0 30px 80px rgba(17, 23, 28, 0.10);
   display: grid;
   gap: 22px;
   grid-template-columns: minmax(0, 1fr) auto;
   justify-content: space-between;
-  margin: 0 auto;
+  margin: clamp(56px, 10vw, 132px) auto;
   max-width: 1280px;
-  padding: clamp(28px, 5vw, 54px);
+  padding: clamp(34px, 5vw, 62px);
+  position: relative;
+  width: min(1280px, calc(100% - clamp(36px, 10vw, 152px)));
 }
 
 .cta-band.dark {
@@ -4336,4 +4340,697 @@ p {
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+/* ════════════════════════════════════════════════
+   2025 SHOWCASE + PROOF LAYER
+   ════════════════════════════════════════════════ */
+
+/* ── Section heading helper ── */
+.section-head {
+  display: grid;
+  gap: 18px;
+  margin: 0 auto clamp(36px, 5vw, 64px);
+  max-width: 1280px;
+}
+
+.section-head h2 {
+  font-size: clamp(36px, 5.5vw, 80px);
+  letter-spacing: 0;
+  line-height: 0.95;
+  max-width: 16ch;
+}
+
+.section-head p:not(.micro-label) {
+  color: rgba(48, 56, 65, 0.66);
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+.dark-page .section-head p:not(.micro-label) {
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.gradient-text {
+  background: linear-gradient(100deg, var(--ember) 0%, var(--aqua) 55%, var(--ember) 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: hue-pan 7s linear infinite;
+}
+
+@keyframes hue-pan {
+  to {
+    background-position: 220% 0;
+  }
+}
+
+/* ── Rólam / Founder ── */
+.founder-section {
+  display: grid;
+  gap: clamp(32px, 6vw, 84px);
+  grid-template-columns: 0.85fr 1fr;
+  align-items: center;
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(76px, 9vw, 132px) clamp(18px, 5vw, 76px);
+}
+
+.founder-card {
+  aspect-ratio: 4 / 5;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 87, 34, 0.55), transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(118, 171, 174, 0.5), transparent 55%),
+    var(--night);
+  border-radius: 36px;
+  box-shadow: 0 40px 120px rgba(17, 23, 28, 0.28);
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  position: relative;
+  transform:
+    perspective(1200px)
+    rotateX(calc(var(--my) * -4deg))
+    rotateY(calc(var(--mx) * 6deg));
+  transition: transform 220ms ease;
+}
+
+.founder-card::after {
+  background-image:
+    linear-gradient(rgba(245, 245, 245, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 245, 245, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.founder-monogram {
+  color: var(--paper);
+  font-size: clamp(96px, 16vw, 220px);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  position: relative;
+  text-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.founder-badge {
+  backdrop-filter: blur(14px);
+  background: rgba(17, 23, 28, 0.55);
+  border: 1px solid rgba(245, 245, 245, 0.18);
+  border-radius: 18px;
+  bottom: 18px;
+  color: var(--paper);
+  display: grid;
+  gap: 2px;
+  left: 18px;
+  padding: 14px 18px;
+  position: absolute;
+  right: 18px;
+}
+
+.founder-badge strong {
+  font-size: 20px;
+}
+
+.founder-badge span {
+  color: rgba(245, 245, 245, 0.66);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.founder-copy {
+  display: grid;
+  gap: 24px;
+}
+
+.founder-copy h2 {
+  font-size: clamp(34px, 5vw, 68px);
+  line-height: 0.98;
+}
+
+.founder-copy p:not(.micro-label) {
+  color: rgba(48, 56, 65, 0.72);
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.75;
+}
+
+.founder-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.founder-tags span {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 9px 15px;
+}
+
+/* ── Proof marquee (logók / gyors idézetek) ── */
+.proof-marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 44px) 0;
+}
+
+.proof-track {
+  animation: marquee 32s linear infinite;
+  display: flex;
+  gap: 18px;
+  width: max-content;
+}
+
+.proof-marquee:hover .proof-track {
+  animation-play-state: paused;
+}
+
+.proof-pill {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: flex;
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 850;
+  gap: 12px;
+  padding: 16px 26px;
+  white-space: nowrap;
+}
+
+.proof-pill b {
+  color: var(--ember);
+}
+
+.dark-page .proof-pill {
+  background: rgba(245, 245, 245, 0.06);
+  border-color: rgba(245, 245, 245, 0.14);
+  color: var(--paper);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Vélemények ── */
+.voices-section {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(76px, 9vw, 132px) clamp(18px, 5vw, 76px);
+}
+
+.voices-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.voice-card {
+  animation: reveal-up both;
+  animation-timeline: view();
+  animation-range: entry 6% cover 26%;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  display: grid;
+  gap: 18px;
+  padding: 30px;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.voice-card:hover {
+  box-shadow: 0 30px 70px rgba(17, 23, 28, 0.12);
+  transform: translateY(-6px);
+}
+
+.voice-card.feature {
+  background: var(--ink);
+  color: var(--paper);
+  grid-column: span 2;
+}
+
+.voice-stars {
+  color: var(--ember);
+  font-size: 18px;
+  letter-spacing: 3px;
+}
+
+.voice-card blockquote {
+  font-size: clamp(17px, 1.9vw, 22px);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.voice-card.feature blockquote {
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1.45;
+}
+
+.voice-author {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  margin-top: auto;
+}
+
+.voice-avatar {
+  align-items: center;
+  background: linear-gradient(135deg, var(--ember), var(--aqua));
+  border-radius: 50%;
+  color: var(--white);
+  display: flex;
+  flex: 0 0 auto;
+  font-weight: 950;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.voice-author div {
+  display: grid;
+}
+
+.voice-author strong {
+  font-size: 15px;
+}
+
+.voice-author span {
+  color: rgba(48, 56, 65, 0.6);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.voice-card.feature .voice-author span {
+  color: rgba(245, 245, 245, 0.6);
+}
+
+/* ── GYIK ── */
+.faq-section {
+  margin: 0 auto;
+  max-width: 980px;
+  padding: clamp(60px, 8vw, 120px) clamp(18px, 5vw, 76px);
+}
+
+.faq-list {
+  display: grid;
+  gap: 12px;
+}
+
+.faq-item {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color 200ms ease;
+}
+
+.faq-item[open] {
+  border-color: rgba(255, 87, 34, 0.4);
+}
+
+.faq-item summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: clamp(17px, 2vw, 22px);
+  font-weight: 850;
+  gap: 16px;
+  justify-content: space-between;
+  list-style: none;
+  padding: 24px 28px;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  color: var(--ember);
+  content: "+";
+  font-size: 28px;
+  font-weight: 400;
+  transition: transform 220ms ease;
+}
+
+.faq-item[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.faq-item p {
+  color: rgba(48, 56, 65, 0.72);
+  line-height: 1.7;
+  padding: 0 28px 26px;
+}
+
+/* ── Pricing teaser (főoldal) ── */
+.price-teaser {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(60px, 8vw, 120px) clamp(18px, 5vw, 76px) 0;
+}
+
+.price-rows {
+  display: grid;
+  gap: 12px;
+}
+
+.price-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.4fr 2fr auto;
+  padding: 22px 8px;
+  transition: padding-left 200ms ease;
+}
+
+.price-row:hover {
+  padding-left: 18px;
+}
+
+.price-row strong {
+  font-size: clamp(18px, 2.2vw, 26px);
+}
+
+.price-row span {
+  color: rgba(48, 56, 65, 0.62);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.price-row b {
+  color: var(--ember);
+  font-size: clamp(16px, 1.8vw, 20px);
+  white-space: nowrap;
+}
+
+/* ── Capability rail (mire vagyok képes) ── */
+.cap-section {
+  padding: clamp(60px, 8vw, 120px) 0;
+}
+
+.cap-section .section-head {
+  padding: 0 clamp(18px, 5vw, 76px);
+}
+
+.cap-rail {
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  gap: 18px;
+  grid-auto-columns: clamp(280px, 78vw, 420px);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  padding: 10px clamp(18px, 5vw, 76px) 28px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.cap-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.cap-card {
+  border-radius: 30px;
+  display: grid;
+  gap: 12px;
+  min-height: 440px;
+  overflow: hidden;
+  padding: 32px;
+  position: relative;
+  scroll-snap-align: start;
+}
+
+.cap-card h3 {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.cap-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.78;
+  position: relative;
+  z-index: 2;
+}
+
+.cap-card .cap-eyebrow {
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.5px;
+  opacity: 1;
+  position: relative;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.cap-card .cap-demo {
+  align-self: end;
+  position: relative;
+  z-index: 2;
+}
+
+/* demo 1: animált aurora */
+.cap-aurora {
+  background: var(--night);
+  color: var(--paper);
+}
+
+.cap-aurora::before {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 87, 34, 0.7), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(118, 171, 174, 0.7), transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(255, 87, 34, 0.5), transparent 45%);
+  content: "";
+  filter: blur(20px);
+  inset: -30%;
+  position: absolute;
+  animation: aurora-drift 12s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  to {
+    transform: translate(8%, 6%) rotate(20deg) scale(1.2);
+  }
+}
+
+/* demo 2: 3D tilt */
+.cap-tilt {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  transform-style: preserve-3d;
+  transition: transform 200ms ease;
+}
+
+.cap-tilt:hover {
+  transform: perspective(900px) rotateX(8deg) rotateY(-10deg);
+}
+
+.cap-tilt .cap-chip {
+  background: var(--ember);
+  border-radius: 18px;
+  box-shadow: 0 24px 50px rgba(255, 87, 34, 0.4);
+  height: 90px;
+  transform: translateZ(40px);
+  width: 90px;
+}
+
+/* demo 3: spotlight (kurzort követ) */
+.cap-spotlight {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cap-spotlight::before {
+  background: radial-gradient(
+    320px circle at calc(50% + var(--mx) * 40%) calc(50% + var(--my) * 40%),
+    rgba(255, 87, 34, 0.35),
+    transparent 60%
+  );
+  content: "";
+  inset: 0;
+  position: absolute;
+  z-index: 1;
+}
+
+/* demo 4: gradient text */
+.cap-gtext {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.cap-gtext .cap-big {
+  background: linear-gradient(100deg, var(--ember), var(--aqua), var(--ember));
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: hue-pan 6s linear infinite;
+  font-size: clamp(46px, 8vw, 88px);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+/* demo 5: glow / neon border */
+.cap-glow {
+  background: var(--night);
+  border: 1px solid rgba(118, 171, 174, 0.4);
+  color: var(--paper);
+}
+
+.cap-glow .cap-orb {
+  background: var(--aqua);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(118, 171, 174, 0.6);
+  height: 80px;
+  width: 80px;
+  animation: pulse-glow 2.4s ease-out infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(118, 171, 174, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 46px rgba(118, 171, 174, 0);
+  }
+}
+
+/* demo 6: belső marquee */
+.cap-marq {
+  background: var(--ember);
+  color: var(--white);
+}
+
+.cap-marq .cap-strip {
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  overflow: hidden;
+}
+
+.cap-marq .cap-strip span {
+  animation: marquee 14s linear infinite;
+  display: inline-block;
+  font-size: 30px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.cap-hint {
+  color: rgba(48, 56, 65, 0.5);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 clamp(18px, 5vw, 76px);
+  text-transform: uppercase;
+}
+
+.dark-page .cap-hint {
+  color: rgba(245, 245, 245, 0.5);
+}
+
+/* ── Esettanulmány (Checky deep) ── */
+.case-study {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(60px, 8vw, 120px) clamp(18px, 5vw, 76px);
+}
+
+.case-shot {
+  border-radius: 30px;
+  box-shadow: 0 40px 110px rgba(17, 23, 28, 0.22);
+  display: block;
+  margin-bottom: clamp(32px, 5vw, 56px);
+  width: 100%;
+}
+
+.case-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: clamp(32px, 5vw, 56px);
+}
+
+.case-block {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  display: grid;
+  gap: 12px;
+  padding: 28px;
+}
+
+.case-block span {
+  color: var(--ember);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.case-block p {
+  color: rgba(48, 56, 65, 0.74);
+  line-height: 1.7;
+}
+
+.case-metrics {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.case-metric {
+  background: var(--ink);
+  border-radius: 24px;
+  color: var(--paper);
+  padding: 30px;
+  text-align: center;
+}
+
+.case-metric:nth-child(2) {
+  background: var(--aqua);
+  color: var(--ink);
+}
+
+.case-metric strong {
+  display: block;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1;
+}
+
+.case-metric span {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+@media (max-width: 880px) {
+  .founder-section,
+  .voices-grid,
+  .case-grid,
+  .case-metrics,
+  .price-row {
+    grid-template-columns: 1fr;
+  }
+
+  .voice-card.feature {
+    grid-column: auto;
+  }
+
+  .price-row {
+    gap: 6px;
+  }
+
+  .price-row b {
+    justify-self: start;
+  }
 }

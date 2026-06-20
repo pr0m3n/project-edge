@@ -3,10 +3,10 @@ import { SiteNav } from "@/components/SiteNav";
 
 const steps = [
   ["01", "Átbeszéljük", "Mi van most, mi nem működik, és milyen típusú megkereséseket szeretnél kapni?"],
-  ["02", "Rendet rakunk", "Oldalak, szövegek, ügyfélút, fontos döntési pontok. Itt derül ki, mire van tényleg szükség."],
+  ["02", "Rendet rakok", "Oldalak, szövegek, ügyfélút, fontos döntési pontok. Itt derül ki, mire van tényleg szükség."],
   ["03", "Megtervezem", "Nem kész sablonból indulok. Kapsz egy vizuális irányt, ami illik a szolgáltatásodhoz és az ügyfeleidhez."],
-  ["04", "Felépítem", "Next.js, Supabase, gyors betöltés, mobilnézet, domain és Vercel deploy. Amit kell, bekötünk."],
-  ["05", "Finomítjuk", "Indulás után megnézzük, hogyan viselkedik az oldal, és javítunk azon, ami a valós használatban látszik."]
+  ["04", "Felépítem", "Next.js, Supabase, gyors betöltés, mobilnézet, domain és Vercel deploy. Amit kell, bekötök."],
+  ["05", "Finomítom", "Indulás után megnézem, hogyan viselkedik az oldal, és javítok azon, ami a valós használatban látszik."]
 ];
 
 export default function ProcessPage() {
@@ -15,7 +15,7 @@ export default function ProcessPage() {
       <SiteNav />
       <section className="page-hero compact inverse">
         <p className="micro-label">Folyamat</p>
-        <h1>Előbb kitaláljuk, mit kell mondania az oldalnak.</h1>
+        <h1>Előbb kitalálom, mit kell mondania az oldalnak.</h1>
       </section>
       <section className="timeline">
         {steps.map(([number, title, copy]) => (
