@@ -168,7 +168,6 @@ export default function WorkPage() {
         </div>
         <p className="cap-hint">← Húzd oldalra a kártyákat →</p>
         <div className="cap-rail">
-          <div className="cap-spacer" aria-hidden="true" />
           {capabilities.map((cap) => (
             <article className={`cap-card ${cap.dark ? "dark" : ""}`} key={cap.title}>
               <div className={`cap-stage ${cap.fx}`}>{cap.stage}</div>
@@ -179,7 +178,6 @@ export default function WorkPage() {
               </div>
             </article>
           ))}
-          <div className="cap-spacer" aria-hidden="true" />
         </div>
         <p className="cap-note">
           Ezek csak <b>példák</b> — a te oldaladhoz pont olyan effekteket és animációkat építek,

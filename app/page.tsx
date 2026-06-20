@@ -173,7 +173,7 @@ export default function Home() {
             <b>Patrik vagyok.</b>
           </div>
           <div className="founder-badge">
-            <strong>Boczán Patrik</strong>
+            <strong>Patrik</strong>
             <span>alapító · fejlesztő · ProjectEdge</span>
           </div>
         </div>
