@@ -6,31 +6,36 @@ const steps = [
     "01",
     "Átbeszéljük",
     "Egy rövid hívás vagy a brief alapján átnézzük, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Nem a technikáról beszélünk, hanem az üzletedről.",
-    "kb. 30 perc"
+    "kb. 30 perc",
+    "💬"
   ],
   [
     "02",
     "Rendet rakok",
     "Összerakom az oldalszerkezetet, az ügyfélutat és a fontos döntési pontokat. Itt dől el, mire van tényleg szükség — és mire nem, hogy ne fizess feleslegesen.",
-    "1–2 nap"
+    "1–2 nap",
+    "🧭"
   ],
   [
     "03",
     "Megtervezem",
     "Kapsz egy konkrét vizuális irányt, mielőtt bármit kódolnék. Nem sablonból: a te szolgáltatásodhoz és ügyfeleidhez szabva. Itt módosítunk, amíg nem stimmel.",
-    "jóváhagyásra váró irány"
+    "jóváhagyásra váró irány",
+    "🎨"
   ],
   [
     "04",
     "Felépítem",
     "Next.js, Supabase, gyors betöltés, mobilnézet, domain és Vercel deploy. A szövegeket megírom, a hozzáféréseket bekötöm. Közben az ügyfélkapun végig látod a haladást.",
-    "a projekt nagy része"
+    "a projekt nagy része",
+    "⚙️"
   ],
   [
     "05",
     "Finomítom",
     "Indulás után megnézem, hogyan viselkedik az oldal a valóságban, és javítok azon, ami csak éles használatban derül ki. Nem tűnök el a leszállítás után.",
-    "indulás után is"
+    "indulás után is",
+    "✨"
   ]
 ];
 
@@ -65,14 +70,17 @@ export default function ProcessPage() {
           stimmel.
         </p>
       </section>
-      <section className="timeline">
-        {steps.map(([number, title, copy, tag]) => (
-          <article key={number}>
-            <strong>{number}</strong>
-            <h2>{title}</h2>
-            <div className="step-body">
+      <section className="proc-list">
+        {steps.map(([number, title, copy, tag, icon]) => (
+          <article className="proc-step" key={number}>
+            <span className="proc-num">{number}</span>
+            <div className="proc-body">
+              <h2>{title}</h2>
               <p>{copy}</p>
               <span className="step-tag">{tag}</span>
+            </div>
+            <div className="proc-icon" aria-hidden="true">
+              {icon}
             </div>
           </article>
         ))}
