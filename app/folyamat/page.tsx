@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
+import { TransitionLink } from "@/components/TransitionLink";
 
 const steps = [
   [
@@ -98,9 +98,9 @@ export default function ProcessPage() {
       </section>
       <section className="cta-band dark">
         <h2>Ha szereted, amikor átlátható a munka, valószínűleg jól fogunk haladni.</h2>
-        <Link className="button primary" href="/ugyfelkapu">
+        <TransitionLink className="button primary" href="/ugyfelkapu">
           Projekt indítása
-        </Link>
+        </TransitionLink>
       </section>
     </main>
   );

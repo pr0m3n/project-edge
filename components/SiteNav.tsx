@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { TransitionLink } from "@/components/TransitionLink";
 
 const links = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -27,23 +27,23 @@ export function SiteNav() {
   return (
     <>
       <nav className="nav-shell" aria-label="Fő navigáció">
-        <Link className="brand-lockup" href="/">
+        <TransitionLink className="brand-lockup" href="/">
           <span className="brand-cube" aria-hidden="true">
             <span />
           </span>
           <span>ProjectEdge</span>
-        </Link>
+        </TransitionLink>
         <div className="nav-orbit">
           {links.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <TransitionLink key={link.href} href={link.href}>
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
         </div>
         <div className="nav-end">
-          <Link className="nav-cta" href="/ugyfelkapu">
+          <TransitionLink className="nav-cta" href="/ugyfelkapu">
             Projekt indítása
-          </Link>
+          </TransitionLink>
           <button
             aria-label={open ? "Menü bezárása" : "Menü megnyitása"}
             aria-expanded={open}
@@ -72,13 +72,13 @@ export function SiteNav() {
       >
         <div className="mobile-nav-links">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
+            <TransitionLink key={link.href} href={link.href} onClick={() => setOpen(false)}>
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
-          <Link className="button primary" href="/ugyfelkapu" onClick={() => setOpen(false)}>
+          <TransitionLink className="button primary" href="/ugyfelkapu" onClick={() => setOpen(false)}>
             Projekt indítása
-          </Link>
+          </TransitionLink>
         </div>
       </nav>
     </>

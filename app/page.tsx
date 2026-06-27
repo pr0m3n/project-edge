@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ModelViewer } from "@/components/ModelViewer";
+import { TransitionLink } from "@/components/TransitionLink";
 import { ScrollScene } from "@/components/ScrollScene";
 import { SiteNav } from "@/components/SiteNav";
 
@@ -87,12 +87,12 @@ export default function Home() {
               fél év múlva újrakezdeni.
             </p>
             <div className="hero-command">
-              <Link className="button primary" href="/ugyfelkapu">
+              <TransitionLink className="button primary" href="/ugyfelkapu">
                 Projekt indítása
-              </Link>
-              <Link className="button spectral" href="/munkak">
+              </TransitionLink>
+              <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
-              </Link>
+              </TransitionLink>
             </div>
           </div>
           <div className="hero-visual-stack">
@@ -132,9 +132,9 @@ export default function Home() {
             frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
             egy kézben épültek.
           </p>
-          <Link className="button primary" href="/munkak">
+          <TransitionLink className="button primary" href="/munkak">
             Esettanulmány megnézése
-          </Link>
+          </TransitionLink>
         </div>
         <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
           <span className="case-tag">Full-stack munka</span>
@@ -153,12 +153,12 @@ export default function Home() {
         </div>
         <div className="route-grid">
           {paths.map((path) => (
-            <Link className="route-tile" href={path.href} key={path.href}>
+            <TransitionLink className="route-tile" href={path.href} key={path.href}>
               <span>{path.eyebrow}</span>
               <h3>{path.title}</h3>
               <p>{path.copy}</p>
               <strong>Megnyitás</strong>
-            </Link>
+            </TransitionLink>
           ))}
         </div>
       </section>
@@ -208,9 +208,9 @@ export default function Home() {
             ügyfélkapun elindítod a projektet, kitöltöd a briefet, követed a haladást, fizetsz és
             kérdezel — akkor, amikor neked kényelmes. A teljes weboldal online elintézhető.
           </p>
-          <Link className="button primary" href="/ugyfelkapu">
+          <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
-          </Link>
+          </TransitionLink>
         </div>
         <ul className="nc-list">
           <li>Nincs kötelező telefonhívás</li>
@@ -249,9 +249,9 @@ export default function Home() {
             A mozgás és a 3D akkor működik jól, ha nem akadályozza az olvasást. Itt pont ez a cél:
             adjon karaktert, de ne vigye el a figyelmet arról, amit el akarsz mondani.
           </p>
-          <Link className="button spectral" href="/munkak">
+          <TransitionLink className="button spectral" href="/munkak">
             Mire vagyok képes?
-          </Link>
+          </TransitionLink>
         </div>
         <div className="planet-stage">
           <ModelViewer
@@ -328,9 +328,9 @@ export default function Home() {
         <article>
           <span>Röviden</span>
           <h2>A jó weboldal nem magyarázkodik. Tisztán vezet tovább.</h2>
-          <Link className="button secondary" href="/folyamat">
+          <TransitionLink className="button secondary" href="/folyamat">
             Nézd meg a folyamatot
-          </Link>
+          </TransitionLink>
         </article>
       </section>
     </main>

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
+import { TransitionLink } from "@/components/TransitionLink";
 
 const capabilities = [
   {
@@ -211,9 +211,9 @@ export default function WorkPage() {
 
       <section className="cta-band">
         <h2>Ha van egy ötleted vagy meglévő oldalad, abból már el lehet indulni.</h2>
-        <Link className="button primary" href="/ugyfelkapu">
+        <TransitionLink className="button primary" href="/ugyfelkapu">
           Beszéljünk róla
-        </Link>
+        </TransitionLink>
       </section>
     </main>
   );

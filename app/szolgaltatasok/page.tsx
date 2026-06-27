@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
+import { TransitionLink } from "@/components/TransitionLink";
 
 const services = [
   ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
@@ -142,9 +142,9 @@ export default function ServicesPage() {
 
       <section className="cta-band">
         <h2>Ha most kell rendbe rakni az online jelenléted, kezdjük egy rövid igényfelméréssel.</h2>
-        <Link className="button primary" href="/ugyfelkapu">
+        <TransitionLink className="button primary" href="/ugyfelkapu">
           Projektet indítok
-        </Link>
+        </TransitionLink>
       </section>
     </main>
   );

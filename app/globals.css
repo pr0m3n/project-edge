@@ -11,6 +11,55 @@
   --shadow: 0 26px 90px rgba(17, 23, 28, 0.18);
 }
 
+/* ════ Oldalátmenetek — View Transitions API ════ */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.992);
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.992);
+  }
+}
+
+::view-transition-old(root) {
+  animation-name: vt-out;
+}
+
+::view-transition-new(root) {
+  animation-name: vt-in;
+}
+
+/* a fix elemek maradjanak a helyükön, ne ússzanak az átmenettel */
+.nav-shell {
+  view-transition-name: site-nav;
+}
+
+.support-widget {
+  view-transition-name: support-widget;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
