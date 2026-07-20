@@ -22,7 +22,15 @@ export function BriefPanel({
   onSaveEdit
 }: BriefPanelProps) {
   const brief = parseBrief(project.goals);
-  const palette = paletteByName(brief["Színirány"]);
+  const palette =
+    project.brief_data?.palette === "custom"
+      ? [
+          project.brief_data.customBg,
+          project.brief_data.customAccent,
+          project.brief_data.customText,
+          project.brief_data.customCta
+        ].filter((color): color is string => Boolean(color))
+      : paletteByName(brief["Színirány"]);
   const briefFields = [
     ["Cél", brief["Cél"]],
     ["Célközönség", brief["Célközönség / vásárlók"]],

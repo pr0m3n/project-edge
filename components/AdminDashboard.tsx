@@ -1485,7 +1485,15 @@ export function AdminDashboard() {
             }
 
             const brief = parseBrief(project.goals);
-            const palette = paletteByName(brief["Színirány"]);
+            const palette =
+              project.brief_data?.palette === "custom"
+                ? [
+                    project.brief_data.customBg,
+                    project.brief_data.customAccent,
+                    project.brief_data.customText,
+                    project.brief_data.customCta
+                  ].filter(Boolean)
+                : paletteByName(brief["Színirány"]);
             const briefFields = [
               ["Cél", brief["Cél"]],
               ["Célközönség", brief["Célközönség / vásárlók"]],

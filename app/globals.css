@@ -1185,6 +1185,27 @@ p {
   resize: vertical;
 }
 
+.input-with-picker {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-picker input:not([type="color"]) {
+  flex: 1;
+}
+
+.input-with-picker input[type="color"] {
+  background: none;
+  border-radius: 12px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 50px;
+  min-height: 50px;
+  padding: 4px;
+  width: 50px;
+}
+
 .quote-panel .button {
   margin-top: 24px;
   min-width: min(100%, 280px);
@@ -1808,8 +1829,9 @@ p {
 }
 
 .portal-slideover {
-  background: var(--paper);
+  background: var(--ink);
   box-shadow: -24px 0 60px rgba(0, 0, 0, 0.35);
+  color: var(--paper);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1820,8 +1842,8 @@ p {
 
 .portal-slideover-head {
   align-items: center;
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  background: var(--ink);
+  border-bottom: 1px solid rgba(245, 245, 245, 0.14);
   display: flex;
   justify-content: space-between;
   padding: 20px 24px;
@@ -1830,21 +1852,29 @@ p {
 }
 
 .portal-slideover-head h2 {
-  color: var(--ink);
+  color: var(--paper);
   font-size: 20px;
   margin: 0;
 }
 
 .portal-slideover-close {
-  background: rgba(48, 56, 65, 0.06);
-  border: 0;
+  align-items: center;
+  background: rgba(245, 245, 245, 0.08);
+  border: 1px solid rgba(245, 245, 245, 0.16);
   border-radius: 50%;
-  color: var(--ink);
+  color: rgba(245, 245, 245, 0.85);
   cursor: pointer;
+  display: flex;
   font-size: 18px;
   height: 32px;
+  justify-content: center;
   line-height: 1;
+  transition: background 180ms ease;
   width: 32px;
+}
+
+.portal-slideover-close:hover {
+  background: rgba(245, 245, 245, 0.16);
 }
 
 .portal-slideover-body {
@@ -2319,7 +2349,6 @@ p {
 }
 
 .style-card {
-  background: var(--paper);
   border-radius: 28px;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
   display: grid;
@@ -2327,34 +2356,49 @@ p {
   max-width: 420px;
   padding: 28px;
   transform: rotate(-2deg);
+  transition: background 200ms ease, color 200ms ease;
   width: 72%;
 }
 
-.style-card.bold {
-  background: var(--ember);
-  color: var(--white);
-  transform: rotate(2deg) scale(1.02);
+/* Vibe modifiers are structural only (shape/rotation/spacing) — the actual
+   colors come from the selected palette (inline style), so the preview
+   reflects both choices at once instead of the vibe silently overriding it. */
+.style-card.vibe-premium {
+  border-radius: 10px;
+  gap: 6px;
+  transform: rotate(0deg);
 }
 
-.style-card.clean {
-  background: var(--white);
-  color: var(--ink);
+.style-card.vibe-premium strong {
+  font-weight: 950;
+  line-height: 0.85;
 }
 
-.style-card.friendly {
-  background: #eef7f7;
-  color: var(--ink);
+.style-card.vibe-clean {
+  border-radius: 32px;
+  gap: 16px;
+  padding: 36px;
+  transform: rotate(0deg);
+}
+
+.style-card.vibe-bold {
+  border-radius: 20px;
+  transform: rotate(2deg) scale(1.03);
+}
+
+.style-card.vibe-bold strong {
+  font-weight: 950;
+}
+
+.style-card.vibe-friendly {
+  border-radius: 40px;
+  transform: rotate(-1deg);
 }
 
 .style-card span {
-  color: var(--ember);
   font-size: 12px;
   font-weight: 950;
   text-transform: uppercase;
-}
-
-.style-card.bold span {
-  color: var(--white);
 }
 
 .style-card strong {
@@ -2365,6 +2409,19 @@ p {
 .style-card p {
   color: inherit;
   line-height: 1.45;
+  opacity: 0.85;
+}
+
+.style-card em {
+  background: var(--ember);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 10px 20px;
 }
 
 .choice-grid,
@@ -2401,6 +2458,76 @@ p {
 .palette-grid button.selected {
   border-color: rgba(255, 87, 34, 0.5);
   box-shadow: 0 16px 40px rgba(255, 87, 34, 0.14);
+}
+
+/* Each vibe option gets a distinct look at a glance, not just on selection —
+   mirrors the same structural personality used by .style-card's preview. */
+.vibe-grid .vibe-premium {
+  background: var(--ink);
+  border-radius: 10px;
+  color: var(--paper);
+}
+
+.vibe-grid .vibe-premium span {
+  color: rgba(245, 245, 245, 0.65);
+}
+
+.vibe-grid .vibe-clean {
+  background: #fff;
+  border-radius: 28px;
+  border-color: rgba(48, 56, 65, 0.06);
+}
+
+.vibe-grid .vibe-bold {
+  background: rgba(255, 87, 34, 0.1);
+  border-color: rgba(255, 87, 34, 0.22);
+  border-radius: 16px;
+}
+
+.vibe-grid .vibe-bold strong {
+  font-weight: 950;
+}
+
+.vibe-grid .vibe-friendly {
+  background: rgba(118, 171, 174, 0.12);
+  border-color: rgba(118, 171, 174, 0.24);
+  border-radius: 34px;
+}
+
+.vibe-grid .vibe-premium.selected {
+  border-color: var(--ember);
+}
+
+.custom-palette-picker {
+  background: rgba(48, 56, 65, 0.03);
+  border: 1px solid rgba(48, 56, 65, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  padding: 16px;
+}
+
+.custom-palette-picker label {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.custom-palette-picker input[type="color"] {
+  background: none;
+  border: 1px solid rgba(48, 56, 65, 0.16);
+  border-radius: 8px;
+  cursor: pointer;
+  height: 32px;
+  padding: 2px;
+  width: 40px;
+}
+
+.custom-palette-picker span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .choice-grid button span {
@@ -4522,6 +4649,12 @@ p {
   padding: 12px 14px;
 }
 
+.branch-note-block {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
 .wizard-visual.assets {
   align-items: center;
   display: flex;
@@ -4537,6 +4670,43 @@ p {
   box-shadow: var(--shadow);
   font-weight: 700;
   padding: 12px 22px;
+}
+
+.logo-preview {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 16px;
+}
+
+.logo-preview img {
+  border-radius: 8px;
+  height: 48px;
+  object-fit: contain;
+  width: 48px;
+}
+
+.logo-preview-chip {
+  background: rgba(118, 171, 174, 0.12);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+}
+
+.logo-preview span:last-child {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.logo-preview-status {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 6px;
 }
 
 /* ── Admin: anyagok és hozzáférések blokk ── */

@@ -74,6 +74,10 @@ export type Project = {
     vibe?: string;
     palette?: string;
     style?: string;
+    customBg?: string;
+    customAccent?: string;
+    customText?: string;
+    customCta?: string;
   } | null;
   last_modified_at: string | null;
   last_modified_by: string | null;
@@ -97,6 +101,7 @@ export type Project = {
   final_payment_paid: boolean;
   final_payment_paid_at: string | null;
   estimated_deadline: string | null;
+  logo_url: string | null;
 };
 
 type Ticket = {
@@ -165,7 +170,12 @@ const initialProject = {
   contactEmail: "",
   contactPhone: "",
   analyticsAccess: "",
-  billingDetails: ""
+  billingDetails: "",
+  customBg: "#F5F5F5",
+  customAccent: "#76ABAE",
+  customText: "#303841",
+  customCta: "#FF5722",
+  logoUrl: ""
 };
 
 export type BriefFormValues = typeof initialProject;
@@ -223,7 +233,18 @@ const paletteOptions: Array<[string, string, string[]]> = [
   ["rose", "Rose premium", ["#FFF7F8", "#E8B4BC", "#332B31", "#C44569"]],
   ["blueprint", "Blueprint", ["#F3F8FF", "#9DB7D6", "#1D3557", "#457B9D"]],
   ["sunset", "Sunset", ["#FFF1E6", "#F7B267", "#2B2D42", "#F25C54"]],
-  ["minimal", "Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]]
+  ["minimal", "Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]],
+  ["custom", "Egyedi paletta", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]]
+];
+
+const curatedFonts = [
+  "Modern groteszk (pl. Inter, Helvetica-szerű)",
+  "Elegáns serif (pl. Playfair, Georgia-szerű)",
+  "Barátságos kerekded (pl. Poppins, Nunito-szerű)",
+  "Klasszikus időtlen (pl. Garamond-szerű)",
+  "Technikai monospace",
+  "Kézírásos / egyedi",
+  "Nincs preferencia — bízom a stúdióra"
 ];
 
 const priorityLabels: Record<string, string> = {
@@ -309,6 +330,55 @@ export function paletteByName(name?: string) {
   return paletteOptions.find(([, label]) => label === name)?.[2] ?? paletteOptions[0][2];
 }
 
+function printDomainGuide(companyName?: string) {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  const heading = companyName ? `${escHtml(companyName)} — domain-vásárlási útmutató` : "Domain-vásárlási útmutató";
+  win.document.write(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${heading}</title>` +
+    `<style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6;max-width:720px;margin:0 auto}h1{color:#111;font-size:26px}h2{color:#111;font-size:18px;margin-top:32px}ul{padding-left:20px}li{margin-bottom:6px}.note{color:#666;font-size:13px}</style></head>` +
+    `<body>` +
+    `<h1>${heading}</h1>` +
+    `<p>Ez az útmutató lépésről lépésre végigvezet azon, hogyan szerezz saját domaint (weboldal-címet) a vállalkozásodnak.</p>` +
+    `<h2>1. Mi az a domain, és miért kell?</h2>` +
+    `<p>A domain a weboldalad internetes címe, pl. <strong>vallalkozasod.hu</strong>. Ez a te tulajdonod — akkor is a tiéd marad, ha később fejlesztőt váltasz.</p>` +
+    `<h2>2. Hogyan válassz domain nevet?</h2>` +
+    `<ul>` +
+    `<li>Legyen rövid, könnyen megjegyezhető és kimondható.</li>` +
+    `<li>Lehetőleg <strong>.hu</strong> vagy <strong>.com</strong> végződés.</li>` +
+    `<li>Kerüld a kötőjeleket és számokat, ha nem feltétlenül szükséges.</li>` +
+    `<li>Érdemes leellenőrizni, hogy a név nem ütközik-e védjeggyel.</li>` +
+    `</ul>` +
+    `<h2>3. Hol regisztrálhatod?</h2>` +
+    `<p>Bármelyik akkreditált, .hu domain regisztrálására jogosult szolgáltatónál regisztrálhatsz. Azt, hogy egy .hu domain név szabad-e, a hivatalos nyilvántartó (a domain.hu oldal, amit az ISZT — Internet Szolgáltatók Tanácsa üzemeltet) oldalán tudod ellenőrizni.</p>` +
+    `<h2>4. Mennyibe kerül? <span class="note">(tájékoztató jellegű, szolgáltatónként és évenként változhat)</span></h2>` +
+    `<ul>` +
+    `<li>.hu domain: nagyságrendileg 2000–5000 Ft / év</li>` +
+    `<li>.com domain: nagyságrendileg 3000–6000 Ft / év</li>` +
+    `</ul>` +
+    `<h2>5. A regisztráció lépései</h2>` +
+    `<ol>` +
+    `<li>Döntsd el a domain nevet.</li>` +
+    `<li>Ellenőrizd, hogy szabad-e.</li>` +
+    `<li>Válassz egy szolgáltatót, és regisztráld.</li>` +
+    `<li>A tulajdonos adatainál a <strong>saját</strong> (nem a fejlesztő) adataidat add meg.</li>` +
+    `<li>Fizesd ki a regisztrációt.</li>` +
+    `<li>Oszd meg velünk a hozzáférést / DNS-beállítási jogot, hogy rá tudjuk kötni a weboldalt.</li>` +
+    `</ol>` +
+    `<h2>6. Mi az a DNS, egyszerűen?</h2>` +
+    `<p>A DNS olyan, mint egy telefonkönyv: megmondja a böngészőnek, melyik szerveren található a weboldalad. Ezt a beállítást, amint megvan a domained, mi elvégezzük.</p>` +
+    `<h2>7. Gyakori hibák</h2>` +
+    `<ul>` +
+    `<li>Ne a fejlesztő nevére regisztráltasd a domaint — legyen mindig a sajátod.</li>` +
+    `<li>Ne felejtsd el a megújítást — sokan elveszítik a domainjüket lejárat miatt.</li>` +
+    `<li>Ne vásárolj felesleges extra domaineket "csak biztos, ami biztos" alapon.</li>` +
+    `</ul>` +
+    `<p class="note">Ha bármiben elakadsz, írj nekünk üzenetet az ügyfélkapun — szívesen segítünk.</p>` +
+    `</body></html>`
+  );
+  win.document.close();
+}
+
 type ClientPortalProps = {
   view?: "auth" | "dashboard";
 };
@@ -357,6 +427,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [modificationRequestText, setModificationRequestText] = useState("");
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
@@ -618,6 +689,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const selectedProjectType = projectTypeOptions.find(([value]) => value === projectForm.projectType) ?? projectTypeOptions[0];
   const selectedVibe = vibeOptions.find(([value]) => value === projectForm.vibe) ?? vibeOptions[0];
   const selectedPalette = paletteOptions.find(([value]) => value === projectForm.palette) ?? paletteOptions[0];
+  const activePaletteColors =
+    projectForm.palette === "custom"
+      ? [projectForm.customBg, projectForm.customAccent, projectForm.customText, projectForm.customCta]
+      : selectedPalette[2];
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
 
   useEffect(() => {
@@ -879,6 +954,36 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice("Elküldtem újra a megerősítő emailt. Nézd meg a Spam/Promóciók mappát is.");
   }
 
+  async function uploadLogo(file: File) {
+    if (!userId) return;
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml", "application/pdf"];
+    if (!allowedTypes.includes(file.type)) {
+      setNotice("Csak PNG, JPG, SVG vagy PDF fájlt lehet feltölteni.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setNotice("A fájl mérete legfeljebb 5 MB lehet.");
+      return;
+    }
+
+    setLogoUploading(true);
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${userId}/${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage.from("client-logos").upload(path, file);
+    if (uploadError) {
+      setLogoUploading(false);
+      setNotice("Nem sikerült feltölteni a logót. Lehet, hogy a Storage még nincs beállítva — próbáld újra később.");
+      return;
+    }
+
+    const { data } = supabase.storage.from("client-logos").getPublicUrl(path);
+    setProjectForm((current) => ({ ...current, logoUrl: data.publicUrl }));
+    setLogoUploading(false);
+    setNotice("Logó sikeresen feltöltve.");
+  }
+
   async function createProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!userId) {
@@ -918,7 +1023,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       projectForm.features ? `Kért funkciók: ${projectForm.features}` : "",
       projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
       `Vizuális karakter: ${selectedVibe[1]}`,
-      `Színirány: ${selectedPalette[1]}`,
+      `Színirány: ${selectedPalette[1]}${projectForm.palette === "custom" ? ` (${activePaletteColors.join(", ")})` : ""}`,
       `Prioritás: ${priorityLabels[projectForm.priority] ?? projectForm.priority}`,
       domainLine,
       platformLine,
@@ -946,7 +1051,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       title: projectForm.title,
       user_id: userId,
       website: projectForm.website || null,
-      brief_data: projectForm
+      brief_data: projectForm,
+      // logo_url mező csak a 011-es migráció után létezik — csak akkor
+      // küldjük, ha tényleg van feltöltött logó (ami maga is csak a
+      // migráció lefuttatása után lehetséges), így addig nem töri el a
+      // sima projekt-beküldést azoknál, akik nem töltenek fel logót.
+      ...(projectForm.logoUrl ? { logo_url: projectForm.logoUrl } : {})
     });
 
     if (error) {
@@ -1029,7 +1139,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       editForm.features ? `Kért funkciók: ${editForm.features}` : "",
       editForm.style ? `Stílus / hangulat: ${editForm.style}` : "",
       `Vizuális karakter: ${selVibe[1]}`,
-      `Színirány: ${selPalette[1]}`,
+      `Színirány: ${selPalette[1]}${editForm.palette === "custom" ? ` (${[editForm.customBg, editForm.customAccent, editForm.customText, editForm.customCta].join(", ")})` : ""}`,
       `Prioritás: ${priorityLabels[editForm.priority] ?? editForm.priority}`
     ]
       .filter(Boolean)
@@ -2244,16 +2354,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 {projectStep === 3 ? (
                   <>
                     <div className="wizard-visual style-lab">
-                      <div className={`style-card ${projectForm.vibe}`}>
-                        <span>{selectedVibe[1]}</span>
+                      <div
+                        className={`style-card vibe-${projectForm.vibe}`}
+                        style={{ background: activePaletteColors[0], color: activePaletteColors[2] }}
+                      >
+                        <span style={{ color: activePaletteColors[1] }}>{selectedVibe[1]}</span>
                         <strong>{projectForm.company || "Márka"}</strong>
                         <p>{selectedVibe[2]}</p>
+                        <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
                       </div>
                     </div>
-                    <div className="choice-grid">
+                    <div className="choice-grid vibe-grid">
                       {vibeOptions.map(([value, label, description]) => (
                         <button
-                          className={projectForm.vibe === value ? "selected" : ""}
+                          className={`vibe-${value} ${projectForm.vibe === value ? "selected" : ""}`}
                           key={value}
                           onClick={() => setProjectForm((current) => ({ ...current, vibe: value }))}
                           type="button"
@@ -2273,13 +2387,36 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         >
                           <strong>{label}</strong>
                           <span>
-                            {colors.map((color) => (
-                              <i key={color} style={{ background: color }} />
+                            {(value === "custom" ? activePaletteColors : colors).map((color, index) => (
+                              <i key={`${color}-${index}`} style={{ background: color }} />
                             ))}
                           </span>
                         </button>
                       ))}
                     </div>
+                    {projectForm.palette === "custom" ? (
+                      <div className="custom-palette-picker">
+                        {(
+                          [
+                            ["customBg", "Háttér"],
+                            ["customAccent", "Kiemelő szín"],
+                            ["customText", "Szöveg"],
+                            ["customCta", "Gomb (CTA)"]
+                          ] as Array<[keyof typeof projectForm, string]>
+                        ).map(([field, label]) => (
+                          <label key={field}>
+                            <input
+                              type="color"
+                              value={projectForm[field]}
+                              onChange={(event) =>
+                                setProjectForm((current) => ({ ...current, [field]: event.target.value }))
+                              }
+                            />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="field">
                       <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista?</label>
                       <textarea
@@ -2352,7 +2489,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                     ) : null}
                     {projectForm.domainStatus === "need" ? (
-                      <p className="branch-note">Rendben — segítünk a domain kiválasztásában, regisztrációjában és a beállításában.</p>
+                      <div className="branch-note-block">
+                        <p className="branch-note">Rendben — segítünk a domain kiválasztásában, regisztrációjában és a beállításában.</p>
+                        <button className="button secondary" type="button" onClick={() => printDomainGuide(projectForm.company)}>
+                          Domain-vásárlási útmutató megnyitása
+                        </button>
+                      </div>
                     ) : null}
 
                     {/* Meglévő oldal — csak ha megadott weboldalt */}
@@ -2436,26 +2578,85 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         </div>
                       </div>
                     ) : null}
+                    {projectForm.logoStatus === "vector" || projectForm.logoStatus === "raster" ? (
+                      <div className="field">
+                        <label htmlFor="logo-upload">Töltsd fel a logódat</label>
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,application/pdf"
+                          disabled={logoUploading}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) uploadLogo(file);
+                            event.target.value = "";
+                          }}
+                        />
+                        {logoUploading ? (
+                          <span className="logo-preview-status">Feltöltés...</span>
+                        ) : projectForm.logoUrl ? (
+                          <div className="logo-preview">
+                            {projectForm.logoUrl.toLowerCase().endsWith(".pdf") ? (
+                              <span className="logo-preview-chip">📎 Fájl csatolva</span>
+                            ) : (
+                              <img src={projectForm.logoUrl} alt="Feltöltött logó előnézet" />
+                            )}
+                            <span>Sikeresen feltöltve — bármikor cserélheted.</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
 
                     {/* Arculat */}
                     <div className="wizard-two">
                       <div className="field">
                         <label htmlFor="brand-colors">Van márkaszíned / színkódod?</label>
-                        <input
-                          id="brand-colors"
-                          value={projectForm.brandColors}
-                          onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
-                          placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
-                        />
+                        <div className="input-with-picker">
+                          <input
+                            id="brand-colors"
+                            value={projectForm.brandColors}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
+                            placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
+                          />
+                          <input
+                            type="color"
+                            aria-label="Márkaszín kiválasztása"
+                            value="#76ABAE"
+                            onChange={(event) =>
+                              setProjectForm((current) => ({
+                                ...current,
+                                brandColors: current.brandColors ? `${current.brandColors}, ${event.target.value}` : event.target.value
+                              }))
+                            }
+                          />
+                        </div>
                       </div>
                       <div className="field">
                         <label htmlFor="font-pref">Betűtípus preferencia?</label>
-                        <input
+                        <select
                           id="font-pref"
-                          value={projectForm.fontPreference}
-                          onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
-                          placeholder="Például: modern groteszk, elegáns serif — vagy hagyd ránk"
-                        />
+                          value={curatedFonts.includes(projectForm.fontPreference) ? projectForm.fontPreference : "egyéb"}
+                          onChange={(event) =>
+                            setProjectForm((current) => ({
+                              ...current,
+                              fontPreference: event.target.value === "egyéb" ? "" : event.target.value
+                            }))
+                          }
+                        >
+                          <option value="">Válassz...</option>
+                          {curatedFonts.map((font) => (
+                            <option key={font} value={font}>{font}</option>
+                          ))}
+                          <option value="egyéb">Egyéb — leírom</option>
+                        </select>
+                        {!curatedFonts.includes(projectForm.fontPreference) && (
+                          <input
+                            style={{ marginTop: "8px" }}
+                            value={projectForm.fontPreference}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
+                            placeholder="Írd le, milyen betűtípust szeretnél — vagy hagyd ránk"
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -2633,8 +2834,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <span>{priorityLabels[projectForm.priority]}</span>
               </div>
               <div className="live-palette">
-                {selectedPalette[2].map((color) => (
-                  <i key={color} style={{ background: color }} />
+                {activePaletteColors.map((color, index) => (
+                  <i key={`${color}-${index}`} style={{ background: color }} />
                 ))}
               </div>
               <div className="live-brief-list">
