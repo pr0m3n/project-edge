@@ -237,15 +237,42 @@ const paletteOptions: Array<[string, string, string[]]> = [
   ["custom", "Egyedi paletta", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]]
 ];
 
-const curatedFonts = [
-  "Modern groteszk (pl. Inter, Helvetica-szerű)",
-  "Elegáns serif (pl. Playfair, Georgia-szerű)",
-  "Barátságos kerekded (pl. Poppins, Nunito-szerű)",
-  "Klasszikus időtlen (pl. Garamond-szerű)",
-  "Technikai monospace",
-  "Kézírásos / egyedi",
-  "Nincs preferencia — bízom a stúdióra"
+// [tárolt érték, közelítő betűkészlet az előnézethez] — az előnézet rendszer-
+// fontokkal közelít, mert a valódi webfontok csak a kész oldalon lesznek.
+const curatedFonts: Array<[string, string]> = [
+  ["Modern groteszk (pl. Inter, Helvetica-szerű)", '"Helvetica Neue", Arial, sans-serif'],
+  ["Elegáns serif (pl. Playfair, Georgia-szerű)", 'Georgia, "Times New Roman", serif'],
+  ["Barátságos kerekded (pl. Poppins, Nunito-szerű)", '"Arial Rounded MT Bold", "Trebuchet MS", sans-serif'],
+  ["Klasszikus időtlen (pl. Garamond-szerű)", 'Garamond, "Palatino Linotype", serif'],
+  ["Technikai monospace", '"Courier New", monospace'],
+  ["Kézírásos / egyedi", '"Snell Roundhand", "Brush Script MT", cursive'],
+  ["Nincs preferencia — bízom a stúdióra", "inherit"]
 ];
+
+// Gyorsválasztó chipek a szabad szöveges mezőkhöz — a kiválasztás vesszős
+// listaként ugyanabba a mezőbe íródik, így az adatszerkezet változatlan,
+// és a szöveges finomítás is megmarad.
+const audienceChips = ["Helyi lakosok", "Magánszemélyek", "Cégek (B2B)", "Családok", "Fiatalok", "Turisták"];
+const pageChips = ["Főoldal", "Szolgáltatások", "Áraink", "Galéria", "Rólunk", "Kapcsolat", "Blog", "Gyakori kérdések"];
+const featureChips = [
+  "Időpontfoglalás",
+  "Kapcsolati űrlap",
+  "Térkép",
+  "Galéria",
+  "Vélemények",
+  "Hírlevél-feliratkozás",
+  "Webshop",
+  "Többnyelvű oldal"
+];
+
+function splitListValue(value: string) {
+  return value.split(",").map((part) => part.trim()).filter(Boolean);
+}
+
+function toggleListValue(current: string, item: string) {
+  const parts = splitListValue(current);
+  return parts.includes(item) ? parts.filter((part) => part !== item).join(", ") : [...parts, item].join(", ");
+}
 
 const priorityLabels: Record<string, string> = {
   automation: "Automatizált folyamatok",
@@ -428,6 +455,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [customFontOpen, setCustomFontOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [supportThreadOpen, setSupportThreadOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
@@ -1676,6 +1706,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     setTicketForm(initialTicket);
     setActiveTicketId(ticket.id);
+    setComposerOpen(false);
+    setSupportThreadOpen(true);
     setNotice("Üzeneted elküldve.");
     loadPortal(true);
   }
@@ -2274,21 +2306,45 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     </div>
                     <div className="field">
                       <label htmlFor="project-goals">Mit szeretnél, hogy az oldal elérjen?</label>
+                      <div className="quick-chips">
+                        {["Több megkeresés, érdeklődő", "Professzionálisabb megjelenés", "Online időpontfoglalás", "Szolgáltatások bemutatása", "Online értékesítés"].map((chip) => (
+                          <button
+                            className={splitListValue(projectForm.goals).includes(chip) ? "active" : ""}
+                            key={chip}
+                            onClick={() => setProjectForm((current) => ({ ...current, goals: toggleListValue(current.goals, chip) }))}
+                            type="button"
+                          >
+                            {chip}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         id="project-goals"
                         required
                         value={projectForm.goals}
                         onChange={(event) => setProjectForm((current) => ({ ...current, goals: event.target.value }))}
-                        placeholder="Írd le emberien: mi most a gond, mi lenne a jó eredmény, miben kéne segítenie az oldalnak?"
+                        placeholder="Kattints a fenti gombokra, vagy írd le a saját szavaiddal: mi most a gond, mi lenne a jó eredmény?"
                       />
                     </div>
                     <div className="field">
                       <label htmlFor="project-audience">Kiknek készül?</label>
+                      <div className="quick-chips">
+                        {audienceChips.map((chip) => (
+                          <button
+                            className={splitListValue(projectForm.audience).includes(chip) ? "active" : ""}
+                            key={chip}
+                            onClick={() => setProjectForm((current) => ({ ...current, audience: toggleListValue(current.audience, chip) }))}
+                            type="button"
+                          >
+                            {chip}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         id="project-audience"
                         value={projectForm.audience}
                         onChange={(event) => setProjectForm((current) => ({ ...current, audience: event.target.value }))}
-                        placeholder="Például: helyi vállalkozók, prémium ügyfelek, B2B döntéshozók, visszatérő vásárlók..."
+                        placeholder="Kattints a fenti gombokra, vagy pontosítsd szabadon..."
                       />
                     </div>
                     <div className="choice-grid compact">
@@ -2314,25 +2370,47 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <div>Admin</div>
                       <div>Automatizmus</div>
                     </div>
-                    <div className="wizard-two">
-                      <div className="field">
-                        <label htmlFor="project-pages">Milyen oldalak kellenek?</label>
-                        <textarea
-                          id="project-pages"
-                          value={projectForm.pages}
-                          onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
-                          placeholder="Főoldal, szolgáltatások, árak, referenciák, kapcsolat, blog, ügyfélkapu..."
-                        />
+                    <div className="field">
+                      <label htmlFor="project-pages">Milyen oldalak kellenek?</label>
+                      <div className="quick-chips">
+                        {pageChips.map((chip) => (
+                          <button
+                            className={splitListValue(projectForm.pages).includes(chip) ? "active" : ""}
+                            key={chip}
+                            onClick={() => setProjectForm((current) => ({ ...current, pages: toggleListValue(current.pages, chip) }))}
+                            type="button"
+                          >
+                            {chip}
+                          </button>
+                        ))}
                       </div>
-                      <div className="field">
-                        <label htmlFor="project-features">Milyen funkciókat szeretnél?</label>
-                        <textarea
-                          id="project-features"
-                          value={projectForm.features}
-                          onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
-                          placeholder="Ajánlatkérés, admin, chat, fizetés, időpontfoglalás, CRM, email automatizmus..."
-                        />
+                      <textarea
+                        id="project-pages"
+                        value={projectForm.pages}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
+                        placeholder="Kattints a fenti gombokra, vagy sorold fel szabadon..."
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="project-features">Milyen funkciókat szeretnél?</label>
+                      <div className="quick-chips">
+                        {featureChips.map((chip) => (
+                          <button
+                            className={splitListValue(projectForm.features).includes(chip) ? "active" : ""}
+                            key={chip}
+                            onClick={() => setProjectForm((current) => ({ ...current, features: toggleListValue(current.features, chip) }))}
+                            type="button"
+                          >
+                            {chip}
+                          </button>
+                        ))}
                       </div>
+                      <textarea
+                        id="project-features"
+                        value={projectForm.features}
+                        onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
+                        placeholder="Kattints a fenti gombokra, vagy írd le szabadon, mire van szükséged..."
+                      />
                     </div>
                     <div className="field">
                       <label htmlFor="project-budget">Mekkora kerettel gondolkodsz?</label>
@@ -2608,56 +2686,72 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
 
                     {/* Arculat */}
-                    <div className="wizard-two">
-                      <div className="field">
-                        <label htmlFor="brand-colors">Van márkaszíned / színkódod?</label>
-                        <div className="input-with-picker">
-                          <input
-                            id="brand-colors"
-                            value={projectForm.brandColors}
-                            onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
-                            placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
-                          />
-                          <input
-                            type="color"
-                            aria-label="Márkaszín kiválasztása"
-                            value="#76ABAE"
-                            onChange={(event) =>
-                              setProjectForm((current) => ({
-                                ...current,
-                                brandColors: current.brandColors ? `${current.brandColors}, ${event.target.value}` : event.target.value
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="field">
-                        <label htmlFor="font-pref">Betűtípus preferencia?</label>
-                        <select
-                          id="font-pref"
-                          value={curatedFonts.includes(projectForm.fontPreference) ? projectForm.fontPreference : "egyéb"}
+                    <div className="field">
+                      <label htmlFor="brand-colors">Van márkaszíned / színkódod?</label>
+                      <div className="input-with-picker">
+                        <input
+                          id="brand-colors"
+                          value={projectForm.brandColors}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
+                          placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
+                        />
+                        <input
+                          type="color"
+                          aria-label="Márkaszín kiválasztása"
+                          value="#76ABAE"
                           onChange={(event) =>
                             setProjectForm((current) => ({
                               ...current,
-                              fontPreference: event.target.value === "egyéb" ? "" : event.target.value
+                              brandColors: current.brandColors ? `${current.brandColors}, ${event.target.value}` : event.target.value
                             }))
                           }
-                        >
-                          <option value="">Válassz...</option>
-                          {curatedFonts.map((font) => (
-                            <option key={font} value={font}>{font}</option>
-                          ))}
-                          <option value="egyéb">Egyéb — leírom</option>
-                        </select>
-                        {!curatedFonts.includes(projectForm.fontPreference) && (
-                          <input
-                            style={{ marginTop: "8px" }}
-                            value={projectForm.fontPreference}
-                            onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
-                            placeholder="Írd le, milyen betűtípust szeretnél — vagy hagyd ránk"
-                          />
-                        )}
+                        />
                       </div>
+                    </div>
+                    <div className="field">
+                      <label>Milyen betűtípus-stílus áll hozzád közel?</label>
+                      <div className="font-grid">
+                        {curatedFonts.map(([label, family]) => {
+                          const shortLabel = label.split(" (")[0];
+                          return (
+                            <button
+                              className={projectForm.fontPreference === label && !customFontOpen ? "selected" : ""}
+                              key={label}
+                              onClick={() => {
+                                setCustomFontOpen(false);
+                                setProjectForm((current) => ({ ...current, fontPreference: label }));
+                              }}
+                              type="button"
+                            >
+                              <span className="font-sample" style={{ fontFamily: family }} aria-hidden="true">Aa</span>
+                              <strong>{shortLabel}</strong>
+                              <span className="font-preview-line" style={{ fontFamily: family }}>Szép weboldal</span>
+                            </button>
+                          );
+                        })}
+                        <button
+                          className={customFontOpen || (Boolean(projectForm.fontPreference) && !curatedFonts.some(([label]) => label === projectForm.fontPreference)) ? "selected" : ""}
+                          onClick={() => {
+                            setCustomFontOpen(true);
+                            setProjectForm((current) => ({
+                              ...current,
+                              fontPreference: curatedFonts.some(([label]) => label === current.fontPreference) ? "" : current.fontPreference
+                            }));
+                          }}
+                          type="button"
+                        >
+                          <span className="font-sample" aria-hidden="true">✏️</span>
+                          <strong>Egyéb</strong>
+                          <span className="font-preview-line">Leírom, mit szeretnék</span>
+                        </button>
+                      </div>
+                      {(customFontOpen || (Boolean(projectForm.fontPreference) && !curatedFonts.some(([label]) => label === projectForm.fontPreference))) && (
+                        <input
+                          value={curatedFonts.some(([label]) => label === projectForm.fontPreference) ? "" : projectForm.fontPreference}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
+                          placeholder="Írd le, milyen betűtípust szeretnél — vagy hagyd ránk"
+                        />
+                      )}
                     </div>
 
                     {/* Szövegek */}
@@ -2916,149 +3010,163 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         <div className="portal-slideover-backdrop" onClick={() => setOpenPanel(null)}>
         <aside className="portal-slideover" onClick={(e) => e.stopPropagation()} aria-label="Üzenetek">
           <div className="portal-slideover-head">
-            <h2>Üzenetek</h2>
+            {supportThreadOpen && activeTicket ? (
+              <button type="button" className="portal-slideover-back" onClick={() => setSupportThreadOpen(false)}>
+                ← Üzenetek
+              </button>
+            ) : (
+              <h2>Üzenetek</h2>
+            )}
             <button type="button" className="portal-slideover-close" onClick={() => setOpenPanel(null)} aria-label="Bezárás">×</button>
           </div>
           <div className="portal-slideover-body">
-        <div className="portal-dashboard-grid support">
-          <section className="portal-panel form-panel">
-            <div className="portal-panel-head">
-              <span>Új üzenet</span>
-              <small>Privát beszélgetés</small>
-            </div>
-            <form className="portal-form" onSubmit={createTicket}>
-              <div className="field">
-                <label htmlFor="ticket-project">Kapcsolódó projekt</label>
-                <select
-                  id="ticket-project"
-                  value={ticketForm.projectId}
-                  onChange={(event) => setTicketForm((current) => ({ ...current, projectId: event.target.value }))}
-                >
-                  <option value="">Általános kérdés</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>{project.title}</option>
+            {supportThreadOpen && activeTicket ? (
+              <section className="portal-panel chat-panel">
+                <div className="portal-chat-head">
+                  <strong>{activeTicket.subject}</strong>
+                  <span className="status-pill">{statusLabels[activeTicket.status] ?? activeTicket.status}</span>
+                </div>
+                <div className="portal-chat-messages">
+                  {(messages[activeTicket.id] ?? []).map((item) => (
+                    <div className={`portal-bubble ${item.sender}`} key={item.id}>
+                      <span>{item.sender === "admin" ? "ProjectEdge" : "Te"}</span>
+                      <p>{item.body}</p>
+                    </div>
                   ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="ticket-subject">Tárgy</label>
-                <input
-                  id="ticket-subject"
-                  required
-                  value={ticketForm.subject}
-                  onChange={(event) => setTicketForm((current) => ({ ...current, subject: event.target.value }))}
-                  placeholder="Például: kérdés a kezdésről"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="ticket-body">Üzenet</label>
-                <textarea
-                  id="ticket-body"
-                  required
-                  value={ticketForm.body}
-                  onChange={(event) => setTicketForm((current) => ({ ...current, body: event.target.value }))}
-                  placeholder="Írd le, miben segítsek."
-                />
-              </div>
-              <button className="button primary" type="submit">
-                Üzenet küldése
-              </button>
-            </form>
-          </section>
-
-          <section className="portal-panel ticket-history">
-            <div className="portal-panel-head">
-              <span>Üzeneteid</span>
-              <small>{tickets.length} beszélgetés</small>
-            </div>
-            <div className="ticket-layout">
-              <div className="ticket-list">
-                {tickets.length === 0 ? <p>Még nincs üzeneted.</p> : null}
-                {tickets.map((ticket) => (
-                  <button
-                    className={activeTicket?.id === ticket.id ? "active" : ""}
-                    key={ticket.id}
-                    onClick={() => setActiveTicketId(ticket.id)}
-                    type="button"
-                  >
-                    <strong>{ticket.subject}</strong>
-                    <span>{statusLabels[ticket.status] ?? ticket.status}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="portal-chat">
-                {activeTicket ? (
-                  <>
-                    <div className="portal-chat-head">
-                      <strong>{activeTicket.subject}</strong>
-                      <span>{statusLabels[activeTicket.status] ?? activeTicket.status}</span>
-                    </div>
-                    <div className="portal-chat-messages">
-                      {(messages[activeTicket.id] ?? []).map((item) => (
-                        <div className={`portal-bubble ${item.sender}`} key={item.id}>
-                          <span>{item.sender === "admin" ? "ProjectEdge" : "Te"}</span>
-                          <p>{item.body}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {activeTicket.status !== "closed" && (
-                      <form className="portal-reply" onSubmit={sendReply}>
-                        <textarea
-                          value={reply}
-                          onChange={(event) => setReply(event.target.value)}
-                          placeholder="Válasz írása..."
-                        />
-                        <button className="button primary" type="submit">
-                          Küldés
-                        </button>
-                      </form>
-                    )}
-                    {activeTicket.status === "closed" ? (
-                      <div style={{ textAlign: "center", color: "var(--muted)", fontSize: "13px", padding: "8px 0" }}>
-                        Ez a beszélgetés lezárva — új kérdéshez küldj új üzenetet.
-                      </div>
-                    ) : null}
-                    {activeTicket.status === "closed" ? (
-                      <form className="portal-rating" onSubmit={submitTicketRating}>
-                        <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
-                        {!activeTicket.rating ? (
-                          <>
-                            <div className="rating-row" role="radiogroup" aria-label="Beszélgetés értékelése">
-                              {[1, 2, 3, 4, 5].map((value) => (
-                                <button
-                                  aria-label={`${value} csillag`}
-                                  className={ticketRating >= value ? "active" : ""}
-                                  key={value}
-                                  onClick={() => setTicketRating(value)}
-                                  type="button"
-                                >
-                                  ★
-                                </button>
-                              ))}
-                            </div>
-                            <textarea
-                              value={ticketRatingComment}
-                              onChange={(event) => setTicketRatingComment(event.target.value)}
-                              placeholder="Pár szóban leírhatod, milyen volt a segítség."
-                            />
-                            <button className="button secondary" type="submit">
-                              Értékelés küldése
+                </div>
+                {activeTicket.status !== "closed" && (
+                  <form className="portal-reply" onSubmit={sendReply}>
+                    <textarea
+                      value={reply}
+                      onChange={(event) => setReply(event.target.value)}
+                      placeholder="Válasz írása..."
+                    />
+                    <button className="button primary" type="submit">
+                      Küldés
+                    </button>
+                  </form>
+                )}
+                {activeTicket.status === "closed" ? (
+                  <div style={{ textAlign: "center", color: "var(--muted)", fontSize: "13px", padding: "8px 0" }}>
+                    Ez a beszélgetés lezárva — új kérdéshez küldj új üzenetet.
+                  </div>
+                ) : null}
+                {activeTicket.status === "closed" ? (
+                  <form className="portal-rating" onSubmit={submitTicketRating}>
+                    <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
+                    {!activeTicket.rating ? (
+                      <>
+                        <div className="rating-row" role="radiogroup" aria-label="Beszélgetés értékelése">
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <button
+                              aria-label={`${value} csillag`}
+                              className={ticketRating >= value ? "active" : ""}
+                              key={value}
+                              onClick={() => setTicketRating(value)}
+                              type="button"
+                            >
+                              ★
                             </button>
-                          </>
-                        ) : null}
-                      </form>
+                          ))}
+                        </div>
+                        <textarea
+                          value={ticketRatingComment}
+                          onChange={(event) => setTicketRatingComment(event.target.value)}
+                          placeholder="Pár szóban leírhatod, milyen volt a segítség."
+                        />
+                        <button className="button secondary" type="submit">
+                          Értékelés küldése
+                        </button>
+                      </>
                     ) : null}
-                  </>
-                ) : (
-                  <div className="portal-empty-state">
-                    <strong>Válassz egy beszélgetést, vagy küldj újat.</strong>
-                    <p>Itt fog megjelenni a teljes beszélgetési előzmény.</p>
+                  </form>
+                ) : null}
+              </section>
+            ) : (
+              <div className="support-stack">
+                {!composerOpen && tickets.length > 0 && (
+                  <button className="button primary" type="button" onClick={() => setComposerOpen(true)}>
+                    ＋ Új üzenet írása
+                  </button>
+                )}
+                {(composerOpen || tickets.length === 0) && (
+                  <section className="portal-panel">
+                    <div className="portal-panel-head">
+                      <span>Új üzenet</span>
+                      {tickets.length > 0 && (
+                        <button type="button" onClick={() => setComposerOpen(false)}>Mégse</button>
+                      )}
+                    </div>
+                    <form className="portal-form" onSubmit={createTicket}>
+                      <div className="field">
+                        <label htmlFor="ticket-project">Miről szeretnél írni?</label>
+                        <select
+                          id="ticket-project"
+                          value={ticketForm.projectId}
+                          onChange={(event) => setTicketForm((current) => ({ ...current, projectId: event.target.value }))}
+                        >
+                          <option value="">Általános kérdés</option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id}>{project.title}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor="ticket-subject">Tárgy</label>
+                        <input
+                          id="ticket-subject"
+                          required
+                          value={ticketForm.subject}
+                          onChange={(event) => setTicketForm((current) => ({ ...current, subject: event.target.value }))}
+                          placeholder="Például: kérdés a kezdésről"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="ticket-body">Üzenet</label>
+                        <textarea
+                          id="ticket-body"
+                          required
+                          value={ticketForm.body}
+                          onChange={(event) => setTicketForm((current) => ({ ...current, body: event.target.value }))}
+                          placeholder="Írd le, miben segítsek."
+                        />
+                      </div>
+                      <button className="button primary" type="submit">
+                        Üzenet küldése
+                      </button>
+                    </form>
+                  </section>
+                )}
+                {tickets.length > 0 && (
+                  <div className="conversation-list">
+                    <span className="conversation-list-title">Beszélgetések ({tickets.length})</span>
+                    {tickets.map((ticket) => {
+                      const lastMessage = (messages[ticket.id] ?? []).slice(-1)[0];
+                      return (
+                        <button
+                          className="conversation-card"
+                          key={ticket.id}
+                          onClick={() => {
+                            setActiveTicketId(ticket.id);
+                            setSupportThreadOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <div className="conversation-card-top">
+                            <strong>{ticket.subject}</strong>
+                            <span className={`status-pill ${ticket.status}`}>{statusLabels[ticket.status] ?? ticket.status}</span>
+                          </div>
+                          {lastMessage ? (
+                            <p>{lastMessage.sender === "admin" ? "ProjectEdge: " : "Te: "}{lastMessage.body}</p>
+                          ) : null}
+                          <small>{new Date(ticket.last_message_at).toLocaleString("hu-HU")}</small>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            </div>
-          </section>
-        </div>
+            )}
           </div>
         </aside>
         </div>
@@ -3179,84 +3287,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <button type="button" className="portal-slideover-close" onClick={() => setOpenPanel(null)} aria-label="Bezárás">×</button>
           </div>
           <div className="portal-slideover-body">
-        <div className="portal-dashboard-grid notifications">
-          <section className="portal-panel hero">
-            <div>
-              <p className="micro-label dark">Értesítések</p>
-              <h2>Kövesd nyomon a projektjeid alakulását.</h2>
-              <p>Minden státuszváltozásról, új ajánlatról, üzenetválaszról és rendszerműveletről itt kapsz értesítést.</p>
-            </div>
-          </section>
-          <section className="portal-panel">
-            <div className="portal-panel-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--white)", flexWrap: "wrap", gap: "10px" }}>
-              <span>Értesítések előzménye</span>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            {notifications.length > 0 && (
+              <div className="notification-actions">
                 {notifications.some((n) => !n.read) && (
-                  <button className="button secondary" onClick={markAllNotificationsAsRead} type="button" style={{ minHeight: "auto", padding: "7px 12px", fontSize: "12px" }}>
-                    Mind olvasott
-                  </button>
+                  <button type="button" onClick={markAllNotificationsAsRead}>Mind olvasott</button>
                 )}
                 {notifications.some((n) => n.read) && (
-                  <button className="button secondary" onClick={deleteReadNotifications} type="button" style={{ minHeight: "auto", padding: "7px 12px", fontSize: "12px", color: "#FF7676", borderColor: "rgba(255, 118, 118, 0.25)" }}>
-                    Olvasottak törlése
-                  </button>
+                  <button type="button" className="danger" onClick={deleteReadNotifications}>Olvasottak törlése</button>
                 )}
-                <small style={{ color: "var(--muted)" }}>{notifications.length} db</small>
               </div>
-            </div>
+            )}
             {notifications.length === 0 ? (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted)" }}>
-                Nincs még értesítésed.
+              <div className="slideover-empty">
+                <span aria-hidden="true">🔔</span>
+                <strong>Nincs még értesítésed.</strong>
+                <p>Minden státuszváltozásról, ajánlatról és üzenetválaszról itt szólunk.</p>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: "12px", padding: "12px 0" }}>
+              <div className="notification-list">
                 {notifications.map((n) => (
-                  <div
+                  <button
+                    className={`notification-item ${n.read ? "" : "unread"}`}
                     key={n.id}
                     onClick={() => markNotificationAsRead(n.id, n.link)}
-                    style={{
-                      background: n.read ? "rgba(48, 56, 65, 0.02)" : "rgba(118, 171, 174, 0.08)",
-                      border: n.read ? "1px solid rgba(48, 56, 65, 0.06)" : "1px solid rgba(118, 171, 174, 0.25)",
-                      borderRadius: "16px",
-                      padding: "16px",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      position: "relative",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "4px"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
+                    type="button"
                   >
-                    {!n.read && (
-                      <span style={{
-                        position: "absolute",
-                        top: "16px",
-                        right: "16px",
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: "#76ABAE"
-                      }} />
-                    )}
-                    <strong style={{ color: n.read ? "var(--ink)" : "#76ABAE", fontSize: "15px", paddingRight: "20px" }}>{n.title}</strong>
-                    <p style={{ margin: 0, fontSize: "14px", color: "rgba(48, 56, 65, 0.7)", lineHeight: "1.4" }}>{n.message}</p>
-                    <small style={{ color: "rgba(48, 56, 65, 0.4)", fontSize: "11px", marginTop: "6px" }}>
-                      {new Date(n.created_at).toLocaleString("hu-HU")}
-                    </small>
-                  </div>
+                    <strong>{n.title}</strong>
+                    <p>{n.message}</p>
+                    <small>{new Date(n.created_at).toLocaleString("hu-HU")}</small>
+                  </button>
                 ))}
               </div>
             )}
-          </section>
-        </div>
           </div>
         </aside>
         </div>

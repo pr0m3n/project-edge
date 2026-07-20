@@ -1170,19 +1170,134 @@ p {
 .field select,
 .field textarea,
 .lead-row select,
-.lead-row textarea {
+.lead-row textarea,
+.portal-reply textarea,
+.portal-rating textarea {
   background: var(--white);
-  border: 1px solid rgba(48, 56, 65, 0.18);
-  border-radius: 18px;
+  border: 1.5px solid rgba(48, 56, 65, 0.14);
+  border-radius: 16px;
   color: var(--ink);
   min-height: 50px;
   padding: 13px 15px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
   width: 100%;
 }
 
+.field input::placeholder,
+.field textarea::placeholder,
+.portal-reply textarea::placeholder,
+.portal-rating textarea::placeholder {
+  color: rgba(48, 56, 65, 0.38);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.portal-reply textarea:focus,
+.portal-rating textarea:focus {
+  border-color: var(--aqua);
+  box-shadow: 0 0 0 4px rgba(118, 171, 174, 0.18);
+  outline: none;
+}
+
 .field textarea {
-  min-height: 170px;
+  min-height: 120px;
   resize: vertical;
+}
+
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-chips button {
+  background: var(--white);
+  border: 1.5px solid rgba(48, 56, 65, 0.14);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 16px;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.quick-chips button:hover {
+  border-color: rgba(118, 171, 174, 0.55);
+  transform: translateY(-1px);
+}
+
+.quick-chips button.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.quick-chips button.active::before {
+  content: "✓ ";
+}
+
+.font-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.font-grid button {
+  align-items: start;
+  background: var(--white);
+  border: 1.5px solid rgba(48, 56, 65, 0.12);
+  border-radius: 18px;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  position: relative;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.font-grid button:hover {
+  transform: translateY(-2px);
+}
+
+.font-grid button.selected {
+  border-color: rgba(255, 87, 34, 0.55);
+  box-shadow: 0 16px 40px rgba(255, 87, 34, 0.14);
+}
+
+.font-grid button.selected::after {
+  align-items: center;
+  background: var(--ember);
+  border-radius: 50%;
+  color: #fff;
+  content: "✓";
+  display: flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 20px;
+  justify-content: center;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 20px;
+}
+
+.font-sample {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.font-grid strong {
+  font-size: 13px;
+}
+
+.font-preview-line {
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .input-with-picker {
@@ -1835,9 +1950,19 @@ p {
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-width: 92vw;
+  max-width: 94vw;
   overflow-y: auto;
-  width: 460px;
+  width: 560px;
+}
+
+.portal-slideover-back {
+  background: none;
+  border: 0;
+  color: var(--aqua);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 0;
 }
 
 .portal-slideover-head {
@@ -1878,11 +2003,197 @@ p {
 }
 
 .portal-slideover-body {
+  display: grid;
+  gap: 16px;
   padding: 20px 24px 32px;
 }
 
-.portal-slideover-body .portal-dashboard-grid {
+/* The .support/.account grid variants define multi-column layouts later in
+   this file at the same specificity — the extra class here makes sure the
+   narrow slideover always stacks its panels into a single column. */
+.portal-slideover-body .portal-dashboard-grid,
+.portal-slideover-body .portal-dashboard-grid.projects,
+.portal-slideover-body .portal-dashboard-grid.support,
+.portal-slideover-body .portal-dashboard-grid.account {
   grid-template-columns: 1fr;
+}
+
+.support-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.conversation-list-title {
+  color: rgba(245, 245, 245, 0.55);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.conversation-card {
+  background: rgba(245, 245, 245, 0.06);
+  border: 1px solid rgba(245, 245, 245, 0.12);
+  border-radius: 18px;
+  color: var(--paper);
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  text-align: left;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.conversation-card:hover {
+  background: rgba(245, 245, 245, 0.12);
+  transform: translateY(-1px);
+}
+
+.conversation-card-top {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.conversation-card-top strong {
+  font-size: 15px;
+}
+
+.conversation-card p {
+  color: rgba(245, 245, 245, 0.6);
+  display: -webkit-box;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.conversation-card small {
+  color: rgba(245, 245, 245, 0.4);
+  font-size: 11px;
+}
+
+.chat-panel {
+  min-height: 60vh;
+}
+
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notification-actions button {
+  background: rgba(245, 245, 245, 0.08);
+  border: 1px solid rgba(245, 245, 245, 0.16);
+  border-radius: 999px;
+  color: rgba(245, 245, 245, 0.85);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 14px;
+  transition: background 180ms ease;
+}
+
+.notification-actions button:hover {
+  background: rgba(245, 245, 245, 0.16);
+}
+
+.notification-actions button.danger {
+  border-color: rgba(255, 118, 118, 0.35);
+  color: #ff9d9d;
+}
+
+.notification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notification-item {
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(245, 245, 245, 0.1);
+  border-radius: 18px;
+  color: var(--paper);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  padding: 16px 18px;
+  position: relative;
+  text-align: left;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.notification-item:hover {
+  background: rgba(245, 245, 245, 0.1);
+  transform: translateY(-1px);
+}
+
+.notification-item.unread {
+  background: rgba(118, 171, 174, 0.14);
+  border-color: rgba(118, 171, 174, 0.4);
+}
+
+.notification-item.unread::after {
+  background: var(--aqua);
+  border-radius: 50%;
+  content: "";
+  height: 8px;
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  width: 8px;
+}
+
+.notification-item strong {
+  font-size: 15px;
+  padding-right: 20px;
+}
+
+.notification-item.unread strong {
+  color: var(--aqua);
+}
+
+.notification-item p {
+  color: rgba(245, 245, 245, 0.68);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.notification-item small {
+  color: rgba(245, 245, 245, 0.38);
+  font-size: 11px;
+}
+
+.slideover-empty {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.slideover-empty span {
+  font-size: 40px;
+}
+
+.slideover-empty strong {
+  font-size: 17px;
+}
+
+.slideover-empty p {
+  color: rgba(245, 245, 245, 0.55);
+  font-size: 14px;
+  margin: 0;
+  max-width: 300px;
 }
 
 .project-switcher {
@@ -2120,10 +2431,11 @@ p {
   white-space: nowrap;
 }
 
+/* 6 lépés van — 3x2-es rács, hogy ne lógjon ki egyedül az utolsó elem. */
 .wizard-progress {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .wizard-progress button {
@@ -2438,15 +2750,35 @@ p {
 .choice-grid button,
 .palette-grid button {
   background: rgba(48, 56, 65, 0.05);
-  border: 1px solid rgba(48, 56, 65, 0.08);
+  border: 1.5px solid rgba(48, 56, 65, 0.08);
   border-radius: 18px;
   color: var(--ink);
   display: grid;
   gap: 7px;
   min-height: 98px;
   padding: 14px;
+  position: relative;
   text-align: left;
   transition: border 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.choice-grid button.selected::after,
+.palette-grid button.selected::after {
+  align-items: center;
+  background: var(--ember);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.35);
+  color: #fff;
+  content: "✓";
+  display: flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 20px;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 20px;
 }
 
 .choice-grid button:hover,
