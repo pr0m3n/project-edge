@@ -158,9 +158,9 @@ const projectStatusLabel = Object.fromEntries(projectStatuses);
 const allowedNextStatuses: Record<string, string[]> = {
   request_received: ["planning", "paused", "closed"],
   planning:         ["offer_sent", "request_received", "paused", "closed"],
-  offer_sent:       ["deposit_pending", "planning", "paused", "closed"],
-  deposit_pending:  ["contract_pending", "offer_sent"],
-  contract_pending: ["in_progress", "deposit_pending"],
+  offer_sent:       ["contract_pending", "planning", "paused", "closed"],
+  contract_pending: ["deposit_pending", "offer_sent"],
+  deposit_pending:  ["in_progress", "contract_pending"],
   in_progress:      ["review", "paused"],
   review:           ["in_progress", "launched"],
   launched:         ["closed"],
@@ -178,19 +178,19 @@ const projectFlow = [
   ["request_received", "Igény"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
-  ["deposit_pending", "Foglaló"],
   ["contract_pending", "Szerződés"],
+  ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
   ["review", "Review"],
   ["launched", "Éles"]
 ];
 
 const defaultOfferDeliverables = [
-  "Stratégiai irány és oldalstruktúra",
-  "Egyedi, reszponzív felület",
-  "Frontend fejlesztés és alap animációk",
-  "Supabase alapú adatkezelés / admin háttér",
-  "Élesítés Vercelen, domain beállításokkal"
+  "Átgondolt oldalstruktúra és tartalmi felépítés",
+  "Egyedi, minden eszközön jól mutató design",
+  "Kész, működő weboldal alap animációkkal",
+  "Saját admin felület, amiből te magad frissítheted az oldalt",
+  "Az oldal élesítése a saját domainoden, teljes beállítással"
 ].join("\n");
 
 const adminPaletteOptions: Array<[string, string[]]> = [
@@ -354,9 +354,13 @@ export function AdminDashboard() {
     link: string
   ) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       await fetch("/api/notify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+        },
         body: JSON.stringify({
           userId: targetUserId,
           email: targetEmail,
@@ -798,8 +802,8 @@ export function AdminDashboard() {
       await triggerNotification(
         ticket.user_id,
         ticket.contact_email,
-        "Új válasz érkezett a ticketedre",
-        `Az adminisztrátor válaszolt a support ticketedre: "${ticket.subject}".`,
+        "Új válasz érkezett az üzenetedre",
+        `Válaszoltunk az üzenetedre: "${ticket.subject}".`,
         "/ugyfelkapu/dashboard#support"
       );
     }
@@ -979,9 +983,9 @@ export function AdminDashboard() {
   const wizardNextLabel: Record<string, string> = {
     request_received: "Ajánlat előkészítése",
     planning: "Ajánlat elküldése",
-    offer_sent: "Tovább: Foglaló fázis",
-    deposit_pending: "Tovább: Szerződés fázis",
-    contract_pending: "Fejlesztés indítása",
+    offer_sent: "Tovább: Szerződés fázis",
+    contract_pending: "Tovább: Foglaló fázis",
+    deposit_pending: "Fejlesztés indítása",
     in_progress: "Küldés átnézésre",
     review: "Élesítés"
   };
@@ -995,12 +999,12 @@ export function AdminDashboard() {
         sendProjectOffer(project);
         break;
       case "offer_sent":
-        updateClientProject(project.id, { status: "deposit_pending" });
-        break;
-      case "deposit_pending":
         updateClientProject(project.id, { status: "contract_pending" });
         break;
       case "contract_pending":
+        updateClientProject(project.id, { status: "deposit_pending" });
+        break;
+      case "deposit_pending":
         updateClientProject(project.id, { status: "in_progress", next_step: "Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást." });
         break;
       case "in_progress":
@@ -1038,15 +1042,15 @@ export function AdminDashboard() {
         headline: "Ajánlat elfogadására vár",
         detail: "Elküldted az ajánlatot. Az ügyfél most dönt: elfogadja, módosítást kér, vagy elutasítja. Neked most nincs teendőd — jelezni fog a rendszer, ha lépett."
       },
-      deposit_pending: {
-        who: "client",
-        headline: "Foglaló befizetésére vár",
-        detail: "Az ügyfél elfogadta az ajánlatot. Most a foglaló (előleg) befizetésére vársz. Amint befizette, a szerződés következik."
-      },
       contract_pending: {
         who: "client",
         headline: "Szerződés aláírására vár",
-        detail: "A foglaló rendben. Az ügyfél a szerződés elfogadására vár — amint aláírta, automatikusan indul a fejlesztési szakasz."
+        detail: "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik."
+      },
+      deposit_pending: {
+        who: "client",
+        headline: "Foglaló befizetésére vár",
+        detail: "A szerződés aláírva. Az ügyfél a foglaló (előleg) befizetésére vár — amint befizette, automatikusan indul a fejlesztési szakasz."
       },
       in_progress: {
         who: "admin",

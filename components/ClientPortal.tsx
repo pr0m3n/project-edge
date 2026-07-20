@@ -11,6 +11,16 @@ import {
   OfflineBanner,
   type ToastKind
 } from "@/components/ui/feedback";
+import { ProjectTurnGuide, isClientTurn } from "@/components/portal/ProjectTurnGuide";
+import { ProjectSwitcher } from "@/components/portal/ProjectSwitcher";
+import { BriefPanel } from "@/components/portal/BriefPanel";
+import { OfferPanel } from "@/components/portal/OfferPanel";
+import { ContractPanel } from "@/components/portal/ContractPanel";
+import { DepositPaymentPanel } from "@/components/portal/DepositPaymentPanel";
+import { BuildProgressPanel } from "@/components/portal/BuildProgressPanel";
+import { ReviewFeedbackPanel } from "@/components/portal/ReviewFeedbackPanel";
+import { LaunchedPanel } from "@/components/portal/LaunchedPanel";
+import { ClosedProjectCard } from "@/components/portal/ClosedProjectCard";
 
 function noticeKind(message: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet|nincs aktív/i.test(message)) {
@@ -26,7 +36,7 @@ function noticeKind(message: string): ToastKind {
   return "info";
 }
 
-type Project = {
+export type Project = {
   id: string;
   contact_email: string | null;
   contact_name: string | null;
@@ -158,6 +168,8 @@ const initialProject = {
   billingDetails: ""
 };
 
+export type BriefFormValues = typeof initialProject;
+
 const initialTicket = {
   body: "",
   projectId: "",
@@ -168,8 +180,8 @@ const projectFlow = [
   ["request_received", "Brief"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
-  ["deposit_pending", "Foglaló"],
   ["contract_pending", "Szerződés"],
+  ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
   ["review", "Átnézés"],
   ["launched", "Élesítés"]
@@ -252,7 +264,7 @@ const analyticsLabels: Record<string, string> = {
   no: "nincs / nem fontos"
 };
 
-function escHtml(value: string | null | undefined) {
+export function escHtml(value: string | null | undefined) {
   return (value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -261,14 +273,14 @@ function escHtml(value: string | null | undefined) {
     .replace(/'/g, "&#039;");
 }
 
-function splitLines(value: string | null) {
+export function splitLines(value: string | null) {
   return (value ?? "")
     .split("\n")
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
-function formatPrice(value: number | null, currency = "Ft") {
+export function formatPrice(value: number | null, currency = "Ft") {
   if (!value) {
     return "Egyeztetés alapján";
   }
@@ -276,11 +288,11 @@ function formatPrice(value: number | null, currency = "Ft") {
   return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
 }
 
-function hasOffer(project: Project) {
+export function hasOffer(project: Project) {
   return project.offer_status === "sent" || Boolean(project.offer_title || project.offer_price || project.offer_summary);
 }
 
-function parseBrief(value: string | null) {
+export function parseBrief(value: string | null) {
   const pairs = splitLines(value).map((line) => {
     const separatorIndex = line.indexOf(":");
     if (separatorIndex === -1) {
@@ -293,7 +305,7 @@ function parseBrief(value: string | null) {
   return Object.fromEntries(pairs) as Record<string, string>;
 }
 
-function paletteByName(name?: string) {
+export function paletteByName(name?: string) {
   return paletteOptions.find(([, label]) => label === name)?.[2] ?? paletteOptions[0][2];
 }
 
@@ -303,7 +315,15 @@ type ClientPortalProps = {
 
 export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [activeTab, setActiveTab] = useState<"overview" | "projects" | "statuses" | "support" | "account" | "notifications">("overview");
+  const [consentChecked, setConsentChecked] = useState(false);
+  // The dashboard has exactly two top-level destinations (the current project,
+  // or the new-brief wizard) plus small icon-triggered slide-over panels for
+  // secondary things (notifications, messages, account) — replaces the old
+  // 6-tab layout, which repeated the same status info 2-3 times before any
+  // real content appeared.
+  const [homeView, setHomeView] = useState<"project" | "new-brief">("project");
+  const [openPanel, setOpenPanel] = useState<"notifications" | "support" | "account" | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [authForm, setAuthForm] = useState({ email: "", name: "", password: "" });
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -404,9 +424,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     link: string
   ) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       await fetch("/api/notify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+        },
         body: JSON.stringify({
           userId: targetUserId,
           email: targetEmail,
@@ -420,22 +444,26 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
   }
 
+  // Notification `link` values are historical DB data — old rows already
+  // saved with #statuses/#projects/#support/#account/#notifications hashes
+  // (from the old 6-tab layout) must keep resolving correctly indefinitely,
+  // even though those tabs no longer exist as such.
   async function markNotificationAsRead(id: string, link?: string | null) {
     await supabase.from("notifications").update({ read: true }).eq("id", id);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     if (link) {
-      if (link.includes("#statuses")) {
-        setActiveTab("statuses");
+      if (link.includes("#projects")) {
+        setOpenPanel(null);
+        setHomeView("new-brief");
       } else if (link.includes("#support")) {
-        setActiveTab("support");
-      } else if (link.includes("#projects")) {
-        setActiveTab("projects");
+        setOpenPanel("support");
       } else if (link.includes("#account")) {
-        setActiveTab("account");
+        setOpenPanel("account");
       } else if (link.includes("#notifications")) {
-        setActiveTab("notifications");
+        setOpenPanel("notifications");
       } else {
-        setActiveTab("overview");
+        setOpenPanel(null);
+        setHomeView("project");
       }
     }
   }
@@ -565,7 +593,28 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   );
 
   const openTickets = tickets.filter((ticket) => ticket.status === "open").length;
-  const latestProject = projects[0];
+
+  const activeProjects = useMemo(() => projects.filter((p) => p.status !== "closed"), [projects]);
+  const closedProjects = useMemo(() => projects.filter((p) => p.status === "closed"), [projects]);
+
+  // Default selection: prefer a project where the client actually has
+  // something to do, then the most recently touched one, then just the
+  // first — over the old "newest by created_at" rule, which could hide an
+  // urgent older project behind a brand-new one.
+  const defaultProjectId = useMemo(() => {
+    const clientTurn = activeProjects.find((p) => isClientTurn(p));
+    if (clientTurn) return clientTurn.id;
+    const byRecency = [...activeProjects].sort((a, b) => {
+      const aTime = new Date(a.last_modified_at || a.created_at).getTime();
+      const bTime = new Date(b.last_modified_at || b.created_at).getTime();
+      return bTime - aTime;
+    });
+    return byRecency[0]?.id ?? "";
+  }, [activeProjects]);
+
+  const selectedProject =
+    activeProjects.find((p) => p.id === selectedProjectId) ?? activeProjects.find((p) => p.id === defaultProjectId) ?? activeProjects[0];
+
   const selectedProjectType = projectTypeOptions.find(([value]) => value === projectForm.projectType) ?? projectTypeOptions[0];
   const selectedVibe = vibeOptions.find(([value]) => value === projectForm.vibe) ?? vibeOptions[0];
   const selectedPalette = paletteOptions.find(([value]) => value === projectForm.palette) ?? paletteOptions[0];
@@ -577,7 +626,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const hash = window.location.hash;
       const search = window.location.search;
       if (hash.includes("type=recovery") || search.includes("reset=true")) {
-        setActiveTab("account");
+        setOpenPanel("account");
         setNotice("Kérjük, állíts be egy új jelszót a 'Jelszó módosítása' résznél.");
       }
     }
@@ -717,7 +766,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     ]);
 
     if (projectError || ticketError) {
-      setNotice("Nem sikerült betölteni az ügyfélkaput. Lehet, hogy a Supabase SQL még nincs lefuttatva.");
+      setNotice("Nem sikerült betölteni az ügyfélkaput. Próbáld frissíteni az oldalt, vagy írj nekünk, ha nem sikerül.");
       setLoading(false);
       return;
     }
@@ -732,7 +781,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       : { data: [], error: null };
 
     if (messageError) {
-      setNotice("A ticket előzményeket nem sikerült betölteni.");
+      setNotice("Az üzenet-előzményeket nem sikerült betölteni.");
       setLoading(false);
       return;
     }
@@ -769,6 +818,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
+    if (!consentChecked) {
+      setNotice("A regisztrációhoz el kell fogadnod az Adatkezelési tájékoztatót és az ÁSZF-et.");
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: authForm.email,
       password: authForm.password,
@@ -799,7 +853,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     setCanResendConfirmation(true);
-    setNotice("Fiók kész. Ha az email megerősítés be van kapcsolva Supabase-ben, kapsz egy megerősítő emailt. Nézd meg a Spam/Promóciók mappát is.");
+    setNotice("Fiók kész. Hamarosan kaphatsz egy megerősítő emailt — nézd meg a Spam/Promóciók mappát is, ha nem találod.");
   }
 
   async function resendConfirmation() {
@@ -818,7 +872,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     });
 
     if (error) {
-      setNotice("Nem sikerült újraküldeni. Supabase-ben ellenőrizd az Auth email beállításokat vagy próbáld később.");
+      setNotice("Nem sikerült újraküldeni. Próbáld pár perc múlva újra, vagy írj nekünk, ha nem sikerül.");
       return;
     }
 
@@ -1067,28 +1121,28 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice("Ajánlat elfogadása...");
     const deposit = Math.round((project.offer_price ?? 0) * 0.3);
     const { error } = await supabase.from("client_projects").update({
-      status: "deposit_pending",
+      status: "contract_pending",
       deposit_amount: deposit,
       payment_status: "unpaid",
       offer_status: "accepted",
-      next_step: "Ajánlat elfogadva. Kérlek, fizesd be a foglalót a projekt elindításához."
+      next_step: "Ajánlat elfogadva. Kérlek, olvasd el és írd alá a vállalkozási szerződést."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elfogadni az ajánlatot.");
     } else {
-      setNotice("Ajánlat elfogadva. Foglaló fizetés szükséges.");
+      setNotice("Ajánlat elfogadva. Következő lépés: a szerződés aláírása.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Ajánlat elfogadva",
-        `Az ügyfél (${email}) elfogadta a(z) "${project.title}" projekt ajánlatát. Foglaló fizetésre vár.`,
+        `Az ügyfél (${email}) elfogadta a(z) "${project.title}" projekt ajánlatát. Szerződés aláírásra vár.`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
         "Ajánlat elfogadva",
-        `Elfogadtad a(z) "${project.title}" projekt ajánlatát. Kérjük, fizesd be a foglalót a fejlesztés elindításához.`,
+        `Elfogadtad a(z) "${project.title}" projekt ajánlatát. Következő lépésként olvasd el és írd alá a szerződést.`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -1201,8 +1255,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     const { error } = await supabase.from("client_projects").update({
       payment_status: "deposit_paid",
-      status: "contract_pending",
-      next_step: "Foglaló sikeresen kifizetve! Kérlek, olvasd el és fogadd el a szerződést."
+      status: "in_progress",
+      next_step: "Foglaló sikeresen kifizetve! Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást."
     }).eq("id", project.id);
 
     setStripeLoading(false);
@@ -1211,19 +1265,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     } else {
       setShowStripeModalProjectId(null);
       setStripeForm({ card: "", exp: "", cvc: "", name: "" });
-      setNotice("Foglaló sikeresen rendezve.");
+      setNotice("Foglaló sikeresen rendezve. A kivitelezés megkezdődik.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Foglaló befizetve",
-        `Az ügyfél (${email}) befizette a foglalót a(z) "${project.title}" projekthez. Szerződés aláírásra vár.`,
+        `Az ügyfél (${email}) befizette a foglalót a(z) "${project.title}" projekthez. A fejlesztés indulhat!`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
         "Foglaló sikeresen kifizetve",
-        `A(z) "${project.title}" projekt foglalója beérkezett. Kérjük, olvasd el és írd alá a szerződést.`,
+        `A(z) "${project.title}" projekt foglalója beérkezett. Megkezdjük a kivitelezést.`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -1278,26 +1332,26 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const { error } = await supabase.from("client_projects").update({
       contract_accepted: true,
       contract_accepted_at: new Date().toISOString(),
-      status: "in_progress",
-      next_step: "Szerződés aláírva! Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást."
+      status: "deposit_pending",
+      next_step: "Szerződés aláírva! Kérlek, fizesd be a foglalót a kivitelezés elindításához."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elfogadni a szerződést.");
     } else {
       setContractChecked(false);
-      setNotice("Szerződés aláírva, a kivitelezés megkezdődik.");
+      setNotice("Szerződés aláírva. Következő lépés: a foglaló befizetése.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Szerződés aláírva",
-        `Az ügyfél (${email}) elfogadta a szerződést a(z) "${project.title}" projekthez. A fejlesztés indulhat!`,
+        `Az ügyfél (${email}) aláírta a szerződést a(z) "${project.title}" projekthez. Foglaló befizetésére vár.`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
         "Szerződés aláírva",
-        `Aláírtad a szerződést a(z) "${project.title}" projekthez. Megkezdjük a kivitelezést.`,
+        `Aláírtad a szerződést a(z) "${project.title}" projekthez. Következő lépésként fizesd be a foglalót a kivitelezés elindításához.`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -1472,7 +1526,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
-    setNotice("Ticket nyitása...");
+    setNotice("Üzenet küldése...");
     const { data: ticket, error: ticketError } = await supabase
       .from("client_tickets")
       .insert({
@@ -1486,7 +1540,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       .single();
 
     if (ticketError || !ticket) {
-      setNotice("Nem sikerült ticketet nyitni.");
+      setNotice("Nem sikerült elküldeni az üzenetet.");
       return;
     }
 
@@ -1498,7 +1552,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     });
 
     if (messageError) {
-      setNotice("A ticket létrejött, de az első üzenet nem ment el.");
+      setNotice("A beszélgetés elindult, de az első üzeneted nem ment el.");
       return;
     }
 
@@ -1512,7 +1566,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     setTicketForm(initialTicket);
     setActiveTicketId(ticket.id);
-    setNotice("Ticket megnyitva.");
+    setNotice("Üzeneted elküldve.");
     loadPortal(true);
   }
 
@@ -1576,110 +1630,29 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice("");
   }
 
-  function renderProjectCard(project: Project, expanded = false) {
-    const brief = parseBrief(project.goals);
-    const palette = paletteByName(brief["Színirány"]);
-    const briefFields = [
-      ["Cél", brief["Cél"]],
-      ["Célközönség", brief["Célközönség / vásárlók"]],
-      ["Oldalak", brief["Fontos oldalak"]],
-      ["Funkciók", brief["Kért funkciók"]],
-      ["Stílus", brief["Stílus / hangulat"]],
-      ["Karakter", brief["Vizuális karakter"]],
-      ["Prioritás", brief["Prioritás"]]
-    ].filter(([, value]) => Boolean(value));
-
+  function renderProjectCard(project: Project) {
     if (project.status === "closed") {
       return (
-        <article className="project-status-card detailed compact-closed" key={project.id} style={{
-          background: "rgba(48, 56, 65, 0.02)",
-          border: "1px solid rgba(48, 56, 65, 0.08)",
-          padding: "16px 20px",
-          borderRadius: "20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px"
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-            <div>
-              <strong style={{ fontSize: "16px", color: "var(--ink)" }}>{project.title}</strong>
-              <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
-                {project.project_type} · {project.company || "Cégnév nélkül"}
-              </div>
-            </div>
-            <span style={{
-              background: "rgba(118, 171, 174, 0.15)",
-              color: "#76ABAE",
-              padding: "4px 10px",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: "bold"
-            }}>
-              Lezárva
-            </span>
-          </div>
-          
-          {project.client_rating ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>
-              <span style={{ fontSize: "13px", color: "var(--muted)" }}>Értékelésed:</span>
-              <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(project.client_rating)}</div>
-              {project.client_review && (
-                <span style={{ fontSize: "13px", color: "var(--ink)", opacity: 0.8, fontStyle: "italic" }}>
-                  - "{project.client_review}"
-                </span>
-              )}
-            </div>
-          ) : (
-            <div style={{ borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference);
-              }} style={{ display: "grid", gap: "10px" }}>
-                <span style={{ fontSize: "13px", color: "var(--muted)" }}>Kérlek értékeld a közös munkát:</span>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                  {[1, 2, 3, 4, 5].map((val) => (
-                    <button
-                      type="button"
-                      key={val}
-                      style={{ fontSize: "20px", background: "none", border: "none", cursor: "pointer", color: reviewForm.rating >= val ? "#FF9800" : "#ccc", padding: 0 }}
-                      onClick={() => setReviewForm({ ...reviewForm, rating: val })}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-                <div className="field" style={{ margin: 0 }}>
-                  <textarea
-                    id={`review-comment-${project.id}`}
-                    required
-                    style={{ fontSize: "13px", padding: "8px 12px", borderRadius: "10px", minHeight: "60px" }}
-                    placeholder="Írd le tapasztalataidat..."
-                    value={reviewForm.review}
-                    onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })}
-                  />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                  <label style={{ display: "flex", gap: "6px", alignItems: "center", cursor: "pointer", fontSize: "12px", color: "var(--muted)" }}>
-                    <input type="checkbox" checked={reviewForm.reference} onChange={(e) => setReviewForm({ ...reviewForm, reference: e.target.checked })} />
-                    <span>Engedélyezem referenciaként</span>
-                  </label>
-                  <button className="button primary" type="submit" style={{ fontSize: "12px", padding: "6px 12px", minHeight: "auto", borderRadius: "8px" }}>Értékelés</button>
-                </div>
-              </form>
-            </div>
-          )}
-        </article>
+        <ClosedProjectCard
+          key={project.id}
+          project={project}
+          reviewForm={reviewForm}
+          onReviewFormChange={setReviewForm}
+          onSubmitReview={() => submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference)}
+        />
       );
     }
 
     return (
-      <article className={`project-status-card detailed ${expanded ? "expanded" : ""}`} key={project.id}>
+      <article className="project-status-card detailed expanded" key={project.id}>
         {project.delete_requested && (
           <div style={{ background: '#FFF3CD', border: '1px solid #FFEBAA', color: '#856404', padding: '14px', borderRadius: '16px', fontSize: '14px' }}>
             <strong>Törlés jóváhagyásra vár</strong>
             <p style={{ margin: '4px 0 0 0' }}>Kezdeményezted a projekt törlését. Az adminisztrátor hamarosan jóváhagyja vagy elutasítja a kérést.</p>
           </div>
         )}
+
+        <ProjectTurnGuide project={project} />
 
         <div className="project-status-head">
           <div>
@@ -1688,25 +1661,39 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           </div>
         </div>
         {(() => {
-          const currentIndex = projectFlow.findIndex(([value]) => value === project.status);
+          const isDeletionPending = project.status === "deletion_pending";
+          const isPaused = project.status === "paused";
+          // deletion_pending itself isn't in projectFlow — freeze the stepper at the
+          // status it was in right before the deletion request instead of showing
+          // everything as "upcoming" (status_before_delete_request is always set
+          // together with deletion_pending, see requestProjectDeletion).
+          const stepperStatus = isDeletionPending
+            ? project.status_before_delete_request ?? project.status
+            : project.status;
+          const currentIndex = projectFlow.findIndex(([value]) => value === stepperStatus);
+          const inactive = isPaused || (currentIndex === -1 && !isDeletionPending);
           return (
-            <div className="project-stepper" aria-label="Projekt folyamat">
-              {projectFlow.map(([value, label], index) => {
-                const state =
-                  currentIndex === -1
-                    ? "upcoming"
-                    : index < currentIndex
-                    ? "done"
-                    : index === currentIndex
-                    ? "active"
-                    : "upcoming";
-                return (
-                  <div className={`stepper-node ${state}`} key={value}>
-                    <span className="stepper-dot">{state === "done" ? "✓" : index + 1}</span>
-                    <span className="stepper-label">{label}</span>
-                  </div>
-                );
-              })}
+            <div className="project-stepper-wrap">
+              {isPaused && <span className="stepper-ribbon">Szünetel</span>}
+              {isDeletionPending && <span className="stepper-ribbon">Törlésre vár</span>}
+              <div className={`project-stepper ${inactive ? "inactive" : ""}`} aria-label="Projekt folyamat">
+                {projectFlow.map(([value, label], index) => {
+                  const state =
+                    currentIndex === -1
+                      ? "upcoming"
+                      : index < currentIndex
+                      ? "done"
+                      : index === currentIndex
+                      ? "active"
+                      : "upcoming";
+                  return (
+                    <div className={`stepper-node ${state}`} key={value}>
+                      <span className="stepper-dot">{state === "done" ? "✓" : index + 1}</span>
+                      <span className="stepper-label">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })()}
@@ -1732,404 +1719,61 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           </small>
         )}
 
-        {editingBriefProjectId === project.id ? (
-          <form onSubmit={(e) => saveBriefEdits(e, project)} style={{ display: 'grid', gap: '16px', marginTop: '16px', background: 'rgba(0,0,0,0.02)', padding: '18px', borderRadius: '22px', border: '1px solid rgba(0,0,0,0.06)' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Brief Szerkesztése</h4>
-            <div className="field">
-              <label htmlFor="edit-title">Projekt neve</label>
-              <input id="edit-title" required value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-company">Cég / márka</label>
-              <input id="edit-company" value={editForm.company} onChange={(e) => setEditForm({ ...editForm, company: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-website">Weboldal</label>
-              <input id="edit-website" value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-goals">Mit érjen el az oldal?</label>
-              <textarea id="edit-goals" required value={editForm.goals} onChange={(e) => setEditForm({ ...editForm, goals: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-audience">Célközönség</label>
-              <textarea id="edit-audience" value={editForm.audience} onChange={(e) => setEditForm({ ...editForm, audience: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-pages">Milyen oldalak kellenek?</label>
-              <textarea id="edit-pages" value={editForm.pages} onChange={(e) => setEditForm({ ...editForm, pages: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-features">Kért funkciók</label>
-              <textarea id="edit-features" value={editForm.features} onChange={(e) => setEditForm({ ...editForm, features: e.target.value })} />
-            </div>
-            <div className="field">
-              <label htmlFor="edit-style">Stílus / hangulat</label>
-              <textarea id="edit-style" value={editForm.style} onChange={(e) => setEditForm({ ...editForm, style: e.target.value })} />
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="button secondary" type="button" onClick={() => setEditingBriefProjectId(null)}>Mégse</button>
-              <button className="button primary" type="submit">Módosítások mentése</button>
-            </div>
-          </form>
-        ) : (
-          <>
-            <div className="project-brief-visual">
-              <div className="project-brief-main">
-                <span>Beküldött terv</span>
-                <strong>{brief["Cél"] || project.goals}</strong>
-              </div>
-              <div className="project-brief-palette">
-                <span>{brief["Színirány"] || "Színirány"}</span>
-                <div>
-                  {palette.map((color) => (
-                    <i key={color} style={{ background: color }} />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="project-brief-grid">
-              {briefFields.map(([label, value]) => (
-                <div key={label}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))}
-            </div>
+        <BriefPanel
+          project={project}
+          isEditing={editingBriefProjectId === project.id}
+          editForm={editForm}
+          onEditFormChange={setEditForm}
+          onStartEdit={() => startEditingBrief(project)}
+          onCancelEdit={() => setEditingBriefProjectId(null)}
+          onSaveEdit={(e) => saveBriefEdits(e, project)}
+        />
 
-            {(project.status === "request_received" || project.status === "planning") && !project.delete_requested && (
-              <button className="button secondary" style={{ width: 'fit-content', marginTop: '4px' }} type="button" onClick={() => startEditingBrief(project)}>
-                Brief szerkesztése
-              </button>
-            )}
-          </>
-        )}
-
-        {hasOffer(project) ? (
-          <section className="client-offer-card">
-            <div className="client-offer-header">
-              <div>
-                <span>Részletes ajánlat</span>
-                <h3>{project.offer_title || `${project.title} ajánlat`}</h3>
-              </div>
-              <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
-            </div>
-            {project.offer_summary ? <p>{project.offer_summary}</p> : null}
-            <div className="client-offer-grid">
-              <div>
-                <span>Mit tartalmaz?</span>
-                <p>{project.offer_scope || "A részletes scope hamarosan megjelenik itt."}</p>
-              </div>
-              <div>
-                <span>Ütemezés</span>
-                <p>{project.offer_timeline || "Az ütemezést az ajánlat véglegesítésekor pontosítjuk."}</p>
-              </div>
-            </div>
-            {splitLines(project.offer_deliverables).length ? (
-              <ul className="client-offer-list">
-                {splitLines(project.offer_deliverables).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : null}
-            {project.offer_note ? <p className="client-offer-note">{project.offer_note}</p> : null}
-
-            {project.status === "offer_sent" && (
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
-                {showModificationRequestProjectId === project.id ? (
-                  <div style={{ display: 'grid', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Módosítás részletei:</label>
-                    <textarea
-                      required
-                      placeholder="Írd le, mit szeretnél módosítani..."
-                      value={modificationRequestText}
-                      onChange={(e) => setModificationRequestText(e.target.value)}
-                    />
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button className="button secondary" type="button" onClick={() => setShowModificationRequestProjectId(null)}>Mégse</button>
-                      <button className="button primary" type="button" onClick={() => requestOfferChanges(project, modificationRequestText)}>Módosítás beküldése</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <button className="button primary" type="button" onClick={() => acceptOffer(project)}>Ajánlat elfogadása</button>
-                    <button className="button secondary" type="button" onClick={() => setShowModificationRequestProjectId(project.id)}>Módosítást kérek</button>
-                    <button className="button secondary" style={{ borderColor: '#DC3545', color: '#DC3545' }} type="button" onClick={() => declineOffer(project)}>Elutasítás</button>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-        ) : (
-          <div className="project-awaiting-offer">
-            <strong>Ajánlat előkészítés alatt</strong>
-            <p>Ha megvan az irány, itt fogod látni a bontást, az ütemezést és az árat.</p>
-          </div>
-        )}
+        <OfferPanel
+          project={project}
+          isRequestingChange={showModificationRequestProjectId === project.id}
+          modificationRequestText={modificationRequestText}
+          onModificationRequestTextChange={setModificationRequestText}
+          onStartModificationRequest={() => setShowModificationRequestProjectId(project.id)}
+          onCancelModificationRequest={() => setShowModificationRequestProjectId(null)}
+          onSubmitModificationRequest={() => requestOfferChanges(project, modificationRequestText)}
+          onAccept={() => acceptOffer(project)}
+          onDecline={() => declineOffer(project)}
+        />
 
         {project.status === "deposit_pending" && (
-          <div style={{ background: 'rgba(118, 171, 174, 0.08)', border: '1px solid rgba(118, 171, 174, 0.15)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '12px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Fizetési részletek (Foglaló)</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Teljes ajánlati ár</span>
-                <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Foglaló (30%)</span>
-                <strong style={{ color: '#FF5722' }}>{formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</strong>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Fennmaradó részlet</span>
-                <strong>{formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")}</strong>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Fizetési státusz</span>
-                <strong style={{ color: '#FF5722' }}>Foglalóra vár</strong>
-              </div>
-            </div>
-            <button className="button primary" style={{ width: 'fit-content', marginTop: '8px' }} type="button" onClick={() => { setStripeMode("deposit"); setShowStripeModalProjectId(project.id); setStripeError(""); }}>
-              Fizetés Stripe-al
-            </button>
-          </div>
+          <DepositPaymentPanel
+            project={project}
+            onStartPayment={() => { setStripeMode("deposit"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
+          />
         )}
 
         {project.status === "contract_pending" && (
-          <div style={{ background: 'rgba(48, 56, 65, 0.02)', border: '1px solid rgba(48, 56, 65, 0.08)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '14px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Vállalkozási Szerződés</h4>
-            
-            <div id="contract-view" style={{ maxHeight: '200px', overflowY: 'auto', background: '#fff', border: '1px solid rgba(0,0,0,0.1)', padding: '16px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.5', color: '#333' }}>
-              <h4 style={{ textAlign: 'center', marginTop: 0 }}>EGYEDI VÁLLALKOZÁSI SZERZŐDÉS (TERVEZET)</h4>
-              <p>Mely létrejött egyrészről a <strong>ProjectEdge Digital Build Studio</strong> (Vállalkozó), másrészről a <strong>{project.company || "Megrendelő"}</strong> (Megrendelő) között az alábbi projekt megvalósítására:</p>
-              <p><strong>Projekt címe:</strong> {project.offer_title || project.title}</p>
-              <p><strong>Vállalási díj:</strong> bruttó {formatPrice(project.offer_price, project.offer_currency || "Ft")}, melyből {formatPrice(project.deposit_amount, project.offer_currency || "Ft")} foglaló kifizetésre került.</p>
-              <p><strong>Scope:</strong> {project.offer_scope || "A részletezett ajánlat szerint."}</p>
-              <p><strong>Határidő/Ütemezés:</strong> {project.offer_timeline || "Megállapodás szerint."}</p>
-              <p>Megrendelő a lenti elfogadással digitális nyilatkozatot tesz a szerződés elfogadásáról.</p>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button className="button secondary" type="button" onClick={() => {
-                const win = window.open("", "_blank");
-                if (win) {
-                  const scopeHtml = escHtml(project.offer_scope || "Egyedi weboldal").replace(/\n/g, "<br/>");
-                  win.document.write(
-                    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Szerződés – ${escHtml(project.title)}</title>` +
-                    `<style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6}h1,h2,h3{color:#111}.signature{margin-top:50px;display:flex;justify-content:space-between}</style></head>` +
-                    `<body>` +
-                    `<h2 style="text-align:center">VÁLLALKOZÁSI SZERZŐDÉS</h2>` +
-                    `<p>Kelt: ${new Date().toLocaleDateString("hu-HU")}</p>` +
-                    `<p><strong>Vállalkozó:</strong> ProjectEdge Digital Build Studio</p>` +
-                    `<p><strong>Megrendelő:</strong> ${escHtml(project.company || "Megrendelő")} (${escHtml(project.contact_name)}, ${escHtml(project.contact_email)})</p>` +
-                    `<hr/>` +
-                    `<h3>1. A szerződés tárgya</h3>` +
-                    `<p>Megrendelő megrendeli a Vállalkozótól a &ldquo;${escHtml(project.title)}&rdquo; elnevezésű weboldalt / digitális rendszert.</p>` +
-                    `<h3>2. Scope és funkciók</h3><p>${scopeHtml}</p>` +
-                    `<h3>3. Határidő és ütemezés</h3><p>${escHtml(project.offer_timeline || "Megállapodás szerint.")}</p>` +
-                    `<h3>4. Vállalkozói díj</h3>` +
-                    `<p>Összesen: ${escHtml(formatPrice(project.offer_price, project.offer_currency || "Ft"))}</p>` +
-                    `<p>Kifizetett foglaló: ${escHtml(formatPrice(project.deposit_amount, project.offer_currency || "Ft"))}</p>` +
-                    `<p>Hátralék: ${escHtml(formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft"))}</p>` +
-                    `<div class="signature"><div>Vállalkozó: ProjectEdge</div><div>Megrendelő: Digitálisan elfogadva</div></div>` +
-                    `<script>window.print();<\/script></body></html>`
-                  );
-                  win.document.close();
-                }
-              }}>Szerződés nyomtatása</button>
-            </div>
-
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px' }}>
-              <input type="checkbox" checked={contractChecked} onChange={(e) => setContractChecked(e.target.checked)} />
-              <span>Elfogadom a vállalkozási szerződésben foglalt feltételeket.</span>
-            </label>
-            
-            <button className="button primary" disabled={!contractChecked} type="button" onClick={() => acceptContract(project)}>
-              Szerződés elfogadása & Kivitelezés indítása
-            </button>
-          </div>
+          <ContractPanel
+            project={project}
+            contractChecked={contractChecked}
+            onContractCheckedChange={setContractChecked}
+            onAccept={() => acceptContract(project)}
+          />
         )}
 
-        {project.staging_url && (project.status === "in_progress" || project.status === "review") && (
-          <div style={{ background: 'rgba(118, 171, 174, 0.06)', border: '1px solid rgba(118, 171, 174, 0.2)', padding: '16px 20px', borderRadius: '18px', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>Előnézeti link</span>
-              <span style={{ fontSize: '13px', color: 'var(--ink)' }}>Az aktuális fejlesztési verzió — még nem éles.</span>
-            </div>
-            <a
-              href={project.staging_url}
-              target="_blank"
-              rel="noreferrer"
-              className="button primary"
-              style={{ fontSize: '13px', minHeight: 'auto', padding: '10px 18px', whiteSpace: 'nowrap' }}
-            >
-              Előnézet megnyitása →
-            </a>
-          </div>
-        )}
-
-        {project.status === "in_progress" && (
-          <div style={{ background: 'rgba(48, 56, 65, 0.02)', border: '1px solid rgba(48, 56, 65, 0.08)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '12px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Kivitelezési mérföldkövek</h4>
-            {project.milestones && project.milestones.length > 0 ? (
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {project.milestones.map((ms, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
-                    <span style={{ display: 'inline-block', width: '22px', height: '22px', borderRadius: '50%', background: ms.done ? '#76ABAE' : 'rgba(0,0,0,0.1)', color: '#fff', textAlign: 'center', lineHeight: '22px', fontSize: '11px', fontWeight: 'bold' }}>
-                      {ms.done ? "✓" : idx + 1}
-                    </span>
-                    <span style={{ textDecoration: ms.done ? 'line-through' : 'none', color: ms.done ? 'var(--muted)' : 'var(--ink)' }}>
-                      {ms.title}
-                    </span>
-                  </div>
-                ))}
-                
-                <div style={{ background: 'rgba(0,0,0,0.06)', height: '6px', borderRadius: '3px', overflow: 'hidden', marginTop: '8px' }}>
-                  <div style={{ background: '#76ABAE', height: '100%', width: `${Math.round((project.milestones.filter(m => m.done).length / project.milestones.length) * 100)}%`, transition: 'width 0.3s ease' }} />
-                </div>
-                <small style={{ color: 'var(--muted)', textAlign: 'right', display: 'block' }}>
-                  {project.milestones.filter(m => m.done).length} / {project.milestones.length} mérföldkő kész ({Math.round((project.milestones.filter(m => m.done).length / project.milestones.length) * 100)}%)
-                </small>
-              </div>
-            ) : (
-              <p style={{ margin: 0, color: 'var(--muted)', fontStyle: 'italic', fontSize: '14px' }}>A kivitelezési feladatok feltöltése folyamatban van.</p>
-            )}
-          </div>
-        )}
+        <BuildProgressPanel project={project} />
 
         {project.status === "review" && (
-          <div style={{ background: 'rgba(255, 87, 34, 0.04)', border: '1px solid rgba(255, 87, 34, 0.12)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '12px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Projekt átnézése</h4>
-            <p style={{ margin: 0, fontSize: '14px' }}>A fejlesztési szakasz lezárult. Kérlek, vizsgáld felül az oldalt.</p>
-            <div style={{ fontSize: '14px', background: 'rgba(0,0,0,0.02)', padding: '8px 12px', borderRadius: '8px', width: 'fit-content' }}>
-              <strong>Visszajelzési körök: {project.feedback_round} / 2</strong>
-            </div>
-
-            {project.feedback_round < 2 ? (
-              <div style={{ display: 'grid', gap: '8px', marginTop: '4px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Kért javítások, módosítások ({project.feedback_round + 1}. kör):</label>
-                <textarea
-                  required
-                  placeholder="Írd le a kívánt módosításokat részletesen..."
-                  value={feedbackRoundNote}
-                  onChange={(e) => setFeedbackRoundNote(e.target.value)}
-                />
-                <button className="button primary" style={{ width: 'fit-content' }} type="button" onClick={() => submitFeedback(project, feedbackRoundNote)}>
-                  Visszajelzés beküldése
-                </button>
-              </div>
-            ) : (
-              <p style={{ margin: 0, color: '#FF5722', fontStyle: 'italic', fontSize: '14px' }}>Minden díjmentes visszajelzési kör lefutott (2/2). Ha további módosításokra van szükséged, kérlek vedd fel velünk a kapcsolatot support ticketen.</p>
-            )}
-          </div>
+          <ReviewFeedbackPanel
+            project={project}
+            feedbackRoundNote={feedbackRoundNote}
+            onFeedbackRoundNoteChange={setFeedbackRoundNote}
+            onSubmit={() => submitFeedback(project, feedbackRoundNote)}
+          />
         )}
 
         {project.status === "launched" && (
-          <div style={{ background: 'rgba(118, 171, 174, 0.05)', border: '1px solid rgba(118, 171, 174, 0.15)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '14px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Projekt Élesítve!</h4>
-            
-            {project.handover_checklist && project.handover_checklist.length > 0 && (
-              <div style={{ display: 'grid', gap: '6px' }}>
-                <strong>Átadási checklist:</strong>
-                {project.handover_checklist.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                    <span style={{ color: item.done ? '#76ABAE' : '#FF5722', fontWeight: 'bold' }}>{item.done ? "✓" : "○"}</span>
-                    <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--muted)' : 'var(--ink)' }}>{item.title}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>Végső fizetés (70%)</span>
-                {project.final_payment_paid ? (
-                  <span style={{ fontWeight: '700', color: '#76ABAE', fontSize: '14px' }}>
-                    Befizetve — köszönjük!
-                    {project.final_payment_paid_at && (
-                      <span style={{ fontWeight: '400', color: 'var(--muted)', marginLeft: '8px', fontSize: '12px' }}>
-                        {new Date(project.final_payment_paid_at).toLocaleDateString("hu-HU")}
-                      </span>
-                    )}
-                  </span>
-                ) : (
-                  <span style={{ fontWeight: '700', color: '#FF9800', fontSize: '14px' }}>Függőben</span>
-                )}
-              </div>
-              {!project.final_payment_paid && (
-                <button
-                  className="button primary"
-                  type="button"
-                  style={{ minHeight: 'auto', padding: '10px 18px', fontSize: '13px', whiteSpace: 'nowrap' }}
-                  onClick={() => { setStripeMode("final"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
-                >
-                  Hátralék kifizetése ({formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")})
-                </button>
-              )}
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '12px', display: 'grid', gap: '8px' }}>
-              <strong>Karbantartási és támogatási ajánlat:</strong>
-              <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.4', color: 'var(--muted)' }}>Havonta figyeljük az oldal sebességét, kezeljük a frissítéseket, mentéseket, és 1 óra fejlesztési keretet biztosítunk.</p>
-              {project.maintenance_option ? (
-                <div style={{ fontWeight: 'bold', fontSize: '14px', color: project.maintenance_option === 'accepted' ? '#76ABAE' : '#FF5722' }}>
-                  Választásod: {project.maintenance_option === 'accepted' ? 'Karbantartás elfogadva' : 'Karbantartás elutasítva'}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
-                  <button className="button primary" type="button" onClick={() => selectMaintenance(project, "accepted")}>Kérem a karbantartást</button>
-                  <button className="button secondary" type="button" onClick={() => selectMaintenance(project, "declined")}>Nem kérem, lezárhatjuk</button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {project.status === "closed" && (
-          <div style={{ background: 'rgba(48, 56, 65, 0.02)', border: '1px solid rgba(48, 56, 65, 0.08)', padding: '20px', borderRadius: '22px', marginTop: '8px', display: 'grid', gap: '12px' }}>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>Projekt Lezárva</h4>
-            {project.client_rating ? (
-              <div style={{ display: 'grid', gap: '8px' }}>
-                <span><strong>Értékelésed:</strong></span>
-                <div style={{ fontSize: '18px', color: '#FF9800' }}>{"★".repeat(project.client_rating)}</div>
-                {project.client_review && <p style={{ fontStyle: 'italic', margin: 0 }}>"{project.client_review}"</p>}
-                <small style={{ color: 'var(--muted)' }}>Referencia engedélyezve: {project.reference_permitted ? "Igen" : "Nem"}</small>
-              </div>
-            ) : (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference);
-              }} style={{ display: 'grid', gap: '12px' }}>
-                <span style={{ fontSize: '14px' }}>Kérlek értékeld a közös munkát:</span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[1, 2, 3, 4, 5].map((val) => (
-                    <button
-                      type="button"
-                      key={val}
-                      style={{ fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer', color: reviewForm.rating >= val ? '#FF9800' : '#ccc', padding: 0 }}
-                      onClick={() => setReviewForm({ ...reviewForm, rating: val })}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-                <div className="field">
-                  <label htmlFor="review-comment">Véleményed</label>
-                  <textarea
-                    id="review-comment"
-                    required
-                    placeholder="Írd le tapasztalataidat..."
-                    value={reviewForm.review}
-                    onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })}
-                  />
-                </div>
-                <label style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer', fontSize: '13px' }}>
-                  <input type="checkbox" checked={reviewForm.reference} onChange={(e) => setReviewForm({ ...reviewForm, reference: e.target.checked })} />
-                  <span>Hozzájárulok, hogy a projekt megosztásra kerüljön referenciaként.</span>
-                </label>
-                <button className="button primary" type="submit" style={{ width: 'fit-content' }}>Értékelés beküldése</button>
-              </form>
-            )}
-          </div>
+          <LaunchedPanel
+            project={project}
+            onPayFinal={() => { setStripeMode("final"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
+            onSelectMaintenance={(choice) => selectMaintenance(project, choice)}
+          />
         )}
 
         {!project.delete_requested && project.status !== "closed" && (
@@ -2191,7 +1835,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <p className="micro-label">Ügyfélkapu</p>
           <h1>Saját projektfelület, nem elvesző emailek.</h1>
           <p>
-            Itt tudsz projektet indítani, ticketet nyitni, visszanézni a beszélgetéseket és látni,
+            Itt tudsz projektet indítani, üzenetet küldeni, visszanézni a beszélgetéseket és látni,
             hol tart a közös munka.
           </p>
         </div>
@@ -2273,7 +1917,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
             {mode === "register" && (
               <small style={{ display: 'block', marginTop: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: '1.3' }}>
-                A Supabase jelszószabályai szerint legalább 6 karakter hosszú jelszó megadása kötelező.
+                Legalább 6 karakter hosszú jelszó megadása kötelező.
               </small>
             )}
           </div>
@@ -2287,6 +1931,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 Elfelejtetted a jelszavad?
               </button>
             </div>
+          )}
+          {mode === "register" && (
+            <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', lineHeight: '1.4', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', marginBottom: '4px' }}>
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(event) => setConsentChecked(event.target.checked)}
+                style={{ marginTop: '2px', flexShrink: 0 }}
+              />
+              <span>
+                Elolvastam és elfogadom az{" "}
+                <a href="/adatkezeles" target="_blank" style={{ color: '#76ABAE' }}>Adatkezelési tájékoztatót</a>{" "}
+                és az{" "}
+                <a href="/aszf" target="_blank" style={{ color: '#76ABAE' }}>ÁSZF-et</a>.
+              </span>
+            </label>
           )}
           <button className="button primary" type="submit">
             {mode === "login" ? "Belépés" : "Fiók létrehozása"}
@@ -2320,11 +1980,45 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         <div>
           <p className="micro-label">Ügyfél dashboard</p>
           <h1>ProjectEdge dashboard</h1>
-          <p>Projektindítás, státusz, support és előzmények egyetlen privát felületen.</p>
+          <p>Projektindítás, státusz és üzenetek egyetlen privát felületen.</p>
         </div>
-        <div className="portal-user-chip">
-          <span>{profileName || email}</span>
-          <button onClick={signOut} type="button">Kilépés</button>
+        <div className="portal-header-actions">
+          <button
+            type="button"
+            className={`portal-icon-button ${openPanel === "notifications" ? "active" : ""}`}
+            aria-label="Értesítések"
+            onClick={() => setOpenPanel(openPanel === "notifications" ? null : "notifications")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            {notifications.filter((n) => !n.read).length > 0 && (
+              <span className="portal-icon-badge">{notifications.filter((n) => !n.read).length}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={`portal-icon-button ${openPanel === "support" ? "active" : ""}`}
+            aria-label="Üzenetek"
+            onClick={() => setOpenPanel(openPanel === "support" ? null : "support")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.32-3.87-.9L3 21l1.9-5.63A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 1 1 21 11.5z"></path>
+            </svg>
+            {openTickets > 0 && <span className="portal-icon-badge">{openTickets}</span>}
+          </button>
+          <button
+            type="button"
+            className={`portal-icon-button ${openPanel === "account" ? "active" : ""}`}
+            aria-label="Fiók"
+            onClick={() => setOpenPanel(openPanel === "account" ? null : "account")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -2342,141 +2036,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               az ajánlat, a fizetés, a fejlesztési mérföldkövek, az előnézeti link és a support — egy helyen.
             </p>
           </div>
-          <button className="button primary" type="button" onClick={() => setActiveTab("projects")}>
+          <button className="button primary" type="button" onClick={() => setHomeView("new-brief")}>
             Projekt brief indítása →
           </button>
         </div>
       )}
 
-      <section className="portal-command-center">
-        <article>
-          <span>Aktív projektek</span>
-          <strong>{projects.length}</strong>
-          <p>{latestProject ? `${latestProject.title} · ${statusLabels[latestProject.status] ?? latestProject.status}` : "Indítsd el az első projektet."}</p>
-        </article>
-        <article>
-          <span>Nyitott ticketek</span>
-          <strong>{openTickets}</strong>
-          <p>{openTickets ? "Van aktív egyeztetés." : "Nincs megválaszolatlan kérdés."}</p>
-        </article>
-        <article>
-          <span>Következő lépés</span>
-          <strong>{latestProject ? "Folyamatban" : "Brief"}</strong>
-          <p>{latestProject?.next_step || "Írd le röviden, mit építsünk vagy javítsunk."}</p>
-        </article>
-      </section>
 
-      <nav className="portal-dashboard-tabs" aria-label="Dashboard fülek">
-        {[
-          ["overview", "Áttekintés"],
-          ["projects", "Projektek"],
-          ["statuses", "Státuszok"],
-          ["support", "Support"],
-          ["notifications", "Értesítések"],
-          ["account", "Fiók"]
-        ].map(([value, label]) => {
-          const unreadCount = value === "notifications" ? notifications.filter((n) => !n.read).length : 0;
-          return (
-            <button
-              className={activeTab === value ? "active" : ""}
-              key={value}
-              onClick={() => setActiveTab(value as any)}
-              type="button"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px"
-              }}
-            >
-              <span>{label}</span>
-              {unreadCount > 0 && (
-                <span style={{
-                  backgroundColor: "#76ABAE",
-                  color: "#222831",
-                  borderRadius: "9999px",
-                  padding: "2px 6px",
-                  fontSize: "10px",
-                  fontWeight: "bold",
-                  lineHeight: "1",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  marginLeft: "2px"
-                }}>
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {activeTab === "overview" ? (
-        <div className="portal-dashboard-grid">
-          <section className="portal-panel hero">
-            <div>
-              <p className="micro-label dark">Projektindítás</p>
-              <h2>Indítsd el a következő munkát egy rövid briefből.</h2>
-              <p>Nem kell kész specifikáció. Elég, ha leírod a célt, a jelenlegi helyzetet és mi lenne jó eredmény.</p>
-            </div>
-            <button className="button primary" onClick={() => setActiveTab("projects")} type="button">
-              Projekt indítása
-            </button>
-          </section>
-          <section className="portal-panel">
-            <div className="portal-panel-head">
-              <span>Legutóbbi projekt</span>
-              <button onClick={() => setActiveTab("statuses")} type="button">Megnyitás</button>
-            </div>
-            {latestProject ? (
-              <article className="project-status-card featured">
-                <div>
-                  <strong>{latestProject.title}</strong>
-                  <span>{statusLabels[latestProject.status] ?? latestProject.status}</span>
-                </div>
-                <p>{latestProject.next_step || "Átnézés alatt. Hamarosan megjelenik itt a következő lépés."}</p>
-                {hasOffer(latestProject) ? (
-                  <div className="project-offer-mini">
-                    <span>Aktív ajánlat</span>
-                    <strong>{formatPrice(latestProject.offer_price, latestProject.offer_currency || "Ft")}</strong>
-                    <small>{latestProject.offer_title || "Részletes ajánlat elérhető a Projektek fülön."}</small>
-                  </div>
-                ) : null}
-              </article>
-            ) : (
-              <div className="portal-empty-state">
-                <strong>Még nincs projekted.</strong>
-                <p>A projektindítás után itt látod a státuszt, a következő lépést és minden kapcsolódó ticketet.</p>
-              </div>
-            )}
-          </section>
-          <section className="portal-panel">
-            <div className="portal-panel-head">
-              <span>Support</span>
-              <button onClick={() => setActiveTab("support")} type="button">Ticketek</button>
-            </div>
-            <div className="portal-mini-list">
-              {tickets.slice(0, 3).map((ticket) => (
-                <button key={ticket.id} onClick={() => { setActiveTicketId(ticket.id); setActiveTab("support"); }} type="button">
-                  <strong>{ticket.subject}</strong>
-                  <span>{statusLabels[ticket.status] ?? ticket.status}</span>
-                </button>
-              ))}
-              {tickets.length === 0 ? <p>Nincs ticket előzményed. Kérdés esetén a Support fülön tudsz írni.</p> : null}
-            </div>
-          </section>
-          <section className="portal-panel muted">
-            <span>Mit kapsz itt?</span>
-            <ul>
-              <li>Projektállapot és következő lépés</li>
-              <li>Ticket előzmények és privát chat</li>
-              <li>Adminból frissített státuszok</li>
-              <li>Lezárt ticket után értékelés</li>
-            </ul>
-          </section>
-        </div>
-      ) : null}
-
-      {activeTab === "projects" ? (
+      {homeView === "new-brief" ? (
         <div className="project-studio-layout">
           <section className="project-wizard-card">
             <div className="wizard-topline">
@@ -2496,7 +2063,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   majd a következő lépéseket és az ajánlatot itt fogod látni a dashboardban.
                 </p>
                 <div className="wizard-success-actions">
-                  <button className="button primary" onClick={() => setActiveTab("statuses")} type="button">
+                  <button className="button primary" onClick={() => setHomeView("project")} type="button">
                     Státusz megnyitása
                   </button>
                   <button
@@ -3090,14 +2657,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         </div>
       ) : null}
 
-      {activeTab === "statuses" ? (
+      {homeView === "project" ? (
         <section className="status-page-panel">
           <div className="status-page-head">
             <div>
-              <span>Projekt státuszok</span>
-              <h2>Innen látod nagyban, hol tartunk.</h2>
+              <span>Projekt státusz</span>
+              <h2>Innen látod, hol tartunk.</h2>
             </div>
-            <button className="button primary" onClick={() => setActiveTab("projects")} type="button">
+            <button className="button primary" onClick={() => setHomeView("new-brief")} type="button">
               Új projekt brief
             </button>
           </div>
@@ -3124,16 +2691,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <p>Indíts egy projekt briefet, és itt látod majd a státuszt, a tennivalókat és az ajánlatot.</p>
               </div>
             ) : null}
-            {projects.map((project) => renderProjectCard(project, true))}
+            {!loading && activeProjects.length > 1 && (
+              <ProjectSwitcher
+                projects={activeProjects}
+                selectedId={selectedProject?.id ?? ""}
+                onSelect={setSelectedProjectId}
+              />
+            )}
+            {!loading && selectedProject ? renderProjectCard(selectedProject) : null}
+            {!loading && closedProjects.length > 0 && (
+              <details className="disclosure">
+                <summary>Korábbi projektek ({closedProjects.length})</summary>
+                <div className="disclosure-body" style={{ display: "grid", gap: "16px" }}>
+                  {closedProjects.map((project) => renderProjectCard(project))}
+                </div>
+              </details>
+            )}
           </div>
         </section>
       ) : null}
 
-      {activeTab === "support" ? (
+      {openPanel === "support" ? (
+        <div className="portal-slideover-backdrop" onClick={() => setOpenPanel(null)}>
+        <aside className="portal-slideover" onClick={(e) => e.stopPropagation()} aria-label="Üzenetek">
+          <div className="portal-slideover-head">
+            <h2>Üzenetek</h2>
+            <button type="button" className="portal-slideover-close" onClick={() => setOpenPanel(null)} aria-label="Bezárás">×</button>
+          </div>
+          <div className="portal-slideover-body">
         <div className="portal-dashboard-grid support">
           <section className="portal-panel form-panel">
             <div className="portal-panel-head">
-              <span>Új support ticket</span>
+              <span>Új üzenet</span>
               <small>Privát beszélgetés</small>
             </div>
             <form className="portal-form" onSubmit={createTicket}>
@@ -3171,19 +2760,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 />
               </div>
               <button className="button primary" type="submit">
-                Ticket megnyitása
+                Üzenet küldése
               </button>
             </form>
           </section>
 
           <section className="portal-panel ticket-history">
             <div className="portal-panel-head">
-              <span>Ticket előzmények</span>
+              <span>Üzeneteid</span>
               <small>{tickets.length} beszélgetés</small>
             </div>
             <div className="ticket-layout">
               <div className="ticket-list">
-                {tickets.length === 0 ? <p>Még nincs ticketed.</p> : null}
+                {tickets.length === 0 ? <p>Még nincs üzeneted.</p> : null}
                 {tickets.map((ticket) => (
                   <button
                     className={activeTicket?.id === ticket.id ? "active" : ""}
@@ -3225,7 +2814,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     )}
                     {activeTicket.status === "closed" ? (
                       <div style={{ textAlign: "center", color: "var(--muted)", fontSize: "13px", padding: "8px 0" }}>
-                        Ez a ticket lezárva — új kérdéshez nyiss új ticketet.
+                        Ez a beszélgetés lezárva — új kérdéshez küldj új üzenetet.
                       </div>
                     ) : null}
                     {activeTicket.status === "closed" ? (
@@ -3233,7 +2822,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <strong>{activeTicket.rating ? "Köszönöm az értékelést." : "Milyen volt a segítség?"}</strong>
                         {!activeTicket.rating ? (
                           <>
-                            <div className="rating-row" role="radiogroup" aria-label="Ticket értékelése">
+                            <div className="rating-row" role="radiogroup" aria-label="Beszélgetés értékelése">
                               {[1, 2, 3, 4, 5].map((value) => (
                                 <button
                                   aria-label={`${value} csillag`}
@@ -3261,7 +2850,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   </>
                 ) : (
                   <div className="portal-empty-state">
-                    <strong>Válassz vagy nyiss ticketet.</strong>
+                    <strong>Válassz egy beszélgetést, vagy küldj újat.</strong>
                     <p>Itt fog megjelenni a teljes beszélgetési előzmény.</p>
                   </div>
                 )}
@@ -3269,14 +2858,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
           </section>
         </div>
+          </div>
+        </aside>
+        </div>
       ) : null}
 
-      {activeTab === "account" ? (
+      {openPanel === "account" ? (
+        <div className="portal-slideover-backdrop" onClick={() => setOpenPanel(null)}>
+        <aside className="portal-slideover" onClick={(e) => e.stopPropagation()} aria-label="Fiók">
+          <div className="portal-slideover-head">
+            <h2>Fiók</h2>
+            <button type="button" className="portal-slideover-close" onClick={() => setOpenPanel(null)} aria-label="Bezárás">×</button>
+          </div>
+          <div className="portal-slideover-body">
         <div className="portal-dashboard-grid account" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
           <section className="portal-panel" style={{ height: "fit-content" }}>
             <div className="portal-panel-head">
               <span>Fiókadatok</span>
-              <small>Supabase Auth</small>
             </div>
             <div className="account-list" style={{ display: "grid", gap: "12px", padding: "12px 0" }}>
               <div>
@@ -3288,7 +2886,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <strong style={{ color: "var(--ink)", fontSize: "15px" }}>{projects.length} db</strong>
               </div>
               <div>
-                <span style={{ fontSize: "11px", color: "var(--muted)", display: "block", textTransform: "uppercase" }}>Support ticketek</span>
+                <span style={{ fontSize: "11px", color: "var(--muted)", display: "block", textTransform: "uppercase" }}>Üzeneteid száma</span>
                 <strong style={{ color: "var(--ink)", fontSize: "15px" }}>{tickets.length} db</strong>
               </div>
             </div>
@@ -3348,7 +2946,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
             <form onSubmit={deleteAccount} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
               <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: "1.4" }}>
-                A fiók törlésével minden projektbrief, ajánlat, ticket és adat véglegesen törlődik a rendszerből.
+                A fiók törlésével minden projektbrief, ajánlat, üzenet és adat véglegesen törlődik a rendszerből.
               </p>
               <div className="field" style={{ margin: 0 }}>
                 <label htmlFor="settings-delete" style={{ color: "var(--muted)" }}>Megerősítéshez írd be: TÖRLÉS</label>
@@ -3367,15 +2965,25 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </form>
           </section>
         </div>
+          </div>
+        </aside>
+        </div>
       ) : null}
 
-      {activeTab === "notifications" ? (
+      {openPanel === "notifications" ? (
+        <div className="portal-slideover-backdrop" onClick={() => setOpenPanel(null)}>
+        <aside className="portal-slideover" onClick={(e) => e.stopPropagation()} aria-label="Értesítések">
+          <div className="portal-slideover-head">
+            <h2>Értesítések</h2>
+            <button type="button" className="portal-slideover-close" onClick={() => setOpenPanel(null)} aria-label="Bezárás">×</button>
+          </div>
+          <div className="portal-slideover-body">
         <div className="portal-dashboard-grid notifications">
           <section className="portal-panel hero">
             <div>
               <p className="micro-label dark">Értesítések</p>
               <h2>Kövesd nyomon a projektjeid alakulását.</h2>
-              <p>Minden státuszváltozásról, új ajánlatról, ticket válaszról és rendszerműveletről itt kapsz értesítést.</p>
+              <p>Minden státuszváltozásról, új ajánlatról, üzenetválaszról és rendszerműveletről itt kapsz értesítést.</p>
             </div>
           </section>
           <section className="portal-panel">
@@ -3448,6 +3056,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             )}
           </section>
         </div>
+          </div>
+        </aside>
+        </div>
       ) : null}
       {showStripeModalProjectId && (() => {
         const project = projects.find(p => p.id === showStripeModalProjectId);
@@ -3460,7 +3071,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)', padding: '16px' }}>
             <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '440px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Stripe Biztonságos Fizetés</span>
+                <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Biztonságos fizetés</span>
                 <button type="button" onClick={() => setShowStripeModalProjectId(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '20px', padding: 0 }}>×</button>
               </div>
 
