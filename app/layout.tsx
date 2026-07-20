@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MotionVars } from "@/components/MotionVars";
 import { SupportWidget } from "@/components/SupportWidget";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,22 +16,13 @@ export const metadata: Metadata = {
     url: "https://www.projectedge.hu",
     siteName: "ProjectEdge",
     locale: "hu_HU",
-    type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "ProjectEdge – Prémium weboldalak és digitális rendszerek"
-      }
-    ]
+    type: "website"
   },
   twitter: {
     card: "summary_large_image",
     title: "ProjectEdge | Weboldalak, amelyek üzletet építenek",
     description:
-      "Egyedi weboldal készítés, ügyfél dashboard, admin rendszerek és Supabase alapú üzleti automatizáció.",
-    images: ["/og-image.png"]
+      "Egyedi weboldal készítés, ügyfél dashboard, admin rendszerek és Supabase alapú üzleti automatizáció."
   }
 };
 
@@ -44,6 +36,7 @@ export default function RootLayout({
       <body>
         <MotionVars />
         {children}
+        <SiteFooter />
         <SupportWidget />
       </body>
     </html>

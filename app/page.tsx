@@ -27,12 +27,12 @@ const paths = [
 const metrics = ["Vercel", "Supabase", "Next.js", "CRM-ready"];
 
 const proof = [
-  "★★★★★ „Két hét alatt élesben volt.”",
   "100% egyedi kód",
-  "★★★★★ „Végre jönnek a megkeresések.”",
+  "Next.js + Supabase",
   "<1s betöltés",
-  "★★★★★ „Profi élmény az ügyfélkapun.”",
-  "Frontend + backend egy kézben"
+  "Frontend + backend egy kézben",
+  "Ügyfélkapu és admin háttér",
+  "2–4 hét átfutás"
 ];
 
 const prices = [
@@ -267,36 +267,31 @@ export default function Home() {
 
       <section className="voices-section">
         <div className="section-head">
-          <p className="micro-label dark">Vélemények</p>
-          <h2>Amit az ügyfeleim mondanak.</h2>
+          <p className="micro-label dark">Mire számíthatsz</p>
+          <h2>Amit egy közös munkában kapsz.</h2>
         </div>
         <div className="voices-grid">
           <article className="voice-card feature">
-            <div className="voice-stars" aria-label="5 csillag">★★★★★</div>
             <blockquote>
-              Korábban három cégtől kértem árajánlatot, mind sablont tolt volna. Patrik egy
-              teljesen egyedi oldalt rakott össze, és menet közben végig láttam, hol tart. Két hét
-              alatt élesben volt.
+              Egyedi kód sablon helyett, és menet közben végig látod, hol tart a projekt. Nincs
+              feketedoboz: az ügyfélkapun bármikor megnézed a státuszt és a következő lépést.
             </blockquote>
             <div className="voice-author">
-              <div className="voice-avatar" aria-hidden="true">KD</div>
               <div>
-                <strong>Kovács Dániel</strong>
-                <span>ügyvezető · Danubia Kft.</span>
+                <strong>Átlátható munka</strong>
+                <span>tervezéstől az indításig</span>
               </div>
             </div>
           </article>
           <article className="voice-card">
-            <div className="voice-stars" aria-label="5 csillag">★★★★★</div>
             <blockquote>
-              A régi oldalunk lassú volt és senki nem írt róla. Az új betöltés szinte azonnali, és
-              tényleg jönnek a megkeresések.
+              Gyors, mobilbarát oldal, ami tényleg segít megtalálni téged — nem csak szép, hanem a
+              megkeresésekre optimalizált.
             </blockquote>
             <div className="voice-author">
-              <div className="voice-avatar" aria-hidden="true">SZR</div>
               <div>
-                <strong>Szabó Réka</strong>
-                <span>tulajdonos · Réka Stúdió</span>
+                <strong>Eredményre tervezve</strong>
+                <span>sebesség + ügyfélszerzés</span>
               </div>
             </div>
           </article>

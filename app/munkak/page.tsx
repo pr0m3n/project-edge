@@ -73,26 +73,23 @@ const voices = [
   {
     feature: true,
     quote:
-      "Korábban három cégtől kértem árajánlatot, mind WordPress sablont tolt volna. Patrik egy teljesen egyedi oldalt rakott össze, és menet közben végig láttam, hol tart. Két hét alatt élesben volt.",
-    name: "Kovács Dániel",
-    role: "ügyvezető · Danubia Kft.",
-    initials: "KD"
+      "Egyedi kód sablon helyett, és menet közben végig látod, hol tart a projekt. Nincs feketedoboz — az ügyfélkapun bármikor megnézed a státuszt és a következő lépést.",
+    name: "Átlátható munka",
+    role: "tervezéstől az indításig"
   },
   {
     feature: false,
     quote:
-      "A régi oldalunk lassú volt és senki nem írt róla. Az új betöltés szinte azonnali, és tényleg jönnek a megkeresések.",
-    name: "Szabó Réka",
-    role: "tulajdonos · Réka Stúdió",
-    initials: "SZR"
+      "Gyors, mobilbarát oldal, ami tényleg segít megtalálni téged — nem csak szép, hanem a megkeresésekre optimalizált.",
+    name: "Eredményre tervezve",
+    role: "sebesség + ügyfélszerzés"
   },
   {
     feature: false,
     quote:
-      "Nem kellett emailben kergetnem semmit. Az ügyfélkapun láttam a státuszt, és pár kattintással fizettem. Profi élmény.",
-    name: "Nagy Bence",
-    role: "alapító · BN Consulting",
-    initials: "NB"
+      "Hívás és emailezgetés nélkül: az ügyfélkapun indítod a projektet, követed a haladást és pár kattintással fizetsz.",
+    name: "Kényelmes folyamat",
+    role: "minden egy helyen"
   }
 ];
 
@@ -187,18 +184,14 @@ export default function WorkPage() {
 
       <section className="voices-section">
         <div className="section-head">
-          <p className="micro-label dark">Vélemények</p>
-          <h2>Akiknek már építettem.</h2>
+          <p className="micro-label dark">Mire számíthatsz</p>
+          <h2>Amit egy közös munkában kapsz.</h2>
         </div>
         <div className="voices-grid">
           {voices.map((voice) => (
             <article className={`voice-card ${voice.feature ? "feature" : ""}`} key={voice.name}>
-              <div className="voice-stars" aria-label="5 csillag">★★★★★</div>
               <blockquote>{voice.quote}</blockquote>
               <div className="voice-author">
-                <div className="voice-avatar" aria-hidden="true">
-                  {voice.initials}
-                </div>
                 <div>
                   <strong>{voice.name}</strong>
                   <span>{voice.role}</span>

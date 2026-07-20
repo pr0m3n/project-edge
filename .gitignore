@@ -1,5 +1,7 @@
 .next
 node_modules
+tsconfig.tsbuildinfo
+.claude/settings.local.json
 .env
 .env*.local
 dist
