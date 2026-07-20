@@ -1903,12 +1903,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
               >
                 {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted)' }}>
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                     <line x1="1" y1="1" x2="23" y2="23"/>
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted)' }}>
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
@@ -1916,7 +1916,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               </button>
             </div>
             {mode === "register" && (
-              <small style={{ display: 'block', marginTop: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '11px', lineHeight: '1.3' }}>
+              <small style={{ display: 'block', marginTop: '6px', color: 'var(--muted)', fontSize: '11px', lineHeight: '1.3' }}>
                 Legalább 6 karakter hosszú jelszó megadása kötelező.
               </small>
             )}
@@ -1933,7 +1933,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
           )}
           {mode === "register" && (
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', lineHeight: '1.4', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', marginBottom: '4px' }}>
+            <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', lineHeight: '1.4', color: 'var(--muted)', cursor: 'pointer', marginBottom: '4px' }}>
               <input
                 type="checkbox"
                 checked={consentChecked}
