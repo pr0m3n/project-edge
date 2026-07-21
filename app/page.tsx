@@ -2,6 +2,7 @@ import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { ScrollScene } from "@/components/ScrollScene";
 import { SiteNav } from "@/components/SiteNav";
+import { PriceEstimator } from "@/components/PriceEstimator";
 
 const paths = [
   {
@@ -32,24 +33,17 @@ const proof = [
   "<1s betöltés",
   "Frontend + backend egy kézben",
   "Ügyfélkapu és admin háttér",
-  "2–4 hét átfutás"
-];
-
-const prices = [
-  ["Landing / bemutatkozó", "Egy gyors, meggyőző oldal, ha most indulsz.", "150–300e Ft"],
-  ["Céges weboldal", "Több aloldal, bizalomépítés, ajánlatkérés.", "400–800e Ft"],
-  ["Webes rendszer", "Belépés, admin, ügyfélkapu, automatizáció.", "800e Ft-tól"],
-  ["Meglévő oldal felújítása", "WordPress vagy egyedi — megnézem, mi gátol.", "120–350e Ft"]
+  "2 naptól 4 hétig, mérettől függően"
 ];
 
 const faqs = [
   [
     "Mennyibe kerül egy weboldal?",
-    "A pontos árat a brief alapján adom meg, de tájékoztató sávok: egy landing 150–300e Ft, egy komolyabb céges oldal 400–800e Ft, egyedi rendszer 800e Ft-tól. A szövegírás az árban van."
+    "50 000 Ft-tól indulnak az áraim, és a legtöbb piaci szereplőnél olcsóbban dolgozom. A pontos árat mindig a brief alapján adom meg — a fenti csúszkával te is meg tudod becsülni, kb. mire számíthatsz."
   ],
   [
     "Mennyi idő alatt készül el?",
-    "A legtöbb oldal 2–4 hét. AI-támogatott munkamenettel gyorsabb vagyok a piac nagy részénél, de minden sor kódot átnézek — nem sablonból dolgozom."
+    "Nem dolgozom rajta a szükségesnél tovább: egy kisebb, egyszerű oldal akár 1–2 nap alatt kész, egy összetettebb, egyedi rendszer pár hét. A pontos időt a terjedelem és a bonyolultság határozza meg."
   ],
   [
     "Mi van, ha nem tetszik az irány?",
@@ -224,21 +218,14 @@ export default function Home() {
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Átlátható nagyságrendek, nem rejtett tételek.</h2>
+          <h2>Nem nagy sávok — próbáld ki, mennyibe kerülne a tiéd.</h2>
           <p>
-            Tájékoztató sávok a magyar piacon. A pontos ajánlatot a projekt terjedelme alapján adom
-            meg — ezért kezdünk mindig egy rövid brieffel.
+            50 000 Ft-tól indulnak az áraim, jellemzően olcsóbban a piaci átlagnál. Válaszd ki, mihez
+            hasonlót szeretnél, és a csúszkával pontosítsd — azonnal látod a hozzávetőleges árat és
+            átfutási időt.
           </p>
         </div>
-        <div className="price-rows">
-          {prices.map(([title, desc, price]) => (
-            <div className="price-row" key={title}>
-              <strong>{title}</strong>
-              <span>{desc}</span>
-              <b>{price}</b>
-            </div>
-          ))}
-        </div>
+        <PriceEstimator />
       </section>
 
       <section className="orbit-section">

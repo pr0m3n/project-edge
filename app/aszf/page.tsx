@@ -46,9 +46,10 @@ export default function TermsPage() {
 
         <h2>4. Díjazás és fizetés</h2>
         <p>
-          A vállalási díj az egyedi ajánlatban szerepel. A munka megkezdésének feltétele a
-          vállalási díj [30]%-ának megfelelő foglaló megfizetése; a fennmaradó összeg a projekt
-          átadásakor esedékes. A fizetés az Ügyfélkapun keresztül történik.
+          A vállalási díj az egyedi ajánlatban szerepel. A munka megkezdésének feltétele egy fix,
+          10 000 Ft összegű foglaló megfizetése, amely a végösszegbe beleszámít. A kész munkát a
+          Vállalkozó csak a teljes vállalási díj beérkezése után adja át és élesíti; a fennmaradó
+          összeg tehát az átadás feltétele. A fizetés az Ügyfélkapun keresztül történik.
         </p>
 
         <h2>5. Fogyasztói elállási jog</h2>
@@ -57,8 +58,8 @@ export default function TermsPage() {
           szerint a szerződéskötéstől számított 14 napon belül indokolás nélkül elállhat.
           Szolgáltatásnyújtás esetén, ha a Megrendelő kifejezetten kéri a teljesítés 14 napon belüli
           megkezdését, tudomásul veszi, hogy a teljesítés megkezdése után az elállási jogát a már
-          teljesített, arányos rész tekintetében elveszíti. A foglaló ilyen megkezdett teljesítés
-          esetén a ténylegesen elvégzett munka arányában számolható el.
+          teljesített, arányos rész tekintetében elveszíti. Mivel a munka megkezdésének feltétele
+          csak a fix összegű foglaló, elállás esetén ennek erejéig áll fenn az elszámolási igény.
         </p>
 
         <h2>6. Szerzői jog és felhasználás</h2>

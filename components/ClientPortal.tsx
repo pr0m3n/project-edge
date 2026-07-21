@@ -1259,7 +1259,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function acceptOffer(project: Project) {
     setNotice("Ajánlat elfogadása...");
-    const deposit = Math.round((project.offer_price ?? 0) * 0.3);
+    // Fix, alacsony foglaló — a cél a komoly érdeklődők szűrése, nem a
+    // kockázat fedezése (azt az adja, hogy csak teljes kifizetés után adjuk
+    // át a kész oldalt, lásd LaunchedPanel).
+    const deposit = 10000;
     const { error } = await supabase.from("client_projects").update({
       status: "contract_pending",
       deposit_amount: deposit,
@@ -2420,10 +2423,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         onChange={(event) => setProjectForm((current) => ({ ...current, budget: event.target.value }))}
                       >
                         <option value="not-sure">Még nem tudom</option>
-                        <option value="100k-300k">100 000 - 300 000 Ft</option>
-                        <option value="300k-600k">300 000 - 600 000 Ft</option>
-                        <option value="600k-1m">600 000 - 1 000 000 Ft</option>
-                        <option value="1m-plus">1 000 000 Ft felett</option>
+                        <option value="50k-150k">50 000 - 150 000 Ft</option>
+                        <option value="150k-350k">150 000 - 350 000 Ft</option>
+                        <option value="350k-700k">350 000 - 700 000 Ft</option>
+                        <option value="700k-plus">700 000 Ft felett</option>
                       </select>
                     </div>
                   </>
@@ -3329,7 +3332,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         const payAmount = stripeMode === "final"
           ? (project.offer_price ?? 0) - (project.deposit_amount ?? 0)
           : (project.deposit_amount ?? 0);
-        const payLabel = stripeMode === "final" ? "Hátralék (70%)" : "Foglaló";
+        const payLabel = stripeMode === "final" ? "Hátralék" : "Foglaló";
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)', padding: '16px' }}>
             <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '440px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '20px' }}>

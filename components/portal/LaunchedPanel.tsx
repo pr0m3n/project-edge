@@ -30,7 +30,7 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: Laun
 
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
         <div>
-          <span style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700", display: "block", marginBottom: "4px" }}>Végső fizetés (70%)</span>
+          <span style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700", display: "block", marginBottom: "4px" }}>Végső fizetés (a fennmaradó összeg)</span>
           {project.final_payment_paid ? (
             <span style={{ fontWeight: "700", color: "#76ABAE", fontSize: "14px" }}>
               Befizetve — köszönjük!

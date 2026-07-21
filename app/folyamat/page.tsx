@@ -54,6 +54,11 @@ const extras = [
     "🔧",
     "Indulás után",
     "Igény szerint havi karbantartás: frissítés, mentés, mérés és apró fejlesztések, hogy az oldal ne öregedjen el."
+  ],
+  [
+    "🔒",
+    "Miért van foglaló",
+    "Egy alacsony, fix összegű foglaló indítja a projektet — ez csak annyit szűr, hogy komoly szándékkal vágjunk bele. A teljes díjat csak a kész oldal átadásakor kérem, tehát nálad nincs kockázat."
   ]
 ];
 

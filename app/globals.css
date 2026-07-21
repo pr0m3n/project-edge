@@ -5496,6 +5496,152 @@ p {
   white-space: nowrap;
 }
 
+.estimator {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  display: grid;
+  gap: 28px;
+  margin-top: 40px;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.estimator-types {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.estimator-types button {
+  background: rgba(48, 56, 65, 0.03);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  position: relative;
+  text-align: left;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.estimator-types button:hover {
+  transform: translateY(-2px);
+}
+
+.estimator-types button.selected {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.estimator-types button strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.estimator-types button.selected strong {
+  color: var(--paper);
+}
+
+.estimator-types button span {
+  color: rgba(48, 56, 65, 0.6);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.estimator-types button.selected span {
+  color: rgba(245, 245, 245, 0.65);
+}
+
+.estimator-slider {
+  display: grid;
+  gap: 10px;
+}
+
+.estimator-slider label {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.estimator-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, var(--aqua), var(--ember));
+  border-radius: 999px;
+  height: 8px;
+  width: 100%;
+}
+
+.estimator-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--ink);
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  height: 24px;
+  width: 24px;
+}
+
+.estimator-slider input[type="range"]::-moz-range-thumb {
+  background: var(--ink);
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  height: 24px;
+  width: 24px;
+}
+
+.estimator-slider-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.estimator-slider-labels span {
+  color: rgba(48, 56, 65, 0.55);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.estimator-result {
+  background: rgba(118, 171, 174, 0.08);
+  border-radius: 24px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  padding: 24px 28px;
+}
+
+.estimator-result span {
+  color: rgba(48, 56, 65, 0.6);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.estimator-result strong {
+  color: var(--ink);
+  display: block;
+  font-size: clamp(24px, 3vw, 34px);
+  margin-top: 4px;
+}
+
+.estimator-note {
+  color: rgba(48, 56, 65, 0.55);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .estimator-result {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Capability rail (mire vagyok képes) ── */
 .cap-section {
   padding: clamp(60px, 8vw, 120px) 0;
