@@ -46,16 +46,16 @@ const specialCases: Array<[string, string, string]> = [
 ];
 
 const bring = [
-  ["Domain", "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítek regisztrálni."],
-  ["Tárhely-hozzáférés", "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük."],
-  ["Logó", "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)."],
-  ["Színek, betűtípus", "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod."],
-  ["Szövegek", "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem."],
-  ["Képek", "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom."],
-  ["Közösségi linkek", "Facebook, Instagram, LinkedIn, Google Cégprofil — amit ki szeretnél tenni."],
-  ["Kapcsolat", "A megjelenő email és telefonszám, ahol az ügyfeleid elérnek."],
-  ["Analytics", "Ha van Google Analytics a régi oldalon, a hozzáférés segít megérteni a számokat. Ha nincs, beállítom."],
-  ["Számlázási adatok", "A szerződéshez és a számlához: cégnév, adószám, székhely — vagy magánszemély adatai."]
+  ["🌐", "Domain", "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítek regisztrálni."],
+  ["🔑", "Tárhely-hozzáférés", "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük."],
+  ["🎨", "Logó", "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)."],
+  ["🖌️", "Színek, betűtípus", "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod."],
+  ["✍️", "Szövegek", "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem."],
+  ["📷", "Képek", "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom."],
+  ["🔗", "Közösségi linkek", "Facebook, Instagram, LinkedIn, Google Cégprofil — amit ki szeretnél tenni."],
+  ["📞", "Kapcsolat", "A megjelenő email és telefonszám, ahol az ügyfeleid elérnek."],
+  ["📊", "Analytics", "Ha van Google Analytics a régi oldalon, a hozzáférés segít megérteni a számokat. Ha nincs, beállítom."],
+  ["🧾", "Számlázási adatok", "A szerződéshez és a számlához: cégnév, adószám, székhely — vagy magánszemély adatai."]
 ];
 
 export default function ServicesPage() {
@@ -135,10 +135,13 @@ export default function ServicesPage() {
           </p>
         </div>
         <div className="bring-grid">
-          {bring.map(([title, copy]) => (
-            <div className="bring-item" key={title}>
-              <strong>{title}</strong>
-              <span>{copy}</span>
+          {bring.map(([icon, title, copy], index) => (
+            <div className="bring-item" key={title} style={{ animationDelay: `${(index % 5) * 60}ms` }}>
+              <span className="bring-icon" aria-hidden="true">{icon}</span>
+              <div>
+                <strong>{title}</strong>
+                <span>{copy}</span>
+              </div>
             </div>
           ))}
         </div>

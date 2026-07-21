@@ -916,7 +916,8 @@ p {
 .quote-panel,
 .orbit-copy,
 .planet-stage,
-.manifesto article {
+.manifesto article,
+.bring-item {
   animation: reveal-up both;
   animation-timeline: view();
   animation-range: entry 8% cover 28%;
@@ -4969,11 +4970,39 @@ p {
 .bring-item {
   background: var(--white);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--aqua);
-  border-radius: 18px;
+  border-radius: 20px;
+  display: flex;
+  gap: 16px;
+  padding: 22px;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.bring-item:hover {
+  border-color: rgba(118, 171, 174, 0.4);
+  box-shadow: 0 24px 60px rgba(17, 23, 28, 0.1);
+  transform: translateY(-4px);
+}
+
+.bring-icon {
+  align-items: center;
+  background: rgba(118, 171, 174, 0.12);
+  border-radius: 14px;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 22px;
+  height: 48px;
+  justify-content: center;
+  transition: transform 220ms ease;
+  width: 48px;
+}
+
+.bring-item:hover .bring-icon {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.bring-item > div {
   display: grid;
-  gap: 6px;
-  padding: 20px 22px;
+  gap: 4px;
 }
 
 .bring-item strong {
@@ -6002,16 +6031,62 @@ p {
   }
 }
 
+.cap-hint-row {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 0 clamp(18px, 5vw, 76px);
+}
+
 .cap-hint {
   color: rgba(48, 56, 65, 0.5);
   font-size: 13px;
   font-weight: 800;
-  padding: 0 clamp(18px, 5vw, 76px);
   text-transform: uppercase;
 }
 
 .dark-page .cap-hint {
   color: rgba(245, 245, 245, 0.5);
+}
+
+.cap-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.cap-nav button {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: 20px;
+  height: 44px;
+  justify-content: center;
+  transition: background 180ms ease, transform 180ms ease;
+  width: 44px;
+}
+
+.cap-nav button:hover {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.dark-page .cap-nav button {
+  background: rgba(245, 245, 245, 0.08);
+  border-color: rgba(245, 245, 245, 0.16);
+  color: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .cap-nav {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

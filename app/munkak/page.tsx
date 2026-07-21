@@ -1,5 +1,6 @@
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
+import { EffectsRail } from "@/components/EffectsRail";
 
 const capabilities = [
   {
@@ -163,19 +164,7 @@ export default function WorkPage() {
             karaktert, amitől egy oldal emlékezetes marad.
           </p>
         </div>
-        <p className="cap-hint">← Húzd oldalra a kártyákat →</p>
-        <div className="cap-rail">
-          {capabilities.map((cap) => (
-            <article className={`cap-card ${cap.dark ? "dark" : ""}`} key={cap.title}>
-              <div className={`cap-stage ${cap.fx}`}>{cap.stage}</div>
-              <div className="cap-caption">
-                <span className="cap-eyebrow">{cap.eyebrow}</span>
-                <h3>{cap.title}</h3>
-                <p>{cap.copy}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+        <EffectsRail capabilities={capabilities} />
         <p className="cap-note">
           Ezek csak <b>példák</b> — a te oldaladhoz pont olyan effekteket és animációkat építek,
           amilyet a márkád megkíván. Sokkal többre vagyok képes, mint ami ide kifér.
