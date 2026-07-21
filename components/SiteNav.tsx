@@ -28,10 +28,8 @@ export function SiteNav() {
     <>
       <nav className="nav-shell" aria-label="Fő navigáció">
         <TransitionLink className="brand-lockup" href="/">
-          <span className="brand-cube" aria-hidden="true">
-            <span />
-          </span>
-          <span>ProjectEdge</span>
+          <img alt="" aria-hidden="true" className="brand-mark" src="/logo/pe-mark-ink.png" />
+          <span className="sr-only">ProjectEdge</span>
         </TransitionLink>
         <div className="nav-orbit">
           {links.map((link) => (
