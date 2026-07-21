@@ -1,5 +1,6 @@
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
+import { PriceEstimator } from "@/components/PriceEstimator";
 
 const services = [
   ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
@@ -8,49 +9,40 @@ const services = [
   ["Admin háttér", "Egyszerű felület a beérkező ügyfeleknek, státuszoknak, ticketeknek és jegyzeteknek. Később tovább automatizálható."]
 ];
 
-// Ügyféltípus → megoldás → mire használjuk → kb. ár
+// Ügyféltípus → megoldás → mire használjuk (az ár a lenti csúszkás becslőben van,
+// hogy ne legyen két, egymástól eltérő megjelenésű ár-forrás az oldalon)
 const solutions: Array<{
   type: string;
   who: string;
   stack: string;
-  price: string;
 }> = [
   {
     type: "Most indulsz / kell egy szép bemutatkozó",
     who: "Egyéni vállalkozó, szabadúszó, helyi szolgáltató, aki egy gyors, meggyőző oldalt szeretne.",
-    stack: "Egyoldalas vagy néhány aloldalas landing — Next.js + Vercel tárhely. Nincs felesleges rendszer mögötte.",
-    price: "50 000 – 150 000 Ft"
+    stack: "Egyoldalas vagy néhány aloldalas landing — Next.js + Vercel tárhely. Nincs felesleges rendszer mögötte."
   },
   {
     type: "Komoly céges weboldal több aloldallal",
     who: "Működő vállalkozás, aki bizalmat épít, ajánlatot kér és kitűnik a versenytársak közül.",
-    stack: "Egyedi prémium oldal — Next.js + Vercel, igény szerint ügyfélkapuval és ajánlatkérő folyamattal.",
-    price: "150 000 – 350 000 Ft"
+    stack: "Egyedi prémium oldal — Next.js + Vercel, igény szerint ügyfélkapuval és ajánlatkérő folyamattal."
   },
   {
     type: "Már van WordPress oldalad",
     who: "Van működő oldalad, de lassú, elavult vagy nem hoz ügyfelet — vagy csak frissítés kell.",
-    stack: "Megnézem, mi van benne. Ha jó az alap, marad a WordPress és csak felújítom. Ha gátol, átültetem modern rendszerre — a tartalmat áthozom.",
-    price: "50 000 – 180 000 Ft"
-  },
-  {
-    type: "Webshop kell",
-    who: "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel.",
-    stack: "Bevált webshop-alapra építek (Shopify / WooCommerce) — nem találok fel mindent újra, hogy neked biztonságos és karbantartható maradjon.",
-    price: "Egyedi ajánlat"
+    stack: "Megnézem, mi van benne. Ha jó az alap, marad a WordPress és csak felújítom. Ha gátol, átültetem modern rendszerre — a tartalmat áthozom."
   },
   {
     type: "Egyedi rendszer, ügyfélkapu, admin",
     who: "Belépés, adatkezelés, dashboard, foglalás, automatizált folyamatok kellenek.",
-    stack: "Egyedi webapp — Next.js + Supabase (adatbázis, belépés, jogosultság) + Vercel. Pont ilyen a ProjectEdge ügyfélkapu is.",
-    price: "350 000 Ft-tól"
-  },
-  {
-    type: "Folyamatos karbantartás és növekedés",
-    who: "Kész oldalad van, de kell, aki figyel rá: frissítés, mérés, apró fejlesztések.",
-    stack: "Havi csomag — biztonsági frissítések, mentés, mérés, kisebb módosítások, havi riport.",
-    price: "15 000 – 35 000 Ft / hó"
+    stack: "Egyedi webapp — Next.js + Supabase (adatbázis, belépés, jogosultság) + Vercel. Pont ilyen a ProjectEdge ügyfélkapu is."
   }
+];
+
+// Ezek nem illenek a fenti, egyszeri projekt-becslőbe (egyedi ajánlat, illetve
+// havi visszatérő díj), ezért külön, egyszerű sorként jelennek meg.
+const specialCases: Array<[string, string, string]> = [
+  ["Webshop kell", "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel — bevált alapra építek (Shopify / WooCommerce).", "Egyedi ajánlat"],
+  ["Folyamatos karbantartás és növekedés", "Kész oldalad van, de kell, aki figyel rá: frissítés, mentés, mérés, apró fejlesztések, havi riport.", "15 000 – 35 000 Ft / hó"]
 ];
 
 const bring = [
@@ -96,8 +88,8 @@ export default function ServicesPage() {
           <h2>Megnézem, hol tartasz — és pontosan azt ajánlom, ami kell.</h2>
           <p>
             Nem akarlak rábeszélni egy drága rendszerre, ha egy szép landing is elég. 50 000 Ft-tól
-            indulnak az áraim, jellemzően olcsóbban a piaci átlagnál — az alábbi sávok tájékoztató
-            jellegűek, a pontos árat a brief alapján adom meg.
+            indulnak az áraim, jellemzően olcsóbban a piaci átlagnál — próbáld ki lent a csúszkával,
+            mennyibe kerülne a tiéd.
           </p>
         </div>
         <div className="solutions-grid">
@@ -109,13 +101,24 @@ export default function ServicesPage() {
                 <span>Mit használok</span>
                 <p>{item.stack}</p>
               </div>
-              <div className="solution-price">
-                <span>Kb. ár</span>
-                <strong>{item.price}</strong>
-              </div>
             </article>
           ))}
         </div>
+
+        <PriceEstimator />
+
+        <div className="special-cases">
+          {specialCases.map(([title, copy, price]) => (
+            <div className="special-case-row" key={title}>
+              <div>
+                <strong>{title}</strong>
+                <span>{copy}</span>
+              </div>
+              <b>{price}</b>
+            </div>
+          ))}
+        </div>
+
         <p className="solutions-note">
           Az árak tájékoztató jellegűek, bruttó nagyságrendek a magyar piacon. A végleges ajánlat a
           projekt terjedelmétől függ — ezért kezdünk mindig egy rövid brieffel.

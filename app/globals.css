@@ -4878,8 +4878,7 @@ p {
   padding-top: 16px;
 }
 
-.solution-stack span,
-.solution-price span {
+.solution-stack span {
   color: var(--aqua);
   font-size: 12px;
   font-weight: 700;
@@ -4893,15 +4892,40 @@ p {
   opacity: 0.85;
 }
 
-.solution-price {
+.special-cases {
   display: grid;
-  gap: 4px;
-  margin-top: auto;
+  gap: 10px;
+  margin-top: 24px;
 }
 
-.solution-price strong {
-  font-size: 22px;
-  font-weight: 800;
+.special-case-row {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 20px 24px;
+}
+
+.special-case-row strong {
+  display: block;
+  font-size: 16px;
+}
+
+.special-case-row span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.special-case-row b {
+  color: var(--ember);
+  font-size: 18px;
+  white-space: nowrap;
 }
 
 .solutions-note {
