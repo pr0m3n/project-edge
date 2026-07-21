@@ -161,9 +161,7 @@ export default function Home() {
         <div className="founder-card">
           <div className="founder-name">
             <span className="founder-tag">// ProjectEdge</span>
-            <span className="founder-hi">
-              Szia, <span className="founder-wave" aria-hidden="true">👋</span>
-            </span>
+            <span className="founder-hi">Szia,</span>
             <b>Patrik vagyok.</b>
           </div>
           <div className="founder-badge">

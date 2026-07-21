@@ -1,6 +1,19 @@
+import type { ReactElement } from "react";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import {
+  IconGlobe,
+  IconKey,
+  IconShapes,
+  IconDroplet,
+  IconPen,
+  IconCamera,
+  IconLink,
+  IconPhone,
+  IconBarChart,
+  IconReceipt
+} from "@/components/icons";
 
 const services = [
   ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
@@ -45,17 +58,17 @@ const specialCases: Array<[string, string, string]> = [
   ["Folyamatos karbantartás és növekedés", "Kész oldalad van, de kell, aki figyel rá: frissítés, mentés, mérés, apró fejlesztések, havi riport.", "15 000 – 35 000 Ft / hó"]
 ];
 
-const bring = [
-  ["🌐", "Domain", "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítek regisztrálni."],
-  ["🔑", "Tárhely-hozzáférés", "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük."],
-  ["🎨", "Logó", "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)."],
-  ["🖌️", "Színek, betűtípus", "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod."],
-  ["✍️", "Szövegek", "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem."],
-  ["📷", "Képek", "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom."],
-  ["🔗", "Közösségi linkek", "Facebook, Instagram, LinkedIn, Google Cégprofil — amit ki szeretnél tenni."],
-  ["📞", "Kapcsolat", "A megjelenő email és telefonszám, ahol az ügyfeleid elérnek."],
-  ["📊", "Analytics", "Ha van Google Analytics a régi oldalon, a hozzáférés segít megérteni a számokat. Ha nincs, beállítom."],
-  ["🧾", "Számlázási adatok", "A szerződéshez és a számlához: cégnév, adószám, székhely — vagy magánszemély adatai."]
+const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: string; copy: string }> = [
+  { Icon: IconGlobe, title: "Domain", copy: "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítek regisztrálni." },
+  { Icon: IconKey, title: "Tárhely-hozzáférés", copy: "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük." },
+  { Icon: IconShapes, title: "Logó", copy: "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)." },
+  { Icon: IconDroplet, title: "Színek, betűtípus", copy: "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod." },
+  { Icon: IconPen, title: "Szövegek", copy: "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem." },
+  { Icon: IconCamera, title: "Képek", copy: "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom." },
+  { Icon: IconLink, title: "Közösségi linkek", copy: "Facebook, Instagram, LinkedIn, Google Cégprofil — amit ki szeretnél tenni." },
+  { Icon: IconPhone, title: "Kapcsolat", copy: "A megjelenő email és telefonszám, ahol az ügyfeleid elérnek." },
+  { Icon: IconBarChart, title: "Analytics", copy: "Ha van Google Analytics a régi oldalon, a hozzáférés segít megérteni a számokat. Ha nincs, beállítom." },
+  { Icon: IconReceipt, title: "Számlázási adatok", copy: "A szerződéshez és a számlához: cégnév, adószám, székhely — vagy magánszemély adatai." }
 ];
 
 export default function ServicesPage() {
@@ -135,9 +148,9 @@ export default function ServicesPage() {
           </p>
         </div>
         <div className="bring-grid">
-          {bring.map(([icon, title, copy], index) => (
+          {bring.map(({ Icon, title, copy }, index) => (
             <div className="bring-item" key={title} style={{ animationDelay: `${(index % 5) * 60}ms` }}>
-              <span className="bring-icon" aria-hidden="true">{icon}</span>
+              <span className="bring-icon" aria-hidden="true"><Icon /></span>
               <div>
                 <strong>{title}</strong>
                 <span>{copy}</span>

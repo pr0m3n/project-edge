@@ -4987,9 +4987,9 @@ p {
   align-items: center;
   background: rgba(118, 171, 174, 0.12);
   border-radius: 14px;
+  color: var(--aqua);
   display: flex;
   flex: 0 0 auto;
-  font-size: 22px;
   height: 48px;
   justify-content: center;
   transition: transform 220ms ease;
@@ -5009,7 +5009,7 @@ p {
   font-size: 16px;
 }
 
-.bring-item span {
+.bring-item > div span {
   color: var(--muted);
   line-height: 1.6;
 }
@@ -5076,10 +5076,14 @@ p {
 }
 
 .logo-preview-chip {
+  align-items: center;
   background: rgba(118, 171, 174, 0.12);
   border-radius: 8px;
+  color: var(--aqua);
+  display: inline-flex;
   font-size: 13px;
   font-weight: 700;
+  gap: 6px;
   padding: 8px 12px;
 }
 
@@ -5232,25 +5236,6 @@ p {
   color: rgba(245, 245, 245, 0.88);
   font-size: clamp(22px, 3.4vw, 34px);
   font-weight: 850;
-}
-
-.founder-name .founder-wave {
-  font-size: clamp(24px, 4vw, 40px);
-  transform-origin: 70% 80%;
-  animation: wave 2.6s ease-in-out infinite;
-  display: inline-block;
-}
-
-@keyframes wave {
-  0%, 60%, 100% {
-    transform: rotate(0deg);
-  }
-  20% {
-    transform: rotate(18deg);
-  }
-  40% {
-    transform: rotate(-8deg);
-  }
 }
 
 .founder-badge {
@@ -6247,8 +6232,8 @@ p {
   align-items: center;
   background: var(--ember);
   border-radius: 14px;
+  color: var(--paper);
   display: flex;
-  font-size: 22px;
   height: 52px;
   justify-content: center;
   width: 52px;
@@ -6354,8 +6339,8 @@ p {
   background: radial-gradient(circle at 35% 30%, rgba(255, 87, 34, 0.28), rgba(118, 171, 174, 0.2));
   border: 1px solid rgba(245, 245, 245, 0.18);
   border-radius: 20px;
+  color: var(--paper);
   display: flex;
-  font-size: 30px;
   height: 64px;
   justify-content: center;
   width: 64px;

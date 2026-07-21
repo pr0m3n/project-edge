@@ -12,6 +12,7 @@ import {
   type ToastKind
 } from "@/components/ui/feedback";
 import { ProjectTurnGuide, isClientTurn } from "@/components/portal/ProjectTurnGuide";
+import { IconPaperclip, IconPen, IconBell } from "@/components/icons";
 import { ProjectSwitcher } from "@/components/portal/ProjectSwitcher";
 import { BriefPanel } from "@/components/portal/BriefPanel";
 import { OfferPanel } from "@/components/portal/OfferPanel";
@@ -2678,7 +2679,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ) : projectForm.logoUrl ? (
                           <div className="logo-preview">
                             {projectForm.logoUrl.toLowerCase().endsWith(".pdf") ? (
-                              <span className="logo-preview-chip">📎 Fájl csatolva</span>
+                              <span className="logo-preview-chip"><IconPaperclip size={16} /> Fájl csatolva</span>
                             ) : (
                               <img src={projectForm.logoUrl} alt="Feltöltött logó előnézet" />
                             )}
@@ -2743,7 +2744,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           }}
                           type="button"
                         >
-                          <span className="font-sample" aria-hidden="true">✏️</span>
+                          <span className="font-sample" aria-hidden="true"><IconPen size={26} /></span>
                           <strong>Egyéb</strong>
                           <span className="font-preview-line">Leírom, mit szeretnék</span>
                         </button>
@@ -3302,7 +3303,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             )}
             {notifications.length === 0 ? (
               <div className="slideover-empty">
-                <span aria-hidden="true">🔔</span>
+                <span aria-hidden="true"><IconBell size={34} /></span>
                 <strong>Nincs még értesítésed.</strong>
                 <p>Minden státuszváltozásról, ajánlatról és üzenetválaszról itt szólunk.</p>
               </div>
