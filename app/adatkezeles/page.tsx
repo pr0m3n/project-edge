@@ -6,9 +6,11 @@ export const metadata: Metadata = {
   description: "Hogyan kezeli a ProjectEdge a személyes adataidat — GDPR szerinti tájékoztató."
 };
 
-// TODO (KITÖLTENDŐ): az [Adatkezelő ...] helyekre a valós adatkezelői adatok
-// kerüljenek. A tájékoztató sablon — éles használat előtt érdemes jogásszal
-// / adatvédelmi szakértővel véglegesíttetni (GDPR / 2011. évi CXII. tv.).
+// A ProjectEdge jelenleg magánszemélyként, nem bejegyzett egyéni tevékenység
+// keretében működik — ha ez változik (pl. egyéni vállalkozás bejegyzése),
+// ezt az oldalt, az impresszumot és az ÁSZF-et frissíteni kell. Éles,
+// nagyobb volumenű használat előtt érdemes jogásszal / adatvédelmi
+// szakértővel átnézetni (GDPR / 2011. évi CXII. tv.).
 export default function PrivacyPage() {
   return (
     <main className="site-shell light-page">
@@ -26,9 +28,10 @@ export default function PrivacyPage() {
       <section className="legal-prose">
         <h2>1. Az adatkezelő</h2>
         <ul>
-          <li><strong>Adatkezelő:</strong> [KITÖLTENDŐ – név / cégnév]</li>
-          <li><strong>Székhely:</strong> [KITÖLTENDŐ]</li>
+          <li><strong>Adatkezelő:</strong> Boczán Patrik (magánszemély, ProjectEdge néven)</li>
+          <li><strong>Székhely:</strong> Budapest, 1141</li>
           <li><strong>E-mail:</strong> info@projectedge.hu</li>
+          <li><strong>Telefon:</strong> +36 20 406 4954</li>
         </ul>
 
         <h2>2. Milyen adatokat kezelünk és miért</h2>
@@ -54,8 +57,13 @@ export default function PrivacyPage() {
           <li><strong>Vercel Inc.</strong> – tárhely / hosting</li>
           <li><strong>Supabase Inc.</strong> – adatbázis és hitelesítés</li>
           <li><strong>Resend</strong> – tranzakciós e-mailek küldése</li>
-          <li><strong>[Stripe]</strong> – fizetés feldolgozása (ha aktív)</li>
         </ul>
+        <p>
+          A foglaló és a vállalási díj fennmaradó része banki átutalással történik, közvetlenül az
+          Adatkezelő bankszámlájára — ehhez külön fizetési szolgáltatót (pl. bankkártya-elfogadó) nem
+          veszünk igénybe, az utaláshoz szükséges adatokat a bankod/Revolutod kezeli a saját
+          feltételei szerint.
+        </p>
 
         <h2>4. Az adatok megőrzési ideje</h2>
         <p>

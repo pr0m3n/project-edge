@@ -6,9 +6,10 @@ export const metadata: Metadata = {
   description: "A ProjectEdge üzemeltetőjének és tárhelyszolgáltatójának adatai."
 };
 
-// TODO (KITÖLTENDŐ): a [...] helyekre a valós céges/egyéni vállalkozói adatok
-// kerüljenek (név, székhely, adószám, nyilvántartási szám). Ezek nélkül az
-// impresszum jogilag hiányos (Ektv. 2001. évi CVIII. tv. 4. §).
+// A ProjectEdge jelenleg magánszemélyként, nem bejegyzett egyéni tevékenység
+// keretében működik — nincs adószám / cégjegyzékszám. Ha ez változik (pl.
+// egyéni vállalkozás bejegyzése), ezt az oldalt frissíteni kell a hivatalos
+// adatokkal (Ektv. 2001. évi CVIII. tv. 4. §).
 export default function ImpressumPage() {
   return (
     <main className="site-shell light-page">
@@ -25,12 +26,11 @@ export default function ImpressumPage() {
       <section className="legal-prose">
         <h2>Szolgáltató</h2>
         <ul>
-          <li><strong>Név / cégnév:</strong> [KITÖLTENDŐ – teljes név vagy cégnév]</li>
-          <li><strong>Székhely / lakcím:</strong> [KITÖLTENDŐ – irányítószám, település, cím]</li>
-          <li><strong>Nyilvántartási / cégjegyzékszám:</strong> [KITÖLTENDŐ]</li>
-          <li><strong>Adószám:</strong> [KITÖLTENDŐ]</li>
+          <li><strong>Név:</strong> Boczán Patrik</li>
+          <li><strong>Székhely / cím:</strong> Budapest, 1141</li>
+          <li><strong>Jogi forma:</strong> magánszemély, jelenleg nem bejegyzett egyéni tevékenység — nincs adószám / cégjegyzékszám</li>
           <li><strong>E-mail:</strong> info@projectedge.hu</li>
-          <li><strong>Telefon:</strong> [KITÖLTENDŐ]</li>
+          <li><strong>Telefon:</strong> +36 20 406 4954</li>
         </ul>
 
         <h2>Tárhelyszolgáltató</h2>

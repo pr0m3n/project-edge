@@ -224,6 +224,10 @@ function formatPrice(value: number | null, currency = "Ft") {
   return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
 }
 
+function transferReference(project: { id: string }) {
+  return `PE-${project.id.slice(0, 8).toUpperCase()}`;
+}
+
 function splitLines(value: string | null) {
   return (value ?? "")
     .split("\n")
@@ -1727,12 +1731,35 @@ export function AdminDashboard() {
                   </div>
                   )}
 
+                  {project.payment_status === "unpaid" && project.deposit_amount ? (
+                    <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                        <strong style={{ fontSize: '14px' }}>Foglaló</strong>
+                        <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
+                          {formatPrice(project.deposit_amount, project.offer_currency || "Ft")} · közlemény: {transferReference(project)}
+                        </small>
+                      </div>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        style={{ color: '#76ABAE', borderColor: 'rgba(118,171,174,0.3)', fontSize: '13px', minHeight: 'auto', padding: '10px 16px' }}
+                        onClick={() => updateClientProject(project.id, {
+                          payment_status: "deposit_paid",
+                          status: "in_progress",
+                          next_step: "Foglaló sikeresen kifizetve! Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást."
+                        })}
+                      >
+                        Foglaló megérkezett a számlára ✓
+                      </button>
+                    </div>
+                  ) : null}
+
                   {project.payment_status === "deposit_paid" && (
                     <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '4px', display: 'grid', gap: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                         <strong style={{ fontSize: '14px' }}>Végső fizetés</strong>
                         <small style={{ color: 'var(--muted)', fontSize: '11px' }}>
-                          Hátralék: {formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")}
+                          Hátralék: {formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")} · közlemény: {transferReference(project)}
                         </small>
                       </div>
                       {project.final_payment_paid ? (

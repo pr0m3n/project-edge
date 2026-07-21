@@ -337,6 +337,16 @@ export function formatPrice(value: number | null, currency = "Ft") {
   return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
 }
 
+export const BANK_TRANSFER_DETAILS = {
+  name: "Boczán Patrik",
+  iban: "HU66 3020 0014 1991 3410 3979 7092",
+  bic: "REVOHUHB"
+};
+
+export function transferReference(project: Project) {
+  return `PE-${project.id.slice(0, 8).toUpperCase()}`;
+}
+
 export function hasOffer(project: Project) {
   return project.offer_status === "sent" || Boolean(project.offer_title || project.offer_price || project.offer_summary);
 }
@@ -444,11 +454,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   // New state variables for upgraded project lifecycle flow
   const [editingBriefProjectId, setEditingBriefProjectId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(initialProject);
-  const [showStripeModalProjectId, setShowStripeModalProjectId] = useState<string | null>(null);
-  const [stripeMode, setStripeMode] = useState<"deposit" | "final">("deposit");
-  const [stripeForm, setStripeForm] = useState({ card: "", exp: "", cvc: "", name: "" });
-  const [stripeError, setStripeError] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(false);
+  const [showPaymentModalProjectId, setShowPaymentModalProjectId] = useState<string | null>(null);
+  const [paymentMode, setPaymentMode] = useState<"deposit" | "final">("deposit");
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [contractChecked, setContractChecked] = useState(false);
   const [feedbackRoundNote, setFeedbackRoundNote] = useState("");
   const [reviewForm, setReviewForm] = useState({ rating: 5, review: "", reference: false });
@@ -1385,86 +1395,70 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
   }
 
-  async function payDeposit(project: Project) {
-    setStripeLoading(true);
-    setStripeError("");
-    
-    if (!stripeForm.card.trim() || !stripeForm.exp.trim() || !stripeForm.cvc.trim() || !stripeForm.name.trim()) {
-      setStripeError("Minden mezőt ki kell tölteni.");
-      setStripeLoading(false);
-      return;
-    }
+  async function markDepositTransferSent(project: Project) {
+    setPaymentLoading(true);
+    setPaymentError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const amount = formatPrice(project.deposit_amount, project.offer_currency || "Ft");
+    const reference = transferReference(project);
 
     const { error } = await supabase.from("client_projects").update({
-      payment_status: "deposit_paid",
-      status: "in_progress",
-      next_step: "Foglaló sikeresen kifizetve! Elindult a kivitelezési szakasz. A mérföldköveknél követheted a haladást."
+      next_step: `Jelezted, hogy elindítottad a(z) ${amount} foglaló utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom — utána indul a kivitelezés.`
     }).eq("id", project.id);
 
-    setStripeLoading(false);
+    setPaymentLoading(false);
     if (error) {
-      setStripeError("A fizetés feldolgozása sikertelen volt.");
+      setPaymentError("Nem sikerült rögzíteni a jelzést. Próbáld újra, vagy írj az info@projectedge.hu címre.");
     } else {
-      setShowStripeModalProjectId(null);
-      setStripeForm({ card: "", exp: "", cvc: "", name: "" });
-      setNotice("Foglaló sikeresen rendezve. A kivitelezés megkezdődik.");
+      setShowPaymentModalProjectId(null);
+      setNotice("Jeleztük, hogy elindítottad az utalást. Amint megérkezik, jóváhagyjuk és folytatjuk.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
-        "Foglaló befizetve",
-        `Az ügyfél (${email}) befizette a foglalót a(z) "${project.title}" projekthez. A fejlesztés indulhat!`,
+        "Foglaló utalás bejelentve",
+        `Az ügyfél (${email}) jelezte, hogy elindította a(z) ${amount} foglaló utalását a(z) "${project.title}" projekthez. Közlemény: ${reference}. Ellenőrizd a bankszámlát, és hagyd jóvá az admin felületen.`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
-        "Foglaló sikeresen kifizetve",
-        `A(z) "${project.title}" projekt foglalója beérkezett. Megkezdjük a kivitelezést.`,
+        "Utalás jelezve",
+        `Jeleztük, hogy elindítottad a foglaló utalását a(z) "${project.title}" projekthez. Amint megérkezik, jóváhagyjuk, és indul a kivitelezés.`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
     }
   }
 
-  async function payFinal(project: Project) {
-    setStripeLoading(true);
-    setStripeError("");
+  async function markFinalTransferSent(project: Project) {
+    setPaymentLoading(true);
+    setPaymentError("");
 
-    if (!stripeForm.card.trim() || !stripeForm.exp.trim() || !stripeForm.cvc.trim() || !stripeForm.name.trim()) {
-      setStripeError("Minden mezőt ki kell tölteni.");
-      setStripeLoading(false);
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const amount = formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft");
+    const reference = transferReference(project);
 
     const { error } = await supabase.from("client_projects").update({
-      final_payment_paid: true,
-      final_payment_paid_at: new Date().toISOString(),
-      payment_status: "fully_paid"
+      next_step: `Jelezted, hogy elindítottad a(z) ${amount} hátralék utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom, majd élesítjük az oldalt.`
     }).eq("id", project.id);
 
-    setStripeLoading(false);
+    setPaymentLoading(false);
     if (error) {
-      setStripeError("A fizetés feldolgozása sikertelen volt.");
+      setPaymentError("Nem sikerült rögzíteni a jelzést. Próbáld újra, vagy írj az info@projectedge.hu címre.");
     } else {
-      setShowStripeModalProjectId(null);
-      setStripeForm({ card: "", exp: "", cvc: "", name: "" });
-      setNotice("Hátralék sikeresen rendezve. Köszönjük!");
+      setShowPaymentModalProjectId(null);
+      setNotice("Jeleztük, hogy elindítottad az utalást. Amint megérkezik, jóváhagyjuk.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
-        "Végső fizetés beérkezett",
-        `Az ügyfél (${email}) kifizette a hátralékot a(z) "${project.title}" projekthez.`,
+        "Hátralék utalás bejelentve",
+        `Az ügyfél (${email}) jelezte, hogy elindította a(z) ${amount} hátralék utalását a(z) "${project.title}" projekthez. Közlemény: ${reference}. Ellenőrizd a bankszámlát, és hagyd jóvá az admin felületen.`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
-        "Hátralék kifizetve",
-        `A(z) "${project.title}" projekt hátraléka beérkezett. Köszönjük az együttműködést!`,
+        "Utalás jelezve",
+        `Jeleztük, hogy elindítottad a hátralék utalását a(z) "${project.title}" projekthez. Amint megérkezik, jóváhagyjuk.`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -1890,7 +1884,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         {project.status === "deposit_pending" && (
           <DepositPaymentPanel
             project={project}
-            onStartPayment={() => { setStripeMode("deposit"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
+            onStartPayment={() => { setPaymentMode("deposit"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
           />
         )}
 
@@ -1917,7 +1911,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         {project.status === "launched" && (
           <LaunchedPanel
             project={project}
-            onPayFinal={() => { setStripeMode("final"); setShowStripeModalProjectId(project.id); setStripeError(""); }}
+            onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
             onSelectMaintenance={(choice) => selectMaintenance(project, choice)}
           />
         )}
@@ -3327,19 +3321,67 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         </aside>
         </div>
       ) : null}
-      {showStripeModalProjectId && (() => {
-        const project = projects.find(p => p.id === showStripeModalProjectId);
+      {showPaymentModalProjectId && (() => {
+        const project = projects.find(p => p.id === showPaymentModalProjectId);
         if (!project) return null;
-        const payAmount = stripeMode === "final"
+        const payAmount = paymentMode === "final"
           ? (project.offer_price ?? 0) - (project.deposit_amount ?? 0)
           : (project.deposit_amount ?? 0);
-        const payLabel = stripeMode === "final" ? "Hátralék" : "Foglaló";
+        const payLabel = paymentMode === "final" ? "Hátralék" : "Foglaló";
+        const reference = transferReference(project);
+
+        async function copyValue(field: string, value: string) {
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopiedField(field);
+            setTimeout(() => setCopiedField((current) => (current === field ? null : current)), 1600);
+          } catch {
+            // vágólap API nem elérhető — a mező kézzel is kijelölhető
+          }
+        }
+
+        const copyRow = (field: string, label: string, value: string, isLast = false) => (
+          <div
+            key={field}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '13px 0',
+              borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.07)'
+            }}
+          >
+            <div style={{ display: 'grid', gap: '2px', minWidth: 0 }}>
+              <span style={{ fontSize: '10.5px', letterSpacing: '0.6px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)' }}>{label}</span>
+              <strong style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: '14.5px', color: '#F5F5F5', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => copyValue(field, value)}
+              style={{
+                flexShrink: 0,
+                background: copiedField === field ? 'rgba(118,171,174,0.18)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${copiedField === field ? 'rgba(118,171,174,0.45)' : 'rgba(255,255,255,0.12)'}`,
+                color: copiedField === field ? '#76ABAE' : 'rgba(255,255,255,0.75)',
+                borderRadius: '10px',
+                padding: '7px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              {copiedField === field ? 'Másolva ✓' : 'Másolás'}
+            </button>
+          </div>
+        );
+
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)', padding: '16px' }}>
-            <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '440px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '20px' }}>
+            <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '460px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '18px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Biztonságos fizetés</span>
-                <button type="button" onClick={() => setShowStripeModalProjectId(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '20px', padding: 0 }}>×</button>
+                <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Banki átutalás</span>
+                <button type="button" onClick={() => setShowPaymentModalProjectId(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '20px', padding: 0 }}>×</button>
               </div>
 
               <div>
@@ -3348,97 +3390,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <small style={{ color: 'rgba(255,255,255,0.4)' }}>{project.company || "Cégnév nélkül"}</small>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Fizetendő összeg ({payLabel}):</span>
-                <strong style={{ fontSize: '20px', color: '#76ABAE' }}>{formatPrice(payAmount, project.offer_currency || "Ft")}</strong>
+              <div style={{ background: 'linear-gradient(160deg, rgba(118,171,174,0.16), rgba(118,171,174,0.02))', border: '1px solid rgba(118,171,174,0.28)', borderRadius: '18px', padding: '16px 20px', display: 'grid', gap: '4px' }}>
+                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)' }}>Fizetendő összeg ({payLabel})</span>
+                <strong style={{ fontSize: '30px', color: '#76ABAE', fontVariantNumeric: 'tabular-nums' }}>{formatPrice(payAmount, project.offer_currency || "Ft")}</strong>
               </div>
 
-              {stripeError && (
+              {paymentError && (
                 <div style={{ background: 'rgba(220,53,69,0.1)', border: '1px solid rgba(220,53,69,0.2)', color: '#FF7676', padding: '12px', borderRadius: '12px', fontSize: '14px' }}>
-                  {stripeError}
+                  {paymentError}
                 </div>
               )}
 
-              <form onSubmit={(e) => { e.preventDefault(); stripeMode === "final" ? payFinal(project) : payDeposit(project); }} style={{ display: 'grid', gap: '14px' }}>
-                <div className="field">
-                  <label htmlFor="stripe-name" style={{ color: 'rgba(255,255,255,0.6)' }}>Kártyabirtokos neve</label>
-                  <input
-                    id="stripe-name"
-                    required
-                    style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px' }}
-                    placeholder="Minta János"
-                    value={stripeForm.name}
-                    onChange={(e) => setStripeForm({ ...stripeForm, name: e.target.value })}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="stripe-card" style={{ color: 'rgba(255,255,255,0.6)' }}>Kártyaszám</label>
-                  <input
-                    id="stripe-card"
-                    required
-                    maxLength={19}
-                    style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px' }}
-                    placeholder="4242 4242 4242 4242"
-                    value={stripeForm.card}
-                    onChange={(e) => {
-                      let v = e.target.value.replace(/\D/g, '');
-                      let matches = v.match(/\d{4,16}/g);
-                      let match = matches && matches[0] || '';
-                      let parts = [];
-                      for (let i=0, len=match.length; i<len; i+=4) {
-                        parts.push(match.substring(i, i+4));
-                      }
-                      if (parts.length > 0) {
-                        setStripeForm({ ...stripeForm, card: parts.join(' ') });
-                      } else {
-                        setStripeForm({ ...stripeForm, card: v });
-                      }
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                  <div className="field">
-                    <label htmlFor="stripe-exp" style={{ color: 'rgba(255,255,255,0.6)' }}>Lejárat</label>
-                    <input
-                      id="stripe-exp"
-                      required
-                      maxLength={5}
-                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px' }}
-                      placeholder="MM/YY"
-                      value={stripeForm.exp}
-                      onChange={(e) => {
-                        let v = e.target.value.replace(/\D/g, '');
-                        if (v.length > 2) {
-                          setStripeForm({ ...stripeForm, exp: `${v.substring(0,2)}/${v.substring(2,4)}` });
-                        } else {
-                          setStripeForm({ ...stripeForm, exp: v });
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="stripe-cvc" style={{ color: 'rgba(255,255,255,0.6)' }}>CVC</label>
-                    <input
-                      id="stripe-cvc"
-                      required
-                      maxLength={3}
-                      type="password"
-                      style={{ background: '#25282F', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px' }}
-                      placeholder="123"
-                      value={stripeForm.cvc}
-                      onChange={(e) => setStripeForm({ ...stripeForm, cvc: e.target.value.replace(/\D/g, '') })}
-                    />
-                  </div>
-                </div>
+              <div style={{ background: '#15171B', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '2px 18px' }}>
+                {copyRow('name', 'Kedvezményezett', BANK_TRANSFER_DETAILS.name)}
+                {copyRow('iban', 'IBAN', BANK_TRANSFER_DETAILS.iban)}
+                {copyRow('bic', 'BIC / SWIFT', BANK_TRANSFER_DETAILS.bic)}
+                {copyRow('reference', 'Közlemény (fontos!)', reference, true)}
+              </div>
 
-                <button className="button primary" type="submit" disabled={stripeLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '8px', background: '#76ABAE', border: 'none', borderRadius: '12px', color: '#fff' }}>
-                  {stripeLoading ? (
-                    <span>Fizetés folyamatban...</span>
-                  ) : (
-                    <span>Fizetés {formatPrice(payAmount, project.offer_currency || "Ft")}</span>
-                  )}
-                </button>
-              </form>
+              <p style={{ margin: 0, fontSize: '12.5px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+                A közlemény alapján tudom azonosítani az utalásod — mindig add meg. Belföldi utalás
+                jellemzően perceken–pár órán belül megérkezik. Ha bármi elakad, írj az{" "}
+                <a href="mailto:info@projectedge.hu" style={{ color: '#76ABAE' }}>info@projectedge.hu</a> címre.
+              </p>
+
+              <button
+                type="button"
+                disabled={paymentLoading}
+                onClick={() => (paymentMode === "final" ? markFinalTransferSent(project) : markDepositTransferSent(project))}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#FF5722', border: 'none', borderRadius: '12px', color: '#fff', padding: '14px', fontSize: '14px', fontWeight: 700, cursor: paymentLoading ? 'default' : 'pointer', opacity: paymentLoading ? 0.7 : 1 }}
+              >
+                {paymentLoading ? 'Jelzés küldése...' : 'Elküldtem az utalást'}
+              </button>
             </div>
           </div>
         );

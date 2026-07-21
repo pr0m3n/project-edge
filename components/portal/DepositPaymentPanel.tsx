@@ -13,7 +13,8 @@ export function DepositPaymentPanel({ project, onStartPayment }: DepositPaymentP
       <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: 1.5 }}>
         A foglaló egy alacsony, fix összegű helyfoglalási díj — ez indítja a munkát. A teljes díjat csak
         a kész oldal átadásakor kérjük, így nincs kockázatod. A foglaló azért kell, hogy csak azoknak a
-        projekteknek dolgozzunk neki, akik ténylegesen komolyan gondolják.
+        projekteknek dolgozzunk neki, akik ténylegesen komolyan gondolják. A fizetés banki átutalással
+        történik — a következő lépésben megkapod az adatokat.
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px" }}>
         <div>
@@ -34,7 +35,7 @@ export function DepositPaymentPanel({ project, onStartPayment }: DepositPaymentP
         </div>
       </div>
       <button className="button primary" style={{ width: "fit-content", marginTop: "8px" }} type="button" onClick={onStartPayment}>
-        Fizetés indítása
+        Utalási adatok megnyitása
       </button>
     </div>
   );

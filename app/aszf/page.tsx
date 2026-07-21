@@ -6,9 +6,11 @@ export const metadata: Metadata = {
   description: "A ProjectEdge szolgáltatásaira vonatkozó Általános Szerződési Feltételek."
 };
 
-// TODO (KITÖLTENDŐ): a [...] helyek valós adatokkal, és éles használat előtt
-// jogi ellenőrzés ajánlott. A fogyasztói elállási jog (45/2014. Korm. r.) és a
-// szerzői jogi átruházás megfogalmazását érdemes szakértővel véglegesíttetni.
+// A ProjectEdge jelenleg magánszemélyként, nem bejegyzett egyéni tevékenység
+// keretében működik — ha ez változik (pl. egyéni vállalkozás bejegyzése),
+// ezt az oldalt frissíteni kell. Éles, nagyobb volumenű használat előtt
+// jogi ellenőrzés ajánlott — a fogyasztói elállási jog (45/2014. Korm. r.)
+// és a szerzői jogi átruházás megfogalmazását érdemes szakértővel átnézetni.
 export default function TermsPage() {
   return (
     <main className="site-shell light-page">
@@ -25,8 +27,9 @@ export default function TermsPage() {
       <section className="legal-prose">
         <h2>1. A szolgáltató</h2>
         <p>
-          [KITÖLTENDŐ – név / cégnév], székhely: [KITÖLTENDŐ], e-mail: info@projectedge.hu
-          (a továbbiakban: Vállalkozó). A részletes adatokat az{" "}
+          Boczán Patrik (magánszemély), székhely/cím: Budapest, 1141, e-mail: info@projectedge.hu
+          (a továbbiakban: Vállalkozó). A szolgáltatás jelenleg nem bejegyzett egyéni tevékenység
+          keretében, magánszemélyként történik. A részletes adatokat az{" "}
           <a href="/impresszum">Impresszum</a> tartalmazza.
         </p>
 
@@ -49,7 +52,11 @@ export default function TermsPage() {
           A vállalási díj az egyedi ajánlatban szerepel. A munka megkezdésének feltétele egy fix,
           10 000 Ft összegű foglaló megfizetése, amely a végösszegbe beleszámít. A kész munkát a
           Vállalkozó csak a teljes vállalási díj beérkezése után adja át és élesíti; a fennmaradó
-          összeg tehát az átadás feltétele. A fizetés az Ügyfélkapun keresztül történik.
+          összeg tehát az átadás feltétele. A fizetés banki átutalással történik, az Ügyfélkapun
+          megjelenő adatok (számlaszám, egyedi közlemény) alapján; a beérkezést a Vállalkozó
+          manuálisan ellenőrzi és igazolja vissza. Mivel a szolgáltatás jelenleg nem bejegyzett
+          egyéni tevékenység keretében történik, a Vállalkozó a kifizetésekről nyugtát/elismervényt
+          ad, ÁFA-s számlát nem tud kiállítani.
         </p>
 
         <h2>5. Fogyasztói elállási jog</h2>
