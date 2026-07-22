@@ -2,6 +2,7 @@ import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import { ContactButton } from "@/components/ContactButton";
 
 const paths = [
   {
@@ -79,9 +80,7 @@ export default function Home() {
               átláthatóan és sablonok nélkül.
             </p>
             <div className="hero-command">
-              <a className="button primary" href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s">
-                Kérek egy gyors véleményt
-              </a>
+              <ContactButton className="button primary">Kérek egy rövid weboldal-áttekintést</ContactButton>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>

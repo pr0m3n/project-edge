@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TransitionLink } from "@/components/TransitionLink";
+import { ContactButton } from "@/components/ContactButton";
 
 const links = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -39,9 +40,7 @@ export function SiteNav() {
           ))}
         </div>
         <div className="nav-end">
-          <a className="nav-cta" href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s">
-            Gyors felmérés
-          </a>
+          <ContactButton className="nav-cta">Kapcsolat</ContactButton>
           <button
             aria-label={open ? "Menü bezárása" : "Menü megnyitása"}
             aria-expanded={open}
@@ -74,13 +73,9 @@ export function SiteNav() {
               {link.label}
             </TransitionLink>
           ))}
-          <a
-            className="button primary"
-            href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s"
-            onClick={() => setOpen(false)}
-          >
-            Gyors felmérés
-          </a>
+          <ContactButton className="button primary" onClick={() => setOpen(false)}>
+            Kapcsolatfelvétel
+          </ContactButton>
         </div>
       </nav>
     </>

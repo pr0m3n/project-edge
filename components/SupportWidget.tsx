@@ -115,6 +115,22 @@ export function SupportWidget() {
     });
   }, [messages, open]);
 
+  useEffect(() => {
+    function openFromCallToAction(event: Event) {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      setOpen(true);
+      if (!ticket && detail?.message) {
+        setForm((current) => ({
+          ...current,
+          message: current.message || detail.message || ""
+        }));
+      }
+    }
+
+    window.addEventListener("projectedge:open-support", openFromCallToAction);
+    return () => window.removeEventListener("projectedge:open-support", openFromCallToAction);
+  }, [ticket]);
+
   if (pathname.startsWith("/admin") || pathname.startsWith("/ugyfelkapu")) {
     return null;
   }
@@ -259,8 +275,8 @@ export function SupportWidget() {
         <div className="support-panel chat">
           <div className="support-head">
             <div>
-              <span>ProjectEdge support</span>
-              <strong>{ticket ? "Beszélgetés" : "Írj nyugodtan"}</strong>
+              <span>ProjectEdge kapcsolat</span>
+              <strong>{ticket ? "Beszélgetés" : "Kérj rövid áttekintést"}</strong>
             </div>
             <button aria-label="Chat ablak bezárása" onClick={() => setOpen(false)} type="button">
               ×
@@ -346,7 +362,7 @@ export function SupportWidget() {
                 required
                 value={form.message}
                 onChange={(event) => updateField("message", event.target.value)}
-                placeholder="Miben segíthetek?"
+                placeholder="Írd be a weboldalad címét és röviden, miben kérsz véleményt."
               />
               <button className="button primary" disabled={status === "loading"} type="submit">
                 {status === "loading" ? "Küldés..." : "Beszélgetés indítása"}
