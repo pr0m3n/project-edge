@@ -80,7 +80,9 @@ export default function Home() {
               átláthatóan és sablonok nélkül.
             </p>
             <div className="hero-command">
-              <ContactButton className="button primary">Kérek egy rövid weboldal-áttekintést</ContactButton>
+              <ContactButton className="button primary" intent="review">
+                Kérek egy rövid weboldal-áttekintést
+              </ContactButton>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>

@@ -5,17 +5,16 @@ import type { ReactNode } from "react";
 type ContactButtonProps = {
   children: ReactNode;
   className?: string;
+  intent?: "contact" | "review";
   onClick?: () => void;
 };
 
-export function ContactButton({ children, className, onClick }: ContactButtonProps) {
+export function ContactButton({ children, className, intent = "contact", onClick }: ContactButtonProps) {
   function openContact() {
     onClick?.();
     window.dispatchEvent(
       new CustomEvent("projectedge:open-support", {
-        detail: {
-          message: "Szeretnék egy rövid weboldal-áttekintést kérni. A weboldalam címe: "
-        }
+        detail: { intent }
       })
     );
   }

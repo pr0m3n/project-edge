@@ -27,11 +27,13 @@ const initialForm = {
 };
 
 const storageKey = "projectedge-support-ticket";
+const reviewMessage = "Szeretnék egy rövid weboldal-áttekintést kérni. A weboldalam címe: ";
 
 export function SupportWidget() {
   const pathname = usePathname();
   const messagesRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [entryIntent, setEntryIntent] = useState<"contact" | "review">("contact");
   const [form, setForm] = useState(initialForm);
   const [reply, setReply] = useState("");
   const [rating, setRating] = useState(0);
@@ -117,12 +119,19 @@ export function SupportWidget() {
 
   useEffect(() => {
     function openFromCallToAction(event: Event) {
-      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      const detail = (event as CustomEvent<{ intent?: "contact" | "review" }>).detail;
+      const nextIntent = detail?.intent === "review" ? "review" : "contact";
+      setEntryIntent(nextIntent);
       setOpen(true);
-      if (!ticket && detail?.message) {
+      if (!ticket) {
         setForm((current) => ({
           ...current,
-          message: current.message || detail.message || ""
+          message:
+            nextIntent === "review"
+              ? current.message || reviewMessage
+              : current.message === reviewMessage
+                ? ""
+                : current.message
         }));
       }
     }
@@ -276,7 +285,13 @@ export function SupportWidget() {
           <div className="support-head">
             <div>
               <span>ProjectEdge kapcsolat</span>
-              <strong>{ticket ? "Beszélgetés" : "Kérj rövid áttekintést"}</strong>
+              <strong>
+                {ticket
+                  ? "Beszélgetés"
+                  : entryIntent === "review"
+                    ? "Kérj rövid áttekintést"
+                    : "Írj nyugodtan"}
+              </strong>
             </div>
             <button aria-label="Chat ablak bezárása" onClick={() => setOpen(false)} type="button">
               ×
@@ -362,7 +377,11 @@ export function SupportWidget() {
                 required
                 value={form.message}
                 onChange={(event) => updateField("message", event.target.value)}
-                placeholder="Írd be a weboldalad címét és röviden, miben kérsz véleményt."
+                placeholder={
+                  entryIntent === "review"
+                    ? "Írd be a weboldalad címét és röviden, miben kérsz véleményt."
+                    : "Miben segíthetek?"
+                }
               />
               <button className="button primary" disabled={status === "loading"} type="submit">
                 {status === "loading" ? "Küldés..." : "Beszélgetés indítása"}
@@ -373,7 +392,22 @@ export function SupportWidget() {
           <p className={`support-notice ${status}`}>{notice}</p>
         </div>
       ) : null}
-      <button className="support-trigger" onClick={() => setOpen((current) => !current)} type="button">
+      <button
+        className="support-trigger"
+        onClick={() => {
+          if (!open) {
+            setEntryIntent("contact");
+            if (!ticket) {
+              setForm((current) => ({
+                ...current,
+                message: current.message === reviewMessage ? "" : current.message
+              }));
+            }
+          }
+          setOpen((current) => !current);
+        }}
+        type="button"
+      >
         <span />
         Chat
       </button>
