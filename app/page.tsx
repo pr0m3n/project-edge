@@ -1,6 +1,5 @@
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
-import { ScrollScene } from "@/components/ScrollScene";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
 
@@ -25,21 +24,21 @@ const paths = [
   }
 ];
 
-const metrics = ["Vercel", "Supabase", "Next.js", "CRM-ready"];
+const metrics = ["Stratégia", "Szöveg", "Design", "Fejlesztés"];
 
 const proof = [
-  "100% egyedi kód",
-  "Next.js + Supabase",
-  "<1s betöltés",
+  "Egyedi felépítés",
+  "Mobilra tervezve",
+  "Mérhető teljesítmény",
   "Frontend + backend egy kézben",
   "Ügyfélkapu és admin háttér",
-  "2 naptól 4 hétig, mérettől függően"
+  "Átlátható projektfolyamat"
 ];
 
 const faqs = [
   [
     "Mennyibe kerül egy weboldal?",
-    "50 000 Ft-tól indulnak az áraim, és a legtöbb piaci szereplőnél olcsóbban dolgozom. A pontos árat mindig a brief alapján adom meg — a fenti csúszkával te is meg tudod becsülni, kb. mire számíthatsz."
+    "50 000 Ft-tól indulnak az áraim. A pontos árat mindig a cél, a szükséges oldalak és funkciók alapján adom meg — a fenti becslővel előre láthatod a várható nagyságrendet."
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -69,34 +68,52 @@ export default function Home() {
         <div className="home-hero-grid">
           <div className="hero-editorial">
             <p className="micro-label">ProjectEdge / Digital Build Studio</p>
-            <h1>
-              <span>Weboldal,</span>
-              <span>ami nem csak</span>
-              <span className="outlined">szép.</span>
-              <span>Dolgozik.</span>
+            <h1 className="hero-statement">
+              <span>Nem weboldalt</span>
+              <span>adok át.</span>
+              <span className="outlined">Egy rendszert,</span>
+              <span>amin ügyfelek érkeznek.</span>
             </h1>
             <p className="hero-lead">
-              Olyan weboldalakat építek, ahol a látvány, a szöveg és az ügyfélszerzés egy irányba
-              dolgozik. Ha már van oldalad, rendbe rakom. Ha nincs, felépítem úgy, hogy ne kelljen
-              fél év múlva újrakezdeni.
+              A szövegtől és a designtól az ügyfélkapuig mindent egy kézben építek meg — gyorsan,
+              átláthatóan és sablonok nélkül.
             </p>
             <div className="hero-command">
-              <TransitionLink className="button primary" href="/ugyfelkapu">
-                Projekt indítása
-              </TransitionLink>
+              <a className="button primary" href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s">
+                Kérek egy gyors véleményt
+              </a>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>
             </div>
           </div>
-          <div className="hero-visual-stack">
-            <ModelViewer
-              alt="3D laptop modell ProjectEdge weboldal vizuálhoz"
-              className="model-frame laptop-model"
-              exposure="1.25"
-              src="/models/laptop_v2.glb"
-            />
-            <ScrollScene />
+          <div className="hero-system" aria-label="ProjectEdge projektfolyamat előnézet">
+            <div className="system-glow" aria-hidden="true" />
+            <div className="system-window">
+              <div className="system-window-bar">
+                <span /><span /><span />
+                <b>projectedge / live build</b>
+              </div>
+              <div className="system-preview">
+                <span className="system-kicker">ÚJ PROJEKT</span>
+                <strong>Az ötlettől az éles oldalig.</strong>
+                <p>Stratégia, design és fejlesztés egyetlen átlátható folyamatban.</p>
+                <i>Projekt indítása →</i>
+              </div>
+            </div>
+            <div className="system-card progress-card">
+              <span>Fejlesztés</span>
+              <strong>72%</strong>
+              <div><i /></div>
+            </div>
+            <div className="system-card status-card">
+              <span className="status-dot" />
+              <div><small>KÖVETKEZŐ LÉPÉS</small><strong>Mobilnézet finomítása</strong></div>
+            </div>
+            <div className="system-card delivery-card">
+              <small>EGY KÉZBEN</small>
+              <span>Szöveg</span><span>Design</span><span>Kód</span>
+            </div>
           </div>
         </div>
       </section>
@@ -107,7 +124,7 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="proof-marquee" aria-label="Ügyfél-visszajelzések">
+      <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
             <span className="proof-pill" key={index}>
@@ -178,8 +195,8 @@ export default function Home() {
             én építem, és én is felelek érte.
           </p>
           <p>
-            A modern eszközök (Next.js, Supabase, AI-támogatott munkamenet) miatt gyors vagyok. De a
-            minőséget nem az AI adja, hanem hogy minden sort átnézek és érdekel a vállalkozásod.
+            A gyorsaság nálam nem kapkodást jelent: rövid döntési utak, modern technológia és egyetlen
+            felelős viszi végig a munkát. Minden döntésnél a vállalkozásod célja az első.
           </p>
           <div className="founder-tags">
             <span>Next.js</span>
@@ -194,11 +211,11 @@ export default function Home() {
       <section className="no-call">
         <div>
           <p className="micro-label">Ügyfélkapu</p>
-          <h2>Hívás és emailezgetés nélkül, az elejétől a végéig.</h2>
+          <h2>Minden egy helyen — de ha szeretnél, beszélhetünk is.</h2>
           <p className="nc-copy">
-            Nem kell időpontot egyeztetni, telefonálgatni vagy e-mailekben kutakodni. Az
+            Nem kell időpontot egyeztetni vagy e-mailekben kutakodni. Az
             ügyfélkapun elindítod a projektet, kitöltöd a briefet, követed a haladást, fizetsz és
-            kérdezel — akkor, amikor neked kényelmes. A teljes weboldal online elintézhető.
+            kérdezel — akkor, amikor neked kényelmes. Ha gyorsabb szóban, természetesen egyeztetünk.
           </p>
           <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
@@ -218,9 +235,8 @@ export default function Home() {
           <p className="micro-label dark">Árak</p>
           <h2>Nem nagy sávok — próbáld ki, mennyibe kerülne a tiéd.</h2>
           <p>
-            50 000 Ft-tól indulnak az áraim, jellemzően olcsóbban a piaci átlagnál. Válaszd ki, mihez
-            hasonlót szeretnél, és a csúszkával pontosítsd — azonnal látod a hozzávetőleges árat és
-            átfutási időt.
+            50 000 Ft-tól indulnak az áraim. Válaszd ki, mihez hasonlót szeretnél, és a csúszkával
+            pontosítsd — azonnal látod a hozzávetőleges árat és átfutási időt.
           </p>
         </div>
         <PriceEstimator />

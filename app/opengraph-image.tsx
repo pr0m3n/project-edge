@@ -27,7 +27,7 @@ export default async function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 1.05, maxWidth: 900 }}>
-            Weboldal, ami nem csak szép. Dolgozik.
+            Nem weboldalt adok át. Egy rendszert, amin ügyfelek érkeznek.
           </div>
           <div style={{ fontSize: 30, color: "rgba(245,245,245,0.65)", maxWidth: 860 }}>
             Egyedi weboldalak, ügyfélkapuk és üzleti rendszerek — egy kézben.

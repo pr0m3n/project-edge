@@ -5,9 +5,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ProjectEdge | Prémium weboldalak és digitális rendszerek",
+  title: "ProjectEdge | Egyedi weboldalak és digitális rendszerek",
   description:
-    "ProjectEdge prémium weboldalakat, ügyfélkapukat és üzleti admin felületeket épít növekedésre kész vállalkozásoknak.",
+    "Egyedi weboldalak, ügyfélkapuk és üzleti admin felületek egy kézben — a szövegtől az élesítésig.",
   metadataBase: new URL("https://www.projectedge.hu"),
   openGraph: {
     title: "ProjectEdge | Weboldalak, amelyek üzletet építenek",

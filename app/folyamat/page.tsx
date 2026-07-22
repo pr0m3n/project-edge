@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { IconMessageCircle, IconCompass, IconPenTool, IconGear, IconSparkles, IconPackage, IconWrench, IconLock } from "@/components/icons";
+
+export const metadata: Metadata = {
+  title: "A közös munka folyamata | ProjectEdge",
+  description: "Az igényfelméréstől a designon és fejlesztésen át az élesítésig: követhető weboldal-készítési folyamat."
+};
 
 const steps = [
   {

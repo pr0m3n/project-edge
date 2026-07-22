@@ -39,9 +39,9 @@ export function SiteNav() {
           ))}
         </div>
         <div className="nav-end">
-          <TransitionLink className="nav-cta" href="/ugyfelkapu">
-            Projekt indítása
-          </TransitionLink>
+          <a className="nav-cta" href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s">
+            Gyors felmérés
+          </a>
           <button
             aria-label={open ? "Menü bezárása" : "Menü megnyitása"}
             aria-expanded={open}
@@ -74,9 +74,13 @@ export function SiteNav() {
               {link.label}
             </TransitionLink>
           ))}
-          <TransitionLink className="button primary" href="/ugyfelkapu" onClick={() => setOpen(false)}>
-            Projekt indítása
-          </TransitionLink>
+          <a
+            className="button primary"
+            href="mailto:info@projectedge.hu?subject=Gyors%20weboldal%20felm%C3%A9r%C3%A9s"
+            onClick={() => setOpen(false)}
+          >
+            Gyors felmérés
+          </a>
         </div>
       </nav>
     </>

@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
@@ -14,6 +15,11 @@ import {
   IconBarChart,
   IconReceipt
 } from "@/components/icons";
+
+export const metadata: Metadata = {
+  title: "Weboldal készítés és egyedi rendszerek | ProjectEdge",
+  description: "Landing oldalak, céges weboldalak, redesign, ügyfélkapu és admin rendszer egy kézben, átlátható folyamattal."
+};
 
 const services = [
   ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
@@ -77,7 +83,7 @@ export default function ServicesPage() {
       <SiteNav />
       <section className="page-hero compact">
         <p className="micro-label dark">Szolgáltatások</p>
-        <h1>Bármilyen vállalkozás vagy, van rá válaszom.</h1>
+        <h1>Annyit építek, amennyire az üzletednek valóban szüksége van.</h1>
         <p>
           Van, ahol egy gyors, jól megírt landing elég. Máshol kell ügyfélkapu, admin felület,
           több aloldal vagy teljes újratervezés. Ha van már WordPress oldalad, azt sem dobom ki
@@ -100,9 +106,9 @@ export default function ServicesPage() {
           <p className="micro-label dark">Megoldás minden helyzetre</p>
           <h2>Megnézem, hol tartasz — és pontosan azt ajánlom, ami kell.</h2>
           <p>
-            Nem akarlak rábeszélni egy drága rendszerre, ha egy szép landing is elég. 50 000 Ft-tól
-            indulnak az áraim, jellemzően olcsóbban a piaci átlagnál — próbáld ki lent a csúszkával,
-            mennyibe kerülne a tiéd.
+            Nem akarlak rábeszélni egy összetett rendszerre, ha egy jól felépített landing is elég.
+            50 000 Ft-tól indulnak az áraim — próbáld ki lent a becslővel, milyen nagyságrendre
+            számíthatsz.
           </p>
         </div>
         <div className="solutions-grid">

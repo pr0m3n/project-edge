@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
+
+export const metadata: Metadata = {
+  title: "Munkák és esettanulmány | ProjectEdge",
+  description: "Egyedi weboldalak és full-stack rendszerek bemutatása: probléma, megoldás és technikai megvalósítás."
+};
 
 const capabilities = [
   {
@@ -101,12 +107,10 @@ export default function WorkPage() {
 
       <section className="page-hero compact">
         <p className="micro-label dark">Munkák</p>
-        <h1>
-          Nem csak <span className="gradient-text">szép</span>. Bizonyítottan működik.
-        </h1>
+        <h1>Egy működő rendszer többet mond egy látványtervnél.</h1>
         <p>
-          Egy jó munka mögött ott a probléma, a döntés és az eredmény. Itt megmutatom a legutóbbi
-          projektet részletesen — és pár olyan effektet, amit a saját oldaladba is be tudok építeni.
+          Megmutatom, milyen problémát kellett megoldani, hogyan épült fel a rendszer, és milyen
+          vizuális eszközökből kaphat saját karaktert a te oldalad.
         </p>
       </section>
 
@@ -134,8 +138,8 @@ export default function WorkPage() {
           <article className="case-block">
             <span>Az eredmény</span>
             <p>
-              Egy stabil, gyors rendszer, ami a komplex működést is elbírja — nem egy sablon, amit
-              fél év múlva újra kell kezdeni.
+              Egy élesben használható, bővíthető rendszer, amely egy felületen fogja össze a
+              felhasználói élményt, az adatokat és az üzleti folyamatokat.
             </p>
           </article>
         </div>
@@ -145,8 +149,8 @@ export default function WorkPage() {
             <span>egyedi kód, sablon nélkül</span>
           </div>
           <div className="case-metric">
-            <strong>&lt;1s</strong>
-            <span>tipikus betöltési idő</span>
+            <strong>Full-stack</strong>
+            <span>felület és háttérrendszer együtt</span>
           </div>
           <div className="case-metric">
             <strong>1</strong>
