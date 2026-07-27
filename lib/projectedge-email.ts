@@ -128,7 +128,7 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin:0 auto;background:#eeede8;border-collapse:collapse;">
           <tr><td style="background:#24262b;padding:20px 32px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-              <td valign="middle" width="70"><img src="${siteUrl}/logo/pe-mark-ink.png" width="52" alt="ProjectEdge" style="display:block;width:52px;height:auto;border:0;filter:brightness(0) invert(1);"></td>
+              <td valign="middle" width="90"><img src="${siteUrl}/logo/pe-mark-white.png" width="78" alt="ProjectEdge" style="display:block;width:78px;height:auto;border:0;"></td>
               <td valign="middle" align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1px;color:#9a9a96;text-transform:uppercase;">Digital Build Studio</td>
             </tr></table>
           </td></tr>
