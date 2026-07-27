@@ -23,9 +23,17 @@ Required environment variables:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=ProjectEdge Studio <info@projectedge.hu>
+RESEND_REPLY_TO=info@projectedge.hu
 ```
 
 The service role key is reserved for future server-only automations. Never expose it in client code.
+
+Transactional emails are sent through Resend and use the same visual language as the
+ProjectEdge cold-email campaign. Verify `projectedge.hu` in Resend, then add
+`RESEND_API_KEY` (and, if needed, the sender/reply-to overrides) to Vercel Production.
+The app reports a visible warning when the key is missing instead of simulating a sent email.
 
 ## Supabase setup
 

@@ -359,7 +359,7 @@ export function AdminDashboard() {
   ) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      await fetch("/api/notify", {
+      const response = await fetch("/api/notify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -373,8 +373,15 @@ export function AdminDashboard() {
           link
         })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.emailSent === false) {
+        const reason = typeof result.emailError === "string" ? ` (${result.emailError})` : "";
+        console.error("A rendszerértesítés rögzült, de az email nem ment ki.", result);
+        setMessage(`Értesítés rögzítve, de az email nem ment ki${reason}`);
+      }
     } catch (err) {
       console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
+      setMessage("Értesítés rögzítve, de az email szolgáltató nem volt elérhető.");
     }
   }
 

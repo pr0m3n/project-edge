@@ -181,6 +181,57 @@ const initialProject = {
 
 export type BriefFormValues = typeof initialProject;
 
+/**
+ * A wizard step csak akkor engedhető tovább, ha az adott képernyőn minden
+ * döntési blokkhoz érkezett legalább egy válasz vagy használható információ.
+ * A feltételes mezőket csak akkor ellenőrizzük, amikor tényleg megjelennek.
+ */
+function validateProjectStep(step: number, form: BriefFormValues): string | null {
+  if (step === 0) {
+    if (!form.title.trim()) return "Add meg a projekt nevét.";
+    if (!form.company.trim()) return "Add meg a cég vagy márka nevét.";
+    if (!form.projectType) return "Válassz projekt típust.";
+  }
+
+  if (step === 1) {
+    if (!form.goals.trim()) return "Írd le, mit szeretnél elérni az oldallal.";
+    if (!form.audience.trim()) return "Írd le, kiknek készül az oldal, vagy válassz egy célközönséget.";
+    if (!form.priority) return "Válassz egy prioritást.";
+  }
+
+  if (step === 2) {
+    if (!form.pages.trim()) return "Adj meg legalább egy fontos oldalt.";
+    if (!form.features.trim()) return "Adj meg legalább egy kért funkciót.";
+    if (!form.budget) return "Válassz költségkeretet, vagy jelöld, hogy még nem tudod.";
+  }
+
+  if (step === 3) {
+    if (!form.vibe) return "Válassz vizuális hangulatot.";
+    if (!form.palette) return "Válassz színirányt.";
+    if (!form.style.trim()) return "Írj legalább egy mondatot a kívánt stílusról, példáról vagy tiltólistáról.";
+  }
+
+  if (step === 4) {
+    if (!form.domainStatus) return "Válaszd ki, hogy van-e már domained.";
+    if (form.domainStatus === "have" && !form.domainName.trim()) return "Add meg a meglévő domain nevét.";
+    if (form.domainStatus === "have" && !form.hostingAccess) return "Válaszd ki, hogyan lesz elérhető a tárhely/domain hozzáférés.";
+    if (form.website.trim() && !form.existingPlatform) return "Válaszd ki, milyen rendszerben fut a jelenlegi weboldal.";
+    if (form.website.trim() && form.existingPlatform === "wordpress" && !form.wpAccess) return "Válaszd ki, tudsz-e WordPress hozzáférést adni.";
+    if (!form.logoStatus) return "Válaszd ki, van-e már logód.";
+    if ((form.logoStatus === "vector" || form.logoStatus === "raster") && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
+    if (form.logoStatus === "none" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
+    if (!form.brandColors.trim()) return "Írd be a márkaszíneket, vagy írd azt, hogy: rátok bízom.";
+    if (!form.fontPreference.trim()) return "Válassz betűtípus-stílust, vagy válaszd a nincs preferencia lehetőséget.";
+    if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
+    if (!form.photoSource) return "Válaszd ki, honnan lesznek a képek.";
+    if (!form.contactEmail.trim() && !form.contactPhone.trim()) return "Adj meg legalább egy kapcsolati email címet vagy telefonszámot.";
+    if (!form.analyticsAccess) return "Válaszd ki, hogyan kezeljük a mérést.";
+    if (!form.billingDetails.trim()) return "Add meg a számlázási adatokat, vagy írd azt, hogy: magánszemély.";
+  }
+
+  return null;
+}
+
 const initialTicket = {
   body: "",
   projectId: "",
@@ -537,7 +588,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   ) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      await fetch("/api/notify", {
+      const response = await fetch("/api/notify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -551,8 +602,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           link
         })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.emailSent === false) {
+        const reason = typeof result.emailError === "string" ? ` (${result.emailError})` : "";
+        console.error("A rendszerértesítés adatbázisba kerülhetett, de az email nem ment ki.", result);
+        setNotice(`Értesítés rögzítve, de az email nem ment ki${reason}`);
+        return false;
+      }
+      return true;
     } catch (err) {
       console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
+      setNotice("Értesítés rögzítve, de az email szolgáltató nem volt elérhető.");
+      return false;
     }
   }
 
@@ -735,6 +796,34 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ? [projectForm.customBg, projectForm.customAccent, projectForm.customText, projectForm.customCta]
       : selectedPalette[2];
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
+
+  function moveToProjectStep(nextStep: number) {
+    const target = Math.max(0, Math.min(briefSteps.length - 1, nextStep));
+    if (target > projectStep) {
+      for (let step = projectStep; step < target; step += 1) {
+        const validationMessage = validateProjectStep(step, projectForm);
+        if (validationMessage) {
+          setProjectStep(step);
+          setNotice(validationMessage);
+          return;
+        }
+      }
+    }
+    setNotice("");
+    setProjectStep(target);
+  }
+
+  function validateAllProjectSteps() {
+    for (let step = 0; step < briefSteps.length - 1; step += 1) {
+      const validationMessage = validateProjectStep(step, projectForm);
+      if (validationMessage) {
+        setProjectStep(step);
+        setNotice(validationMessage);
+        return false;
+      }
+    }
+    return true;
+  }
 
   async function ensureClientProfile(sessionUser: {
     id: string;
@@ -1074,15 +1163,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
-    if (!projectForm.title.trim()) {
-      setProjectStep(0);
-      setNotice("Adj nevet a projektnek, hogy el tudjam menteni.");
-      return;
-    }
-
-    if (!projectForm.goals.trim()) {
-      setProjectStep(1);
-      setNotice("Írd le röviden, mit szeretnél elérni az oldallal.");
+    if (!validateAllProjectSteps()) {
       return;
     }
 
@@ -1211,7 +1292,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function saveBriefEdits(event: FormEvent<HTMLFormElement>, project: Project) {
     event.preventDefault();
-    setNotice("Brief módosítások mentése...");
+    for (let step = 0; step < briefSteps.length - 1; step += 1) {
+      const validationMessage = validateProjectStep(step, editForm);
+      if (validationMessage) {
+        setNotice(validationMessage);
+        return;
+      }
+    }
+    setNotice("Projektindító adatlap módosításainak mentése...");
     
     const selVibe = vibeOptions.find(([v]) => v === editForm.vibe) ?? vibeOptions[0];
     const selPalette = paletteOptions.find(([v]) => v === editForm.palette) ?? paletteOptions[0];
@@ -1282,7 +1370,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }).eq("id", project.id);
 
     if (error) {
-      setNotice("Nem sikerült elmenteni a brief módosításokat.");
+      setNotice("Nem sikerült elmenteni a projektindító adatlap módosításait.");
       return;
     }
 
@@ -1293,21 +1381,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     await triggerNotification(
       null,
       "admin@projectedge.hu",
-      "Brief módosítva",
-      `Az ügyfél (${email}) módosította a briefet a(z) "${project.title}" projektben. Változások száma: ${logs.length}.`,
+      "Projektindító adatlap módosítva",
+      `Az ügyfél (${email}) módosította a projektindító adatlapot a(z) "${project.title}" projektben. Változások száma: ${logs.length}.`,
       "/admin"
     );
 
     await triggerNotification(
       userId,
       email,
-      "Brief módosítva",
-      `Sikeresen elmentetted a brief módosításokat a(z) "${editForm.title}" projektben.`,
+      "Projektindító adatlap módosítva",
+      `Sikeresen elmentetted a projektindító adatlap módosításait a(z) "${editForm.title}" projektben.`,
       "/ugyfelkapu/dashboard#projects"
     );
 
     setEditingBriefProjectId(null);
-    setNotice("Brief sikeresen módosítva.");
+    setNotice("Projektindító adatlap sikeresen módosítva.");
     loadPortal(true);
   }
 
@@ -1509,6 +1597,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function acceptContract(project: Project) {
+    if (!contractChecked) {
+      setNotice("Az aláíráshoz el kell fogadnod a szerződést és az ÁSZF-et.");
+      return;
+    }
     setNotice("Szerződés elfogadása...");
     const { error } = await supabase.from("client_projects").update({
       contract_accepted: true,
@@ -1634,6 +1726,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function submitProjectReview(project: Project, rating: number, review: string, referencePermitted: boolean) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      setNotice("Válassz 1 és 5 közötti értékelést.");
+      return;
+    }
     setNotice("Értékelés mentése...");
     const { error } = await supabase.from("client_projects").update({
       client_rating: rating,
@@ -1704,6 +1800,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   async function createTicket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!userId) {
+      return;
+    }
+
+    if (!ticketForm.subject.trim() || !ticketForm.body.trim()) {
+      setNotice("A tárgy és az üzenet megadása kötelező.");
       return;
     }
 
@@ -2043,6 +2144,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <label htmlFor="client-name">Név</label>
               <input
                 id="client-name"
+                required
                 value={authForm.name}
                 onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))}
                 placeholder="Kovács Anna"
@@ -2126,6 +2228,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', lineHeight: '1.4', color: 'var(--muted)', cursor: 'pointer', marginBottom: '4px' }}>
               <input
                 type="checkbox"
+                required
                 checked={consentChecked}
                 onChange={(event) => setConsentChecked(event.target.checked)}
                 style={{ marginTop: '2px', flexShrink: 0 }}
@@ -2275,7 +2378,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     <button
                       className={index === projectStep ? "active" : index < projectStep ? "done" : ""}
                       key={step}
-                      onClick={() => setProjectStep(index)}
+                      onClick={() => moveToProjectStep(index)}
                       type="button"
                     >
                       <span>{String(index + 1).padStart(2, "0")}</span>
@@ -2312,6 +2415,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <label htmlFor="project-company">Cég / márka</label>
                         <input
                           id="project-company"
+                          required
                           value={projectForm.company}
                           onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))}
                           placeholder="Vállalkozás neve"
@@ -2390,6 +2494,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       <textarea
                         id="project-audience"
+                        required
                         value={projectForm.audience}
                         onChange={(event) => setProjectForm((current) => ({ ...current, audience: event.target.value }))}
                         placeholder="Kattints a fenti gombokra, vagy pontosítsd szabadon..."
@@ -2434,6 +2539,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       <textarea
                         id="project-pages"
+                        required
                         value={projectForm.pages}
                         onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
                         placeholder="Kattints a fenti gombokra, vagy sorold fel szabadon..."
@@ -2455,6 +2561,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       <textarea
                         id="project-features"
+                        required
                         value={projectForm.features}
                         onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
                         placeholder="Kattints a fenti gombokra, vagy írd le szabadon, mire van szükséged..."
@@ -2547,6 +2654,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista?</label>
                       <textarea
                         id="project-style"
+                        required
                         value={projectForm.style}
                         onChange={(event) => setProjectForm((current) => ({ ...current, style: event.target.value }))}
                         placeholder="Például: sötét prémium, nagy tipó, kevés stock fotó, animált 3D, ne legyen túl corporate..."
@@ -2564,8 +2672,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <div className="asset-chip">Hozzáférés</div>
                     </div>
                     <p className="wizard-hint">
-                      Ezekre azért van szükségem, hogy gördülékenyen tudjunk indulni. Amit most nem
-                      tudsz, nyugodtan hagyd üresen — később is pótolható.
+                      Ezekre azért van szükségem, hogy gördülékenyen tudjunk indulni. Minden blokkban
+                      válassz egy lehetőséget vagy adj meg egy rövid információt; amit később pontosítunk,
+                      azt írd be így: „később” vagy „rátok bízom”.
                     </p>
 
                     {/* Domain */}
@@ -2594,6 +2703,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           <label htmlFor="domain-name">Mi a domain neve?</label>
                           <input
                             id="domain-name"
+                            required
                             value={projectForm.domainName}
                             onChange={(event) => setProjectForm((current) => ({ ...current, domainName: event.target.value }))}
                             placeholder="vallalkozas.hu"
@@ -2603,6 +2713,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           <label htmlFor="hosting-access">Tárhely / domain hozzáférés</label>
                           <select
                             id="hosting-access"
+                            required
                             value={projectForm.hostingAccess}
                             onChange={(event) => setProjectForm((current) => ({ ...current, hostingAccess: event.target.value }))}
                           >
@@ -2651,6 +2762,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <label htmlFor="wp-access">Tudsz WordPress admin hozzáférést adni? (a tartalom átemeléséhez)</label>
                         <select
                           id="wp-access"
+                          required
                           value={projectForm.wpAccess}
                           onChange={(event) => setProjectForm((current) => ({ ...current, wpAccess: event.target.value }))}
                         >
@@ -2739,9 +2851,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <div className="input-with-picker">
                         <input
                           id="brand-colors"
+                          required
                           value={projectForm.brandColors}
                           onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
-                          placeholder="Például: #1E2329, sötétzöld, arany — vagy hagyd ránk"
+                          placeholder="Például: #1E2329, sötétzöld, arany — vagy írd: rátok bízom"
                         />
                         <input
                           type="color"
@@ -2795,6 +2908,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       {(customFontOpen || (Boolean(projectForm.fontPreference) && !curatedFonts.some(([label]) => label === projectForm.fontPreference))) && (
                         <input
+                          required
                           value={curatedFonts.some(([label]) => label === projectForm.fontPreference) ? "" : projectForm.fontPreference}
                           onChange={(event) => setProjectForm((current) => ({ ...current, fontPreference: event.target.value }))}
                           placeholder="Írd le, milyen betűtípust szeretnél — vagy hagyd ránk"
@@ -2882,6 +2996,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <label htmlFor="analytics-access">Van Google Analytics / mérés a régi oldalon?</label>
                       <select
                         id="analytics-access"
+                        required
                         value={projectForm.analyticsAccess}
                         onChange={(event) => setProjectForm((current) => ({ ...current, analyticsAccess: event.target.value }))}
                       >
@@ -2897,6 +3012,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <label htmlFor="billing-details">Számlázási adatok (a szerződéshez / számlához)</label>
                       <textarea
                         id="billing-details"
+                        required
                         value={projectForm.billingDetails}
                         onChange={(event) => setProjectForm((current) => ({ ...current, billingDetails: event.target.value }))}
                         placeholder="Cégnév, adószám, székhely cím — vagy magánszemély esetén név és cím"
@@ -2946,7 +3062,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     {projectStep < briefSteps.length - 1 ? (
                       <button
                         className="button primary"
-                        onClick={() => setProjectStep((current) => Math.min(briefSteps.length - 1, current + 1))}
+                        onClick={() => moveToProjectStep(projectStep + 1)}
                         type="button"
                       >
                         Következő

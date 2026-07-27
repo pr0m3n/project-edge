@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type TicketPayload = {
   email?: string;
@@ -68,6 +69,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save message." }, { status: 500 });
   }
 
+  const emailResult = await sendProjectEdgeEmail({
+    to: "admin@projectedge.hu",
+    subject: `Új üzenet a weboldalról: ${name}`,
+    eyebrow: "PROJECTEDGE · ÚJ ÜZENET",
+    preheader: `${name} új support üzenetet küldött a projectedge.hu oldalon.`,
+    message: `${name} új support beszélgetést indított.\n\n${message}`,
+    link: "/admin/dashboard",
+    linkLabel: "Megnyitás az adminban",
+    details: [
+      { label: "Név", value: name },
+      { label: "Email", value: email },
+      { label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }
+    ]
+  });
+
   return NextResponse.json({
     ticket: {
       id: ticket.id,
@@ -76,6 +92,8 @@ export async function POST(request: Request) {
       status: ticket.status,
       visitorToken: ticket.visitor_token
     },
-    messages: [firstMessage]
+    messages: [firstMessage],
+    emailSent: emailResult.ok,
+    emailError: emailResult.ok ? null : emailResult.error
   });
 }

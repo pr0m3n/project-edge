@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-// HTML-escape minden ügyfél/kliens által megadott szöveget, mielőtt az email
-// sablonba kerül — így nem lehet HTML-t/scriptet injektálni a levélbe.
-function escapeHtml(value: unknown) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 // Csak belső, relatív útvonalat engedünk a levél gombjában (nyílt átirányítás ellen).
 function safeInternalLink(link: unknown) {
@@ -74,59 +64,31 @@ export async function POST(request: Request) {
       console.error("Failed to insert notification into DB:", dbError);
     }
 
-    // Send email via Resend if API key is provided
-    const resendApiKey = process.env.RESEND_API_KEY;
     let emailSent = false;
-    let emailLog = "";
+    let emailError: string | null = null;
 
     // Determine recipient
     const targetEmail = email || (userId ? null : "admin@projectedge.hu");
 
     if (targetEmail) {
-      if (resendApiKey) {
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.projectedge.hu";
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${resendApiKey}`
-          },
-          body: JSON.stringify({
-            from: "ProjectEdge Studio <info@projectedge.hu>",
-            to: targetEmail,
-            subject: safeTitle,
-            html: `
-              <div style="font-family: sans-serif; padding: 24px; color: #303841; max-width: 600px; margin: 0 auto; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px;">
-                <h2 style="color: #76ABAE; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-top: 0;">${escapeHtml(safeTitle)}</h2>
-                <p style="font-size: 15px; line-height: 1.6;">${escapeHtml(safeMessage)}</p>
-                ${safeLink ? `
-                  <p style="margin-top: 24px;">
-                    <a href="${escapeHtml(siteUrl + safeLink)}" style="background-color: #76ABAE; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Megtekintés az Ügyfélkapun</a>
-                  </p>
-                ` : ""}
-                <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 24px 0;" />
-                <small style="color: rgba(48,56,65,0.5); display: block;">Ezt az értesítést a ProjectEdge automatikus rendszere küldte. Kérjük, ne válaszolj erre az emailre.</small>
-              </div>
-            `
-          })
-        });
-
-        if (res.ok) {
-          emailSent = true;
-          emailLog = "Email sent via Resend API";
-        } else {
-          const errData = await res.json();
-          emailLog = `Resend API failed: ${JSON.stringify(errData)}`;
-        }
-      } else {
-        emailLog = `Resend API Key missing. Simulated email to ${targetEmail}: [${safeTitle}] -> ${safeMessage}`;
-        console.log(emailLog);
-      }
-    } else {
-      emailLog = "No target email provided, skipped sending email.";
+      const result = await sendProjectEdgeEmail({
+        to: targetEmail,
+        subject: safeTitle,
+        message: safeMessage,
+        link: safeLink,
+        eyebrow: userId ? "PROJECTEDGE · ÜGYFÉLKAPU" : "PROJECTEDGE · ÚJ ÉRTESÍTÉS",
+        details: [
+          { label: "Címzett", value: targetEmail },
+          { label: "Állapot", value: "Értesítés rögzítve" }
+        ]
+      });
+      emailSent = result.ok;
+      emailError = result.ok ? null : result.error;
     }
 
-    return NextResponse.json({ success: true, emailSent });
+    // A DB értesítés ettől még megmarad, de a választásból egyértelműen látszik,
+    // ha a levélküldő nincs beállítva vagy a szolgáltató elutasította a levelet.
+    return NextResponse.json({ success: !dbError, emailSent, emailError });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
