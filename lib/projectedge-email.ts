@@ -14,6 +14,8 @@ export type ProjectEdgeEmailInput = {
   link?: string | null;
   linkLabel?: string;
   details?: EmailDetail[];
+  terminalLabel?: string;
+  tags?: string[];
 };
 
 export type ProjectEdgeEmailResult =
@@ -40,19 +42,44 @@ function messageHtml(message: string) {
     .join("");
 }
 
+function terminalSummary(message: string) {
+  const firstLine = message.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || "Értesítés rögzítve.";
+  return escapeHtml(firstLine.slice(0, 180));
+}
+
 function detailsHtml(details: EmailDetail[] = []) {
   const visibleDetails = details.filter((detail) => detail.value.trim());
   if (!visibleDetails.length) return "";
 
   return `
-    <tr><td style="padding:0 32px 24px 32px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#24262b;border-radius:10px;border-collapse:separate;overflow:hidden;">
-        ${visibleDetails.map((detail, index) => `
-          <tr>
-            <td style="padding:13px 20px;${index < visibleDetails.length - 1 ? "border-bottom:1px solid #34363c;" : ""}font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a9a96;width:38%;">${escapeHtml(detail.label)}</td>
-            <td style="padding:13px 20px;${index < visibleDetails.length - 1 ? "border-bottom:1px solid #34363c;" : ""}font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:#f4f3ee;">${escapeHtml(detail.value)}</td>
-          </tr>`).join("")}
+    <tr><td style="padding:0 32px 26px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#24262b;border-radius:12px;border-collapse:separate;overflow:hidden;">
+        <tr><td style="padding:22px 24px 12px 24px;font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:1.5px;color:#ff8f5f;text-transform:uppercase;">Részletek</td></tr>
+        <tr><td style="padding:0 24px 22px 24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${visibleDetails.map((detail) => `
+              <tr>
+                <td width="24" valign="top" style="padding:0 0 10px 0;"><div style="width:16px;height:16px;border-radius:50%;background:#ff5a1f;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#24262b;line-height:16px;">✓</div></td>
+                <td valign="top" style="padding:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;color:#e6e6e4;"><span style="color:#9a9a96;">${escapeHtml(detail.label)}:</span> <strong style="color:#fff;">${escapeHtml(detail.value)}</strong></td>
+              </tr>`).join("")}
+          </table>
+        </td></tr>
       </table>
+    </td></tr>`;
+}
+
+function tagsHtml(tags: string[] = []) {
+  const visibleTags = tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 6);
+  if (!visibleTags.length) return "";
+
+  return `
+    <tr><td style="padding:0 32px 26px 32px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        ${visibleTags.map((tag, index) => `
+          <td style="padding:7px 14px;border:1px solid #24262b;border-radius:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#24262b;${index ? "padding-left:14px;" : ""}">${escapeHtml(tag)}</td>
+          ${index < visibleTags.length - 1 ? '<td style="width:8px;">&nbsp;</td>' : ''}
+        `).join("")}
+      </tr></table>
     </td></tr>`;
 }
 
@@ -81,6 +108,9 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
   const title = escapeHtml(input.subject.slice(0, 200));
   const eyebrow = escapeHtml(input.eyebrow || "PROJECTEDGE · ÜGYFÉLKAPU");
   const preheader = escapeHtml(input.preheader || input.subject);
+  const terminalLabel = escapeHtml(input.terminalLabel || "projectedge.notify");
+  const terminalMessage = terminalSummary(input.message);
+  const tags = input.tags?.length ? input.tags : ["Ügyfélkapu", "Next.js", "Supabase", "Resend"];
 
   const html = `<!doctype html>
 <html lang="hu">
@@ -112,13 +142,15 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
                   <td style="padding-right:6px;"><span style="display:block;width:9px;height:9px;border-radius:50%;background:#ff5a1f;font-size:0;line-height:0;">&nbsp;</span></td>
                   <td style="padding-right:6px;"><span style="display:block;width:9px;height:9px;border-radius:50%;background:#4a4c52;font-size:0;line-height:0;">&nbsp;</span></td>
                   <td style="padding-right:10px;"><span style="display:block;width:9px;height:9px;border-radius:50%;background:#4a4c52;font-size:0;line-height:0;">&nbsp;</span></td>
-                  <td style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#8f9096;">projectedge.notify</td>
+                  <td style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#8f9096;">${terminalLabel}</td>
                 </tr></table>
               </td></tr>
-              <tr><td style="padding:20px 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#e6e6e4;">${messageHtml(input.message)}</td></tr>
+              <tr><td style="padding:16px 20px;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:1.9;color:#c7c8cc;"><span style="color:#ff5a1f;">$</span> projectedge.notify --status sent<br><span style="color:#ff5a1f;">→</span> ${terminalMessage}</td></tr>
             </table>
           </td></tr>
+          <tr><td style="padding:0 32px 26px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#3a3b3f;">${messageHtml(input.message)}</td></tr>
           ${detailsHtml(input.details)}
+          ${tagsHtml(tags)}
           ${safeLink ? `<tr><td style="padding:0 32px 28px 32px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ff5a1f" style="border-radius:30px;"><a href="${escapeHtml(safeLink)}" style="display:block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#fff4ee;text-decoration:none;border-radius:30px;">${escapeHtml(input.linkLabel || "Megnyitás az ügyfélkapun")} →</a></td></tr></table></td></tr>` : ""}
           <tr><td style="padding:0 32px 36px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#3a3b3f;">Üdvözlettel,<br><strong style="color:#1c1d20;">Patrik</strong><br><span style="color:#7a7b76;">alapító · fejlesztő · ProjectEdge</span></td></tr>
           <tr><td style="padding:20px 32px 32px 32px;border-top:1px solid #dedcd4;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#8f8f88;">ProjectEdge — egyedi weboldalak, ügyfélkapuk és üzleti rendszerek.<br><a href="${siteUrl}" style="color:#24262b;text-decoration:underline;">projectedge.hu</a> · <a href="mailto:${replyTo}" style="color:#24262b;text-decoration:underline;">${escapeHtml(replyTo)}</a><br><br>Ez egy automatikus értesítés a ProjectEdge ügyfélkapujából.</td></tr>
