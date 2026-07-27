@@ -1998,6 +1998,66 @@ p {
   color: var(--paper);
 }
 
+.google-auth-button {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid rgba(48, 56, 65, 0.2);
+  border-radius: 999px;
+  color: var(--ink);
+  display: flex;
+  font-weight: 900;
+  gap: 12px;
+  justify-content: center;
+  min-height: 52px;
+  padding: 12px 20px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.google-auth-button:hover {
+  border-color: rgba(48, 56, 65, 0.38);
+  box-shadow: 0 12px 30px rgba(17, 23, 28, 0.1);
+  transform: translateY(-1px);
+}
+
+.google-auth-button:focus-visible {
+  outline: 3px solid rgba(118, 171, 174, 0.45);
+  outline-offset: 3px;
+}
+
+.google-auth-mark {
+  background: conic-gradient(
+    from -45deg,
+    #4285f4 0 25%,
+    #34a853 0 42%,
+    #fbbc05 0 66%,
+    #ea4335 0 84%,
+    #4285f4 0
+  );
+  background-clip: text;
+  color: transparent;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.auth-divider {
+  align-items: center;
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 12px;
+  grid-template-columns: 1fr auto 1fr;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  background: rgba(48, 56, 65, 0.14);
+  content: "";
+  height: 1px;
+}
+
 .portal-resend {
   justify-self: stretch;
 }

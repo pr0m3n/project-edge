@@ -736,6 +736,29 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       : selectedPalette[2];
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
 
+  async function ensureClientProfile(sessionUser: {
+    id: string;
+    email?: string;
+    user_metadata?: Record<string, unknown>;
+  }) {
+    const userEmail = sessionUser.email ?? "";
+    const metadataName =
+      typeof sessionUser.user_metadata?.full_name === "string"
+        ? sessionUser.user_metadata.full_name
+        : typeof sessionUser.user_metadata?.name === "string"
+          ? sessionUser.user_metadata.name
+          : "";
+
+    await supabase.from("client_profiles").upsert(
+      {
+        email: userEmail,
+        full_name: metadataName || userEmail,
+        id: sessionUser.id
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
+  }
+
   useEffect(() => {
     // Check if recovery link is used
     if (typeof window !== "undefined") {
@@ -761,6 +784,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
       setUserId(sessionUser.id);
       setEmail(sessionUser.email ?? "");
+      void ensureClientProfile(sessionUser);
       if (view === "auth") {
         window.location.href = "/ugyfelkapu/dashboard";
         return;
@@ -774,6 +798,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setUserId(sessionUser?.id ?? "");
       setEmail(sessionUser?.email ?? "");
       if (sessionUser) {
+        void ensureClientProfile(sessionUser);
         if (view === "auth") {
           window.location.href = "/ugyfelkapu/dashboard";
           return;
@@ -970,6 +995,24 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     setCanResendConfirmation(true);
     setNotice("Fiók kész. Hamarosan kaphatsz egy megerősítő emailt — nézd meg a Spam/Promóciók mappát is, ha nem találod.");
+  }
+
+  async function continueWithGoogle() {
+    setNotice("Átirányítás a Google biztonságos belépési oldalára...");
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        queryParams: {
+          prompt: "select_account"
+        },
+        redirectTo: `${window.location.origin}/ugyfelkapu/dashboard`
+      }
+    });
+
+    if (error) {
+      setNotice(`A Google-belépés most nem indítható el: ${error.message}`);
+    }
   }
 
   async function resendConfirmation() {
@@ -1987,6 +2030,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <button className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setNotice(""); }} type="button">
               Regisztráció
             </button>
+          </div>
+          <button className="google-auth-button" onClick={continueWithGoogle} type="button">
+            <span aria-hidden="true" className="google-auth-mark">G</span>
+            Folytatás Google-lel
+          </button>
+          <div className="auth-divider" role="separator">
+            <span>vagy emaillel</span>
           </div>
           {mode === "register" ? (
             <div className="field">
