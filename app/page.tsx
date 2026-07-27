@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
@@ -177,11 +178,14 @@ export default function Home() {
 
       <section className="founder-section">
         <div className="founder-card">
-          <div className="founder-name">
-            <span className="founder-tag">// ProjectEdge</span>
-            <span className="founder-hi">Szia,</span>
-            <b>Patrik vagyok.</b>
-          </div>
+          <Image
+            alt="Patrik, a ProjectEdge alapítója és fejlesztője"
+            className="founder-photo"
+            fill
+            sizes="(max-width: 880px) calc(100vw - 36px), 42vw"
+            src="/profile/patrik.png"
+          />
+          <span className="founder-photo-tag">// Szia, Patrik vagyok.</span>
           <div className="founder-badge">
             <strong>Patrik</strong>
             <span>alapító · fejlesztő · ProjectEdge</span>

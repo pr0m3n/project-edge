@@ -66,6 +66,7 @@ export function SiteNav() {
         className={`mobile-nav ${open ? "open" : ""}`}
         aria-label="Mobil navigáció"
         aria-hidden={!open}
+        inert={!open}
       >
         <div className="mobile-nav-links">
           {links.map((link) => (

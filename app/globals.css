@@ -5376,10 +5376,7 @@ p {
 
 .founder-card {
   aspect-ratio: 4 / 5;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 87, 34, 0.55), transparent 55%),
-    radial-gradient(circle at 80% 85%, rgba(118, 171, 174, 0.5), transparent 55%),
-    var(--night);
+  background: var(--night);
   border-radius: 36px;
   box-shadow: 0 40px 120px rgba(17, 23, 28, 0.28);
   display: grid;
@@ -5394,49 +5391,36 @@ p {
 }
 
 .founder-card::after {
-  background-image:
-    linear-gradient(rgba(245, 245, 245, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 245, 245, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background:
+    linear-gradient(180deg, rgba(17, 23, 28, 0.08) 45%, rgba(17, 23, 28, 0.82) 100%),
+    linear-gradient(110deg, rgba(255, 87, 34, 0.12), transparent 44%);
   content: "";
   inset: 0;
+  pointer-events: none;
   position: absolute;
+  z-index: 1;
 }
 
-.founder-name {
-  display: grid;
-  gap: 10px;
-  padding: 0 30px;
-  position: relative;
-  text-align: center;
+.founder-photo {
+  object-fit: cover;
+  object-position: 50% 42%;
 }
 
-.founder-name .founder-tag {
-  color: rgba(245, 245, 245, 0.7);
+.founder-photo-tag {
+  backdrop-filter: blur(12px);
+  background: rgba(17, 23, 28, 0.52);
+  border: 1px solid rgba(245, 245, 245, 0.18);
+  border-radius: 999px;
+  color: var(--paper);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13px;
   font-weight: 700;
+  left: 18px;
   letter-spacing: 0.5px;
-}
-
-.founder-name b {
-  background: linear-gradient(100deg, var(--paper) 0%, #ffd9c7 50%, var(--paper) 100%);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: hue-pan 8s linear infinite;
-  font-size: clamp(38px, 6.5vw, 64px);
-  font-weight: 950;
-  letter-spacing: -0.03em;
-  line-height: 1.18;
-  padding-bottom: 0.1em;
-}
-
-.founder-name .founder-hi {
-  color: rgba(245, 245, 245, 0.88);
-  font-size: clamp(22px, 3.4vw, 34px);
-  font-weight: 850;
+  padding: 10px 14px;
+  position: absolute;
+  top: 18px;
+  z-index: 2;
 }
 
 .founder-badge {
@@ -5452,6 +5436,7 @@ p {
   padding: 14px 18px;
   position: absolute;
   right: 18px;
+  z-index: 2;
 }
 
 .founder-badge strong {
