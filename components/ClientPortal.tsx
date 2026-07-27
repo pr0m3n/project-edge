@@ -95,6 +95,11 @@ export type Project = {
   feedback_notes: string | null;
   handover_checklist: Array<{ title: string; done: boolean }> | null;
   maintenance_option: string | null;
+  maintenance_monthly_fee: number | null;
+  maintenance_currency: string | null;
+  deposit_transfer_reported: boolean;
+  final_transfer_reported: boolean;
+  review_approved: boolean;
   client_rating: number | null;
   client_review: string | null;
   reference_permitted: boolean;
@@ -143,17 +148,17 @@ const statusLabels: Record<string, string> = {
 
 const initialProject = {
   audience: "",
-  budget: "not-sure",
+  budget: "",
   company: "",
   features: "",
   goals: "",
   pages: "",
-  palette: "edge",
-  projectType: "premium-business-site",
-  priority: "quality",
+  palette: "",
+  projectType: "",
+  priority: "",
   style: "",
   title: "",
-  vibe: "premium",
+  vibe: "",
   website: "",
   // Anyagok és hozzáférések (5. lépés)
   domainStatus: "",
@@ -165,7 +170,7 @@ const initialProject = {
   wantLogoDesign: "",
   brandColors: "",
   fontPreference: "",
-  contentSource: "studio",
+  contentSource: "",
   photoSource: "",
   socialLinks: "",
   contactEmail: "",
@@ -188,27 +193,27 @@ export type BriefFormValues = typeof initialProject;
  */
 function validateProjectStep(step: number, form: BriefFormValues): string | null {
   if (step === 0) {
-    if (!form.title.trim()) return "Add meg a projekt nevét.";
-    if (!form.company.trim()) return "Add meg a cég vagy márka nevét.";
+    if (form.title.trim().length < 2) return "Add meg a projekt nevét legalább 2 karakterrel.";
+    if (form.company.trim().length < 2) return "Add meg a cég vagy márka nevét legalább 2 karakterrel.";
     if (!form.projectType) return "Válassz projekt típust.";
   }
 
   if (step === 1) {
-    if (!form.goals.trim()) return "Írd le, mit szeretnél elérni az oldallal.";
-    if (!form.audience.trim()) return "Írd le, kiknek készül az oldal, vagy válassz egy célközönséget.";
+    if (form.goals.trim().length < 10) return "Írd le legalább egy rövid mondatban, mit szeretnél elérni az oldallal.";
+    if (form.audience.trim().length < 5) return "Írd le legalább néhány szóval, kiknek készül az oldal.";
     if (!form.priority) return "Válassz egy prioritást.";
   }
 
   if (step === 2) {
-    if (!form.pages.trim()) return "Adj meg legalább egy fontos oldalt.";
-    if (!form.features.trim()) return "Adj meg legalább egy kért funkciót.";
+    if (form.pages.trim().length < 3) return "Adj meg legalább egy fontos oldalt.";
+    if (form.features.trim().length < 3) return "Adj meg legalább egy kért funkciót, vagy írd azt, hogy „nincs”.";
     if (!form.budget) return "Válassz költségkeretet, vagy jelöld, hogy még nem tudod.";
   }
 
   if (step === 3) {
     if (!form.vibe) return "Válassz vizuális hangulatot.";
     if (!form.palette) return "Válassz színirányt.";
-    if (!form.style.trim()) return "Írj legalább egy mondatot a kívánt stílusról, példáról vagy tiltólistáról.";
+    if (form.style.trim().length < 8) return "Írj legalább néhány szót a kívánt stílusról, példáról vagy tiltólistáról.";
   }
 
   if (step === 4) {
@@ -225,6 +230,8 @@ function validateProjectStep(step: number, form: BriefFormValues): string | null
     if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
     if (!form.photoSource) return "Válaszd ki, honnan lesznek a képek.";
     if (!form.contactEmail.trim() && !form.contactPhone.trim()) return "Adj meg legalább egy kapcsolati email címet vagy telefonszámot.";
+    if (form.contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) return "Adj meg érvényes kapcsolati email címet.";
+    if (form.contactPhone.trim() && form.contactPhone.replace(/\D/g, "").length < 7) return "Adj meg érvényes telefonszámot.";
     if (!form.analyticsAccess) return "Válaszd ki, hogyan kezeljük a mérést.";
     if (!form.billingDetails.trim()) return "Add meg a számlázási adatokat, vagy írd azt, hogy: magánszemély.";
   }
@@ -1527,6 +1534,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function markDepositTransferSent(project: Project) {
+    if (project.deposit_transfer_reported) return;
     setPaymentLoading(true);
     setPaymentError("");
 
@@ -1534,6 +1542,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const reference = transferReference(project);
 
     const { error } = await supabase.from("client_projects").update({
+      deposit_transfer_reported: true,
       next_step: `Jelezted, hogy elindítottad a(z) ${amount} foglaló utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom — utána indul a kivitelezés.`
     }).eq("id", project.id);
 
@@ -1562,6 +1571,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   async function markFinalTransferSent(project: Project) {
+    if (project.final_transfer_reported) return;
     setPaymentLoading(true);
     setPaymentError("");
 
@@ -1569,6 +1579,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const reference = transferReference(project);
 
     const { error } = await supabase.from("client_projects").update({
+      final_transfer_reported: true,
       next_step: `Jelezted, hogy elindítottad a(z) ${amount} hátralék utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom, majd élesítjük az oldalt.`
     }).eq("id", project.id);
 
@@ -1698,31 +1709,46 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       if (!ok) return;
     }
     setNotice("Karbantartási igény mentése...");
+    const requesting = option === "requested";
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: option,
-      status: "closed",
-      next_step: "Projekt sikeresen lezárva. Köszönjük az együttműködést!"
+      status: requesting ? "launched" : "closed",
+      next_step: requesting
+        ? "Karbantartási ajánlatot kértél. Az adminisztrátor beállítja a havi díjat; addig nincs teendőd."
+        : "Projekt sikeresen lezárva. Köszönjük az együttműködést!"
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
-      setNotice("Döntésedet elmentettük. A projekt lezárult.");
+      setNotice(requesting ? "Karbantartási ajánlatkérés elküldve. Most az adminisztrátoron a sor." : "Döntésedet elmentettük. A projekt lezárult.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Karbantartási döntés",
-        `Az ügyfél (${email}) döntött a karbantartásról a(z) "${project.title}" projektnél: ${option === 'accepted' ? 'KÉRI' : 'NEM KÉRI'}.`,
+        `Az ügyfél (${email}) döntött a karbantartásról a(z) "${project.title}" projektnél: ${requesting ? 'HAVIDÍJAS AJÁNLATOT KÉR' : option === 'accepted' ? 'ELFOGADTA' : 'NEM KÉRI'}.`,
         "/admin"
       );
-      await triggerNotification(
-        userId,
-        email,
-        "Projekt sikeresen lezárva",
-        `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
-        "/ugyfelkapu/dashboard#statuses"
-      );
+      await triggerNotification(userId, email, requesting ? "Karbantartási ajánlatkérés elküldve" : "Projekt sikeresen lezárva",
+        requesting ? `A(z) "${project.title}" projekthez karbantartási ajánlatot kértél. Értesítünk, amikor a havidíj elkészült.` : `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
+        "/ugyfelkapu/dashboard#statuses");
       loadPortal(true);
     }
+  }
+
+  async function approveReview(project: Project) {
+    setNotice("Jóváhagyás mentése...");
+    const { error } = await supabase.from("client_projects").update({
+      review_approved: true,
+      next_step: "Jóváhagytad az elkészült oldalt. Most az adminisztrátor végzi az élesítést; addig nincs teendőd."
+    }).eq("id", project.id);
+    if (error) {
+      setNotice("Nem sikerült menteni a jóváhagyást.");
+      return;
+    }
+    await triggerNotification(null, "admin@projectedge.hu", "Ügyfél jóváhagyta az oldalt",
+      `Az ügyfél (${email}) jóváhagyta a(z) "${project.title}" projektet. Az oldal élesíthető.`, "/admin");
+    setNotice("Jóváhagyva. Most az adminisztrátoron a sor.");
+    loadPortal(true);
   }
 
   async function submitProjectReview(project: Project, rating: number, review: string, referencePermitted: boolean) {
@@ -2044,12 +2070,17 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         <BuildProgressPanel project={project} />
 
         {project.status === "review" && (
-          <ReviewFeedbackPanel
-            project={project}
-            feedbackRoundNote={feedbackRoundNote}
-            onFeedbackRoundNoteChange={setFeedbackRoundNote}
-            onSubmit={() => submitFeedback(project, feedbackRoundNote)}
-          />
+          project.review_approved ? null : <>
+            <ReviewFeedbackPanel
+              project={project}
+              feedbackRoundNote={feedbackRoundNote}
+              onFeedbackRoundNoteChange={setFeedbackRoundNote}
+              onSubmit={() => submitFeedback(project, feedbackRoundNote)}
+            />
+            <button className="button primary" type="button" onClick={() => approveReview(project)}>
+              Minden rendben, jóváhagyom
+            </button>
+          </>
         )}
 
         {project.status === "launched" && (

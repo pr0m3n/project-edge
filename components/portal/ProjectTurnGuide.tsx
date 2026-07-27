@@ -41,11 +41,9 @@ function buildGuide(project: Project): Guide | null {
         detail: "Ez indítja el a munkát — olvasd át és fogadd el lent."
       };
     case "deposit_pending":
-      return {
-        who: "client",
-        headline: "Fizesd be a foglalót",
-        detail: "A szerződés megvan — a foglaló indítja el a fejlesztést."
-      };
+      return project.deposit_transfer_reported
+        ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }
+        : { who: "client", headline: "Fizesd be a foglalót", detail: "A szerződés megvan — utald el, majd lent jelezd az utalást." };
     case "in_progress":
       return {
         who: "studio",
@@ -53,6 +51,9 @@ function buildGuide(project: Project): Guide | null {
         detail: "Ha van előnézeti link vagy mérföldkő-frissítés, itt fogod látni."
       };
     case "review":
+      if (project.review_approved) {
+        return { who: "studio", headline: "Az élesítés következik", detail: "Jóváhagytad az oldalt. Most az adminisztrátor végzi az élesítést." };
+      }
       return project.feedback_round >= 2
         ? {
             who: "client",
@@ -66,18 +67,22 @@ function buildGuide(project: Project): Guide | null {
           };
     case "launched":
       if (!project.final_payment_paid) {
-        return {
-          who: "client",
-          headline: "Rendezd a hátralékot",
-          detail: "Az oldal élesítve — a hátralék kifizetése zárja le a projektet."
-        };
+        return project.final_transfer_reported
+          ? { who: "studio", headline: "Ellenőrizzük a hátralékot", detail: "Jelezted az utalást. Most nincs teendőd." }
+          : { who: "client", headline: "Rendezd a hátralékot", detail: "Utald el a hátralékot, majd lent jelezd az utalást." };
       }
       if (!project.maintenance_option) {
         return {
           who: "client",
           headline: "Válaszd ki a karbantartást",
-          detail: "Döntsd el lent, kéred-e a havi karbantartást, vagy lezárhatjuk a projektet."
+          detail: "Kérj havidíjas ajánlatot, vagy zárd le a projektet karbantartás nélkül."
         };
+      }
+      if (project.maintenance_option === "requested" && !project.maintenance_monthly_fee) {
+        return { who: "studio", headline: "Karbantartási havidíjat készítünk", detail: "Megkaptuk a kérésedet. Most nincs teendőd." };
+      }
+      if (project.maintenance_option === "offered") {
+        return { who: "client", headline: "Dönts a karbantartási havidíjról", detail: "A pontos havi díj lent látható. Fogadd el, vagy zárd le karbantartás nélkül." };
       }
       return {
         who: "studio",

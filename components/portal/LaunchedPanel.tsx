@@ -4,7 +4,7 @@ import { formatPrice } from "@/components/ClientPortal";
 type LaunchedPanelProps = {
   project: Project;
   onPayFinal: () => void;
-  onSelectMaintenance: (choice: "accepted" | "declined") => void;
+  onSelectMaintenance: (choice: "requested" | "accepted" | "declined") => void;
 };
 
 export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: LaunchedPanelProps) {
@@ -44,7 +44,7 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: Laun
             <span style={{ fontWeight: "700", color: "#FF9800", fontSize: "14px" }}>Függőben</span>
           )}
         </div>
-        {!project.final_payment_paid && (
+        {!project.final_payment_paid && !project.final_transfer_reported && (
           <button
             className="button primary"
             type="button"
@@ -54,18 +54,34 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: Laun
             Hátralék kifizetése ({formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft")})
           </button>
         )}
+        {!project.final_payment_paid && project.final_transfer_reported && (
+          <strong className="waiting-copy">Utalás jelezve — az adminisztrátor ellenőrzi. Most nincs teendőd.</strong>
+        )}
       </div>
 
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "12px", display: "grid", gap: "8px" }}>
         <strong>Karbantartási és támogatási ajánlat:</strong>
         <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.4", color: "var(--muted)" }}>Havonta figyeljük az oldal sebességét, kezeljük a frissítéseket, mentéseket, és 1 óra fejlesztési keretet biztosítunk.</p>
-        {project.maintenance_option ? (
-          <div style={{ fontWeight: "bold", fontSize: "14px", color: project.maintenance_option === "accepted" ? "#76ABAE" : "#FF5722" }}>
+        {!project.final_payment_paid ? (
+          <p className="waiting-copy">A karbantartásról a végső fizetés jóváhagyása után dönthetsz.</p>
+        ) : project.maintenance_option === "requested" && !project.maintenance_monthly_fee ? (
+          <p className="waiting-copy">Ajánlatkérés elküldve — az adminisztrátor most állítja össze a havidíjat.</p>
+        ) : project.maintenance_option === "offered" && project.maintenance_monthly_fee ? (
+          <div className="maintenance-offer">
+            <strong>{formatPrice(project.maintenance_monthly_fee, project.maintenance_currency || "Ft")} / hó</strong>
+            <p>Ez ismétlődő havi díj. Elfogadás után a karbantartás aktív, a projekt pedig lezárul.</p>
+            <div className="maintenance-actions">
+              <button className="button primary" type="button" onClick={() => onSelectMaintenance("accepted")}>Elfogadom a havidíjat</button>
+              <button className="button secondary" type="button" onClick={() => onSelectMaintenance("declined")}>Nem kérem, lezárhatjuk</button>
+            </div>
+          </div>
+        ) : project.maintenance_option === "accepted" || project.maintenance_option === "declined" ? (
+          <div className="decision-copy">
             Választásod: {project.maintenance_option === "accepted" ? "Karbantartás elfogadva" : "Karbantartás elutasítva"}
           </div>
         ) : (
           <div style={{ display: "flex", gap: "12px", marginTop: "4px" }}>
-            <button className="button primary" type="button" onClick={() => onSelectMaintenance("accepted")}>Kérem a karbantartást</button>
+            <button className="button primary" type="button" onClick={() => onSelectMaintenance("requested")}>Kérek havidíjas ajánlatot</button>
             <button className="button secondary" type="button" onClick={() => onSelectMaintenance("declined")}>Nem kérem, lezárhatjuk</button>
           </div>
         )}
