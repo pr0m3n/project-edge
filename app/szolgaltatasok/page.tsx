@@ -140,7 +140,7 @@ export default function ServicesPage() {
 
         <p className="solutions-note">
           Az árak tájékoztató jellegűek, bruttó nagyságrendek a magyar piacon. A végleges ajánlat a
-          projekt terjedelmétől függ — ezért kezdünk mindig egy rövid brieffel.
+          projekt terjedelmétől függ — ezért kezdünk mindig egy rövid projektindító adatlappal.
         </p>
       </section>
 
@@ -149,7 +149,7 @@ export default function ServicesPage() {
           <p className="micro-label dark">Mit hozz magaddal</p>
           <h2>Ezeket kérdezem meg induláskor.</h2>
           <p>
-            A brief kitöltésekor ezekre kérdezek rá — de nyugodtan kezdj neki akkor is, ha még nincs
+            A projektindító adatlap kitöltésekor ezekre kérdezek rá — de nyugodtan kezdj neki akkor is, ha még nincs
             meg minden. Amit nem tudsz, később pótolható, és sok mindenben segítek.
           </p>
         </div>

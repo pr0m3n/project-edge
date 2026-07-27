@@ -19,7 +19,7 @@ function buildGuide(project: Project): Guide | null {
     case "request_received":
       return {
         who: "studio",
-        headline: "Megkaptuk a briefed",
+        headline: "Megkaptuk az adatlapodat",
         detail: "Hamarosan jelentkezünk a részletes ajánlattal — addig nincs teendőd."
       };
     case "planning":

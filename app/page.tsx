@@ -219,7 +219,7 @@ export default function Home() {
           <h2>Minden egy helyen — de ha szeretnél, beszélhetünk is.</h2>
           <p className="nc-copy">
             Nem kell időpontot egyeztetni vagy e-mailekben kutakodni. Az
-            ügyfélkapun elindítod a projektet, kitöltöd a briefet, követed a haladást, fizetsz és
+            ügyfélkapun elindítod a projektet, kitöltöd a projektindító adatlapot, követed a haladást, fizetsz és
             kérdezel — akkor, amikor neked kényelmes. Ha gyorsabb szóban, természetesen egyeztetünk.
           </p>
           <TransitionLink className="button primary" href="/ugyfelkapu">
@@ -229,7 +229,7 @@ export default function Home() {
         <ul className="nc-list">
           <li>Nincs kötelező telefonhívás</li>
           <li>Nincs időpont-egyeztetés</li>
-          <li>Minden egy helyen: brief, státusz, fizetés</li>
+          <li>Minden egy helyen: adatlap, státusz, fizetés</li>
           <li>Kérdés bármikor, ticketen</li>
           <li>A saját idődben haladsz</li>
         </ul>

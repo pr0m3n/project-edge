@@ -1,7 +1,7 @@
 import type { Project } from "@/components/ClientPortal";
 
 const switcherStatusLabels: Record<string, string> = {
-  request_received: "Brief",
+  request_received: "Adatlap",
   planning: "Tervezés",
   offer_sent: "Ajánlat",
   contract_pending: "Szerződés",

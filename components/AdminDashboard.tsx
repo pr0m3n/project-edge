@@ -710,7 +710,7 @@ export function AdminDashboard() {
       offer_title: project.offer_title || `${project.title} - részletes ajánlat`,
       offer_timeline: project.offer_timeline || "Első ütem: tervezés és design. Második ütem: fejlesztés, tesztelés és élesítés.",
       status: "planning",
-      next_step: project.next_step || "Átnézem a briefet és összerakom a részletes ajánlatot a dashboardodban."
+      next_step: project.next_step || "Átnézem az adatlapot és összerakom a részletes ajánlatot a dashboardodban."
     });
   }
 
@@ -1031,7 +1031,7 @@ export function AdminDashboard() {
         who: "admin",
         step: "1. lépés",
         headline: "Ajánlat előkészítése",
-        detail: "Új igény érkezett. Olvasd át a briefet lent, majd egy kattintással készítsd elő az ajánlat vázát — ezután az Ajánlatépítőben tudod kitölteni.",
+        detail: "Új igény érkezett. Olvasd át az adatlapot lent, majd egy kattintással készítsd elő az ajánlat vázát — ezután az Ajánlatépítőben tudod kitölteni.",
         actions: [{ label: "Ajánlat vázának előkészítése", onClick: () => primeOffer(project) }]
       },
       planning: {
@@ -1567,7 +1567,7 @@ export function AdminDashboard() {
               {renderProjectGuide(project)}
 
               <details className="admin-collapse">
-                <summary>Brief és részletek megtekintése</summary>
+                <summary>Adatlap és részletek megtekintése</summary>
                 <div style={{ display: "grid", gap: "16px" }}>
               <div className="admin-project-facts">
                 <div>
@@ -1631,7 +1631,7 @@ export function AdminDashboard() {
                 if (logs.length === 0) return null;
                 return (
                   <section style={{ background: 'rgba(48,56,65,0.03)', border: '1px solid var(--line)', borderRadius: '18px', padding: '16px', display: 'grid', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brief változások előzménye ({logs.length})</span>
+                  <span style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Adatlapváltozások előzménye ({logs.length})</span>
                     <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'grid', gap: '6px', fontSize: '13px' }}>
                       {logs.map((log) => (
                         <div key={log.id} style={{ borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>

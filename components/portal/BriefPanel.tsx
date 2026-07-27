@@ -55,7 +55,7 @@ export function BriefPanel({
           border: "1px solid rgba(0,0,0,0.06)"
         }}
       >
-        <h4 style={{ margin: 0, fontSize: "18px" }}>Brief Szerkesztése</h4>
+        <h4 style={{ margin: 0, fontSize: "18px" }}>Adatlap szerkesztése</h4>
         <div className="field">
           <label htmlFor="edit-title">Projekt neve</label>
           <input id="edit-title" required value={editForm.title} onChange={(e) => onEditFormChange({ ...editForm, title: e.target.value })} />
@@ -126,7 +126,7 @@ export function BriefPanel({
 
       {(project.status === "request_received" || project.status === "planning") && !project.delete_requested && (
         <button className="button secondary" style={{ width: "fit-content", marginTop: "4px" }} type="button" onClick={onStartEdit}>
-          Brief szerkesztése
+          Adatlap szerkesztése
         </button>
       )}
     </>

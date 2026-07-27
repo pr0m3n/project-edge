@@ -188,7 +188,7 @@ const initialTicket = {
 };
 
 const projectFlow = [
-  ["request_received", "Brief"],
+  ["request_received", "Adatlap"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
   ["contract_pending", "Szerződés"],
@@ -1151,16 +1151,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     await triggerNotification(
       null,
       "admin@projectedge.hu",
-      "Új projekt brief",
-      `Új projekt brief érkezett: "${projectForm.title}" az ügyféltől (${email}).`,
+      "Új projektindító adatlap",
+      `Új projektindító adatlap érkezett: "${projectForm.title}" az ügyféltől (${email}).`,
       "/admin"
     );
 
     await triggerNotification(
       userId,
       email,
-      "Brief sikeresen beküldve",
-      `A(z) "${projectForm.title}" projekt briefét sikeresen rögzítettük. Az adminisztrátor hamarosan elkészíti az ajánlatot.`,
+      "Projektindító adatlap beküldve",
+      `A(z) "${projectForm.title}" projektindító adatlapját sikeresen rögzítettük. Az adminisztrátor hamarosan elkészíti az ajánlatot.`,
       "/ugyfelkapu/dashboard#projects"
     );
 
@@ -2222,12 +2222,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             <span className="micro-label">Üdvözlünk a fedélzeten</span>
             <h2>Örülünk, hogy itt vagy{profileName ? `, ${profileName}` : ""}!</h2>
             <p>
-              Indítsd el az első projekt briefedet pár perc alatt. Onnantól minden itt fut össze:
+            Indítsd el az első projektindító adatlapodat pár perc alatt. Onnantól minden itt fut össze:
               az ajánlat, a fizetés, a fejlesztési mérföldkövek, az előnézeti link és a support — egy helyen.
             </p>
           </div>
           <button className="button primary" type="button" onClick={() => setHomeView("new-brief")}>
-            Projekt brief indítása →
+            Projektindító adatlap indítása →
           </button>
         </div>
       )}
@@ -2238,7 +2238,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <section className="project-wizard-card">
             <div className="wizard-topline">
               <div>
-                <span>Projekt brief</span>
+                <span>Projektindító adatlap</span>
                 <h2>{projectSubmitted ? "Terv elküldve" : briefSteps[projectStep]}</h2>
               </div>
               <strong>{projectSubmitted ? "Kész" : `${briefProgress}%`}</strong>
@@ -2249,7 +2249,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <span>Elmentettük és elküldtük</span>
                 <h3>{submittedProjectTitle || "A projektterv"}</h3>
                 <p>
-                  Köszönöm, megkaptam a briefet. Átnézem a célokat, a funkciókat és a vizuális irányt,
+                  Köszönöm, megkaptam az adatlapot. Átnézem a célokat, a funkciókat és a vizuális irányt,
                   majd a következő lépéseket és az ajánlatot itt fogod látni a dashboardban.
                 </p>
                 <div className="wizard-success-actions">
@@ -2965,7 +2965,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <aside className="project-brief-preview">
             <section className="live-brief-card">
               <div className="live-brief-head">
-                <span>Élő brief</span>
+                <span>Élő adatlap</span>
                 <strong>{briefProgress}% kész</strong>
               </div>
               <h3>{projectForm.title || "A projekt neve ide kerül"}</h3>
@@ -3008,7 +3008,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <h2>Innen látod, hol tartunk.</h2>
             </div>
             <button className="button primary" onClick={() => setHomeView("new-brief")} type="button">
-              Új projekt brief
+              Új projektindító adatlap
             </button>
           </div>
           <div className="status-page-grid">
@@ -3031,7 +3031,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             {!loading && projects.length === 0 ? (
               <div className="portal-empty-state">
                 <strong>Még nincs projekted.</strong>
-                <p>Indíts egy projekt briefet, és itt látod majd a státuszt, a tennivalókat és az ajánlatot.</p>
+                <p>Indíts egy projektindító adatlapot, és itt látod majd a státuszt, a tennivalókat és az ajánlatot.</p>
               </div>
             ) : null}
             {!loading && activeProjects.length > 1 && (
@@ -3303,7 +3303,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
             <form onSubmit={deleteAccount} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
               <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: "1.4" }}>
-                A fiók törlésével minden projektbrief, ajánlat, üzenet és adat véglegesen törlődik a rendszerből.
+                A fiók törlésével minden projektindító adatlap, ajánlat, üzenet és adat véglegesen törlődik a rendszerből.
               </p>
               <div className="field" style={{ margin: 0 }}>
                 <label htmlFor="settings-delete" style={{ color: "var(--muted)" }}>Megerősítéshez írd be: TÖRLÉS</label>

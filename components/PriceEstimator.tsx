@@ -115,7 +115,7 @@ export function PriceEstimator() {
         </div>
       </div>
       <p className="estimator-note">
-        Ez egy tájékoztató becslés — a pontos árat és határidőt mindig a briefed alapján adom meg. Nem
+        Ez egy tájékoztató becslés — a pontos árat és határidőt mindig a projektindító adatlapod alapján adom meg. Nem
         dolgozom rajta feleslegesen tovább a szükségesnél: egy kisebb oldal akár 1–2 nap alatt is
         elkészülhet.
       </p>

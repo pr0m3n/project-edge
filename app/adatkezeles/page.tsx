@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         </p>
         <h3>b) Ügyfélkapu (regisztráció, projektek)</h3>
         <p>
-          Kezelt adatok: e-mail cím, név, jelszó (titkosítva), a projekt briefjében megadott adatok,
+          Kezelt adatok: e-mail cím, név, jelszó (titkosítva), a projektindító adatlapon megadott adatok,
           számlázási adatok. Cél: a fiók és a projekt kezelése, a szolgáltatás teljesítése. Jogalap:
           szerződés teljesítése (GDPR 6. cikk (1) b)).
         </p>

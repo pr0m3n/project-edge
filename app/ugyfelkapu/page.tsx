@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Ügyfélkapu | ProjectEdge",
-  description: "Projektindítás, brief, üzenetek és projektstátusz egyetlen átlátható ügyfélfelületen."
+  description: "Projektindítás, projektindító adatlap, üzenetek és projektstátusz egyetlen átlátható ügyfélfelületen."
 };
 
 export default function ClientPortalPage() {

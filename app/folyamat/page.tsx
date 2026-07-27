@@ -12,7 +12,7 @@ const steps = [
   {
     number: "01",
     title: "Átbeszéljük",
-    copy: "Az ügyfélkapun kitöltött brief alapján átnézem, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Hívás nélkül is megy — de ha jobban szereted, beszélhetünk is.",
+    copy: "Az ügyfélkapun kitöltött projektindító adatlap alapján átnézem, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Hívás nélkül is megy — de ha jobban szereted, beszélhetünk is.",
     tag: "hívás nélkül is",
     Icon: IconMessageCircle
   },
