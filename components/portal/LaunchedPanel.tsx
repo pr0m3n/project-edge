@@ -1,14 +1,17 @@
 import type { Project } from "@/components/ClientPortal";
-import { formatPrice } from "@/components/ClientPortal";
+import { BANK_TRANSFER_DETAILS, formatPrice, transferReference } from "@/components/ClientPortal";
 
 type LaunchedPanelProps = {
   project: Project;
   onPayFinal: () => void;
-  onSelectMaintenance: (choice: "requested" | "accepted" | "declined") => void;
+  onSelectMaintenance: (choice: "requested" | "declined") => void;
+  onConfirmFollowupCheck: () => void;
+  onReportFollowupTransfer: () => void;
 };
 
-export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: LaunchedPanelProps) {
+export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance, onConfirmFollowupCheck, onReportFollowupTransfer }: LaunchedPanelProps) {
   const checklist = project.handover_checklist ?? [];
+  const followupLocked = ["awaiting_transfer", "transfer_reported", "scheduled", "completed"].includes(project.followup_check_status || "");
 
   return (
     <div style={{ background: "rgba(118, 171, 174, 0.05)", border: "1px solid rgba(118, 171, 174, 0.15)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "14px" }}>
@@ -70,28 +73,55 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: Laun
       </div>
 
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "12px", display: "grid", gap: "8px" }}>
-        <strong>Karbantartási és támogatási ajánlat:</strong>
-        <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.4", color: "var(--muted)" }}>Havonta figyeljük az oldal sebességét, kezeljük a frissítéseket, mentéseket, és 1 óra fejlesztési keretet biztosítunk.</p>
+        <strong>Egyszeri 30 napos utóellenőrzés</strong>
+        <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.5", color: "var(--muted)" }}>
+          Az indulás után körülbelül egy hónappal átnézzük, hogy a weboldal a valós használat mellett is rendben működik-e.
+        </p>
+        <div className="maintenance-scope">
+          <span>Elérhetőség, hibák és hibás hivatkozások ellenőrzése</span>
+          <span>Mobilos megjelenés és fő felhasználói útvonalak próbája</span>
+          <span>Űrlapok, alapvető integrációk és analitika ellenőrzése</span>
+          <span>Rövid állapotjelentés a talált problémákról és a következő lépésekről</span>
+        </div>
+        <p className="maintenance-boundary"><strong>Fontos:</strong> ez állapotfelmérés, nem folyamatos karbantartás. A díj a projekt összetettségéhez igazodik. A feltárt nagyobb fejlesztésekre csak külön jóváhagyással készül ajánlat.</p>
+        <p className="waiting-copy">Egyszeri szolgáltatás: nincs előfizetés, havidíj vagy automatikus megújulás.</p>
         {!project.final_payment_paid ? (
-          <p className="waiting-copy">A karbantartásról a végső fizetés jóváhagyása után dönthetsz.</p>
-        ) : project.maintenance_option === "requested" && !project.maintenance_monthly_fee ? (
-          <p className="waiting-copy">Ajánlatkérés elküldve — az adminisztrátor most állítja össze a havidíjat.</p>
-        ) : project.maintenance_option === "offered" && project.maintenance_monthly_fee ? (
+          <p className="waiting-copy">Az utóellenőrzésről a végső fizetés jóváhagyása után dönthetsz.</p>
+        ) : project.followup_check_status === "requested" && !project.followup_check_fee ? (
+          <p className="waiting-copy">Ajánlatkérés elküldve — az adminisztrátor most állítja be az egyszeri díjat.</p>
+        ) : (project.followup_check_status === "offered" || followupLocked) && project.followup_check_fee ? (
           <div className="maintenance-offer">
-            <strong>{formatPrice(project.maintenance_monthly_fee, project.maintenance_currency || "Ft")} / hó</strong>
-            <p>Ez ismétlődő havi díj. Elfogadás után a karbantartás aktív, a projekt pedig lezárul.</p>
-            <div className="maintenance-actions">
-              <button className="button primary" type="button" onClick={() => onSelectMaintenance("accepted")}>Elfogadom a havidíjat</button>
+            <div className="maintenance-total"><span>Egyszeri díj</span><strong>{formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")}</strong></div>
+            {!followupLocked ? <div className="maintenance-actions">
+              <button className="button primary" type="button" onClick={onConfirmFollowupCheck}>Kérem az utóellenőrzést</button>
               <button className="button secondary" type="button" onClick={() => onSelectMaintenance("declined")}>Nem kérem, lezárhatjuk</button>
-            </div>
+            </div> : null}
+            {["awaiting_transfer", "transfer_reported"].includes(project.followup_check_status || "") ? (
+              <div className="maintenance-transfer">
+                <span className="micro-label">30 napos utóellenőrzés</span>
+                <h4>Banki átutalás</h4>
+                <div><span>Kedvezményezett</span><strong>{BANK_TRANSFER_DETAILS.name}</strong></div>
+                <div><span>IBAN</span><strong>{BANK_TRANSFER_DETAILS.iban}</strong></div>
+                <div><span>Közlemény</span><strong>{transferReference(project)}-CHECK30</strong></div>
+                <div><span>Összeg</span><strong>{formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")}</strong></div>
+                {project.followup_check_status === "awaiting_transfer" ? (
+                  <button className="button primary" type="button" onClick={onReportFollowupTransfer}>Elutaltam az összeget</button>
+                ) : (
+                  <p className="waiting-copy">Utalás jelezve — az adminisztrátor ellenőrzi és beütemezi az ellenőrzést.</p>
+                )}
+              </div>
+            ) : null}
+            {project.followup_check_status === "scheduled" ? (
+              <p className="decision-copy">Az utóellenőrzést beütemeztük {project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") + " napjára" : "körülbelül 30 nap múlvára"}.</p>
+            ) : null}
           </div>
-        ) : project.maintenance_option === "accepted" || project.maintenance_option === "declined" ? (
+        ) : project.followup_check_status === "declined" ? (
           <div className="decision-copy">
-            Választásod: {project.maintenance_option === "accepted" ? "Karbantartás elfogadva" : "Karbantartás elutasítva"}
+            Utóellenőrzés nélkül lezárva
           </div>
         ) : (
           <div style={{ display: "flex", gap: "12px", marginTop: "4px" }}>
-            <button className="button primary" type="button" onClick={() => onSelectMaintenance("requested")}>Kérek havidíjas ajánlatot</button>
+            <button className="button primary" type="button" onClick={() => onSelectMaintenance("requested")}>Kérek árat az utóellenőrzésre</button>
             <button className="button secondary" type="button" onClick={() => onSelectMaintenance("declined")}>Nem kérem, lezárhatjuk</button>
           </div>
         )}

@@ -106,6 +106,11 @@ type ClientProject = {
   subscription_status: string | null;
   subscription_started_at: string | null;
   subscription_cancel_requested_at: string | null;
+  followup_check_fee: number | null;
+  followup_check_status: string | null;
+  followup_check_transfer_reported: boolean;
+  followup_check_due_at: string | null;
+  followup_check_completed_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
   review_approved: boolean;
@@ -687,19 +692,33 @@ export function AdminDashboard() {
   }
 
   async function sendMaintenanceOffer(project: ClientProject) {
-    const fee = Number(maintenanceFees[project.id] ?? project.maintenance_monthly_fee ?? 0);
+    const fee = Number(maintenanceFees[project.id] ?? project.followup_check_fee ?? 0);
     if (!Number.isInteger(fee) || fee <= 0) {
-      setMessage("Adj meg egy érvényes, 0-nál nagyobb havi díjat.");
+      setMessage("Adj meg egy érvényes, 0-nál nagyobb egyszeri díjat.");
       return;
     }
     await updateClientProject(project.id, {
-      maintenance_monthly_fee: fee,
+      followup_check_fee: fee,
+      followup_check_status: "offered",
       maintenance_currency: project.offer_currency || "Ft",
       maintenance_option: "offered",
-      next_step: `Elkészült a karbantartási ajánlat: ${formatPrice(fee, project.offer_currency || "Ft")} / hó. Kérlek, fogadd el vagy utasítsd el az ügyfélkapuban.`
+      next_step: `Elkészült a 30 napos utóellenőrzés ajánlata: egyszeri ${formatPrice(fee, project.offer_currency || "Ft")}. Kérlek, fogadd el vagy utasítsd el az ügyfélkapuban.`
     });
-    await triggerNotification(project.user_id, project.contact_email, "Karbantartási ajánlat elkészült",
-      `A(z) "${project.title}" projekt karbantartási ajánlata ${formatPrice(fee, project.offer_currency || "Ft")} / hó. Az ügyfélkapuban tudsz dönteni.`, "/ugyfelkapu/dashboard#statuses");
+    await triggerNotification(project.user_id, project.contact_email, "Utóellenőrzési ajánlat elkészült",
+      `A(z) "${project.title}" projekt 30 napos utóellenőrzésének egyszeri díja ${formatPrice(fee, project.offer_currency || "Ft")}. Az ügyfélkapuban tudsz dönteni.`, "/ugyfelkapu/dashboard#statuses");
+  }
+
+  async function confirmFollowupPayment(project: ClientProject) {
+    const dueAt = new Date();
+    dueAt.setDate(dueAt.getDate() + 30);
+    await updateClientProject(project.id, {
+      followup_check_status: "scheduled",
+      followup_check_due_at: dueAt.toISOString().slice(0, 10),
+      status: "closed",
+      next_step: `Az utóellenőrzés kifizetve és ${dueAt.toLocaleDateString("hu-HU")} napjára beütemezve. Addig nincs teendőd.`
+    });
+    await triggerNotification(project.user_id, project.contact_email, "Utóellenőrzés beütemezve",
+      `A(z) "${project.title}" 30 napos utóellenőrzését ${dueAt.toLocaleDateString("hu-HU")} napjára beütemeztük.`, "/ugyfelkapu/dashboard#statuses");
   }
 
   async function rejectDeletion(project: ClientProject) {
@@ -1000,23 +1019,19 @@ export function AdminDashboard() {
           </div>
         )}
 
-        {project.maintenance_option === "accepted" ? (
+        {project.followup_check_status === "scheduled" || project.followup_check_status === "completed" ? (
           <div className="admin-subscription-row">
             <div>
-              <span>Karbantartás</span>
-              <strong>{formatPrice(project.maintenance_monthly_fee, project.maintenance_currency || "Ft")} / hó</strong>
-              <small>Állapot: {project.subscription_status === "active" ? "aktív" : project.subscription_status === "cancel_requested" ? "lemondásra vár" : project.subscription_status === "cancelled" ? "megszűnt" : "aktiválásra vár"}</small>
+              <span>30 napos utóellenőrzés</span>
+              <strong>{formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")} · egyszeri díj</strong>
+              <small>{project.followup_check_status === "completed" ? "Elvégezve" : `Ütemezve: ${project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") : "dátum nélkül"}`}</small>
             </div>
-            {project.subscription_status === "pending_activation" ? (
+            {project.followup_check_status === "scheduled" ? (
               <button className="button primary" type="button" onClick={() => updateClientProject(project.id, {
-                subscription_status: "active",
-                subscription_started_at: new Date().toISOString()
-              } as Partial<ClientProject>)}>Előfizetés aktiválása</button>
-            ) : null}
-            {project.subscription_status === "cancel_requested" ? (
-              <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, {
-                subscription_status: "cancelled"
-              })}>Lemondás lezárása</button>
+                followup_check_status: "completed",
+                followup_check_completed_at: new Date().toISOString(),
+                next_step: "A 30 napos utóellenőrzés elkészült. Az eredményről értesítést kapsz."
+              })}>Ellenőrzés kész</button>
             ) : null}
           </div>
         ) : null}
@@ -1127,22 +1142,28 @@ export function AdminDashboard() {
       launched: {
         who: project.final_transfer_reported && !project.final_payment_paid
           ? "admin"
+          : project.followup_check_status === "transfer_reported"
+            ? "admin"
           : project.final_payment_paid && project.maintenance_option === "requested"
             ? "admin"
             : "client",
         step: "4. lépés",
         headline: project.final_transfer_reported && !project.final_payment_paid
           ? "Ellenőrizd a végső fizetést"
+          : project.followup_check_status === "transfer_reported"
+            ? "Ellenőrizd az utóellenőrzési utalást"
           : project.final_payment_paid && project.maintenance_option === "requested"
-            ? "Állítsd be a karbantartási havidíjat"
+            ? "Állítsd be az utóellenőrzés egyszeri díját"
             : project.final_payment_paid && project.maintenance_option === "offered"
               ? "Ügyfél döntésére vár"
               : "Ügyfél lépésére vár",
         detail: project.final_transfer_reported && !project.final_payment_paid
           ? "Az ügyfél jelezte a hátralék utalását. Csak a bankszámla ellenőrzése után jelöld beérkezettnek."
+          : project.followup_check_status === "transfer_reported"
+            ? `Az ügyfél a ${formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")} egyszeri díj utalását jelezte. Ellenőrzés után ütemezd be a 30 napos ellenőrzést.`
           : project.final_payment_paid && project.maintenance_option === "requested"
-            ? "Az ügyfél havidíjas karbantartási ajánlatot kért. Add meg a pontos havi összeget és küldd el."
-            : "Az ügyfélnek kell fizetnie vagy döntenie a karbantartási ajánlatról. Addig nincs teendőd."
+            ? "Az ügyfél 30 napos utóellenőrzést kért. Add meg a projekt összetettségéhez illő egyszeri összeget és küldd el."
+            : "Az ügyfélnek kell fizetnie vagy döntenie az utóellenőrzési ajánlatról. Addig nincs teendőd."
       },
       paused: {
         who: "admin",
@@ -1859,7 +1880,7 @@ export function AdminDashboard() {
                             final_payment_paid: true,
                             final_payment_paid_at: new Date().toISOString(),
                             payment_status: "fully_paid",
-                            next_step: "A végső fizetés beérkezett. Dönts: kérsz-e havidíjas karbantartási ajánlatot, vagy lezárhatjuk a projektet."
+                            next_step: "A végső fizetés beérkezett. Dönts: kérsz-e egyszeri 30 napos utóellenőrzést, vagy lezárhatjuk a projektet."
                           })}
                         >
                           Végső fizetés beérkezett ✓
@@ -1871,16 +1892,27 @@ export function AdminDashboard() {
                   {project.status === "launched" && project.final_payment_paid && project.maintenance_option === "requested" && (
                     <div className="maintenance-admin-box">
                       <label className="admin-field">
-                        <span>Karbantartás havi díja ({project.offer_currency || "Ft"} / hó)</span>
+                        <span>30 napos utóellenőrzés egyszeri díja ({project.offer_currency || "Ft"})</span>
                         <input
                           inputMode="numeric"
-                          value={maintenanceFees[project.id] ?? String(project.maintenance_monthly_fee ?? "")}
+                          value={maintenanceFees[project.id] ?? String(project.followup_check_fee ?? "")}
                           onChange={(event) => setMaintenanceFees((current) => ({ ...current, [project.id]: event.target.value.replace(/\D/g, "") }))}
-                          placeholder="pl. 24900"
+                          placeholder="A projekt összetettsége alapján"
                         />
                       </label>
+                      <p className="waiting-copy">Egyszeri állapotfelmérés körülbelül 30 nappal az indulás után. Nem előfizetés, és nem tartalmaz automatikus fejlesztési munkát.</p>
                       <button className="button primary" type="button" onClick={() => sendMaintenanceOffer(project)}>
-                        Havidíjas ajánlat elküldése
+                        Egyszeri ajánlat elküldése
+                      </button>
+                    </div>
+                  )}
+
+                  {project.status === "launched" && project.followup_check_status === "transfer_reported" && (
+                    <div className="maintenance-admin-box">
+                      <strong>Utóellenőrzési utalás ellenőrzése</strong>
+                      <p>Egyszeri díj: {formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")}</p>
+                      <button className="button primary" type="button" onClick={() => confirmFollowupPayment(project)}>
+                        Összeg megérkezett — ütemezés 30 nap múlvára
                       </button>
                     </div>
                   )}

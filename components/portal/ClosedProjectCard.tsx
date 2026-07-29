@@ -12,10 +12,9 @@ type ClosedProjectCardProps = {
   reviewForm: ReviewFormValues;
   onReviewFormChange: (value: ReviewFormValues) => void;
   onSubmitReview: () => void;
-  onCancelSubscription: () => void;
 };
 
-export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview, onCancelSubscription }: ClosedProjectCardProps) {
+export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview }: ClosedProjectCardProps) {
   return (
     <article
       className="project-status-card detailed compact-closed"
@@ -59,22 +58,17 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
         </span>
       </div>
 
-      {project.maintenance_option === "accepted" ? (
+      {project.followup_check_status === "scheduled" || project.followup_check_status === "completed" ? (
         <div className="subscription-card">
           <div>
-            <span className="micro-label">Havi karbantartás</span>
-            <strong>{project.maintenance_monthly_fee?.toLocaleString("hu-HU")} {project.maintenance_currency || "Ft"} / hó</strong>
-            <small>
-              {project.subscription_status === "cancel_requested"
-                ? "Lemondás rögzítve — az aktuális időszak végén megszűnik."
-                : project.subscription_status === "active"
-                  ? "Aktív előfizetés"
-                  : "Aktiválás folyamatban"}
-            </small>
+            <span className="micro-label">30 napos utóellenőrzés</span>
+            <strong>
+              {project.followup_check_status === "completed"
+                ? "Az ellenőrzés elkészült"
+                : `Ütemezve: ${project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") : "hamarosan"}`}
+            </strong>
+            <small>Egyszeri szolgáltatás, nem előfizetés és nem újul meg automatikusan.</small>
           </div>
-          {project.subscription_status !== "cancel_requested" && project.subscription_status !== "cancelled" ? (
-            <button className="button secondary" type="button" onClick={onCancelSubscription}>Előfizetés lemondása</button>
-          ) : null}
         </div>
       ) : null}
 

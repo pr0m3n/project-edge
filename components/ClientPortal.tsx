@@ -101,6 +101,11 @@ export type Project = {
   maintenance_monthly_fee: number | null;
   maintenance_currency: string | null;
   subscription_status: string | null;
+  followup_check_fee: number | null;
+  followup_check_status: string | null;
+  followup_check_transfer_reported: boolean;
+  followup_check_due_at: string | null;
+  followup_check_completed_at: string | null;
   subscription_cancel_requested_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
@@ -1800,63 +1805,82 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   async function selectMaintenance(project: Project, option: string) {
     if (option === "declined") {
       const ok = await confirm({
-        title: "Lezárjuk karbantartás nélkül?",
-        message: "A projekt lezárul, és nem aktiváljuk a folyamatos karbantartási csomagot. Később bármikor kérheted emailben.",
+        title: "Lezárjuk utóellenőrzés nélkül?",
+        message: "A projekt lezárul. Nem lesz előfizetés; ha most nem kéred, később külön is kérhetsz technikai ellenőrzést.",
         confirmLabel: "Igen, lezárhatjuk",
         cancelLabel: "Mégse",
         danger: true
       });
       if (!ok) return;
     }
-    setNotice("Karbantartási igény mentése...");
+    setNotice("Utóellenőrzési igény mentése...");
     const requesting = option === "requested";
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: option,
-      ...(option === "accepted" ? { subscription_status: "pending_activation" } : {}),
+      followup_check_status: requesting ? "requested" : "declined",
       status: requesting ? "launched" : "closed",
       next_step: requesting
-        ? "Karbantartási ajánlatot kértél. Az adminisztrátor beállítja a havi díjat; addig nincs teendőd."
+        ? "30 napos utóellenőrzést kértél. Az adminisztrátor beállítja az egyszeri díjat; addig nincs teendőd."
         : "Projekt sikeresen lezárva. Köszönjük az együttműködést!"
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
-      setNotice(requesting ? "Karbantartási ajánlatkérés elküldve. Most az adminisztrátoron a sor." : "Döntésedet elmentettük. A projekt lezárult.");
+      setNotice(requesting ? "Utóellenőrzési ajánlatkérés elküldve. Most az adminisztrátoron a sor." : "Döntésedet elmentettük. A projekt lezárult.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
-        "Karbantartási döntés",
-        `Az ügyfél (${email}) döntött a karbantartásról a(z) "${project.title}" projektnél: ${requesting ? 'HAVIDÍJAS AJÁNLATOT KÉR' : option === 'accepted' ? 'ELFOGADTA' : 'NEM KÉRI'}.`,
+        "Utóellenőrzési döntés",
+        `Az ügyfél (${email}) döntött a 30 napos utóellenőrzésről a(z) "${project.title}" projektnél: ${requesting ? 'AJÁNLATOT KÉR' : 'NEM KÉRI'}.`,
         "/admin"
       );
-      await triggerNotification(userId, email, requesting ? "Karbantartási ajánlatkérés elküldve" : "Projekt sikeresen lezárva",
-        requesting ? `A(z) "${project.title}" projekthez karbantartási ajánlatot kértél. Értesítünk, amikor a havidíj elkészült.` : `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
+      await triggerNotification(userId, email, requesting ? "Utóellenőrzési ajánlatkérés elküldve" : "Projekt sikeresen lezárva",
+        requesting ? `A(z) "${project.title}" projekthez 30 napos utóellenőrzést kértél. Értesítünk, amikor az egyszeri díj elkészült.` : `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
         "/ugyfelkapu/dashboard#statuses");
       loadPortal(true);
     }
   }
 
-  async function cancelSubscription(project: Project) {
+  async function confirmFollowupCheck(project: Project) {
+    const fee = project.followup_check_fee;
+    if (!fee) {
+      setNotice("Az utóellenőrzés díja még nincs beállítva.");
+      return;
+    }
     const ok = await confirm({
-      title: "Karbantartási előfizetés lemondása",
-      message: "A lemondást azonnal rögzítjük. A szolgáltatás az aktuális rendezett időszak végéig aktív marad, utána nem újul meg.",
-      confirmLabel: "Lemondás rögzítése",
-      cancelLabel: "Mégse",
-      danger: true
+      title: "30 napos utóellenőrzés",
+      message: `Ez egyszeri ${formatPrice(fee, project.maintenance_currency || "Ft")} díj. Nincs előfizetés és nincs automatikus megújulás. Elfogadás után megjelennek az utalási adatok.`,
+      confirmLabel: "Kérem az ellenőrzést",
+      cancelLabel: "Mégse"
     });
     if (!ok) return;
     const { error } = await supabase.from("client_projects").update({
-      subscription_status: "cancel_requested",
-      subscription_cancel_requested_at: new Date().toISOString(),
-      next_step: "A karbantartási előfizetés lemondását rögzítettük. Az aktuális időszak végén megszűnik."
+      maintenance_option: "accepted",
+      followup_check_status: "awaiting_transfer",
+      followup_check_transfer_reported: false,
+      next_step: `A 30 napos utóellenőrzést rögzítettük. Utald el a(z) ${formatPrice(fee, project.maintenance_currency || "Ft")} egyszeri díjat, majd jelezd az ügyfélkapuban.`
     }).eq("id", project.id);
     if (error) {
-      setNotice("Nem sikerült rögzíteni a lemondást.");
+      setNotice("Nem sikerült rögzíteni az utóellenőrzést.");
       return;
     }
-    await triggerNotification(null, "admin@projectedge.hu", "Előfizetés lemondása",
-      `Az ügyfél (${email}) lemondta a(z) "${project.title}" karbantartási előfizetését.`, "/admin");
-    setNotice("A lemondást rögzítettük.");
+    setNotice("Az utóellenőrzés rögzítve. Megjelentek az utalási adatok.");
+    loadPortal(true);
+  }
+
+  async function reportFollowupTransfer(project: Project) {
+    const { error } = await supabase.from("client_projects").update({
+      followup_check_transfer_reported: true,
+      followup_check_status: "transfer_reported",
+      next_step: "Jelezted az utóellenőrzés díjának utalását. Az adminisztrátor ellenőrzi, majd beütemezi a 30 napos ellenőrzést."
+    }).eq("id", project.id);
+    if (error) {
+      setNotice("Nem sikerült jelezni az utalást.");
+      return;
+    }
+    await triggerNotification(null, "admin@projectedge.hu", "Utóellenőrzés utalása bejelentve",
+      `Az ügyfél (${email}) jelezte a(z) "${project.title}" 30 napos utóellenőrzési díjának utalását. Ellenőrizd a bankszámlát.`, "/admin");
+    setNotice("Utalás jelezve. Most az adminisztrátoron a sor.");
     loadPortal(true);
   }
 
@@ -2074,7 +2098,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           reviewForm={reviewForm}
           onReviewFormChange={setReviewForm}
           onSubmitReview={() => submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference)}
-          onCancelSubscription={() => cancelSubscription(project)}
         />
       );
     }
@@ -2214,6 +2237,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             project={project}
             onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
             onSelectMaintenance={(choice) => selectMaintenance(project, choice)}
+            onConfirmFollowupCheck={() => confirmFollowupCheck(project)}
+            onReportFollowupTransfer={() => reportFollowupTransfer(project)}
           />
         )}
 

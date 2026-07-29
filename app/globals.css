@@ -1797,6 +1797,93 @@ p {
   margin: 0;
 }
 
+.maintenance-scope {
+  display: grid;
+  gap: 7px;
+}
+
+.maintenance-scope span {
+  align-items: flex-start;
+  color: #33474c;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.maintenance-scope span::before {
+  color: #287177;
+  content: "✓";
+  flex: 0 0 auto;
+  font-weight: 850;
+}
+
+.maintenance-boundary {
+  background: #fff8ed;
+  border: 1px solid #e8c889;
+  border-radius: 12px;
+  color: #664b1e;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 2px 0;
+  padding: 11px 13px;
+}
+
+.maintenance-total {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #c8d9da;
+  border-radius: 13px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.maintenance-total span {
+  color: #53636b;
+  font-size: 13px;
+}
+
+.maintenance-total strong {
+  color: #214f53;
+  font-size: 20px;
+}
+
+.maintenance-transfer {
+  background: #fff;
+  border: 1px solid #b8cdcf;
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.maintenance-transfer h4 {
+  color: #243034;
+  margin: 0 0 3px;
+}
+
+.maintenance-transfer > div {
+  align-items: start;
+  border-top: 1px solid #e1e8e9;
+  display: grid;
+  gap: 3px;
+  grid-template-columns: minmax(100px, 0.6fr) minmax(0, 1.4fr);
+  padding-top: 8px;
+}
+
+.maintenance-transfer > div span {
+  color: #64747b;
+  font-size: 12px;
+}
+
+.maintenance-transfer > div strong {
+  color: #26363b;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
 .decision-copy {
   color: #315f63;
   font-size: 14px;
