@@ -1726,6 +1726,27 @@ export function AdminDashboard() {
                 </section>
               ) : null}
 
+              {project.brief_data?.domainPurchaseState === "submitted" ? (
+                <section className="admin-assets-block">
+                  <span className="admin-assets-title">Megvásárolt domain ellenőrzése</span>
+                  <div className="admin-brief-grid">
+                    <div>
+                      <span>Domain</span>
+                      <strong>{project.brief_data.domainName}</strong>
+                    </div>
+                    <div>
+                      <span>Ügyfél jelzése</span>
+                      <strong>Aktív státusz elküldve</strong>
+                    </div>
+                  </div>
+                  {project.brief_data.domainProofUrl ? (
+                    <a className="button secondary compact-action" href={project.brief_data.domainProofUrl} target="_blank" rel="noreferrer">
+                      Igazolás megnyitása
+                    </a>
+                  ) : null}
+                </section>
+              ) : null}
+
               {(() => {
                 const logs = changeLogs[project.id] ?? [];
                 if (logs.length === 0) return null;

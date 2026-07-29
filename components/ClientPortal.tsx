@@ -84,6 +84,10 @@ export type Project = {
     contentFileUrls?: string[];
     brandColors?: string;
     photoUrls?: string[];
+    domainName?: string;
+    domainStatus?: string;
+    domainProofUrl?: string;
+    domainPurchaseState?: string;
   } | null;
   last_modified_at: string | null;
   last_modified_by: string | null;
@@ -180,6 +184,8 @@ const initialProject = {
   // Anyagok és hozzáférések (5. lépés)
   domainStatus: "",
   domainName: "",
+  domainProofUrl: "",
+  domainPurchaseState: "",
   hostingAccess: "",
   existingPlatform: "",
   wpAccess: "",
@@ -489,55 +495,6 @@ export function paletteByName(name?: string) {
   return paletteOptions.find(([, label]) => label === name)?.[2] ?? paletteOptions[0][2];
 }
 
-function printDomainGuide(companyName?: string) {
-  const win = window.open("", "_blank");
-  if (!win) return;
-  const heading = companyName ? `${escHtml(companyName)} — domain-vásárlási útmutató` : "Domain-vásárlási útmutató";
-  win.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${heading}</title>` +
-    `<style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6;max-width:720px;margin:0 auto}h1{color:#111;font-size:26px}h2{color:#111;font-size:18px;margin-top:32px}ul{padding-left:20px}li{margin-bottom:6px}.note{color:#666;font-size:13px}</style></head>` +
-    `<body>` +
-    `<h1>${heading}</h1>` +
-    `<p>Ez az útmutató lépésről lépésre végigvezet azon, hogyan szerezz saját domaint (weboldal-címet) a vállalkozásodnak.</p>` +
-    `<h2>1. Mi az a domain, és miért kell?</h2>` +
-    `<p>A domain a weboldalad internetes címe, pl. <strong>vallalkozasod.hu</strong>. Ez a te tulajdonod — akkor is a tiéd marad, ha később fejlesztőt váltasz.</p>` +
-    `<h2>2. Hogyan válassz domain nevet?</h2>` +
-    `<ul>` +
-    `<li>Legyen rövid, könnyen megjegyezhető és kimondható.</li>` +
-    `<li>Lehetőleg <strong>.hu</strong> vagy <strong>.com</strong> végződés.</li>` +
-    `<li>Kerüld a kötőjeleket és számokat, ha nem feltétlenül szükséges.</li>` +
-    `<li>Érdemes leellenőrizni, hogy a név nem ütközik-e védjeggyel.</li>` +
-    `</ul>` +
-    `<h2>3. Hol regisztrálhatod?</h2>` +
-    `<p>Bármelyik akkreditált, .hu domain regisztrálására jogosult szolgáltatónál regisztrálhatsz. Azt, hogy egy .hu domain név szabad-e, a hivatalos nyilvántartó (a domain.hu oldal, amit az ISZT — Internet Szolgáltatók Tanácsa üzemeltet) oldalán tudod ellenőrizni.</p>` +
-    `<h2>4. Mennyibe kerül? <span class="note">(tájékoztató jellegű, szolgáltatónként és évenként változhat)</span></h2>` +
-    `<ul>` +
-    `<li>.hu domain: nagyságrendileg 2000–5000 Ft / év</li>` +
-    `<li>.com domain: nagyságrendileg 3000–6000 Ft / év</li>` +
-    `</ul>` +
-    `<h2>5. A regisztráció lépései</h2>` +
-    `<ol>` +
-    `<li>Döntsd el a domain nevet.</li>` +
-    `<li>Ellenőrizd, hogy szabad-e.</li>` +
-    `<li>Válassz egy szolgáltatót, és regisztráld.</li>` +
-    `<li>A tulajdonos adatainál a <strong>saját</strong> (nem a fejlesztő) adataidat add meg.</li>` +
-    `<li>Fizesd ki a regisztrációt.</li>` +
-    `<li>Oszd meg velünk a hozzáférést / DNS-beállítási jogot, hogy rá tudjuk kötni a weboldalt.</li>` +
-    `</ol>` +
-    `<h2>6. Mi az a DNS, egyszerűen?</h2>` +
-    `<p>A DNS olyan, mint egy telefonkönyv: megmondja a böngészőnek, melyik szerveren található a weboldalad. Ezt a beállítást, amint megvan a domained, mi elvégezzük.</p>` +
-    `<h2>7. Gyakori hibák</h2>` +
-    `<ul>` +
-    `<li>Ne a fejlesztő nevére regisztráltasd a domaint — legyen mindig a sajátod.</li>` +
-    `<li>Ne felejtsd el a megújítást — sokan elveszítik a domainjüket lejárat miatt.</li>` +
-    `<li>Ne vásárolj felesleges extra domaineket "csak biztos, ami biztos" alapon.</li>` +
-    `</ul>` +
-    `<p class="note">Ha bármiben elakadsz, írj nekünk üzenetet az ügyfélkapun — szívesen segítünk.</p>` +
-    `</body></html>`
-  );
-  win.document.close();
-}
-
 type ClientPortalProps = {
   view?: "auth" | "dashboard";
 };
@@ -590,7 +547,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [assetUploading, setAssetUploading] = useState(false);
   const [contentUploading, setContentUploading] = useState(false);
   const [validationTarget, setValidationTarget] = useState("");
-  const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [customFontOpen, setCustomFontOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [supportThreadOpen, setSupportThreadOpen] = useState(false);
@@ -601,10 +557,24 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [newPassword, setNewPassword] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [recentlyClosedProjectId, setRecentlyClosedProjectId] = useState<string | null>(null);
+  const [pendingBrandColor, setPendingBrandColor] = useState("#76ABAE");
+  const [domainUpdateProjectId, setDomainUpdateProjectId] = useState<string | null>(null);
+  const [domainUpdateName, setDomainUpdateName] = useState("");
+  const [domainProofUrl, setDomainProofUrl] = useState("");
+  const [domainProofUploading, setDomainProofUploading] = useState(false);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
   const online = useOnline();
+
+  useEffect(() => {
+    if (!validationTarget) return;
+    const currentMessage = validateProjectStep(projectStep, projectForm);
+    if (!currentMessage || validationTargetFor(currentMessage) !== validationTarget) {
+      setValidationTarget("");
+      document.querySelectorAll(".validation-error").forEach((node) => node.classList.remove("validation-error"));
+    }
+  }, [projectForm, projectStep, validationTarget]);
 
   // Mirror logged-in (dashboard) notices into transient toasts. Auth screens
   // keep their inline form-status message. Transient "...folyamatban" notices
@@ -1311,6 +1281,67 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }));
     setContentUploading(false);
     setNotice(`${uploaded.length} szöveges fájl sikeresen feltöltve.`);
+  }
+
+  async function uploadDomainProof(file: File) {
+    if (!userId) return;
+    if (!["image/png", "image/jpeg", "image/webp", "application/pdf"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setNotice("A domain igazolása PNG, JPG, WEBP vagy PDF lehet, legfeljebb 10 MB méretben.");
+      return;
+    }
+    setDomainProofUploading(true);
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${userId}/domain-${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage.from("client-assets").upload(path, file);
+    if (error) {
+      setNotice("A domain igazolásának feltöltése nem sikerült.");
+      setDomainProofUploading(false);
+      return;
+    }
+    setDomainProofUrl(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+    setDomainProofUploading(false);
+    setNotice("A domain igazolása feltöltve.");
+  }
+
+  async function submitPurchasedDomain(project: Project) {
+    const domain = domainUpdateName.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (!domain || !domain.includes(".")) {
+      setNotice("Írd be a megvásárolt domain nevét, például: vallalkozasod.hu.");
+      return;
+    }
+    if (!domainProofUrl) {
+      setNotice("Tölts fel egy képet vagy PDF-et az aktív domain státuszáról.");
+      return;
+    }
+    const briefData = {
+      ...(project.brief_data ?? {}),
+      domainName: domain,
+      domainProofUrl,
+      domainPurchaseState: "submitted"
+    };
+    const { error } = await supabase
+      .from("client_projects")
+      .update({
+        brief_data: briefData,
+        next_step: "A domain adatait elküldted. Most az adminisztrátor ellenőrzi, majd megadja a pontos DNS-beállításokat."
+      })
+      .eq("id", project.id);
+    if (error) {
+      setNotice("A domain adatainak elküldése nem sikerült.");
+      return;
+    }
+    setProjects((current) => current.map((item) => item.id === project.id ? { ...item, brief_data: briefData, next_step: "A domain adatait elküldted. Most az adminisztrátor ellenőrzi, majd megadja a pontos DNS-beállításokat." } : item));
+    setDomainUpdateProjectId(null);
+    setDomainUpdateName("");
+    setDomainProofUrl("");
+    setNotice("A domain adatait elküldtük. Most az adminisztrátoron a sor.");
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Domain adatok érkeztek",
+      `Az ügyfél (${email}) elküldte a(z) ${domain} domain adatait a(z) "${project.title}" projekthez.`,
+      "/admin"
+    );
   }
 
   async function createProject(event: FormEvent<HTMLFormElement>) {
@@ -2116,6 +2147,67 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
         <ProjectTurnGuide project={project} />
 
+        {project.brief_data?.domainStatus === "need" ? (
+          <section className="project-domain-action">
+            <div className="project-domain-action-copy">
+              <span className="micro-label">Domain következő lépés</span>
+              {project.brief_data.domainPurchaseState === "submitted" ? (
+                <>
+                  <h4>Domain elküldve: {project.brief_data.domainName}</h4>
+                  <p>Az igazolást megkaptuk. Most az adminisztrátor ellenőrzi, majd az átadási listában megadja a szükséges DNS-rekordokat.</p>
+                  {project.brief_data.domainProofUrl ? <a href={project.brief_data.domainProofUrl} target="_blank" rel="noreferrer">Feltöltött igazolás megnyitása</a> : null}
+                </>
+              ) : (
+                <>
+                  <h4>Ha megvetted a domaint, itt küldd el.</h4>
+                  <p>A briefet ettől még beküldheted. Vásárlás után add meg a domain nevét és tölts fel egy képet az aktív státuszról.</p>
+                </>
+              )}
+            </div>
+            {project.brief_data.domainPurchaseState !== "submitted" ? (
+              <button
+                className="button secondary compact-action"
+                type="button"
+                onClick={() => {
+                  setDomainUpdateProjectId((current) => current === project.id ? null : project.id);
+                  setDomainUpdateName(project.brief_data?.domainName ?? "");
+                  setDomainProofUrl(project.brief_data?.domainProofUrl ?? "");
+                }}
+              >
+                Domain adatok elküldése
+              </button>
+            ) : <span className="sent-state">✓ Elküldve</span>}
+            {domainUpdateProjectId === project.id ? (
+              <div className="project-domain-submit">
+                <label>
+                  <span>Megvásárolt domain</span>
+                  <input value={domainUpdateName} onChange={(event) => setDomainUpdateName(event.target.value)} placeholder="vallalkozasod.hu" />
+                </label>
+                <div className="asset-uploader">
+                  <label htmlFor={`domain-proof-${project.id}`}>
+                    <strong>{domainProofUploading ? "Feltöltés..." : domainProofUrl ? "✓ Igazolás feltöltve" : "Aktív státusz feltöltése"}</strong>
+                    <span>PNG, JPG, WEBP vagy PDF · legfeljebb 10 MB</span>
+                  </label>
+                  <input
+                    id={`domain-proof-${project.id}`}
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp,.pdf,image/*,application/pdf"
+                    disabled={domainProofUploading}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) uploadDomainProof(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </div>
+                <button className="button primary compact-action" type="button" onClick={() => submitPurchasedDomain(project)}>
+                  Domain beküldése
+                </button>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         <div className="project-status-head">
           <div>
             <strong>{project.title}</strong>
@@ -2838,17 +2930,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ))}
                       </div>
                     ) : null}
-                    <div className="wizard-visual style-lab stable-style-preview">
-                      <div
-                        className={`style-card vibe-${projectForm.vibe}`}
-                        style={{ background: activePaletteColors[0], color: activePaletteColors[2] }}
-                      >
-                        <span style={{ color: activePaletteColors[1] }}>{selectedVibe[1]}</span>
-                        <strong>{projectForm.company || "Márka"}</strong>
-                        <p>{selectedVibe[2]}</p>
-                        <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
-                      </div>
-                    </div>
                     <div className="field">
                       <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista? <span className="optional-label">Nem kötelező</span></label>
                       <textarea
@@ -2925,20 +3006,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
                     {projectForm.domainStatus === "need" ? (
                       <div className="domain-help-card">
-                        <div className="domain-help-icon">R</div>
-                        <div>
+                        <img className="domain-guide-cover" src="/guides/domain-guide-cover.png" alt="Rackhost domainvásárlási útmutató borítója" />
+                        <div className="domain-help-copy">
                           <span className="micro-label">Rackhost · teljes vásárlási útmutató</span>
-                          <h4>Vedd meg végig, képernyőről képernyőre</h4>
-                          <p>A képes PDF megmutatja a keresést, a kosarat, a regisztrációt, a tulajdonosi jóváhagyást és azt is, pontosan mit küldj el nekünk utána.</p>
+                          <h4>Vásárlás képernyőről képernyőre</h4>
+                          <p>Rövid, képes útmutató a kereséstől az aktív domainig. A briefet most is beküldheted; a megvásárolt domainhez külön beküldőgomb jelenik meg a projektednél.</p>
+                          <a className="domain-guide-button" href="/guides/projectedge-domainvasarlas-rackhost.pdf" target="_blank" rel="noreferrer">
+                            PDF megnyitása <span>↗</span>
+                          </a>
                         </div>
-                        <a className="button primary" href="/guides/projectedge-domainvasarlas-rackhost.pdf" target="_blank" rel="noreferrer">
-                          Képes PDF megnyitása
-                        </a>
                         <div className="domain-guide-summary">
-                          <strong>Utána csak ezt küldd el:</strong>
-                          <span>1. a megvásárolt domain nevét</span>
-                          <span>2. egy képet arról, hogy a domain aktív</span>
-                          <span>3. jelszót és bankkártyaadatot soha</span>
+                          <strong>Vásárlás után a projektednél küldöd el:</strong>
+                          <span>domainnév + aktív státusz képe</span>
+                          <span>jelszó és bankkártyaadat nélkül</span>
                         </div>
                       </div>
                     ) : null}
@@ -3069,22 +3149,52 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             .split(",")
                             .map((color) => color.trim())
                             .filter((color) => /^#[0-9a-f]{6}$/i.test(color))
-                            .map((color) => <i key={color} style={{ background: color }} title={color} />)}
-                          <label>
+                            .filter((color, index, colors) => colors.indexOf(color) === index)
+                            .map((color) => (
+                              <button
+                                className="brand-color-chip"
+                                key={color}
+                                style={{ background: color }}
+                                title={`${color} eltávolítása`}
+                                type="button"
+                                onClick={() => setProjectForm((current) => ({
+                                  ...current,
+                                  brandColors: current.brandColors
+                                    .split(",")
+                                    .map((item) => item.trim())
+                                    .filter((item) => item.toUpperCase() !== color.toUpperCase())
+                                    .join(", ")
+                                }))}
+                              >
+                                <span>×</span>
+                              </button>
+                            ))}
+                          <div className="brand-color-add">
                             <input
                               type="color"
-                              aria-label="Új márkaszín hozzáadása"
-                              value="#76ABAE"
-                              onChange={(event) => {
-                                const next = event.target.value.toUpperCase();
+                              aria-label="Márkaszín kiválasztása"
+                              value={pendingBrandColor}
+                              onChange={(event) => setPendingBrandColor(event.target.value.toUpperCase())}
+                            />
+                            <code>{pendingBrandColor}</code>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = pendingBrandColor.toUpperCase();
                                 setProjectForm((current) => {
                                   const colors = current.brandColors.split(",").map((item) => item.trim()).filter(Boolean);
-                                  return { ...current, brandColors: [...colors, next].join(", ") };
+                                  return {
+                                    ...current,
+                                    brandColors: colors.some((item) => item.toUpperCase() === next)
+                                      ? colors.join(", ")
+                                      : [...colors, next].join(", ")
+                                  };
                                 });
                               }}
-                            />
-                            <span>+ Szín hozzáadása</span>
-                          </label>
+                            >
+                              Hozzáadás
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3381,6 +3491,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <div className="live-brief-head">
                 <span>Élő adatlap</span>
                 <strong>{briefProgress}% kész</strong>
+              </div>
+              <div
+                className={`sidebar-style-preview vibe-${projectForm.vibe || "premium"}`}
+                style={{ background: activePaletteColors[0], color: activePaletteColors[2] }}
+              >
+                <span style={{ color: activePaletteColors[1] }}>{selectedVibe[1]}</span>
+                <strong>{projectForm.company || "Márkád"}</strong>
+                <p>{selectedVibe[2]}</p>
+                <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
               </div>
               <h3>{projectForm.title || "A projekt neve ide kerül"}</h3>
               <p>{projectForm.goals || "Ahogy válaszolsz, itt épül össze az anyag, amiből ajánlatot tudok adni."}</p>
