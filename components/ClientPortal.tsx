@@ -79,6 +79,9 @@ export type Project = {
     customAccent?: string;
     customText?: string;
     customCta?: string;
+    websiteStatus?: string;
+    contentBrief?: string;
+    photoUrls?: string[];
   } | null;
   last_modified_at: string | null;
   last_modified_by: string | null;
@@ -97,6 +100,8 @@ export type Project = {
   maintenance_option: string | null;
   maintenance_monthly_fee: number | null;
   maintenance_currency: string | null;
+  subscription_status: string | null;
+  subscription_cancel_requested_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
   review_approved: boolean;
@@ -160,6 +165,7 @@ const initialProject = {
   title: "",
   vibe: "",
   website: "",
+  websiteStatus: "",
   // Anyagok és hozzáférések (5. lépés)
   domainStatus: "",
   domainName: "",
@@ -171,7 +177,9 @@ const initialProject = {
   brandColors: "",
   fontPreference: "",
   contentSource: "",
+  contentBrief: "",
   photoSource: "",
+  photoUrls: [] as string[],
   socialLinks: "",
   contactEmail: "",
   contactPhone: "",
@@ -195,13 +203,15 @@ function validateProjectStep(step: number, form: BriefFormValues): string | null
   if (step === 0) {
     if (form.title.trim().length < 2) return "Add meg a projekt nevét legalább 2 karakterrel.";
     if (form.company.trim().length < 2) return "Add meg a cég vagy márka nevét legalább 2 karakterrel.";
-    if (!form.projectType) return "Válassz projekt típust.";
+    if (!splitListValue(form.projectType).length) return "Válassz legalább egy projekt típust.";
+    if (!form.websiteStatus) return "Jelöld, hogy van-e már weboldalad.";
+    if (form.websiteStatus === "yes" && !form.website.trim()) return "Add meg a meglévő weboldal címét.";
   }
 
   if (step === 1) {
     if (form.goals.trim().length < 10) return "Írd le legalább egy rövid mondatban, mit szeretnél elérni az oldallal.";
     if (form.audience.trim().length < 5) return "Írd le legalább néhány szóval, kiknek készül az oldal.";
-    if (!form.priority) return "Válassz egy prioritást.";
+    if (!splitListValue(form.priority).length) return "Válassz legalább egy vágyott eredményt.";
   }
 
   if (step === 2) {
@@ -213,30 +223,67 @@ function validateProjectStep(step: number, form: BriefFormValues): string | null
   if (step === 3) {
     if (!form.vibe) return "Válassz vizuális hangulatot.";
     if (!form.palette) return "Válassz színirányt.";
-    if (form.style.trim().length < 8) return "Írj legalább néhány szót a kívánt stílusról, példáról vagy tiltólistáról.";
   }
 
   if (step === 4) {
     if (!form.domainStatus) return "Válaszd ki, hogy van-e már domained.";
     if (form.domainStatus === "have" && !form.domainName.trim()) return "Add meg a meglévő domain nevét.";
     if (form.domainStatus === "have" && !form.hostingAccess) return "Válaszd ki, hogyan lesz elérhető a tárhely/domain hozzáférés.";
-    if (form.website.trim() && !form.existingPlatform) return "Válaszd ki, milyen rendszerben fut a jelenlegi weboldal.";
-    if (form.website.trim() && form.existingPlatform === "wordpress" && !form.wpAccess) return "Válaszd ki, tudsz-e WordPress hozzáférést adni.";
+    if (form.websiteStatus === "yes" && !form.existingPlatform) return "Válaszd ki, milyen rendszerben fut a jelenlegi weboldal.";
+    if (form.websiteStatus === "yes" && form.existingPlatform === "wordpress" && !form.wpAccess) return "Válaszd ki, tudsz-e WordPress hozzáférést adni.";
     if (!form.logoStatus) return "Válaszd ki, van-e már logód.";
-    if ((form.logoStatus === "vector" || form.logoStatus === "raster") && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
-    if (form.logoStatus === "none" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
+    if (form.logoStatus === "yes" && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
+    if (form.logoStatus === "no" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
     if (!form.brandColors.trim()) return "Írd be a márkaszíneket, vagy írd azt, hogy: rátok bízom.";
     if (!form.fontPreference.trim()) return "Válassz betűtípus-stílust, vagy válaszd a nincs preferencia lehetőséget.";
     if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
+    if (form.contentSource === "studio" && form.contentBrief.trim().length < 30) return "Mutasd be röviden a céget, hogy hiteles szöveget tudjunk írni.";
     if (!form.photoSource) return "Válaszd ki, honnan lesznek a képek.";
+    if (form.photoSource === "own" && form.photoUrls.length === 0) return "Tölts fel legalább egy saját képet.";
     if (!form.contactEmail.trim() && !form.contactPhone.trim()) return "Adj meg legalább egy kapcsolati email címet vagy telefonszámot.";
     if (form.contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) return "Adj meg érvényes kapcsolati email címet.";
     if (form.contactPhone.trim() && form.contactPhone.replace(/\D/g, "").length < 7) return "Adj meg érvényes telefonszámot.";
-    if (!form.analyticsAccess) return "Válaszd ki, hogyan kezeljük a mérést.";
+    if (form.websiteStatus === "yes" && !form.analyticsAccess) return "Válaszd ki, hogyan kezeljük a régi oldal mérését.";
     if (!form.billingDetails.trim()) return "Add meg a számlázási adatokat, vagy írd azt, hogy: magánszemély.";
   }
 
   return null;
+}
+
+function validationTargetFor(message: string) {
+  const targets: Array<[RegExp, string]> = [
+    [/projekt nevét/i, "project-title"],
+    [/cég vagy márka/i, "project-company"],
+    [/projekt típust/i, "project-types"],
+    [/van-e már weboldalad/i, "website-status"],
+    [/weboldal címét/i, "project-website"],
+    [/mit szeretnél elérni/i, "project-goals"],
+    [/kiknek készül/i, "project-audience"],
+    [/vágyott eredményt|prioritást/i, "project-priorities"],
+    [/fontos oldalt/i, "project-pages"],
+    [/kért funkciót/i, "project-features"],
+    [/költségkeretet/i, "project-budget"],
+    [/vizuális hangulatot/i, "project-vibe"],
+    [/színirányt/i, "project-palette"],
+    [/domained/i, "domain-status"],
+    [/domain nevét/i, "domain-name"],
+    [/tárhely|domain hozzáférés/i, "hosting-access"],
+    [/milyen rendszerben/i, "existing-platform"],
+    [/WordPress hozzáférést/i, "wp-access"],
+    [/van-e már logód/i, "logo-status"],
+    [/Töltsd fel a logót/i, "logo-upload"],
+    [/logótervezést/i, "logo-design"],
+    [/márkaszíneket/i, "brand-colors"],
+    [/betűtípus/i, "font-preference"],
+    [/ki írja a szövegeket/i, "content-source"],
+    [/Mutasd be röviden/i, "content-brief"],
+    [/honnan lesznek a képek/i, "photo-source"],
+    [/saját képet/i, "photo-upload"],
+    [/kapcsolati email|telefonszámot/i, "contact-details"],
+    [/régi oldal mérését/i, "analytics-access"],
+    [/számlázási adatokat/i, "billing-details"]
+  ];
+  return targets.find(([pattern]) => pattern.test(message))?.[1] ?? "";
 }
 
 const initialTicket = {
@@ -360,6 +407,8 @@ const wpAccessLabels: Record<string, string> = {
 };
 
 const logoLabels: Record<string, string> = {
+  yes: "van, feltöltve",
+  no: "nincs logó",
   vector: "van, vektoros",
   raster: "van, csak képként",
   none: "nincs logó"
@@ -524,6 +573,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [assetUploading, setAssetUploading] = useState(false);
+  const [validationTarget, setValidationTarget] = useState("");
+  const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [customFontOpen, setCustomFontOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [supportThreadOpen, setSupportThreadOpen] = useState(false);
@@ -795,7 +847,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const selectedProject =
     activeProjects.find((p) => p.id === selectedProjectId) ?? activeProjects.find((p) => p.id === defaultProjectId) ?? activeProjects[0];
 
-  const selectedProjectType = projectTypeOptions.find(([value]) => value === projectForm.projectType) ?? projectTypeOptions[0];
+  const selectedProjectTypeLabels = splitListValue(projectForm.projectType)
+    .map((value) => projectTypeOptions.find(([option]) => option === value)?.[1])
+    .filter(Boolean);
   const selectedVibe = vibeOptions.find(([value]) => value === projectForm.vibe) ?? vibeOptions[0];
   const selectedPalette = paletteOptions.find(([value]) => value === projectForm.palette) ?? paletteOptions[0];
   const activePaletteColors =
@@ -804,6 +858,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       : selectedPalette[2];
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
 
+  function revealValidation(message: string) {
+    const target = validationTargetFor(message);
+    setNotice(message);
+    setValidationTarget(target);
+    if (!target) return;
+    window.setTimeout(() => {
+      document.querySelectorAll(".validation-error").forEach((node) => node.classList.remove("validation-error"));
+      const element = document.getElementById(target);
+      element?.classList.add("validation-error");
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const focusable = element?.matches("input,textarea,select,button")
+        ? element
+        : element?.querySelector<HTMLElement>("input,textarea,select,button");
+      focusable?.focus({ preventScroll: true });
+    }, 80);
+  }
+
   function moveToProjectStep(nextStep: number) {
     const target = Math.max(0, Math.min(briefSteps.length - 1, nextStep));
     if (target > projectStep) {
@@ -811,12 +882,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         const validationMessage = validateProjectStep(step, projectForm);
         if (validationMessage) {
           setProjectStep(step);
-          setNotice(validationMessage);
+          revealValidation(validationMessage);
           return;
         }
       }
     }
     setNotice("");
+    setValidationTarget("");
+    document.querySelectorAll(".validation-error").forEach((node) => node.classList.remove("validation-error"));
     setProjectStep(target);
   }
 
@@ -825,7 +898,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const validationMessage = validateProjectStep(step, projectForm);
       if (validationMessage) {
         setProjectStep(step);
-        setNotice(validationMessage);
+        revealValidation(validationMessage);
         return false;
       }
     }
@@ -1164,6 +1237,31 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice("Logó sikeresen feltöltve.");
   }
 
+  async function uploadProjectPhotos(files: File[]) {
+    if (!userId || files.length === 0) return;
+    const images = files.filter((file) => file.type.startsWith("image/") && file.size <= 10 * 1024 * 1024);
+    if (images.length !== files.length) {
+      setNotice("Csak legfeljebb 10 MB-os képfájlokat tölthetsz fel.");
+      return;
+    }
+    setAssetUploading(true);
+    const uploaded: string[] = [];
+    for (const file of images) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+      const { error } = await supabase.storage.from("client-assets").upload(path, file);
+      if (error) {
+        setAssetUploading(false);
+        setNotice("Az egyik kép feltöltése nem sikerült. Próbáld újra.");
+        return;
+      }
+      uploaded.push(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+    }
+    setProjectForm((current) => ({ ...current, photoUrls: [...current.photoUrls, ...uploaded] }));
+    setAssetUploading(false);
+    setNotice(`${uploaded.length} kép sikeresen feltöltve.`);
+  }
+
   async function createProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!userId) {
@@ -1181,11 +1279,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       : projectForm.domainStatus === "need"
         ? "Domain: még nincs — segítséget kér a regisztrációhoz"
         : "";
-    const platformLine = projectForm.website.trim() && projectForm.existingPlatform
+    const platformLine = projectForm.websiteStatus === "yes" && projectForm.existingPlatform
       ? `Jelenlegi rendszer: ${platformLabels[projectForm.existingPlatform] ?? projectForm.existingPlatform}${projectForm.existingPlatform === "wordpress" && wpAccessLabels[projectForm.wpAccess] ? ` — ${wpAccessLabels[projectForm.wpAccess]}` : ""}`
       : "";
     const logoLine = projectForm.logoStatus
-      ? `Logó: ${logoLabels[projectForm.logoStatus]}${projectForm.logoStatus === "none" && projectForm.wantLogoDesign ? ` — ${projectForm.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}` : ""}`
+      ? `Logó: ${logoLabels[projectForm.logoStatus]}${projectForm.logoStatus === "no" && projectForm.wantLogoDesign ? ` — ${projectForm.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}` : ""}`
       : "";
 
     const detailedGoals = [
@@ -1196,14 +1294,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
       `Vizuális karakter: ${selectedVibe[1]}`,
       `Színirány: ${selectedPalette[1]}${projectForm.palette === "custom" ? ` (${activePaletteColors.join(", ")})` : ""}`,
-      `Prioritás: ${priorityLabels[projectForm.priority] ?? projectForm.priority}`,
+      `Prioritás: ${splitListValue(projectForm.priority).map((value) => priorityLabels[value] ?? value).join(", ")}`,
       domainLine,
       platformLine,
       logoLine,
       projectForm.brandColors ? `Márkaszín: ${projectForm.brandColors}` : "",
       projectForm.fontPreference ? `Betűtípus: ${projectForm.fontPreference}` : "",
       `Szövegek: ${projectForm.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
+      projectForm.contentBrief ? `Cégbemutató a szövegíráshoz: ${projectForm.contentBrief}` : "",
       projectForm.photoSource ? `Képek: ${projectForm.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
+      projectForm.photoUrls.length ? `Feltöltött képek: ${projectForm.photoUrls.length} db` : "",
       projectForm.contactEmail ? `Kapcsolati email: ${projectForm.contactEmail}` : "",
       projectForm.contactPhone ? `Telefon: ${projectForm.contactPhone}` : "",
       projectForm.socialLinks ? `Közösségi linkek: ${projectForm.socialLinks}` : "",
@@ -1299,7 +1399,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function saveBriefEdits(event: FormEvent<HTMLFormElement>, project: Project) {
     event.preventDefault();
-    for (let step = 0; step < briefSteps.length - 1; step += 1) {
+    for (let step = 0; step < 4; step += 1) {
       const validationMessage = validateProjectStep(step, editForm);
       if (validationMessage) {
         setNotice(validationMessage);
@@ -1712,6 +1812,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const requesting = option === "requested";
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: option,
+      ...(option === "accepted" ? { subscription_status: "pending_activation" } : {}),
       status: requesting ? "launched" : "closed",
       next_step: requesting
         ? "Karbantartási ajánlatot kértél. Az adminisztrátor beállítja a havi díjat; addig nincs teendőd."
@@ -1733,6 +1834,30 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         "/ugyfelkapu/dashboard#statuses");
       loadPortal(true);
     }
+  }
+
+  async function cancelSubscription(project: Project) {
+    const ok = await confirm({
+      title: "Karbantartási előfizetés lemondása",
+      message: "A lemondást azonnal rögzítjük. A szolgáltatás az aktuális rendezett időszak végéig aktív marad, utána nem újul meg.",
+      confirmLabel: "Lemondás rögzítése",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
+    const { error } = await supabase.from("client_projects").update({
+      subscription_status: "cancel_requested",
+      subscription_cancel_requested_at: new Date().toISOString(),
+      next_step: "A karbantartási előfizetés lemondását rögzítettük. Az aktuális időszak végén megszűnik."
+    }).eq("id", project.id);
+    if (error) {
+      setNotice("Nem sikerült rögzíteni a lemondást.");
+      return;
+    }
+    await triggerNotification(null, "admin@projectedge.hu", "Előfizetés lemondása",
+      `Az ügyfél (${email}) lemondta a(z) "${project.title}" karbantartási előfizetését.`, "/admin");
+    setNotice("A lemondást rögzítettük.");
+    loadPortal(true);
   }
 
   async function approveReview(project: Project) {
@@ -1949,6 +2074,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           reviewForm={reviewForm}
           onReviewFormChange={setReviewForm}
           onSubmitReview={() => submitProjectReview(project, reviewForm.rating, reviewForm.review, reviewForm.reference)}
+          onCancelSubscription={() => cancelSubscription(project)}
         />
       );
     }
@@ -2452,22 +2578,36 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           placeholder="Vállalkozás neve"
                         />
                       </div>
-                      <div className="field">
-                        <label htmlFor="project-website">Van már weboldal?</label>
-                        <input
-                          id="project-website"
-                          value={projectForm.website}
-                          onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
-                          placeholder="https://..."
-                        />
+                      <div className={`field ${validationTarget === "website-status" || validationTarget === "project-website" ? "validation-error" : ""}`} id="website-status">
+                        <label>Van már működő weboldalad?</label>
+                        <div className="choice-grid compact">
+                          <button
+                            className={projectForm.websiteStatus === "yes" ? "selected" : ""}
+                            onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "yes" }))}
+                            type="button"
+                          ><strong>Igen</strong></button>
+                          <button
+                            className={projectForm.websiteStatus === "no" ? "selected" : ""}
+                            onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "no", website: "", existingPlatform: "", wpAccess: "", analyticsAccess: "" }))}
+                            type="button"
+                          ><strong>Nem</strong></button>
+                        </div>
+                        {projectForm.websiteStatus === "yes" ? (
+                          <input
+                            id="project-website"
+                            value={projectForm.website}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
+                            placeholder="https://..."
+                          />
+                        ) : null}
                       </div>
                     </div>
-                    <div className="choice-grid">
+                    <div id="project-types" className={`choice-grid ${validationTarget === "project-types" ? "validation-error" : ""}`}>
                       {projectTypeOptions.map(([value, label, description]) => (
                         <button
-                          className={projectForm.projectType === value ? "selected" : ""}
+                          className={splitListValue(projectForm.projectType).includes(value) ? "selected" : ""}
                           key={value}
-                          onClick={() => setProjectForm((current) => ({ ...current, projectType: value }))}
+                          onClick={() => setProjectForm((current) => ({ ...current, projectType: toggleListValue(current.projectType, value) }))}
                           type="button"
                         >
                           <strong>{label}</strong>
@@ -2531,12 +2671,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         placeholder="Kattints a fenti gombokra, vagy pontosítsd szabadon..."
                       />
                     </div>
-                    <div className="choice-grid compact">
+                    <div id="project-priorities" className={`choice-grid compact ${validationTarget === "project-priorities" ? "validation-error" : ""}`}>
                       {Object.entries(priorityLabels).map(([value, label]) => (
                         <button
-                          className={projectForm.priority === value ? "selected" : ""}
+                          className={splitListValue(projectForm.priority).includes(value) ? "selected" : ""}
                           key={value}
-                          onClick={() => setProjectForm((current) => ({ ...current, priority: value }))}
+                          onClick={() => setProjectForm((current) => ({ ...current, priority: toggleListValue(current.priority, value) }))}
                           type="button"
                         >
                           <strong>{label}</strong>
@@ -2628,7 +2768,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
                       </div>
                     </div>
-                    <div className="choice-grid vibe-grid">
+                    <div className="choice-grid vibe-grid" id="project-vibe">
                       {vibeOptions.map(([value, label, description]) => (
                         <button
                           className={`vibe-${value} ${projectForm.vibe === value ? "selected" : ""}`}
@@ -2641,7 +2781,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         </button>
                       ))}
                     </div>
-                    <div className="palette-grid">
+                    <div className="palette-grid" id="project-palette">
                       {paletteOptions.map(([value, label, colors]) => (
                         <button
                           className={projectForm.palette === value ? "selected" : ""}
@@ -2682,10 +2822,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                     ) : null}
                     <div className="field">
-                      <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista?</label>
+                      <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista? <span className="optional-label">Nem kötelező</span></label>
                       <textarea
                         id="project-style"
-                        required
                         value={projectForm.style}
                         onChange={(event) => setProjectForm((current) => ({ ...current, style: event.target.value }))}
                         placeholder="Például: sötét prémium, nagy tipó, kevés stock fotó, animált 3D, ne legyen túl corporate..."
@@ -2709,7 +2848,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     </p>
 
                     {/* Domain */}
-                    <div className="field">
+                    <div className="field" id="domain-status">
                       <label>Domain (a weboldal címe)</label>
                       <div className="choice-grid compact">
                         <button
@@ -2757,17 +2896,44 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                     ) : null}
                     {projectForm.domainStatus === "need" ? (
-                      <div className="branch-note-block">
-                        <p className="branch-note">Rendben — segítünk a domain kiválasztásában, regisztrációjában és a beállításában.</p>
-                        <button className="button secondary" type="button" onClick={() => printDomainGuide(projectForm.company)}>
-                          Domain-vásárlási útmutató megnyitása
+                      <div className="domain-help-card">
+                        <div className="domain-help-icon">.hu</div>
+                        <div>
+                          <span className="micro-label">Biztonságos domainindítás</span>
+                          <h4>A domain végig a te tulajdonod marad</h4>
+                          <p>Segítünk nevet választani, ellenőrizni, regisztrálni és a kész oldalhoz kapcsolni. Jelszót nem kell üzenetben elküldened.</p>
+                        </div>
+                        <button className="button secondary" type="button" onClick={() => setShowDomainGuide((current) => !current)}>
+                          {showDomainGuide ? "Útmutató bezárása" : "Részletes útmutató megnyitása"}
                         </button>
+                        {showDomainGuide ? (
+                          <div className="domain-guide-pro">
+                            <header>
+                              <span>01–06</span>
+                              <div><strong>Domainindítás lépésről lépésre</strong><small>Átlagosan 10–15 perc</small></div>
+                            </header>
+                            {[
+                              ["Névválasztás", "Rövid, könnyen kimondható, lehetőleg kötőjel és szám nélkül. Elsőként a .hu, nemzetközi közönségnél a .com változatot ellenőrizd."],
+                              ["Elérhetőség ellenőrzése", "A .hu név foglaltságát a domain.hu hivatalos keresőjében ellenőrizd. A közösségi felületeken is nézd meg a név elérhetőségét."],
+                              ["Regisztrátor kiválasztása", "A számla és a tulajdonosi adatok a te vagy a céged nevére kerüljenek. A fejlesztő soha ne legyen a domain tulajdonosa."],
+                              ["Biztonság", "Kapcsold be a kétlépcsős belépést és az automatikus éves megújítást. A hozzáférést meghívással vagy korlátozott jogosultsággal add át."],
+                              ["DNS összekötés", "A szükséges rekordokat mi adjuk meg és ellenőrizzük. Nem kérjük el a jelszavadat; képernyőn vezetünk végig vagy jogosultságot kérünk."],
+                              ["Átadás", "A domain, a számlázás és a megújítás nálad marad. Az ügyfélkapuban rögzítjük, mikor kapcsolódott és mikor jár le."]
+                            ].map(([title, copy], index) => (
+                              <div className="domain-guide-step" key={title}>
+                                <b>{String(index + 1).padStart(2, "0")}</b><div><strong>{title}</strong><p>{copy}</p></div>
+                              </div>
+                            ))}
+                            <div className="domain-guide-warning"><strong>Soha ne küldj jelszót üzenetben.</strong> Meghívásos hozzáférést vagy képernyőmegosztással végzett DNS-beállítást használunk.</div>
+                            <button className="button secondary" type="button" onClick={() => printDomainGuide(projectForm.company)}>Nyomtatható változat megnyitása</button>
+                          </div>
+                        ) : null}
                       </div>
                     ) : null}
 
                     {/* Meglévő oldal — csak ha megadott weboldalt */}
-                    {projectForm.website.trim() ? (
-                      <div className="field">
+                    {projectForm.websiteStatus === "yes" && projectForm.website.trim() ? (
+                      <div className="field" id="existing-platform">
                         <label>Min fut a jelenlegi oldalad?</label>
                         <div className="choice-grid compact">
                           {[
@@ -2788,7 +2954,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         </div>
                       </div>
                     ) : null}
-                    {projectForm.website.trim() && projectForm.existingPlatform === "wordpress" ? (
+                    {projectForm.websiteStatus === "yes" && projectForm.existingPlatform === "wordpress" ? (
                       <div className="field">
                         <label htmlFor="wp-access">Tudsz WordPress admin hozzáférést adni? (a tartalom átemeléséhez)</label>
                         <select
@@ -2805,13 +2971,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
 
                     {/* Logó */}
-                    <div className="field">
+                    <div className="field" id="logo-status">
                       <label>Van logód?</label>
                       <div className="choice-grid compact">
                         {[
-                          ["vector", "Van, vektoros (ai/svg/pdf)"],
-                          ["raster", "Van, csak kép (jpg/png)"],
-                          ["none", "Nincs logóm"]
+                          ["yes", "Igen, van logóm"],
+                          ["no", "Nincs logóm"]
                         ].map(([value, label]) => (
                           <button
                             key={value}
@@ -2824,8 +2989,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ))}
                       </div>
                     </div>
-                    {projectForm.logoStatus === "none" ? (
-                      <div className="field">
+                    {projectForm.logoStatus === "no" ? (
+                      <div className="field" id="logo-design">
                         <label>Kérsz logótervezést?</label>
                         <div className="choice-grid compact">
                           <button
@@ -2847,7 +3012,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         </div>
                       </div>
                     ) : null}
-                    {projectForm.logoStatus === "vector" || projectForm.logoStatus === "raster" ? (
+                    {projectForm.logoStatus === "yes" ? (
                       <div className="field">
                         <label htmlFor="logo-upload">Töltsd fel a logódat</label>
                         <input
@@ -2900,7 +3065,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         />
                       </div>
                     </div>
-                    <div className="field">
+                    <div className="field" id="font-preference">
                       <label>Milyen betűtípus-stílus áll hozzád közel?</label>
                       <div className="font-grid">
                         {curatedFonts.map(([label, family]) => {
@@ -2948,7 +3113,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     </div>
 
                     {/* Szövegek */}
-                    <div className="field">
+                    <div className="field" id="content-source">
                       <label>A szövegeket ki írja?</label>
                       <div className="choice-grid compact">
                         <button
@@ -2968,10 +3133,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           <span>Kész szövegeket adok az oldalakhoz.</span>
                         </button>
                       </div>
+                      {projectForm.contentSource === "studio" ? (
+                        <div className="conditional-brief" id="content-brief">
+                          <span className="micro-label">Ehhez szükségünk van rád</span>
+                          <h4>Mesélj a vállalkozásodról</h4>
+                          <p>Nem kell marketingesen fogalmaznod. A saját szavaidból készítünk hiteles, eladható weboldalszöveget.</p>
+                          <textarea
+                            value={projectForm.contentBrief}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, contentBrief: event.target.value }))}
+                            placeholder={"Kik vagytok és mióta működtök?\nMit képvisel a cégetek?\nMi a legfontosabb szolgáltatásotok vagy terméketek?\nMiért választanak benneteket?\nMilyen hangon beszéljünk a vásárlókkal?"}
+                          />
+                          <small>{projectForm.contentBrief.trim().length}/30 minimum karakter</small>
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* Képek */}
-                    <div className="field">
+                    <div className="field" id="photo-source">
                       <label>Képek, fotók?</label>
                       <div className="choice-grid compact">
                         <button
@@ -2989,10 +3167,37 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           <strong>Kérek stock / segítséget</strong>
                         </button>
                       </div>
+                      {projectForm.photoSource === "own" ? (
+                        <div className="asset-uploader" id="photo-upload">
+                          <label htmlFor="project-photo-upload">
+                            <strong>{assetUploading ? "Képek feltöltése..." : "Képek kiválasztása"}</strong>
+                            <span>JPG, PNG vagy WEBP · képenként legfeljebb 10 MB · egyszerre több is választható</span>
+                          </label>
+                          <input
+                            id="project-photo-upload"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            disabled={assetUploading}
+                            onChange={(event) => {
+                              const files = Array.from(event.target.files ?? []);
+                              uploadProjectPhotos(files);
+                              event.target.value = "";
+                            }}
+                          />
+                          {projectForm.photoUrls.length ? (
+                            <div className="asset-preview-grid">
+                              {projectForm.photoUrls.map((url, index) => (
+                                <div key={url}><img src={url} alt={`Feltöltött kép ${index + 1}`} /><button type="button" onClick={() => setProjectForm((current) => ({ ...current, photoUrls: current.photoUrls.filter((item) => item !== url) }))}>×</button></div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* Kapcsolat + közösségi */}
-                    <div className="wizard-two">
+                    <div className="wizard-two" id="contact-details">
                       <div className="field">
                         <label htmlFor="contact-email">Megjelenő kapcsolati email</label>
                         <input
@@ -3023,7 +3228,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     </div>
 
                     {/* Analytics */}
-                    <div className="field">
+                    {projectForm.websiteStatus === "yes" ? <div className="field">
                       <label htmlFor="analytics-access">Van Google Analytics / mérés a régi oldalon?</label>
                       <select
                         id="analytics-access"
@@ -3036,7 +3241,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <option value="setup">Nincs, de szeretnék mérést</option>
                         <option value="no">Nincs / nem fontos</option>
                       </select>
-                    </div>
+                    </div> : null}
 
                     {/* Számlázás */}
                     <div className="field">
@@ -3062,7 +3267,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     <div className="summary-grid">
                       <div>
                         <span>Projekt típusa</span>
-                        <strong>{selectedProjectType[1]}</strong>
+                        <strong>{selectedProjectTypeLabels.join(", ") || "Nincs kiválasztva"}</strong>
                       </div>
                       <div>
                         <span>Stílus</span>
@@ -3118,9 +3323,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <h3>{projectForm.title || "A projekt neve ide kerül"}</h3>
               <p>{projectForm.goals || "Ahogy válaszolsz, itt épül össze az anyag, amiből ajánlatot tudok adni."}</p>
               <div className="live-brief-tags">
-                <span>{selectedProjectType[1]}</span>
+                <span>{selectedProjectTypeLabels.join(" · ") || "Projekt típusa"}</span>
                 <span>{selectedVibe[1]}</span>
-                <span>{priorityLabels[projectForm.priority]}</span>
+                <span>{splitListValue(projectForm.priority).map((value) => priorityLabels[value]).filter(Boolean).join(" · ") || "Vágyott eredmény"}</span>
               </div>
               <div className="live-palette">
                 {activePaletteColors.map((color, index) => (

@@ -12,9 +12,10 @@ type ClosedProjectCardProps = {
   reviewForm: ReviewFormValues;
   onReviewFormChange: (value: ReviewFormValues) => void;
   onSubmitReview: () => void;
+  onCancelSubscription: () => void;
 };
 
-export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview }: ClosedProjectCardProps) {
+export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview, onCancelSubscription }: ClosedProjectCardProps) {
   return (
     <article
       className="project-status-card detailed compact-closed"
@@ -29,6 +30,14 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
         gap: "12px"
       }}
     >
+      {!project.client_rating ? (
+        <div className="completion-celebration" aria-hidden="true">
+          {Array.from({ length: 18 }).map((_, index) => <i key={index} />)}
+          <span>🎉</span>
+          <strong>Köszönjük a közös munkát!</strong>
+          <small>Elkészültünk. Nagyon örülünk, hogy velünk építetted fel az oldaladat.</small>
+        </div>
+      ) : null}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
         <div>
           <strong style={{ fontSize: "16px", color: "var(--ink)" }}>{project.title}</strong>
@@ -49,6 +58,25 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
           Lezárva
         </span>
       </div>
+
+      {project.maintenance_option === "accepted" ? (
+        <div className="subscription-card">
+          <div>
+            <span className="micro-label">Havi karbantartás</span>
+            <strong>{project.maintenance_monthly_fee?.toLocaleString("hu-HU")} {project.maintenance_currency || "Ft"} / hó</strong>
+            <small>
+              {project.subscription_status === "cancel_requested"
+                ? "Lemondás rögzítve — az aktuális időszak végén megszűnik."
+                : project.subscription_status === "active"
+                  ? "Aktív előfizetés"
+                  : "Aktiválás folyamatban"}
+            </small>
+          </div>
+          {project.subscription_status !== "cancel_requested" && project.subscription_status !== "cancelled" ? (
+            <button className="button secondary" type="button" onClick={onCancelSubscription}>Előfizetés lemondása</button>
+          ) : null}
+        </div>
+      ) : null}
 
       {project.client_rating ? (
         <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>

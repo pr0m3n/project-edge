@@ -28,6 +28,16 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance }: Laun
         </details>
       )}
 
+      <details className="disclosure handover-guide">
+        <summary>Technikai átadás: kinél mi marad?</summary>
+        <div className="disclosure-body handover-ownership">
+          <div><strong>Domain</strong><span>A te vagy a céged tulajdona. A megújítás és számlázás nálad marad.</span></div>
+          <div><strong>Vercel</strong><span>Meghívásos hozzáféréssel vagy projektátadással kerül hozzád; a production domain és a környezeti változók ellenőrzőlistán mennek végig.</span></div>
+          <div><strong>Supabase</strong><span>Szervezeti meghívással vagy projektátadással kapod meg. Jelszót és titkos kulcsot nem küldünk üzenetben.</span></div>
+          <div><strong>GitHub</strong><span>A forráskód repository-hozzáférését külön jogosultsággal adjuk át, így később más fejlesztővel is folytatható.</span></div>
+        </div>
+      </details>
+
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
         <div>
           <span style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase", fontWeight: "700", display: "block", marginBottom: "4px" }}>Végső fizetés (a fennmaradó összeg)</span>

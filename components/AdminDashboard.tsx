@@ -103,6 +103,9 @@ type ClientProject = {
   maintenance_option: string | null;
   maintenance_monthly_fee: number | null;
   maintenance_currency: string | null;
+  subscription_status: string | null;
+  subscription_started_at: string | null;
+  subscription_cancel_requested_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
   review_approved: boolean;
@@ -997,17 +1000,26 @@ export function AdminDashboard() {
           </div>
         )}
 
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-          <select
-            value={project.status}
-            onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-            style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "6px", background: "#25282F", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-          >
-            {allowedStatusOptions(project.status).map(([val, lbl]) => (
-              <option key={val} value={val}>{lbl}</option>
-            ))}
-          </select>
-        </div>
+        {project.maintenance_option === "accepted" ? (
+          <div className="admin-subscription-row">
+            <div>
+              <span>Karbantartás</span>
+              <strong>{formatPrice(project.maintenance_monthly_fee, project.maintenance_currency || "Ft")} / hó</strong>
+              <small>Állapot: {project.subscription_status === "active" ? "aktív" : project.subscription_status === "cancel_requested" ? "lemondásra vár" : project.subscription_status === "cancelled" ? "megszűnt" : "aktiválásra vár"}</small>
+            </div>
+            {project.subscription_status === "pending_activation" ? (
+              <button className="button primary" type="button" onClick={() => updateClientProject(project.id, {
+                subscription_status: "active",
+                subscription_started_at: new Date().toISOString()
+              } as Partial<ClientProject>)}>Előfizetés aktiválása</button>
+            ) : null}
+            {project.subscription_status === "cancel_requested" ? (
+              <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, {
+                subscription_status: "cancelled"
+              })}>Lemondás lezárása</button>
+            ) : null}
+          </div>
+        ) : null}
       </article>
     );
   }
@@ -1038,7 +1050,21 @@ export function AdminDashboard() {
         break;
       case "review":
         if (project.review_approved) {
-          updateClientProject(project.id, { status: "launched", next_step: "Az oldal éles. Kérlek, rendezd a hátralékot, majd jelezd az utalást." });
+          updateClientProject(project.id, {
+            status: "launched",
+            next_step: "Az oldal éles. Kérlek, rendezd a hátralékot, majd jelezd az utalást.",
+            handover_checklist: project.handover_checklist?.length ? project.handover_checklist : [
+              { title: "GitHub repository tulajdonosi hozzáférés rendezve", done: false },
+              { title: "Vercel projekt meghívás vagy tulajdonátadás elküldve", done: false },
+              { title: "Production domain és DNS ellenőrizve", done: false },
+              { title: "Vercel környezeti változók dokumentálva és ellenőrizve", done: false },
+              { title: "Supabase szervezet/projekt hozzáférés átadva", done: false },
+              { title: "Supabase RLS, Auth redirect URL-ek és Storage szabályok ellenőrizve", done: false },
+              { title: "Adatmentés és helyreállítási felelős rögzítve", done: false },
+              { title: "Domain, Vercel és Supabase számlázási felelős rögzítve", done: false },
+              { title: "Ügyfél átadási ellenőrzése és visszaigazolása megtörtént", done: false }
+            ]
+          });
         }
         break;
       default:
@@ -1678,6 +1704,19 @@ export function AdminDashboard() {
                         <span>{label}</span>
                         <strong>{value}</strong>
                       </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {Array.isArray(project.brief_data?.photoUrls) && project.brief_data.photoUrls.length > 0 ? (
+                <section className="admin-assets-block">
+                  <span className="admin-assets-title">Ügyfél által feltöltött képek ({project.brief_data.photoUrls.length})</span>
+                  <div className="asset-preview-grid">
+                    {project.brief_data.photoUrls.map((url: string, index: number) => (
+                      <a href={url} target="_blank" rel="noreferrer" key={url}>
+                        <img src={url} alt={`Ügyfélkép ${index + 1}`} />
+                      </a>
                     ))}
                   </div>
                 </section>
