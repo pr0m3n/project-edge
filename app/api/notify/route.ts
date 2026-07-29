@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     const safeTitle = String(title ?? "").slice(0, 200);
     const safeMessage = String(message ?? "").slice(0, 4000);
     const safeLink = safeInternalLink(link);
+    const isFollowupCheck = /utóellenőrzés|működési ellenőrzés/i.test(safeTitle);
 
     if (!safeTitle) {
       return NextResponse.json({ error: "Missing title" }, { status: 400 });
@@ -76,9 +77,20 @@ export async function POST(request: Request) {
         subject: safeTitle,
         message: safeMessage,
         link: safeLink,
-        eyebrow: userId ? "PROJECTEDGE · ÜGYFÉLKAPU" : "PROJECTEDGE · ÚJ ÉRTESÍTÉS",
+        eyebrow: isFollowupCheck
+          ? "PROJECTEDGE · 30 NAPOS ELLENŐRZÉS"
+          : userId ? "PROJECTEDGE · ÜGYFÉLKAPU" : "PROJECTEDGE · ÚJ ÉRTESÍTÉS",
+        preheader: isFollowupCheck
+          ? `Indulás utáni működési ellenőrzés · ${safeTitle}`
+          : safeTitle,
+        linkLabel: isFollowupCheck ? "Ellenőrzés megnyitása" : "Megnyitás az ügyfélkapun",
+        terminalLabel: isFollowupCheck ? "projectedge.check30" : "projectedge.notify",
+        tags: isFollowupCheck
+          ? ["30 napos ellenőrzés", "Működés", "Ügyfélkapu"]
+          : undefined,
         details: [
           { label: "Címzett", value: targetEmail },
+          { label: "Szolgáltatás", value: isFollowupCheck ? "Indulás utáni működési ellenőrzés" : "ProjectEdge ügyfélkapu" },
           { label: "Állapot", value: "Értesítés rögzítve" }
         ]
       });
