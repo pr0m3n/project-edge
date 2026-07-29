@@ -35,6 +35,25 @@ ProjectEdge cold-email campaign. Verify `projectedge.hu` in Resend, then add
 `RESEND_API_KEY` (and, if needed, the sender/reply-to overrides) to Vercel Production.
 The app reports a visible warning when the key is missing instead of simulating a sent email.
 
+## Client guide PDFs
+
+The onboarding and handover guides are generated, not hand-designed:
+
+```bash
+python3 scripts/generate_guides.py
+```
+
+This writes four PDFs plus cover PNGs into `public/guides/`:
+`projectedge-domainvasarlas-rackhost.pdf`, `projectedge-vercel-atadas.pdf`,
+`projectedge-supabase-atadas.pdf` and `projectedge-resend-email.pdf`.
+`lib/handover.ts` links each guided handover step to the matching file, so keep the
+file names stable. The shared design system lives in `scripts/guide_kit.py` and
+follows the website plus Resend email language (night `#1c1d20`, paper `#eeede8`,
+ember `#ff5722`, aqua `#76abae`, mono kickers, terminal blocks).
+
+Requires `reportlab`, `Pillow` (for screenshot crops) and `pdftoppm` (poppler) for
+the cover PNGs. Rackhost screenshots come from `tmp/pdfs/domain-guide/`.
+
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
@@ -42,6 +61,13 @@ The app reports a visible warning when the key is missing instead of simulating 
 3. Run `supabase/migrations/002_support_tickets.sql`.
 4. Create an admin user in Supabase Auth.
 5. Add the admin user to `public.admin_users`.
+
+Migrations are applied manually, in filename order. Note that
+`010_lock_financial_columns.sql` is **obsolete — do not run it**; it is superseded by
+`019_client_write_guard.sql`, which restricts client writes without breaking the
+current (mocked) payment flow. `018_private_client_assets.sql` makes the
+`client-assets` and `client-logos` buckets private: uploads are addressed by object
+path and opened through short-lived signed URLs (`lib/storage-assets.ts`).
 
 Example:
 

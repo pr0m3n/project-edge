@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
+import { PROVIDER } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Impresszum | ProjectEdge",
   description: "A ProjectEdge üzemeltetőjének és tárhelyszolgáltatójának adatai."
 };
 
-// A ProjectEdge jelenleg magánszemélyként, nem bejegyzett egyéni tevékenység
-// keretében működik — nincs adószám / cégjegyzékszám. Ha ez változik (pl.
-// egyéni vállalkozás bejegyzése), ezt az oldalt frissíteni kell a hivatalos
-// adatokkal (Ektv. 2001. évi CVIII. tv. 4. §).
+// A szolgáltatói adatok a lib/legal.ts-ben, EGY helyen élnek (ÁSZF és a
+// vállalkozási szerződés is onnan olvassa). Cégalapítás / egyéni vállalkozás
+// bejegyzése után elég ott kitölteni az adószámot és a nyilvántartási számot,
+// és pontosítani a jogi formát — ez az oldal automatikusan követi
+// (Ektv. 2001. évi CVIII. tv. 4. §).
 export default function ImpressumPage() {
   return (
     <main className="site-shell light-page">
@@ -26,11 +28,15 @@ export default function ImpressumPage() {
       <section className="legal-prose">
         <h2>Szolgáltató</h2>
         <ul>
-          <li><strong>Név:</strong> Boczán Patrik</li>
-          <li><strong>Székhely / cím:</strong> Budapest, 1141</li>
-          <li><strong>Jogi forma:</strong> magánszemély, jelenleg nem bejegyzett egyéni tevékenység — nincs adószám / cégjegyzékszám</li>
-          <li><strong>E-mail:</strong> info@projectedge.hu</li>
-          <li><strong>Telefon:</strong> +36 20 406 4954</li>
+          <li><strong>Név:</strong> {PROVIDER.legalName}</li>
+          <li><strong>Székhely / cím:</strong> {PROVIDER.address}</li>
+          <li><strong>Jogi forma:</strong> {PROVIDER.legalForm}{PROVIDER.taxNumber ? "" : " — nincs adószám / cégjegyzékszám"}</li>
+          {PROVIDER.taxNumber ? <li><strong>Adószám:</strong> {PROVIDER.taxNumber}</li> : null}
+          {PROVIDER.registrationNumber ? (
+            <li><strong>Nyilvántartási szám:</strong> {PROVIDER.registrationNumber}</li>
+          ) : null}
+          <li><strong>E-mail:</strong> {PROVIDER.email}</li>
+          <li><strong>Telefon:</strong> {PROVIDER.phone}</li>
         </ul>
 
         <h2>Tárhelyszolgáltató</h2>

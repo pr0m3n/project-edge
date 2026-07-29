@@ -11,6 +11,9 @@ import {
   OfflineBanner,
   type ToastKind
 } from "@/components/ui/feedback";
+import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
+import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
+import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan, type HandoverStepState } from "@/lib/handover";
 
 function messageKind(text: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
@@ -99,7 +102,10 @@ type ClientProject = {
   milestones: Array<{ title: string; done: boolean }> | null;
   feedback_round: number;
   feedback_notes: string | null;
+  /** Régi, szabad szöveges átadási lista — csak a 017 előtti projekteknél. */
   handover_checklist: Array<{ title: string; done: boolean }> | null;
+  /** Vezetett átadás állapota (lib/handover.ts). */
+  handover_steps: HandoverStepState[] | null;
   maintenance_option: string | null;
   maintenance_monthly_fee: number | null;
   maintenance_currency: string | null;
@@ -284,7 +290,6 @@ export function AdminDashboard() {
   // Upgraded flow states
   const [changeLogs, setChangeLogs] = useState<Record<string, any[]>>({});
   const [newMilestoneTitle, setNewMilestoneTitle] = useState<Record<string, string>>({});
-  const [newHandoverTitle, setNewHandoverTitle] = useState<Record<string, string>>({});
 
   // Phase 2 state variables
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -1045,20 +1050,16 @@ export function AdminDashboard() {
         break;
       case "review":
         if (project.review_approved) {
+          // Élesítéskor összeáll a vezetett átadás terve. Alapból minden
+          // szolgáltatás benne van; a fölösleges csoportokat (pl. nincs
+          // adatbázis vagy levélküldés) az átadás-panelen egy kattintással
+          // ki lehet venni.
           updateClientProject(project.id, {
             status: "launched",
             next_step: "Az oldal éles. Kérlek, rendezd a hátralékot, majd jelezd az utalást.",
-            handover_checklist: project.handover_checklist?.length ? project.handover_checklist : [
-              { title: "ÜGYFÉL · Saját Vercel-csapat létrehozva, ProjectEdge meghívva", done: false },
-              { title: "ADMIN · Vercel Project Transfer kész; domain, production és env változók ellenőrizve", done: false },
-              { title: "ÜGYFÉL · Saját Supabase-szervezet létrehozva, ProjectEdge meghívva", done: false },
-              { title: "ADMIN · Supabase GitHub-integráció leválasztva, projekt átadva, Auth/RLS/Storage tesztelve", done: false },
-              { title: "ÜGYFÉL · GitHub repository tulajdonosi hozzáférés visszaigazolva", done: false },
-              { title: "ÜGYFÉL · Rackhost domain aktív; jelszó helyett a kért DNS rekordok beállítva", done: false },
-              { title: "ADMIN · Éles domain, www, HTTPS, űrlapok és fő funkciók végigtesztelve", done: false },
-              { title: "KÖZÖS · Számlázási felelősök, megújítás és helyreállítási felelős dokumentálva", done: false },
-              { title: "ÜGYFÉL · Átadási ellenőrzés kész, tulajdonosi hozzáférések visszaigazolva", done: false }
-            ]
+            handover_steps: project.handover_steps?.length
+              ? project.handover_steps
+              : buildHandoverPlan(DEFAULT_HANDOVER_SERVICES)
           });
         }
         break;
@@ -1600,7 +1601,10 @@ export function AdminDashboard() {
             const showPrepare = s === "request_received" || s === "planning";
             const showOffer = s === "request_received" || s === "planning";
             const showBuild = s === "in_progress" || (s === "review" && project.review_approved);
-            const showHandover = (s === "review" && project.review_approved) || s === "launched";
+            // Az összetevők kijelölése már a brief átolvasása után elérhető: ez
+            // dönti el, milyen útmutatókat és átadási lépéseket kap az ügyfél.
+            // Lezárt / törlésre váró projektnél már nincs értelme.
+            const showHandover = s !== "closed" && s !== "deletion_pending";
 
             return (
             <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
@@ -1705,9 +1709,7 @@ export function AdminDashboard() {
                   <span className="admin-assets-title">Ügyfél által feltöltött képek ({project.brief_data.photoUrls.length})</span>
                   <div className="asset-preview-grid">
                     {project.brief_data.photoUrls.map((url: string, index: number) => (
-                      <a href={url} target="_blank" rel="noreferrer" key={url}>
-                        <img src={url} alt={`Ügyfélkép ${index + 1}`} />
-                      </a>
+                      <AssetImage key={url} value={url} alt={`Ügyfélkép ${index + 1}`} />
                     ))}
                   </div>
                 </section>
@@ -1719,7 +1721,7 @@ export function AdminDashboard() {
                   <div className="uploaded-file-list">
                     {project.brief_data.contentFileUrls.map((url: string, index: number) => (
                       <div key={url}>
-                        <a href={url} target="_blank" rel="noreferrer">Szöveges anyag {index + 1}</a>
+                        <AssetLink label={`Szöveges anyag ${index + 1}`} value={url} />
                       </div>
                     ))}
                   </div>
@@ -1740,9 +1742,11 @@ export function AdminDashboard() {
                     </div>
                   </div>
                   {project.brief_data.domainProofUrl ? (
-                    <a className="button secondary compact-action" href={project.brief_data.domainProofUrl} target="_blank" rel="noreferrer">
-                      Igazolás megnyitása
-                    </a>
+                    <AssetLink
+                      className="button secondary compact-action"
+                      label="Igazolás megnyitása"
+                      value={project.brief_data.domainProofUrl}
+                    />
                   ) : null}
                 </section>
               ) : null}
@@ -1956,59 +1960,19 @@ export function AdminDashboard() {
                   )}
 
                   {showHandover && (
-                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px', marginTop: '16px', display: 'grid', gap: '12px' }}>
-                    <strong>Átadási checklist ({project.handover_checklist?.length || 0})</strong>
-                    <div style={{ display: 'grid', gap: '8px' }}>
-                      {project.handover_checklist?.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: 'rgba(48,56,65,0.05)', padding: '6px 10px', borderRadius: '8px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                            <input
-                              type="checkbox"
-                              checked={item.done}
-                              onChange={(e) => {
-                                const updated = [...(project.handover_checklist || [])];
-                                updated[idx] = { ...updated[idx], done: e.target.checked };
-                                updateClientProject(project.id, { handover_checklist: updated });
-                              }}
-                            />
-                            <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--muted)' : 'var(--ink)' }}>{item.title}</span>
-                          </label>
-                          <button
-                            type="button"
-                            style={{ background: 'none', border: 'none', color: '#FF5722', cursor: 'pointer', padding: 0 }}
-                            onClick={() => {
-                              const updated = (project.handover_checklist || []).filter((_, i) => i !== idx);
-                              updateClientProject(project.id, { handover_checklist: updated });
-                            }}
-                          >
-                            Törlés
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        style={{ background: 'var(--white)', border: '1px solid var(--line)', color: 'var(--ink)', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', flex: 1 }}
-                        placeholder="Új átadási pont..."
-                        value={newHandoverTitle[project.id] ?? ""}
-                        onChange={(e) => setNewHandoverTitle({ ...newHandoverTitle, [project.id]: e.target.value })}
-                      />
-                      <button
-                        className="button primary"
-                        style={{ minHeight: 'auto', padding: '6px 12px' }}
-                        type="button"
-                        onClick={() => {
-                          const title = newHandoverTitle[project.id]?.trim();
-                          if (!title) return;
-                          const updated = [...(project.handover_checklist || []), { title, done: false }];
-                          updateClientProject(project.id, { handover_checklist: updated });
-                          setNewHandoverTitle({ ...newHandoverTitle, [project.id]: "" });
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
+                    <AdminHandoverPanel
+                      steps={project.handover_steps}
+                      onChange={(steps) => updateClientProject(project.id, { handover_steps: steps })}
+                      onStepCompleted={(_stepId, title) => {
+                        void triggerNotification(
+                          project.user_id,
+                          project.contact_email,
+                          "Átadási lépés kész — rajtad a sor",
+                          `Elvégeztünk egy lépést a(z) "${project.title}" projekt átadásában: ${title}\n\nNyisd meg az ügyfélkaput, ahol a következő lépést és a hozzá tartozó linkeket találod.`,
+                          "/ugyfelkapu/dashboard#statuses"
+                        );
+                      }}
+                    />
                   )}
                 </section>
 

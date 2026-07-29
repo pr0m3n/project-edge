@@ -1,5 +1,6 @@
 import type { Project } from "@/components/ClientPortal";
 import { formatPrice } from "@/components/ClientPortal";
+import { isHandoverComplete } from "@/lib/handover";
 
 type LaunchedPanelProps = {
   project: Project;
@@ -8,18 +9,23 @@ type LaunchedPanelProps = {
 };
 
 export function LaunchedPanel({ project, onPayFinal, onCloseProject }: LaunchedPanelProps) {
-  const checklist = project.handover_checklist ?? [];
-  const handoverComplete = checklist.length > 0 && checklist.every((item) => item.done);
+  // A vezetett átadás (017) az elsődleges. A `handover_checklist` csak a régebbi
+  // projektek miatt maradt itt: ott az a lista dönti el, lezárható-e a projekt.
+  const legacyChecklist = project.handover_checklist ?? [];
+  const guidedSteps = project.handover_steps ?? [];
+  const handoverComplete = guidedSteps.length
+    ? isHandoverComplete(guidedSteps)
+    : legacyChecklist.length > 0 && legacyChecklist.every((item) => item.done);
 
   return (
     <div style={{ background: "rgba(118, 171, 174, 0.05)", border: "1px solid rgba(118, 171, 174, 0.15)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "14px" }}>
       <h4 style={{ margin: 0, fontSize: "18px" }}>Projekt Élesítve!</h4>
 
-      {checklist.length > 0 && (
+      {!guidedSteps.length && legacyChecklist.length > 0 && (
         <details className="disclosure">
-          <summary>Átadási checklist ({checklist.filter((i) => i.done).length}/{checklist.length} kész)</summary>
+          <summary>Átadási checklist ({legacyChecklist.filter((i) => i.done).length}/{legacyChecklist.length} kész)</summary>
           <div className="disclosure-body" style={{ display: "grid", gap: "6px" }}>
-            {checklist.map((item, idx) => (
+            {legacyChecklist.map((item, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px" }}>
                 <span style={{ color: item.done ? "#76ABAE" : "#FF5722", fontWeight: "bold" }}>{item.done ? "✓" : "○"}</span>
                 <span style={{ textDecoration: item.done ? "line-through" : "none", color: item.done ? "var(--muted)" : "var(--ink)" }}>{item.title}</span>
@@ -33,9 +39,11 @@ export function LaunchedPanel({ project, onPayFinal, onCloseProject }: LaunchedP
         <summary>Technikai átadás: kinél mi marad?</summary>
         <div className="disclosure-body handover-ownership">
           <div><strong>Domain</strong><span>A te vagy a céged tulajdona. A megújítás és számlázás nálad marad.</span></div>
-          <div><strong>Vercel</strong><span>Meghívásos hozzáféréssel vagy projektátadással kerül hozzád; a production domain és a környezeti változók ellenőrzőlistán mennek végig.</span></div>
-          <div><strong>Supabase</strong><span>Szervezeti meghívással vagy projektátadással kapod meg. Jelszót és titkos kulcsot nem küldünk üzenetben.</span></div>
-          <div><strong>GitHub</strong><span>A forráskód repository-hozzáférését külön jogosultsággal adjuk át, így később más fejlesztővel is folytatható.</span></div>
+          <div><strong>Vercel</strong><span>A saját csapatodba adjuk át a projektet, leállás nélkül. Ezután a domain és a környezeti változók is a te oldalán vannak.</span></div>
+          <div><strong>Supabase</strong><span>A saját szervezetedbe kerül az adatbázis, és az átadás után lecseréljük a fejlesztés közben használt titkos kulcsokat.</span></div>
+          <div><strong>Resend</strong><span>A levélküldés a te fiókodból megy. Az API kulcsot te hozod létre és te illeszted be a saját Vercel projektedbe — hozzánk nem kerül.</span></div>
+          <div><strong>GitHub</strong><span>A forráskód repository-t a megadott fiókodnak adjuk át, így később más fejlesztővel is folytatható.</span></div>
+          <div><strong>Jelszavak</strong><span>Egyetlen lépésnél sem kérünk jelszót, bankkártyaadatot vagy titkos kulcsot. Mindenhol meghívásos hozzáférés van.</span></div>
         </div>
       </details>
 
@@ -86,7 +94,10 @@ export function LaunchedPanel({ project, onPayFinal, onCloseProject }: LaunchedP
         {!project.final_payment_paid ? (
           <p className="waiting-copy">A projekt lezárása a végső fizetés jóváhagyása után válik elérhetővé.</p>
         ) : !handoverComplete ? (
-          <p className="waiting-copy">A projektet akkor tudod lezárni, ha az adminisztrátor minden átadási pontot kipipált. Most nála van a következő lépés.</p>
+          <p className="waiting-copy">
+            A projekt akkor zárható le, ha a vezetett átadás minden lépése kész. A soron következő lépést fentebb, az
+            „Vezetett átadás” résznél látod.
+          </p>
         ) : (
           <button className="button primary" type="button" onClick={onCloseProject}>Átvettem, projekt lezárása</button>
         )}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
+import { PROVIDER } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "ÁSZF | ProjectEdge",
@@ -27,9 +28,8 @@ export default function TermsPage() {
       <section className="legal-prose">
         <h2>1. A szolgáltató</h2>
         <p>
-          Boczán Patrik (magánszemély), székhely/cím: Budapest, 1141, e-mail: info@projectedge.hu
-          (a továbbiakban: Vállalkozó). A szolgáltatás jelenleg nem bejegyzett egyéni tevékenység
-          keretében, magánszemélyként történik. A részletes adatokat az{" "}
+          {PROVIDER.legalName} ({PROVIDER.legalForm}), székhely/cím: {PROVIDER.address}, e-mail:{" "}
+          {PROVIDER.email} (a továbbiakban: Vállalkozó). A részletes adatokat az{" "}
           <a href="/impresszum">Impresszum</a> tartalmazza.
         </p>
 
@@ -50,13 +50,18 @@ export default function TermsPage() {
         <h2>4. Díjazás és fizetés</h2>
         <p>
           A vállalási díj az egyedi ajánlatban szerepel. A munka megkezdésének feltétele egy fix,
-          10 000 Ft összegű foglaló megfizetése, amely a végösszegbe beleszámít. A kész munkát a
-          Vállalkozó csak a teljes vállalási díj beérkezése után adja át és élesíti; a fennmaradó
-          összeg tehát az átadás feltétele. A fizetés banki átutalással történik, az Ügyfélkapun
-          megjelenő adatok (számlaszám, egyedi közlemény) alapján; a beérkezést a Vállalkozó
-          manuálisan ellenőrzi és igazolja vissza. Mivel a szolgáltatás jelenleg nem bejegyzett
-          egyéni tevékenység keretében történik, a Vállalkozó a kifizetésekről nyugtát/elismervényt
-          ad, ÁFA-s számlát nem tud kiállítani.
+          10 000 Ft összegű foglaló megfizetése, amely a végösszegbe beleszámít. A fizetés banki
+          átutalással történik, az Ügyfélkapun megjelenő adatok (számlaszám, egyedi közlemény)
+          alapján; a beérkezést a Vállalkozó manuálisan ellenőrzi és igazolja vissza. Mivel a
+          szolgáltatás jelenleg nem bejegyzett egyéni tevékenység keretében történik, a Vállalkozó a
+          kifizetésekről nyugtát/elismervényt ad, ÁFA-s számlát nem tud kiállítani.
+        </p>
+        <p>
+          A teljesítés sorrendje: a Vállalkozó az elkészült oldalt a Megrendelő jóváhagyása után
+          élesíti, ezt követően esedékes a fennmaradó összeg, és a <strong>hozzáférések teljes
+          átadása (7. pont) a teljes vállalási díj beérkezése után történik</strong>. Az élesítés
+          tehát nem jelenti a hozzáférések átadását: a felhasználási jog is a teljes díj
+          megfizetésével száll át (6. pont).
         </p>
 
         <h2>5. Fogyasztói elállási jog</h2>
@@ -77,21 +82,55 @@ export default function TermsPage() {
           irányadók. A díj teljes megfizetéséig a szerzői jogok a Vállalkozót illetik.
         </p>
 
-        <h2>7. Együttműködés és határidők</h2>
+        <h2>7. Üzemeltetés, harmadik feles szolgáltatások és átadás</h2>
+        <p>
+          Az elkészült weboldal harmadik felek szolgáltatásain fut. Ezek jellemzően: a domain
+          regisztrátora (pl. Rackhost), a futtatási környezet (Vercel), szükség esetén az adatbázis
+          és belépéskezelés (Supabase), valamint a levélküldés (Resend). Ezeknek a szolgáltatásoknak
+          saját szerződési feltételei és díjszabása van.
+        </p>
+        <p>
+          <strong>A szolgáltatások a Megrendelő saját (vagy céges) fiókjába kerülnek, és a
+          díjaikat — beleértve a domain éves megújítását — a Megrendelő fizeti.</strong> A vállalási
+          díj a fejlesztésre vonatkozik, és nem tartalmazza ezeket a folyamatos költségeket, kivéve
+          ha az egyedi ajánlat kifejezetten így rendelkezik. A Vállalkozó az átadás előtt
+          tájékoztatást ad arról, mely szolgáltatás milyen csomagot igényel az éles működéshez.
+        </p>
+        <p>
+          Az átadás az Ügyfélkapu vezetett átadási folyamatában, lépésenként, visszakövethetően
+          történik. A Vállalkozó a hozzáféréseket meghívásos jogosultsággal, illetve
+          projektátadással adja át; <strong>jelszót, bankkártyaadatot és titkos kulcsot egyik fél sem
+          küld a másiknak</strong>. Az átadás lezárása után a fiókok, a számlázás, a megújítás és a
+          mentések felelőssége a Megrendelőt terheli. Az egyes szolgáltatásoknál a Megrendelő
+          közreműködése (fiók létrehozása, meghívás elfogadása, DNS rekordok felvétele) az átadás
+          feltétele; ennek késedelme a 8. pont szerint hosszabbítja a határidőt.
+        </p>
+
+        <h2>8. Díjmentes technikai garancia</h2>
+        <p>
+          A projekt Ügyfélkapun történő lezárásától számított 30 napig a Vállalkozó díjmentesen
+          kivizsgálja és javítja az átadáskor vállalt működés igazolt hibáit. A garancia nem
+          tartalmaz új funkciót, új tartalmat, utólagos módosítást, harmadik felek szolgáltatásainak
+          kieséséből eredő hibát, sem a Megrendelő vagy harmadik fél által végzett módosítások
+          következményeit. A garancia nem karbantartási előfizetés; a hibát a Megrendelő az
+          Ügyfélkapun jelzi.
+        </p>
+
+        <h2>9. Együttműködés és határidők</h2>
         <p>
           A határidők a Megrendelő által biztosított anyagok, hozzáférések és visszajelzések
           határidőben történő megadását feltételezik. A Megrendelő késedelme a teljesítési
           határidőt arányosan meghosszabbítja.
         </p>
 
-        <h2>8. Felelősség</h2>
+        <h2>10. Felelősség</h2>
         <p>
           A Vállalkozó a tőle elvárható szakmai gondossággal jár el. Nem felel a Megrendelő által
           szolgáltatott tartalmakért, harmadik felek szolgáltatásainak kieséséért, illetve az
           átadás után a Megrendelő vagy harmadik fél által végzett módosításokból eredő hibákért.
         </p>
 
-        <h2>9. Vitarendezés</h2>
+        <h2>11. Vitarendezés</h2>
         <p>
           A felek a vitáikat elsődlegesen békés úton rendezik. Ennek eredménytelensége esetén a
           hatáskörrel és illetékességgel rendelkező magyar bíróság jár el. Fogyasztói jogvita esetén

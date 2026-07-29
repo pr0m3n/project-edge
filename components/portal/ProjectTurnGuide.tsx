@@ -1,4 +1,14 @@
 import type { Project } from "@/components/ClientPortal";
+import { activeHandoverStep, handoverTurn, isHandoverComplete } from "@/lib/handover";
+
+/**
+ * A hiányzó domain önmagában is „rajtad a sor" helyzet: hiába dolgozunk az
+ * oldalon, élesíteni nem tudunk, amíg a domain nincs meg. Korábban a sáv ilyenkor
+ * is azt írta, hogy „nálunk a labda, nincs teendőd".
+ */
+function needsDomainFromClient(project: Project) {
+  return project.brief_data?.domainStatus === "need" && project.brief_data?.domainPurchaseState !== "submitted";
+}
 
 type GuideWho = "client" | "studio" | "neutral";
 
@@ -45,6 +55,25 @@ function buildGuide(project: Project): Guide | null {
         ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }
         : { who: "client", headline: "Fizesd be a foglalót", detail: "A szerződés megvan — utald el, majd lent jelezd az utalást." };
     case "in_progress":
+      if (needsDomainFromClient(project)) {
+        return {
+          who: "client",
+          headline: "Hiányzik még a domain",
+          detail:
+            "Az oldalon dolgozunk, de élesíteni csak a saját domaineddel tudunk. Vedd meg (az útmutató segít), majd lent küldd be az adatait."
+        };
+      }
+      // Kivitelezés alatt is lehet ügyfél-lépés: a fiókok létrehozása és a
+      // meghívások az élesítés előtt kellenek, különben az élesítés napján
+      // derül ki, hogy nincs hová átadni.
+      if (project.handover_steps?.length && handoverTurn(project.handover_steps) === "client") {
+        const active = activeHandoverStep(project.handover_steps);
+        return {
+          who: "client",
+          headline: active ? active.def.title : "Egy előkészítő lépés van rajtad",
+          detail: "Az oldalon dolgozunk. Közben nyisd meg lent a „Vezetett átadás” részt — ott a linkek és az útmutató is megvan."
+        };
+      }
       return {
         who: "studio",
         headline: "Épül az oldalad",
@@ -52,6 +81,13 @@ function buildGuide(project: Project): Guide | null {
       };
     case "review":
       if (project.review_approved) {
+        if (needsDomainFromClient(project)) {
+          return {
+            who: "client",
+            headline: "Már csak a domain hiányzik az élesítéshez",
+            detail: "Jóváhagytad az oldalt. Vedd meg a domaint az útmutató szerint, majd lent küldd be az adatait."
+          };
+        }
         return { who: "studio", headline: "Az élesítés következik", detail: "Jóváhagytad az oldalt. Most az adminisztrátor végzi az élesítést." };
       }
       return project.feedback_round >= 2
@@ -65,17 +101,37 @@ function buildGuide(project: Project): Guide | null {
             headline: "Nézd át és jelezz vissza",
             detail: "Nézd meg az elkészült verziót lent, és írd meg, mit javítsunk — vagy hagyd jóvá."
           };
-    case "launched":
+    case "launched": {
       if (!project.final_payment_paid) {
         return project.final_transfer_reported
           ? { who: "studio", headline: "Ellenőrizzük a hátralékot", detail: "Jelezted az utalást. Most nincs teendőd." }
           : { who: "client", headline: "Rendezd a hátralékot", detail: "Utald el a hátralékot, majd lent jelezd az utalást." };
       }
+
+      // Élesítés után a vezetett átadás dönti el, kinél van a labda — így nem
+      // kell külön egyeztetni, ki jön a Vercel / Supabase / Resend lépésekben.
+      const steps = project.handover_steps;
+      if (steps?.length && !isHandoverComplete(steps)) {
+        const active = activeHandoverStep(steps);
+        return handoverTurn(steps) === "client"
+          ? {
+              who: "client",
+              headline: active ? active.def.title : "Egy átadási lépés van rajtad",
+              detail: "Nyisd meg lent a „Vezetett átadás” részt — ott találod a linkeket és az útmutatót is."
+            }
+          : {
+              who: "studio",
+              headline: "Az átadáson dolgozunk",
+              detail: active ? `${active.def.title} — nincs teendőd, értesítést kapsz, amint továbbmegy.` : "Nincs teendőd."
+            };
+      }
+
       return {
         who: "client",
         headline: "Zárd le a kész projektet",
         detail: "A lezárással elindul a 30 napos díjmentes technikai garancia. Ezután csak akkor kell jelezned, ha valódi működési hibát találsz."
       };
+    }
     case "paused":
       return {
         who: "neutral",

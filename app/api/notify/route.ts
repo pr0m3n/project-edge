@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
+/** A stúdió értesítési címe — ügyfél-jelzések ide futnak be. */
+const STUDIO_NOTIFICATION_EMAIL = process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+
 // Csak belső, relatív útvonalat engedünk a levél gombjában (nyílt átirányítás ellen).
 function safeInternalLink(link: unknown) {
   if (typeof link !== "string") return null;
@@ -36,7 +39,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, email, title, message, link } = body ?? {};
+    const { userId, title, message, link } = body ?? {};
+    // A body `email` mezőjét szándékosan NEM használjuk: korábban a címzett
+    // onnan jött, tehát bármelyik bejelentkezett ügyfél küldhetett levelet
+    // bármilyen címre a projectedge.hu-ról (hitelesített email-relay). A címzettet
+    // innentől a szerver határozza meg a hívó jogosultsága alapján.
 
     // Egyszerű méret-korlátok, hogy ne lehessen a végponton keresztül óriási
     // tartalmat küldeni.
@@ -53,9 +60,49 @@ export async function POST(request: Request) {
       auth: { persistSession: false }
     });
 
+    // 2. Címzett meghatározása kizárólag szerver oldalon.
+    //
+    //    * userId nélkül → a stúdió saját címe (ügyfél jelzései érkeznek ide),
+    //    * saját magának bárki küldhet (a token e-mail címére),
+    //    * MÁS felhasználónak csak admin küldhet, és a címet ilyenkor is az
+    //      adatbázisból olvassuk ki, nem a kérésből.
+    //    Az admin-ellenőrzés a hívó saját tokenjével fut, hogy service role
+    //    kulcs nélkül is helyes eredményt adjon (az admin_users olvasását az
+    //    is_admin() policy engedi a saját sorra).
+    const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    const { data: adminRow } = await callerClient
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const isAdmin = Boolean(adminRow);
+
+    const targetUserId: string | null = typeof userId === "string" && userId ? userId : null;
+    let targetEmail: string | null = null;
+
+    if (!targetUserId) {
+      targetEmail = STUDIO_NOTIFICATION_EMAIL;
+    } else if (targetUserId === user.id) {
+      targetEmail = user.email ?? null;
+    } else if (isAdmin) {
+      // Adminként a saját tokenünkkel is olvasható a profil (is_admin policy),
+      // így ez a lekérdezés service role kulcs nélkül is működik.
+      const { data: profile } = await callerClient
+        .from("client_profiles")
+        .select("email")
+        .eq("id", targetUserId)
+        .maybeSingle();
+      targetEmail = profile?.email ?? null;
+    } else {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Insert notification into public.notifications
     const { error: dbError } = await supabase.from("notifications").insert({
-      user_id: userId || null,
+      user_id: targetUserId,
       title: safeTitle,
       message: safeMessage,
       link: safeLink
@@ -67,9 +114,6 @@ export async function POST(request: Request) {
 
     let emailSent = false;
     let emailError: string | null = null;
-
-    // Determine recipient
-    const targetEmail = email || (userId ? null : "admin@projectedge.hu");
 
     if (targetEmail) {
       const result = await sendProjectEdgeEmail({

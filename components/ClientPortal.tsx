@@ -22,6 +22,10 @@ import { BuildProgressPanel } from "@/components/portal/BuildProgressPanel";
 import { ReviewFeedbackPanel } from "@/components/portal/ReviewFeedbackPanel";
 import { LaunchedPanel } from "@/components/portal/LaunchedPanel";
 import { ClosedProjectCard } from "@/components/portal/ClosedProjectCard";
+import { HandoverPanel } from "@/components/portal/HandoverPanel";
+import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
+import { assetReference } from "@/lib/storage-assets";
+import { completeHandoverStep, type HandoverStepState } from "@/lib/handover";
 
 function noticeKind(message: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet|nincs aktív/i.test(message)) {
@@ -102,7 +106,10 @@ export type Project = {
   milestones: Array<{ title: string; done: boolean }> | null;
   feedback_round: number;
   feedback_notes: string | null;
+  /** Régi, szabad szöveges átadási lista — csak a 017 előtt indult projekteknél. */
   handover_checklist: Array<{ title: string; done: boolean }> | null;
+  /** Vezetett átadás állapota (lib/handover.ts). */
+  handover_steps: HandoverStepState[] | null;
   maintenance_option: string | null;
   maintenance_monthly_fee: number | null;
   maintenance_currency: string | null;
@@ -440,6 +447,73 @@ const analyticsLabels: Record<string, string> = {
   no: "nincs / nem fontos"
 };
 
+/**
+ * A brief emberi olvasásra szánt szöveges változata (`client_projects.goals`).
+ *
+ * FONTOS: ezt a beküldés ÉS a későbbi szerkesztés is ugyaninnen kapja. Korábban
+ * két külön builder volt, és a szerkesztő csak 8 sort írt vissza — így az ügyfél
+ * első módosításánál eltűnt a Domain, Logó, Szövegek, Kapcsolat és Számlázás sor
+ * az admin nézetéből (ami ebből a szövegből parse-ol). Ha új brief mező készül,
+ * elég itt felvenni.
+ */
+export function buildBriefText(form: BriefFormValues) {
+  const vibe = vibeOptions.find(([value]) => value === form.vibe) ?? vibeOptions[0];
+  const palette = paletteOptions.find(([value]) => value === form.palette) ?? paletteOptions[0];
+  const customColors = [form.customBg, form.customAccent, form.customText, form.customCta];
+
+  const domainLine =
+    form.domainStatus === "have"
+      ? `Domain: ${form.domainName || "saját domain"}${
+          hostingAccessLabels[form.hostingAccess] ? ` (${hostingAccessLabels[form.hostingAccess]})` : ""
+        }`
+      : form.domainStatus === "need"
+        ? "Domain: még nincs — segítséget kér a regisztrációhoz"
+        : "";
+
+  const platformLine =
+    form.websiteStatus === "yes" && form.existingPlatform
+      ? `Jelenlegi rendszer: ${platformLabels[form.existingPlatform] ?? form.existingPlatform}${
+          form.existingPlatform === "wordpress" && wpAccessLabels[form.wpAccess] ? ` — ${wpAccessLabels[form.wpAccess]}` : ""
+        }`
+      : "";
+
+  const logoLine = form.logoStatus
+    ? `Logó: ${logoLabels[form.logoStatus]}${
+        form.logoStatus === "no" && form.wantLogoDesign
+          ? ` — ${form.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}`
+          : ""
+      }`
+    : "";
+
+  return [
+    `Cél: ${form.goals}`,
+    form.audience ? `Célközönség / vásárlók: ${form.audience}` : "",
+    form.pages ? `Fontos oldalak: ${form.pages}` : "",
+    form.features ? `Kért funkciók: ${form.features}` : "",
+    form.style ? `Stílus / hangulat: ${form.style}` : "",
+    `Vizuális karakter: ${vibe[1]}`,
+    `Színirány: ${palette[1]}${form.palette === "custom" ? ` (${customColors.join(", ")})` : ""}`,
+    `Prioritás: ${splitListValue(form.priority).map((value) => priorityLabels[value] ?? value).join(", ")}`,
+    domainLine,
+    platformLine,
+    logoLine,
+    form.brandColors ? `Márkaszín: ${form.brandColors}` : "",
+    form.fontPreference ? `Betűtípus: ${form.fontPreference}` : "",
+    `Szövegek: ${form.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
+    form.contentBrief ? `Cégbemutató a szövegíráshoz: ${form.contentBrief}` : "",
+    form.contentFileUrls.length ? `Feltöltött szöveges anyagok: ${form.contentFileUrls.length} db` : "",
+    form.photoSource ? `Képek: ${form.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
+    form.photoUrls.length ? `Feltöltött képek: ${form.photoUrls.length} db` : "",
+    form.contactEmail ? `Kapcsolati email: ${form.contactEmail}` : "",
+    form.contactPhone ? `Telefon: ${form.contactPhone}` : "",
+    form.socialLinks ? `Közösségi linkek: ${form.socialLinks}` : "",
+    analyticsLabels[form.analyticsAccess] ? `Analytics: ${analyticsLabels[form.analyticsAccess]}` : "",
+    form.billingDetails ? `Számlázási adatok: ${form.billingDetails}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 export function escHtml(value: string | null | undefined) {
   return (value ?? "")
     .replace(/&/g, "&amp;")
@@ -538,6 +612,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [contractChecked, setContractChecked] = useState(false);
+  const [performanceConsent, setPerformanceConsent] = useState(false);
   const [feedbackRoundNote, setFeedbackRoundNote] = useState("");
   const [reviewForm, setReviewForm] = useState({ rating: 5, review: "", reference: false });
   const [modificationRequestText, setModificationRequestText] = useState("");
@@ -562,6 +637,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [domainUpdateName, setDomainUpdateName] = useState("");
   const [domainProofUrl, setDomainProofUrl] = useState("");
   const [domainProofUploading, setDomainProofUploading] = useState(false);
+  const [handoverSaving, setHandoverSaving] = useState(false);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -1220,8 +1296,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
-    const { data } = supabase.storage.from("client-logos").getPublicUrl(path);
-    setProjectForm((current) => ({ ...current, logoUrl: data.publicUrl }));
+    // Privát bucket (018-as migráció): az útvonalat tároljuk, a megnyitás
+    // signed URL-lel történik (lib/storage-assets.ts).
+    setProjectForm((current) => ({ ...current, logoUrl: assetReference("client-logos", path) }));
     setLogoUploading(false);
     setNotice("Logó sikeresen feltöltve.");
   }
@@ -1244,7 +1321,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         setNotice("Az egyik kép feltöltése nem sikerült. Próbáld újra.");
         return;
       }
-      uploaded.push(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+      uploaded.push(assetReference("client-assets", path));
     }
     setProjectForm((current) => ({ ...current, photoUrls: [...current.photoUrls, ...uploaded] }));
     setAssetUploading(false);
@@ -1273,7 +1350,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         setNotice("A szöveges anyag feltöltése nem sikerült. Próbáld újra.");
         return;
       }
-      uploaded.push(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+      uploaded.push(assetReference("client-assets", path));
     }
     setProjectForm((current) => ({
       ...current,
@@ -1298,7 +1375,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setDomainProofUploading(false);
       return;
     }
-    setDomainProofUrl(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+    // A domain-igazoláson tulajdonosi adatok (név, cím, telefon) szerepelnek,
+    // ezért privát bucketbe kerül, és csak signed URL-lel nyitható meg.
+    setDomainProofUrl(assetReference("client-assets", path));
     setDomainProofUploading(false);
     setNotice("A domain igazolása feltöltve.");
   }
@@ -1344,6 +1423,50 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     );
   }
 
+  /**
+   * Egy átadási lépés lezárása az ügyfél oldaláról.
+   *
+   * A sorrendet és a felelőst a lib/handover.ts ellenőrzi, az adatbázisban pedig
+   * a 019-es migráció triggere is: az ügyfél nem tudja kipipálni a mi
+   * lépéseinket, tehát nem lehet a felületet megkerülve „kész" állapotba vinni
+   * az átadást.
+   */
+  async function completeClientHandoverStep(project: Project, stepId: string, value: string) {
+    const result = completeHandoverStep(project.handover_steps, stepId, "client", value);
+    if (result.error) {
+      setNotice(result.error);
+      return;
+    }
+
+    setHandoverSaving(true);
+    const { error } = await supabase
+      .from("client_projects")
+      .update({ handover_steps: result.steps })
+      .eq("id", project.id);
+    setHandoverSaving(false);
+
+    if (error) {
+      setNotice("Nem sikerült rögzíteni a lépést. Próbáld újra.");
+      return;
+    }
+
+    setProjects((current) =>
+      current.map((item) => (item.id === project.id ? { ...item, handover_steps: result.steps } : item))
+    );
+    setNotice("Lépés rögzítve. Köszönjük!");
+
+    const completed = result.steps.find((step) => step.id === stepId);
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Átadási lépés kész",
+      `Az ügyfél (${email}) elvégzett egy átadási lépést a(z) "${project.title}" projektben.${
+        completed?.value ? `\n\nMegadott adat: ${completed.value}` : ""
+      }`,
+      "/admin"
+    );
+  }
+
   async function createProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!userId) {
@@ -1356,45 +1479,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     setNotice("Projekt mentése...");
 
-    const domainLine = projectForm.domainStatus === "have"
-      ? `Domain: ${projectForm.domainName || "saját domain"}${hostingAccessLabels[projectForm.hostingAccess] ? ` (${hostingAccessLabels[projectForm.hostingAccess]})` : ""}`
-      : projectForm.domainStatus === "need"
-        ? "Domain: még nincs — segítséget kér a regisztrációhoz"
-        : "";
-    const platformLine = projectForm.websiteStatus === "yes" && projectForm.existingPlatform
-      ? `Jelenlegi rendszer: ${platformLabels[projectForm.existingPlatform] ?? projectForm.existingPlatform}${projectForm.existingPlatform === "wordpress" && wpAccessLabels[projectForm.wpAccess] ? ` — ${wpAccessLabels[projectForm.wpAccess]}` : ""}`
-      : "";
-    const logoLine = projectForm.logoStatus
-      ? `Logó: ${logoLabels[projectForm.logoStatus]}${projectForm.logoStatus === "no" && projectForm.wantLogoDesign ? ` — ${projectForm.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}` : ""}`
-      : "";
-
-    const detailedGoals = [
-      `Cél: ${projectForm.goals}`,
-      projectForm.audience ? `Célközönség / vásárlók: ${projectForm.audience}` : "",
-      projectForm.pages ? `Fontos oldalak: ${projectForm.pages}` : "",
-      projectForm.features ? `Kért funkciók: ${projectForm.features}` : "",
-      projectForm.style ? `Stílus / hangulat: ${projectForm.style}` : "",
-      `Vizuális karakter: ${selectedVibe[1]}`,
-      `Színirány: ${selectedPalette[1]}${projectForm.palette === "custom" ? ` (${activePaletteColors.join(", ")})` : ""}`,
-      `Prioritás: ${splitListValue(projectForm.priority).map((value) => priorityLabels[value] ?? value).join(", ")}`,
-      domainLine,
-      platformLine,
-      logoLine,
-      projectForm.brandColors ? `Márkaszín: ${projectForm.brandColors}` : "",
-      projectForm.fontPreference ? `Betűtípus: ${projectForm.fontPreference}` : "",
-      `Szövegek: ${projectForm.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
-      projectForm.contentBrief ? `Cégbemutató a szövegíráshoz: ${projectForm.contentBrief}` : "",
-      projectForm.contentFileUrls.length ? `Feltöltött szöveges anyagok: ${projectForm.contentFileUrls.length} db` : "",
-      projectForm.photoSource ? `Képek: ${projectForm.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
-      projectForm.photoUrls.length ? `Feltöltött képek: ${projectForm.photoUrls.length} db` : "",
-      projectForm.contactEmail ? `Kapcsolati email: ${projectForm.contactEmail}` : "",
-      projectForm.contactPhone ? `Telefon: ${projectForm.contactPhone}` : "",
-      projectForm.socialLinks ? `Közösségi linkek: ${projectForm.socialLinks}` : "",
-      analyticsLabels[projectForm.analyticsAccess] ? `Analytics: ${analyticsLabels[projectForm.analyticsAccess]}` : "",
-      projectForm.billingDetails ? `Számlázási adatok: ${projectForm.billingDetails}` : ""
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    const detailedGoals = buildBriefText(projectForm);
 
     const { error } = await supabase.from("client_projects").insert({
       budget: projectForm.budget,
@@ -1491,21 +1576,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
     setNotice("Projektindító adatlap módosításainak mentése...");
     
-    const selVibe = vibeOptions.find(([v]) => v === editForm.vibe) ?? vibeOptions[0];
-    const selPalette = paletteOptions.find(([v]) => v === editForm.palette) ?? paletteOptions[0];
-    
-    const newDetailedGoals = [
-      `Cél: ${editForm.goals}`,
-      editForm.audience ? `Célközönség / vásárlók: ${editForm.audience}` : "",
-      editForm.pages ? `Fontos oldalak: ${editForm.pages}` : "",
-      editForm.features ? `Kért funkciók: ${editForm.features}` : "",
-      editForm.style ? `Stílus / hangulat: ${editForm.style}` : "",
-      `Vizuális karakter: ${selVibe[1]}`,
-      `Színirány: ${selPalette[1]}${editForm.palette === "custom" ? ` (${[editForm.customBg, editForm.customAccent, editForm.customText, editForm.customCta].join(", ")})` : ""}`,
-      `Prioritás: ${priorityLabels[editForm.priority] ?? editForm.priority}`
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    // Ugyanaz a builder, mint a beküldésnél — így a szerkesztés nem törli ki a
+    // szerkesztőben nem szerkeszthető sorokat (domain, logó, szövegek, kapcsolat,
+    // számlázás), amelyeket az admin nézete ebből a szövegből olvas.
+    const newDetailedGoals = buildBriefText(editForm);
 
     const logs: Array<{
       project_id: string;
@@ -1795,6 +1869,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Az aláíráshoz el kell fogadnod a szerződést és az ÁSZF-et.");
       return;
     }
+    if (!performanceConsent) {
+      setNotice("Jelöld be a teljesítés megkezdésére vonatkozó nyilatkozatot is.");
+      return;
+    }
     setNotice("Szerződés elfogadása...");
     const { error } = await supabase.from("client_projects").update({
       contract_accepted: true,
@@ -1806,6 +1884,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice("Nem sikerült elfogadni a szerződést.");
     } else {
       setContractChecked(false);
+      setPerformanceConsent(false);
       setNotice("Szerződés aláírva. Következő lépés: a foglaló befizetése.");
       await triggerNotification(
         null,
@@ -2147,7 +2226,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
         <ProjectTurnGuide project={project} />
 
-        {project.brief_data?.domainStatus === "need" ? (
+        {/* Csak a domain beszerzésének idején van itt helye: élesítés után az
+            átadási panel veszi át, törlési kérelem alatt pedig a sárga sáv a
+            fókusz. Korábban a „Domain elküldve" blokk hónapokkal az élesítés
+            után is a kártya tetején maradt. */}
+        {project.brief_data?.domainStatus === "need" &&
+        !project.delete_requested &&
+        ["request_received", "planning", "offer_sent", "contract_pending", "deposit_pending", "in_progress", "review"].includes(
+          project.status
+        ) ? (
           <section className="project-domain-action">
             <div className="project-domain-action-copy">
               <span className="micro-label">Domain következő lépés</span>
@@ -2155,7 +2242,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <>
                   <h4>Domain elküldve: {project.brief_data.domainName}</h4>
                   <p>Az igazolást megkaptuk. Most az adminisztrátor ellenőrzi, majd az átadási listában megadja a szükséges DNS-rekordokat.</p>
-                  {project.brief_data.domainProofUrl ? <a href={project.brief_data.domainProofUrl} target="_blank" rel="noreferrer">Feltöltött igazolás megnyitása</a> : null}
+                  {project.brief_data.domainProofUrl ? (
+                    <AssetLink label="Feltöltött igazolás megnyitása" value={project.brief_data.domainProofUrl} />
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -2307,6 +2396,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             project={project}
             contractChecked={contractChecked}
             onContractCheckedChange={setContractChecked}
+            performanceConsent={performanceConsent}
+            onPerformanceConsentChange={setPerformanceConsent}
             onAccept={() => acceptContract(project)}
           />
         )}
@@ -2325,6 +2416,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               Minden rendben, jóváhagyom
             </button>
           </>
+        )}
+
+        {/* A lépések a kivitelezés indulásától látszanak, amint az admin
+            kijelölte a projekt összetevőit. Ez szándékos: fiók létrehozása és
+            meghívás nélkül nem lehet élesíteni, tehát ezeknek az élesítés ELŐTT
+            kell megtörténniük. Az ajánlat előtt viszont nem jelenik meg, mert
+            akkor még nincs se szerződés, se eldöntött technikai összetétel. */}
+        {["in_progress", "review", "launched"].includes(project.status) &&
+        (project.handover_steps?.length ?? 0) > 0 && (
+          <HandoverPanel
+            project={project}
+            busy={handoverSaving}
+            onCompleteStep={(stepId, value) => completeClientHandoverStep(project, stepId, value)}
+          />
         )}
 
         {project.status === "launched" && (
@@ -3125,7 +3230,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             {projectForm.logoUrl.toLowerCase().endsWith(".pdf") ? (
                               <span className="logo-preview-chip"><IconPaperclip size={16} /> Fájl csatolva</span>
                             ) : (
-                              <img src={projectForm.logoUrl} alt="Feltöltött logó előnézet" />
+                              <AssetImage value={projectForm.logoUrl} alt="Feltöltött logó előnézet" />
                             )}
                             <span>Sikeresen feltöltve — bármikor cserélheted.</span>
                           </div>

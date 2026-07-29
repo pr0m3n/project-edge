@@ -56,7 +56,11 @@ const faqs = [
   ],
   [
     "Mi van a leszállítás után?",
-    "Indulás után megnézem, hogyan viselkedik az oldal, és javítok azon, ami a valós használatban látszik. Igény szerint havi karbantartás is kérhető."
+    "A projekt lezárásától 30 napig díjmentes technikai garanciát adok: ha az átadott működésben hiba van, kivizsgálom és javítom. Új funkció és új tartalom nem tartozik ide, de igény szerint havi karbantartás kérhető."
+  ],
+  [
+    "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
+    "Mindent a te (vagy a céged) fiókjába adok át: domain, Vercel, ha kell adatbázis és levélküldés, valamint a forráskód. Az átadás az ügyfélkapun lépésenként, linkekkel és útmutatóval megy — jelszót egyszer sem kérek. A szolgáltatások díjai (pl. a domain éves megújítása) az átadás után nálad futnak."
   ]
 ];
 
@@ -271,17 +275,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Ezek szándékosan NEM idézetek: saját vállalások. A korábbi
+          blockquote + „szerző" felépítés ügyfélvéleménynek látszott, holott
+          nincs mögötte valós referencia — ezért lett belőle nyílt vállalás-kártya. */}
       <section className="voices-section">
         <div className="section-head">
           <p className="micro-label dark">Mire számíthatsz</p>
-          <h2>Amit egy közös munkában kapsz.</h2>
+          <h2>Amit vállalok — nem ügyfélidézetek, hanem konkrét ígéretek.</h2>
         </div>
         <div className="voices-grid">
           <article className="voice-card feature">
-            <blockquote>
+            <p className="voice-claim">
               Egyedi kód sablon helyett, és menet közben végig látod, hol tart a projekt. Nincs
               feketedoboz: az ügyfélkapun bármikor megnézed a státuszt és a következő lépést.
-            </blockquote>
+            </p>
             <div className="voice-author">
               <div>
                 <strong>Átlátható munka</strong>
@@ -290,14 +297,26 @@ export default function Home() {
             </div>
           </article>
           <article className="voice-card">
-            <blockquote>
+            <p className="voice-claim">
               Gyors, mobilbarát oldal, ami tényleg segít megtalálni téged — nem csak szép, hanem a
               megkeresésekre optimalizált.
-            </blockquote>
+            </p>
             <div className="voice-author">
               <div>
                 <strong>Eredményre tervezve</strong>
                 <span>sebesség + ügyfélszerzés</span>
+              </div>
+            </div>
+          </article>
+          <article className="voice-card">
+            <p className="voice-claim">
+              A végén minden hozzáférés a tiéd: domain, futtatás, adatbázis, forráskód. Az átadás
+              lépésenként, az ügyfélkapun megy — nem telefonon.
+            </p>
+            <div className="voice-author">
+              <div>
+                <strong>Nincs bezárás</strong>
+                <span>átadás + 30 napos garancia</span>
               </div>
             </div>
           </article>

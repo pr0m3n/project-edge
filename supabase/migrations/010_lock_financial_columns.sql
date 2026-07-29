@@ -1,5 +1,12 @@
 -- 010_lock_financial_columns.sql
 --
+-- ⚠️ ELAVULT — EZT A FÁJLT NE FUTTASD LE. A helyére a
+-- 019_client_write_guard.sql került, ami ugyanezt a védelmet adja, de úgy, hogy
+-- a jelenlegi (mock) fizetési folyamat nem bukik el rajta, és a státusz-
+-- átmeneteket, az átadási lépéseket és a törlést is védi. A 019 eltakarítja az
+-- itt létrehozott triggert, ha korábban mégis lefutott volna.
+--
+-- (Eredeti leírás:)
 -- FONTOS – EZT A VALÓS FIZETÉSSEL EGYÜTT ALKALMAZD:
 -- Ez a migráció megakadályozza, hogy egy bejelentkezett ügyfél (nem admin) a
 -- böngészőből átírja az ár-, foglaló-, fizetési- és szerződés-mezőket a
