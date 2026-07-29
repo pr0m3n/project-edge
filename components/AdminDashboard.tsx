@@ -113,6 +113,8 @@ type ClientProject = {
   followup_check_completed_at: string | null;
   followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
   followup_check_report: string | null;
+  warranty_started_at: string | null;
+  warranty_expires_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
   review_approved: boolean;
@@ -939,6 +941,8 @@ export function AdminDashboard() {
   function renderClosedProjectCard(project: ClientProject) {
     const rating = project.client_rating;
     const review = project.client_review;
+    const warrantyUntil = project.warranty_expires_at ? new Date(project.warranty_expires_at) : null;
+    const warrantyActive = warrantyUntil ? warrantyUntil.getTime() > Date.now() : false;
     return (
       <article className="admin-project-card compact-closed" key={project.id} style={{
         background: "rgba(255, 255, 255, 0.02)",
@@ -971,6 +975,9 @@ export function AdminDashboard() {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: "13px" }}>
             <strong>{project.contact_name || "Ügyfél"}</strong>
             {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "#76ABAE", fontSize: "12px" }}>{project.contact_email}</a> : null}
+            <button className="admin-delete-project" type="button" onClick={() => approveDeletion(project)}>
+              Projekt végleges törlése
+            </button>
           </div>
         </div>
 
@@ -989,6 +996,24 @@ export function AdminDashboard() {
             Még nem érkezett értékelés az ügyféltől.
           </div>
         )}
+
+        <section className="admin-warranty-card">
+          <div>
+            <span className="micro-label">30 napos technikai garancia</span>
+            <strong>
+              {warrantyUntil
+                ? `${warrantyActive ? "Aktív" : "Lejárt"} · ${warrantyUntil.toLocaleDateString("hu-HU")}-ig`
+                : "Nincs rögzített kezdődátum"}
+            </strong>
+            <small>Nem automatikus karbantartás: csak az átadott működés igazolt hibáit javítjuk. Új tartalom és új funkció külön kérés.</small>
+          </div>
+          <ul>
+            <li>Átadási hozzáférések és tulajdonosok rögzítve</li>
+            <li>Éles domain és HTTPS ellenőrizve</li>
+            <li>Űrlapok / fő funkciók átadáskor tesztelve</li>
+            <li>Garanciális hibát az ügyfél ticketben jelez</li>
+          </ul>
+        </section>
 
       </article>
     );
@@ -1024,15 +1049,15 @@ export function AdminDashboard() {
             status: "launched",
             next_step: "Az oldal éles. Kérlek, rendezd a hátralékot, majd jelezd az utalást.",
             handover_checklist: project.handover_checklist?.length ? project.handover_checklist : [
-              { title: "GitHub repository tulajdonosi hozzáférés rendezve", done: false },
-              { title: "Vercel projekt meghívás vagy tulajdonátadás elküldve", done: false },
-              { title: "Production domain és DNS ellenőrizve", done: false },
-              { title: "Vercel környezeti változók dokumentálva és ellenőrizve", done: false },
-              { title: "Supabase szervezet/projekt hozzáférés átadva", done: false },
-              { title: "Supabase RLS, Auth redirect URL-ek és Storage szabályok ellenőrizve", done: false },
-              { title: "Adatmentés és helyreállítási felelős rögzítve", done: false },
-              { title: "Domain, Vercel és Supabase számlázási felelős rögzítve", done: false },
-              { title: "Ügyfél átadási ellenőrzése és visszaigazolása megtörtént", done: false }
+              { title: "ÜGYFÉL · Saját Vercel-csapat létrehozva, ProjectEdge meghívva", done: false },
+              { title: "ADMIN · Vercel Project Transfer kész; domain, production és env változók ellenőrizve", done: false },
+              { title: "ÜGYFÉL · Saját Supabase-szervezet létrehozva, ProjectEdge meghívva", done: false },
+              { title: "ADMIN · Supabase GitHub-integráció leválasztva, projekt átadva, Auth/RLS/Storage tesztelve", done: false },
+              { title: "ÜGYFÉL · GitHub repository tulajdonosi hozzáférés visszaigazolva", done: false },
+              { title: "ÜGYFÉL · Rackhost domain aktív; jelszó helyett a kért DNS rekordok beállítva", done: false },
+              { title: "ADMIN · Éles domain, www, HTTPS, űrlapok és fő funkciók végigtesztelve", done: false },
+              { title: "KÖZÖS · Számlázási felelősök, megújítás és helyreállítási felelős dokumentálva", done: false },
+              { title: "ÜGYFÉL · Átadási ellenőrzés kész, tulajdonosi hozzáférések visszaigazolva", done: false }
             ]
           });
         }
@@ -1683,6 +1708,19 @@ export function AdminDashboard() {
                       <a href={url} target="_blank" rel="noreferrer" key={url}>
                         <img src={url} alt={`Ügyfélkép ${index + 1}`} />
                       </a>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {Array.isArray(project.brief_data?.contentFileUrls) && project.brief_data.contentFileUrls.length > 0 ? (
+                <section className="admin-assets-block">
+                  <span className="admin-assets-title">Ügyfél által feltöltött szövegek ({project.brief_data.contentFileUrls.length})</span>
+                  <div className="uploaded-file-list">
+                    {project.brief_data.contentFileUrls.map((url: string, index: number) => (
+                      <div key={url}>
+                        <a href={url} target="_blank" rel="noreferrer">Szöveges anyag {index + 1}</a>
+                      </div>
                     ))}
                   </div>
                 </section>

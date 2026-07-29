@@ -9,6 +9,7 @@ type LaunchedPanelProps = {
 
 export function LaunchedPanel({ project, onPayFinal, onCloseProject }: LaunchedPanelProps) {
   const checklist = project.handover_checklist ?? [];
+  const handoverComplete = checklist.length > 0 && checklist.every((item) => item.done);
 
   return (
     <div style={{ background: "rgba(118, 171, 174, 0.05)", border: "1px solid rgba(118, 171, 174, 0.15)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "14px" }}>
@@ -83,9 +84,11 @@ export function LaunchedPanel({ project, onPayFinal, onCloseProject }: LaunchedP
           <div><span>→</span><p><strong>Külön munka</strong>Új funkció, új tartalom és utólagos módosítás csak külön jóváhagyással.</p></div>
         </div>
         {!project.final_payment_paid ? (
-          <p className="waiting-copy">A garancia a végső fizetés jóváhagyásakor indul.</p>
+          <p className="waiting-copy">A projekt lezárása a végső fizetés jóváhagyása után válik elérhetővé.</p>
+        ) : !handoverComplete ? (
+          <p className="waiting-copy">A projektet akkor tudod lezárni, ha az adminisztrátor minden átadási pontot kipipált. Most nála van a következő lépés.</p>
         ) : (
-          <button className="button primary" type="button" onClick={onCloseProject}>Projekt lezárása</button>
+          <button className="button primary" type="button" onClick={onCloseProject}>Átvettem, projekt lezárása</button>
         )}
       </div>
     </div>

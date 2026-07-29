@@ -81,6 +81,8 @@ export type Project = {
     customCta?: string;
     websiteStatus?: string;
     contentBrief?: string;
+    contentFileUrls?: string[];
+    brandColors?: string;
     photoUrls?: string[];
   } | null;
   last_modified_at: string | null;
@@ -108,6 +110,8 @@ export type Project = {
   followup_check_completed_at: string | null;
   followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
   followup_check_report: string | null;
+  warranty_started_at: string | null;
+  warranty_expires_at: string | null;
   subscription_cancel_requested_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
@@ -185,6 +189,7 @@ const initialProject = {
   fontPreference: "",
   contentSource: "",
   contentBrief: "",
+  contentFileUrls: [] as string[],
   photoSource: "",
   photoUrls: [] as string[],
   socialLinks: "",
@@ -241,10 +246,11 @@ function validateProjectStep(step: number, form: BriefFormValues): string | null
     if (!form.logoStatus) return "Válaszd ki, van-e már logód.";
     if (form.logoStatus === "yes" && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
     if (form.logoStatus === "no" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
-    if (!form.brandColors.trim()) return "Írd be a márkaszíneket, vagy írd azt, hogy: rátok bízom.";
+    if (!form.brandColors.trim()) return "Adj meg legalább egy márkaszínt, vagy írd azt, hogy: rátok bízom.";
     if (!form.fontPreference.trim()) return "Válassz betűtípus-stílust, vagy válaszd a nincs preferencia lehetőséget.";
     if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
     if (form.contentSource === "studio" && form.contentBrief.trim().length < 30) return "Mutasd be röviden a céget, hogy hiteles szöveget tudjunk írni.";
+    if (form.contentSource === "client" && form.contentBrief.trim().length < 30 && form.contentFileUrls.length === 0) return "Írj be vagy tölts fel legalább egy használható szöveges anyagot.";
     if (!form.photoSource) return "Válaszd ki, honnan lesznek a képek.";
     if (form.photoSource === "own" && form.photoUrls.length === 0) return "Tölts fel legalább egy saját képet.";
     if (!form.contactEmail.trim() && !form.contactPhone.trim()) return "Adj meg legalább egy kapcsolati email címet vagy telefonszámot.";
@@ -280,10 +286,11 @@ function validationTargetFor(message: string) {
     [/van-e már logód/i, "logo-status"],
     [/Töltsd fel a logót/i, "logo-upload"],
     [/logótervezést/i, "logo-design"],
-    [/márkaszíneket/i, "brand-colors"],
+    [/márkaszínt/i, "brand-colors"],
     [/betűtípus/i, "font-preference"],
     [/ki írja a szövegeket/i, "content-source"],
     [/Mutasd be röviden/i, "content-brief"],
+    [/szöveges anyagot/i, "content-client-material"],
     [/honnan lesznek a képek/i, "photo-source"],
     [/saját képet/i, "photo-upload"],
     [/kapcsolati email|telefonszámot/i, "contact-details"],
@@ -581,6 +588,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState(false);
+  const [contentUploading, setContentUploading] = useState(false);
   const [validationTarget, setValidationTarget] = useState("");
   const [showDomainGuide, setShowDomainGuide] = useState(false);
   const [customFontOpen, setCustomFontOpen] = useState(false);
@@ -592,6 +600,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [profileName, setProfileName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [recentlyClosedProjectId, setRecentlyClosedProjectId] = useState<string | null>(null);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -835,6 +844,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   const activeProjects = useMemo(() => projects.filter((p) => p.status !== "closed"), [projects]);
   const closedProjects = useMemo(() => projects.filter((p) => p.status === "closed"), [projects]);
+  const highlightedClosedProject = closedProjects.find((project) => project.id === recentlyClosedProjectId)
+    ?? closedProjects.find((project) => !project.client_rating)
+    ?? null;
 
   // Default selection: prefer a project where the client actually has
   // something to do, then the most recently touched one, then just the
@@ -1269,6 +1281,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice(`${uploaded.length} kép sikeresen feltöltve.`);
   }
 
+  async function uploadContentFiles(files: File[]) {
+    if (!userId || files.length === 0) return;
+    const allowed = files.filter(
+      (file) =>
+        ["text/plain", "application/pdf"].includes(file.type) &&
+        file.size <= 15 * 1024 * 1024
+    );
+    if (allowed.length !== files.length) {
+      setNotice("Csak TXT vagy PDF tölthető fel, fájlonként legfeljebb 15 MB méretben.");
+      return;
+    }
+    setContentUploading(true);
+    const uploaded: string[] = [];
+    for (const file of allowed) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `${userId}/copy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+      const { error } = await supabase.storage.from("client-assets").upload(path, file);
+      if (error) {
+        setContentUploading(false);
+        setNotice("A szöveges anyag feltöltése nem sikerült. Próbáld újra.");
+        return;
+      }
+      uploaded.push(supabase.storage.from("client-assets").getPublicUrl(path).data.publicUrl);
+    }
+    setProjectForm((current) => ({
+      ...current,
+      contentFileUrls: [...current.contentFileUrls, ...uploaded]
+    }));
+    setContentUploading(false);
+    setNotice(`${uploaded.length} szöveges fájl sikeresen feltöltve.`);
+  }
+
   async function createProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!userId) {
@@ -1309,6 +1353,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       projectForm.fontPreference ? `Betűtípus: ${projectForm.fontPreference}` : "",
       `Szövegek: ${projectForm.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
       projectForm.contentBrief ? `Cégbemutató a szövegíráshoz: ${projectForm.contentBrief}` : "",
+      projectForm.contentFileUrls.length ? `Feltöltött szöveges anyagok: ${projectForm.contentFileUrls.length} db` : "",
       projectForm.photoSource ? `Képek: ${projectForm.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
       projectForm.photoUrls.length ? `Feltöltött képek: ${projectForm.photoUrls.length} db` : "",
       projectForm.contactEmail ? `Kapcsolati email: ${projectForm.contactEmail}` : "",
@@ -1813,15 +1858,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     });
     if (!ok) return;
     setNotice("Projekt lezárása...");
+    const warrantyStartedAt = new Date();
+    const warrantyExpiresAt = new Date(warrantyStartedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
     const { error } = await supabase.from("client_projects").update({
       maintenance_option: null,
       followup_check_status: null,
       status: "closed",
+      warranty_started_at: warrantyStartedAt.toISOString(),
+      warranty_expires_at: warrantyExpiresAt.toISOString(),
       next_step: "A projekt lezárult. Az átadástól számított 30 napig díjmentes technikai garancia védi az elkészült működést."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
+      setRecentlyClosedProjectId(project.id);
       setNotice("A projekt lezárult. A 30 napos technikai garancia aktív.");
       await triggerNotification(
         null,
@@ -2556,7 +2606,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       <div className={`field ${validationTarget === "website-status" || validationTarget === "project-website" ? "validation-error" : ""}`} id="website-status">
                         <label>Van már működő weboldalad?</label>
-                        <div className="choice-grid compact">
+                        <div className="choice-grid compact website-status-choices">
                           <button
                             className={projectForm.websiteStatus === "yes" ? "selected" : ""}
                             onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "yes" }))}
@@ -2578,6 +2628,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ) : null}
                       </div>
                     </div>
+                    <p className="multi-select-hint">Többet is kijelölhetsz.</p>
                     <div id="project-types" className={`choice-grid ${validationTarget === "project-types" ? "validation-error" : ""}`}>
                       {projectTypeOptions.map(([value, label, description]) => (
                         <button
@@ -2647,6 +2698,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         placeholder="Kattints a fenti gombokra, vagy pontosítsd szabadon..."
                       />
                     </div>
+                    <p className="multi-select-hint">Többet is kijelölhetsz.</p>
                     <div id="project-priorities" className={`choice-grid compact ${validationTarget === "project-priorities" ? "validation-error" : ""}`}>
                       {Object.entries(priorityLabels).map(([value, label]) => (
                         <button
@@ -2733,17 +2785,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
                 {projectStep === 3 ? (
                   <>
-                    <div className="wizard-visual style-lab">
-                      <div
-                        className={`style-card vibe-${projectForm.vibe}`}
-                        style={{ background: activePaletteColors[0], color: activePaletteColors[2] }}
-                      >
-                        <span style={{ color: activePaletteColors[1] }}>{selectedVibe[1]}</span>
-                        <strong>{projectForm.company || "Márka"}</strong>
-                        <p>{selectedVibe[2]}</p>
-                        <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
-                      </div>
-                    </div>
                     <div className="choice-grid vibe-grid" id="project-vibe">
                       {vibeOptions.map(([value, label, description]) => (
                         <button
@@ -2797,6 +2838,17 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ))}
                       </div>
                     ) : null}
+                    <div className="wizard-visual style-lab stable-style-preview">
+                      <div
+                        className={`style-card vibe-${projectForm.vibe}`}
+                        style={{ background: activePaletteColors[0], color: activePaletteColors[2] }}
+                      >
+                        <span style={{ color: activePaletteColors[1] }}>{selectedVibe[1]}</span>
+                        <strong>{projectForm.company || "Márka"}</strong>
+                        <p>{selectedVibe[2]}</p>
+                        <em style={{ background: activePaletteColors[3] }}>Ajánlatot kérek</em>
+                      </div>
+                    </div>
                     <div className="field">
                       <label htmlFor="project-style">Van konkrét stílus, példa vagy tiltólista? <span className="optional-label">Nem kötelező</span></label>
                       <textarea
@@ -2873,37 +2925,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
                     {projectForm.domainStatus === "need" ? (
                       <div className="domain-help-card">
-                        <div className="domain-help-icon">.hu</div>
+                        <div className="domain-help-icon">R</div>
                         <div>
-                          <span className="micro-label">Biztonságos domainindítás</span>
-                          <h4>A domain végig a te tulajdonod marad</h4>
-                          <p>Segítünk nevet választani, ellenőrizni, regisztrálni és a kész oldalhoz kapcsolni. Jelszót nem kell üzenetben elküldened.</p>
+                          <span className="micro-label">Rackhost · teljes vásárlási útmutató</span>
+                          <h4>Vedd meg végig, képernyőről képernyőre</h4>
+                          <p>A képes PDF megmutatja a keresést, a kosarat, a regisztrációt, a tulajdonosi jóváhagyást és azt is, pontosan mit küldj el nekünk utána.</p>
                         </div>
-                        <button className="button secondary" type="button" onClick={() => setShowDomainGuide((current) => !current)}>
-                          {showDomainGuide ? "Útmutató bezárása" : "Részletes útmutató megnyitása"}
-                        </button>
-                        {showDomainGuide ? (
-                          <div className="domain-guide-pro">
-                            <header>
-                              <span>01–06</span>
-                              <div><strong>Domainindítás lépésről lépésre</strong><small>Átlagosan 10–15 perc</small></div>
-                            </header>
-                            {[
-                              ["Névválasztás", "Rövid, könnyen kimondható, lehetőleg kötőjel és szám nélkül. Elsőként a .hu, nemzetközi közönségnél a .com változatot ellenőrizd."],
-                              ["Elérhetőség ellenőrzése", "A .hu név foglaltságát a domain.hu hivatalos keresőjében ellenőrizd. A közösségi felületeken is nézd meg a név elérhetőségét."],
-                              ["Regisztrátor kiválasztása", "A számla és a tulajdonosi adatok a te vagy a céged nevére kerüljenek. A fejlesztő soha ne legyen a domain tulajdonosa."],
-                              ["Biztonság", "Kapcsold be a kétlépcsős belépést és az automatikus éves megújítást. A hozzáférést meghívással vagy korlátozott jogosultsággal add át."],
-                              ["DNS összekötés", "A szükséges rekordokat mi adjuk meg és ellenőrizzük. Nem kérjük el a jelszavadat; képernyőn vezetünk végig vagy jogosultságot kérünk."],
-                              ["Átadás", "A domain, a számlázás és a megújítás nálad marad. Az ügyfélkapuban rögzítjük, mikor kapcsolódott és mikor jár le."]
-                            ].map(([title, copy], index) => (
-                              <div className="domain-guide-step" key={title}>
-                                <b>{String(index + 1).padStart(2, "0")}</b><div><strong>{title}</strong><p>{copy}</p></div>
-                              </div>
-                            ))}
-                            <div className="domain-guide-warning"><strong>Soha ne küldj jelszót üzenetben.</strong> Meghívásos hozzáférést vagy képernyőmegosztással végzett DNS-beállítást használunk.</div>
-                            <button className="button secondary" type="button" onClick={() => printDomainGuide(projectForm.company)}>Nyomtatható változat megnyitása</button>
-                          </div>
-                        ) : null}
+                        <a className="button primary" href="/guides/projectedge-domainvasarlas-rackhost.pdf" target="_blank" rel="noreferrer">
+                          Képes PDF megnyitása
+                        </a>
+                        <div className="domain-guide-summary">
+                          <strong>Utána csak ezt küldd el:</strong>
+                          <span>1. a megvásárolt domain nevét</span>
+                          <span>2. egy képet arról, hogy a domain aktív</span>
+                          <span>3. jelszót és bankkártyaadatot soha</span>
+                        </div>
                       </div>
                     ) : null}
 
@@ -3018,27 +3054,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
 
                     {/* Arculat */}
-                    <div className="field">
-                      <label htmlFor="brand-colors">Van márkaszíned / színkódod?</label>
-                      <div className="input-with-picker">
+                    <div className="field" id="brand-colors">
+                      <label htmlFor="brand-colors-text">Van márkaszíned / színkódod?</label>
+                      <div className="brand-color-builder">
                         <input
-                          id="brand-colors"
+                          id="brand-colors-text"
                           required
                           value={projectForm.brandColors}
                           onChange={(event) => setProjectForm((current) => ({ ...current, brandColors: event.target.value }))}
                           placeholder="Például: #1E2329, sötétzöld, arany — vagy írd: rátok bízom"
                         />
-                        <input
-                          type="color"
-                          aria-label="Márkaszín kiválasztása"
-                          value="#76ABAE"
-                          onChange={(event) =>
-                            setProjectForm((current) => ({
-                              ...current,
-                              brandColors: current.brandColors ? `${current.brandColors}, ${event.target.value}` : event.target.value
-                            }))
-                          }
-                        />
+                        <div className="brand-color-swatches">
+                          {projectForm.brandColors
+                            .split(",")
+                            .map((color) => color.trim())
+                            .filter((color) => /^#[0-9a-f]{6}$/i.test(color))
+                            .map((color) => <i key={color} style={{ background: color }} title={color} />)}
+                          <label>
+                            <input
+                              type="color"
+                              aria-label="Új márkaszín hozzáadása"
+                              value="#76ABAE"
+                              onChange={(event) => {
+                                const next = event.target.value.toUpperCase();
+                                setProjectForm((current) => {
+                                  const colors = current.brandColors.split(",").map((item) => item.trim()).filter(Boolean);
+                                  return { ...current, brandColors: [...colors, next].join(", ") };
+                                });
+                              }}
+                            />
+                            <span>+ Szín hozzáadása</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                     <div className="field" id="font-preference">
@@ -3120,6 +3167,45 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             placeholder={"Kik vagytok és mióta működtök?\nMit képvisel a cégetek?\nMi a legfontosabb szolgáltatásotok vagy terméketek?\nMiért választanak benneteket?\nMilyen hangon beszéljünk a vásárlókkal?"}
                           />
                           <small>{projectForm.contentBrief.trim().length}/30 minimum karakter</small>
+                        </div>
+                      ) : null}
+                      {projectForm.contentSource === "client" ? (
+                        <div className="conditional-brief" id="content-client-material">
+                          <span className="micro-label">Küldd el egyben is</span>
+                          <h4>A kész vagy nyers szöveged</h4>
+                          <p>Beilleszthetsz egy hosszú szöveget, vagy feltölthetsz több TXT/PDF fájlt. Nem kell oldalanként szétszedned.</p>
+                          <textarea
+                            value={projectForm.contentBrief}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, contentBrief: event.target.value }))}
+                            placeholder="Másold ide mindazt, amit az oldalon szeretnél látni..."
+                          />
+                          <div className="asset-uploader">
+                            <label htmlFor="project-copy-upload">
+                              <strong>{contentUploading ? "Feltöltés..." : "TXT vagy PDF feltöltése"}</strong>
+                              <span>Fájlonként legfeljebb 15 MB</span>
+                            </label>
+                            <input
+                              id="project-copy-upload"
+                              type="file"
+                              accept=".txt,.pdf,text/plain,application/pdf"
+                              multiple
+                              disabled={contentUploading}
+                              onChange={(event) => {
+                                uploadContentFiles(Array.from(event.target.files ?? []));
+                                event.target.value = "";
+                              }}
+                            />
+                            {projectForm.contentFileUrls.length ? (
+                              <div className="uploaded-file-list">
+                                {projectForm.contentFileUrls.map((url, index) => (
+                                  <div key={url}>
+                                    <a href={url} target="_blank" rel="noreferrer">Szöveges anyag {index + 1}</a>
+                                    <button type="button" onClick={() => setProjectForm((current) => ({ ...current, contentFileUrls: current.contentFileUrls.filter((item) => item !== url) }))}>Eltávolítás</button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
                       ) : null}
                     </div>
@@ -3370,11 +3456,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               />
             )}
             {!loading && selectedProject ? renderProjectCard(selectedProject) : null}
+            {!loading && highlightedClosedProject ? (
+              <section className="just-completed-project">
+                {renderProjectCard(highlightedClosedProject)}
+              </section>
+            ) : null}
             {!loading && closedProjects.length > 0 && (
               <details className="disclosure">
                 <summary>Korábbi projektek ({closedProjects.length})</summary>
                 <div className="disclosure-body" style={{ display: "grid", gap: "16px" }}>
-                  {closedProjects.map((project) => renderProjectCard(project))}
+                  {closedProjects
+                    .filter((project) => project.id !== highlightedClosedProject?.id)
+                    .map((project) => renderProjectCard(project))}
                 </div>
               </details>
             )}
@@ -3707,6 +3800,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           : (project.deposit_amount ?? 0);
         const payLabel = paymentMode === "final" ? "Hátralék" : "Foglaló";
         const reference = transferReference(project);
+        const transferAlreadyReported = paymentMode === "final"
+          ? project.final_transfer_reported
+          : project.deposit_transfer_reported;
 
         async function copyValue(field: string, value: string) {
           try {
@@ -3794,11 +3890,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
               <button
                 type="button"
-                disabled={paymentLoading}
+                disabled={paymentLoading || transferAlreadyReported}
                 onClick={() => (paymentMode === "final" ? markFinalTransferSent(project) : markDepositTransferSent(project))}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#FF5722', border: 'none', borderRadius: '12px', color: '#fff', padding: '14px', fontSize: '14px', fontWeight: 700, cursor: paymentLoading ? 'default' : 'pointer', opacity: paymentLoading ? 0.7 : 1 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: transferAlreadyReported ? '#315f63' : '#FF5722', border: 'none', borderRadius: '12px', color: '#fff', padding: '14px', fontSize: '14px', fontWeight: 700, cursor: paymentLoading || transferAlreadyReported ? 'default' : 'pointer', opacity: paymentLoading ? 0.7 : 1 }}
               >
-                {paymentLoading ? 'Jelzés küldése...' : 'Elküldtem az utalást'}
+                {paymentLoading ? 'Jelzés küldése...' : transferAlreadyReported ? '✓ Utalás elküldése jelezve' : 'Elküldtem az utalást'}
               </button>
             </div>
           </div>

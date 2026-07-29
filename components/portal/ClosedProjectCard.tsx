@@ -15,9 +15,11 @@ type ClosedProjectCardProps = {
 };
 
 export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview }: ClosedProjectCardProps) {
-  const warrantyUntil = project.final_payment_paid_at
-    ? new Date(new Date(project.final_payment_paid_at).getTime() + 30 * 24 * 60 * 60 * 1000)
-    : null;
+  const warrantyUntil = project.warranty_expires_at
+    ? new Date(project.warranty_expires_at)
+    : project.final_payment_paid_at
+      ? new Date(new Date(project.final_payment_paid_at).getTime() + 30 * 24 * 60 * 60 * 1000)
+      : null;
   return (
     <article
       className="project-status-card detailed compact-closed"
