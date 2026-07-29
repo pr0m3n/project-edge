@@ -1804,86 +1804,37 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     loadPortal(true);
   }
 
-  async function selectMaintenance(project: Project, option: string) {
-    if (option === "declined") {
-      const ok = await confirm({
-        title: "Lezárjuk utóellenőrzés nélkül?",
-        message: "A projekt lezárul. Nem lesz előfizetés; ha most nem kéred, később külön is kérhetsz technikai ellenőrzést.",
-        confirmLabel: "Igen, lezárhatjuk",
-        cancelLabel: "Mégse",
-        danger: true
-      });
-      if (!ok) return;
-    }
-    setNotice("Utóellenőrzési igény mentése...");
-    const requesting = option === "requested";
+  async function closeCompletedProject(project: Project) {
+    const ok = await confirm({
+      title: "Projekt lezárása",
+      message: "A projekt elkészült. A lezárással elindul a 30 napos díjmentes technikai garancia.",
+      confirmLabel: "Projekt lezárása",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+    setNotice("Projekt lezárása...");
     const { error } = await supabase.from("client_projects").update({
-      maintenance_option: option,
-      followup_check_status: requesting ? "requested" : "declined",
-      status: requesting ? "launched" : "closed",
-      next_step: requesting
-        ? "30 napos utóellenőrzést kértél. Az adminisztrátor beállítja az egyszeri díjat; addig nincs teendőd."
-        : "Projekt sikeresen lezárva. Köszönjük az együttműködést!"
+      maintenance_option: null,
+      followup_check_status: null,
+      status: "closed",
+      next_step: "A projekt lezárult. Az átadástól számított 30 napig díjmentes technikai garancia védi az elkészült működést."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
-      setNotice(requesting ? "Utóellenőrzési ajánlatkérés elküldve. Most az adminisztrátoron a sor." : "Döntésedet elmentettük. A projekt lezárult.");
+      setNotice("A projekt lezárult. A 30 napos technikai garancia aktív.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
-        "Utóellenőrzési döntés",
-        `Az ügyfél (${email}) döntött a 30 napos utóellenőrzésről a(z) "${project.title}" projektnél: ${requesting ? 'AJÁNLATOT KÉR' : 'NEM KÉRI'}.`,
+        "Projekt lezárva",
+        `Az ügyfél (${email}) lezárta a(z) "${project.title}" projektet. A 30 napos technikai garancia elindult.`,
         "/admin"
       );
-      await triggerNotification(userId, email, requesting ? "Utóellenőrzési ajánlatkérés elküldve" : "Projekt sikeresen lezárva",
-        requesting ? `A(z) "${project.title}" projekthez 30 napos utóellenőrzést kértél. Értesítünk, amikor az egyszeri díj elkészült.` : `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.`,
+      await triggerNotification(userId, email, "Projekt sikeresen lezárva",
+        `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.\n\nAz átadástól számított 30 napig díjmentes technikai garanciát biztosítunk az általunk elkészített működésre. Ha hibát találsz, jelentsd az ügyfélkapuban.`,
         "/ugyfelkapu/dashboard#statuses");
       loadPortal(true);
     }
-  }
-
-  async function confirmFollowupCheck(project: Project) {
-    const fee = project.followup_check_fee;
-    if (!fee) {
-      setNotice("Az utóellenőrzés díja még nincs beállítva.");
-      return;
-    }
-    const ok = await confirm({
-      title: "30 napos utóellenőrzés",
-      message: `Ez egyszeri ${formatPrice(fee, project.maintenance_currency || "Ft")} díj. Nincs előfizetés és nincs automatikus megújulás. Elfogadás után megjelennek az utalási adatok.`,
-      confirmLabel: "Kérem az ellenőrzést",
-      cancelLabel: "Mégse"
-    });
-    if (!ok) return;
-    const { error } = await supabase.from("client_projects").update({
-      maintenance_option: "accepted",
-      followup_check_status: "awaiting_transfer",
-      followup_check_transfer_reported: false,
-      next_step: `A 30 napos utóellenőrzést rögzítettük. Utald el a(z) ${formatPrice(fee, project.maintenance_currency || "Ft")} egyszeri díjat, majd jelezd az ügyfélkapuban.`
-    }).eq("id", project.id);
-    if (error) {
-      setNotice("Nem sikerült rögzíteni az utóellenőrzést.");
-      return;
-    }
-    setNotice("Az utóellenőrzés rögzítve. Megjelentek az utalási adatok.");
-    loadPortal(true);
-  }
-
-  async function reportFollowupTransfer(project: Project) {
-    const { error } = await supabase.from("client_projects").update({
-      followup_check_transfer_reported: true,
-      followup_check_status: "transfer_reported",
-      next_step: "Jelezted az utóellenőrzés díjának utalását. Az adminisztrátor ellenőrzi, majd beütemezi a 30 napos ellenőrzést."
-    }).eq("id", project.id);
-    if (error) {
-      setNotice("Nem sikerült jelezni az utalást.");
-      return;
-    }
-    await triggerNotification(null, "admin@projectedge.hu", "Utóellenőrzés utalása bejelentve",
-      `Az ügyfél (${email}) jelezte a(z) "${project.title}" 30 napos utóellenőrzési díjának utalását. Ellenőrizd a bankszámlát.`, "/admin");
-    setNotice("Utalás jelezve. Most az adminisztrátoron a sor.");
-    loadPortal(true);
   }
 
   async function approveReview(project: Project) {
@@ -2238,9 +2189,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           <LaunchedPanel
             project={project}
             onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
-            onSelectMaintenance={(choice) => selectMaintenance(project, choice)}
-            onConfirmFollowupCheck={() => confirmFollowupCheck(project)}
-            onReportFollowupTransfer={() => reportFollowupTransfer(project)}
+            onCloseProject={() => closeCompletedProject(project)}
           />
         )}
 

@@ -71,29 +71,10 @@ function buildGuide(project: Project): Guide | null {
           ? { who: "studio", headline: "Ellenőrizzük a hátralékot", detail: "Jelezted az utalást. Most nincs teendőd." }
           : { who: "client", headline: "Rendezd a hátralékot", detail: "Utald el a hátralékot, majd lent jelezd az utalást." };
       }
-      if (!project.maintenance_option) {
-        return {
-          who: "client",
-          headline: "Dönts a 30 napos utóellenőrzésről",
-          detail: "Kérj egyszeri árat az indulás utáni ellenőrzésre, vagy zárd le nélküle a projektet."
-        };
-      }
-      if (project.followup_check_status === "requested" && !project.followup_check_fee) {
-        return { who: "studio", headline: "Elkészítjük az utóellenőrzés árát", detail: "Megkaptuk a kérésedet. Most nincs teendőd." };
-      }
-      if (project.maintenance_option === "offered" || project.maintenance_option === "accepted") {
-        if (project.followup_check_status === "transfer_reported") {
-          return { who: "studio", headline: "Ellenőrizzük az utóellenőrzés utalását", detail: "Jelezted az utalást. Most nincs teendőd." };
-        }
-        if (project.followup_check_status === "awaiting_transfer") {
-          return { who: "client", headline: "Utald el az utóellenőrzés díját", detail: "Az egyszeri ajánlatot elfogadtad. Az utalási adatok lent láthatók." };
-        }
-        return { who: "client", headline: "Dönts az utóellenőrzésről", detail: "A pontos egyszeri díj lent látható. Fogadd el, vagy zárd le nélküle a projektet." };
-      }
       return {
-        who: "studio",
-        headline: "Készen vagyunk!",
-        detail: "Minden lépés lezárult — köszönjük a közös munkát."
+        who: "client",
+        headline: "Zárd le a kész projektet",
+        detail: "A lezárással elindul a 30 napos díjmentes technikai garancia. Ezután csak akkor kell jelezned, ha valódi működési hibát találsz."
       };
     case "paused":
       return {

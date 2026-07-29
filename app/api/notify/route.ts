@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const safeTitle = String(title ?? "").slice(0, 200);
     const safeMessage = String(message ?? "").slice(0, 4000);
     const safeLink = safeInternalLink(link);
-    const isFollowupCheck = /utóellenőrzés|működési ellenőrzés/i.test(safeTitle);
+    const isWarrantyNotice = /projekt sikeresen lezárva|projekt lezárva|technikai garancia/i.test(safeTitle);
 
     if (!safeTitle) {
       return NextResponse.json({ error: "Missing title" }, { status: 400 });
@@ -77,20 +77,20 @@ export async function POST(request: Request) {
         subject: safeTitle,
         message: safeMessage,
         link: safeLink,
-        eyebrow: isFollowupCheck
-          ? "PROJECTEDGE · 30 NAPOS ELLENŐRZÉS"
+        eyebrow: isWarrantyNotice
+          ? "PROJECTEDGE · 30 NAPOS GARANCIA"
           : userId ? "PROJECTEDGE · ÜGYFÉLKAPU" : "PROJECTEDGE · ÚJ ÉRTESÍTÉS",
-        preheader: isFollowupCheck
-          ? `Indulás utáni működési ellenőrzés · ${safeTitle}`
+        preheader: isWarrantyNotice
+          ? `Díjmentes technikai garancia · ${safeTitle}`
           : safeTitle,
-        linkLabel: isFollowupCheck ? "Ellenőrzés megnyitása" : "Megnyitás az ügyfélkapun",
-        terminalLabel: isFollowupCheck ? "projectedge.check30" : "projectedge.notify",
-        tags: isFollowupCheck
-          ? ["30 napos ellenőrzés", "Működés", "Ügyfélkapu"]
+        linkLabel: isWarrantyNotice ? "Projekt megnyitása" : "Megnyitás az ügyfélkapun",
+        terminalLabel: isWarrantyNotice ? "projectedge.warranty30" : "projectedge.notify",
+        tags: isWarrantyNotice
+          ? ["30 napos garancia", "Projekt lezárva", "Ügyfélkapu"]
           : undefined,
         details: [
           { label: "Címzett", value: targetEmail },
-          { label: "Szolgáltatás", value: isFollowupCheck ? "Indulás utáni működési ellenőrzés" : "ProjectEdge ügyfélkapu" },
+          { label: "Szolgáltatás", value: isWarrantyNotice ? "30 napos díjmentes technikai garancia" : "ProjectEdge ügyfélkapu" },
           { label: "Állapot", value: "Értesítés rögzítve" }
         ]
       });

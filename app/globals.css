@@ -1928,6 +1928,67 @@ p {
 .followup-checklist input { accent-color: #367b61; margin-top: 2px; }
 .followup-result-card p { color: #35484d; line-height: 1.55; margin: 8px 0 0; white-space: pre-wrap; }
 
+.warranty-card {
+  align-items: center;
+  background: linear-gradient(135deg, #273238 0%, #35474c 72%, #6b4137 100%);
+  border-radius: 18px;
+  color: #fff;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: auto 1fr;
+  padding: 20px;
+}
+
+.warranty-badge,
+.warranty-summary-icon {
+  align-items: center;
+  background: #ff5722;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-size: 24px;
+  font-weight: 900;
+  height: 64px;
+  justify-content: center;
+  position: relative;
+  width: 64px;
+}
+
+.warranty-badge::after {
+  bottom: 10px;
+  content: "NAP";
+  font-size: 7px;
+  letter-spacing: 1px;
+  position: absolute;
+}
+
+.warranty-card > div:last-child { display: grid; gap: 6px; }
+.warranty-card .micro-label { color: #ffb49b; }
+.warranty-card strong { font-size: clamp(19px, 2.8vw, 27px); line-height: 1.12; }
+.warranty-card p { color: rgba(255, 255, 255, 0.76); font-size: 13px; line-height: 1.5; margin: 0; }
+
+.warranty-terms {
+  display: grid;
+  gap: 9px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.warranty-terms > div {
+  align-items: flex-start;
+  background: #f5f8f8;
+  border: 1px solid #d4e0e1;
+  border-radius: 13px;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+
+.warranty-terms > div > span { color: #d94a20; font-weight: 900; }
+.warranty-terms p { color: #5c6c72; display: grid; font-size: 12px; gap: 3px; line-height: 1.4; margin: 0; }
+.warranty-terms strong { color: #2d4045; font-size: 13px; }
+.warranty-summary { justify-content: flex-start; }
+.warranty-summary-icon { flex: 0 0 auto; font-size: 17px; height: 46px; width: 46px; }
+
 .maintenance-boundary {
   background: #fff8ed;
   border: 1px solid #e8c889;
@@ -2309,6 +2370,8 @@ p {
   .domain-help-card > .button { grid-column: 1 / -1; }
   .subscription-card, .admin-subscription-row { align-items: stretch; flex-direction: column; }
   .followup-deliverables, .followup-checklist { grid-template-columns: 1fr; }
+  .warranty-terms { grid-template-columns: 1fr; }
+  .warranty-card { align-items: start; grid-template-columns: 1fr; }
 }
 
 .admin-project-card .button.secondary {
