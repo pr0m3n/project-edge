@@ -111,6 +111,8 @@ type ClientProject = {
   followup_check_transfer_reported: boolean;
   followup_check_due_at: string | null;
   followup_check_completed_at: string | null;
+  followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
+  followup_check_report: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
   review_approved: boolean;
@@ -122,6 +124,18 @@ type ClientProject = {
   final_payment_paid_at: string | null;
   estimated_deadline: string | null;
 };
+
+const FOLLOWUP_CHECKLIST = [
+  { key: "availability", label: "Elérhetőség, 404-es hibák és hibás hivatkozások", done: false },
+  { key: "mobile", label: "Mobilos megjelenés a fontos képernyőméreteken", done: false },
+  { key: "journeys", label: "Fő vásárlói útvonalak, gombok és navigáció", done: false },
+  { key: "forms", label: "Űrlapok, visszaigazolások és beérkező üzenetek", done: false },
+  { key: "integrations", label: "Külső integrációk és automatizmusok", done: false },
+  { key: "analytics", label: "Analitika és konverziómérés működése", done: false },
+  { key: "performance", label: "Betöltési sebesség és alapvető teljesítmény", done: false },
+  { key: "security", label: "Domain, SSL és alapvető biztonsági állapot", done: false },
+  { key: "logs", label: "Vercel- és Supabase-naplókban megjelent hibák", done: false }
+];
 
 type ClientTicket = {
   id: string;
@@ -714,11 +728,31 @@ export function AdminDashboard() {
     await updateClientProject(project.id, {
       followup_check_status: "scheduled",
       followup_check_due_at: dueAt.toISOString().slice(0, 10),
+      followup_checklist: FOLLOWUP_CHECKLIST,
       status: "closed",
       next_step: `Az utóellenőrzés kifizetve és ${dueAt.toLocaleDateString("hu-HU")} napjára beütemezve. Addig nincs teendőd.`
     });
     await triggerNotification(project.user_id, project.contact_email, "Utóellenőrzés beütemezve",
       `A(z) "${project.title}" 30 napos utóellenőrzését ${dueAt.toLocaleDateString("hu-HU")} napjára beütemeztük.`, "/ugyfelkapu/dashboard#statuses");
+  }
+
+  async function completeFollowupCheck(project: ClientProject) {
+    const checklist = project.followup_checklist || [];
+    if (checklist.length !== FOLLOWUP_CHECKLIST.length || checklist.some((item) => !item.done)) {
+      setMessage("Az ellenőrzés csak akkor zárható le, ha minden ellenőrzési pont kész.");
+      return;
+    }
+    if (!project.followup_check_report?.trim()) {
+      setMessage("Írj rövid, közérthető eredményt és következő lépést az ügyfélnek.");
+      return;
+    }
+    await updateClientProject(project.id, {
+      followup_check_status: "completed",
+      followup_check_completed_at: new Date().toISOString(),
+      next_step: "A 30 napos működési ellenőrzés elkészült. Az eredményt az ügyfélkapuban találod."
+    });
+    await triggerNotification(project.user_id, project.contact_email, "Elkészült a működési ellenőrzés",
+      `A(z) "${project.title}" indulás utáni ellenőrzése elkészült. Az eredményt az ügyfélkapuban találod.`, "/ugyfelkapu/dashboard#statuses");
   }
 
   async function rejectDeletion(project: ClientProject) {
@@ -1020,18 +1054,47 @@ export function AdminDashboard() {
         )}
 
         {project.followup_check_status === "scheduled" || project.followup_check_status === "completed" ? (
-          <div className="admin-subscription-row">
-            <div>
-              <span>30 napos utóellenőrzés</span>
-              <strong>{formatPrice(project.followup_check_fee, project.maintenance_currency || "Ft")} · egyszeri díj</strong>
-              <small>{project.followup_check_status === "completed" ? "Elvégezve" : `Ütemezve: ${project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") : "dátum nélkül"}`}</small>
+          <div className="followup-admin-card">
+            <div className="followup-admin-head">
+              <div>
+                <span className="micro-label">Indulás utáni működési ellenőrzés</span>
+                <strong>{project.followup_check_status === "completed" ? "Ellenőrzés lezárva" : "Kötelező ellenőrzőlista"}</strong>
+                <small>{project.followup_check_status === "completed" ? "Az eredményt az ügyfél is látja." : `Határidő: ${project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") : "nincs megadva"}`}</small>
+              </div>
+              <span className="followup-progress">
+                {(project.followup_checklist || []).filter((item) => item.done).length}/{FOLLOWUP_CHECKLIST.length}
+              </span>
             </div>
+            <div className="followup-checklist">
+              {(project.followup_checklist?.length ? project.followup_checklist : FOLLOWUP_CHECKLIST).map((item) => (
+                <label key={item.key} className={item.done ? "done" : ""}>
+                  <input
+                    type="checkbox"
+                    checked={item.done}
+                    disabled={project.followup_check_status === "completed"}
+                    onChange={(event) => {
+                      const source = project.followup_checklist?.length ? project.followup_checklist : FOLLOWUP_CHECKLIST;
+                      updateClientProject(project.id, {
+                        followup_checklist: source.map((current) => current.key === item.key ? { ...current, done: event.target.checked } : current)
+                      });
+                    }}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+            <label className="admin-field">
+              <span>Ügyfélnek szóló eredmény és következő lépés</span>
+              <textarea
+                value={project.followup_check_report || ""}
+                disabled={project.followup_check_status === "completed"}
+                placeholder="Például: Minden fontos funkció rendben működik. Két hibás hivatkozást javítottunk, további teendő nincs."
+                onChange={(event) => setClientProjects((current) => current.map((item) => item.id === project.id ? { ...item, followup_check_report: event.target.value } : item))}
+                onBlur={(event) => updateClientProject(project.id, { followup_check_report: event.target.value })}
+              />
+            </label>
             {project.followup_check_status === "scheduled" ? (
-              <button className="button primary" type="button" onClick={() => updateClientProject(project.id, {
-                followup_check_status: "completed",
-                followup_check_completed_at: new Date().toISOString(),
-                next_step: "A 30 napos utóellenőrzés elkészült. Az eredményről értesítést kapsz."
-              })}>Ellenőrzés kész</button>
+              <button className="button primary" type="button" onClick={() => completeFollowupCheck(project)}>Ellenőrzés lezárása és értesítés</button>
             ) : null}
           </div>
         ) : null}

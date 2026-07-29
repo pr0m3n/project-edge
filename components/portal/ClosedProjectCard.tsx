@@ -59,7 +59,7 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
       </div>
 
       {project.followup_check_status === "scheduled" || project.followup_check_status === "completed" ? (
-        <div className="subscription-card">
+        <div className="subscription-card followup-result-card">
           <div>
             <span className="micro-label">30 napos utóellenőrzés</span>
             <strong>
@@ -68,6 +68,9 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
                 : `Ütemezve: ${project.followup_check_due_at ? new Date(project.followup_check_due_at).toLocaleDateString("hu-HU") : "hamarosan"}`}
             </strong>
             <small>Egyszeri szolgáltatás, nem előfizetés és nem újul meg automatikusan.</small>
+            {project.followup_check_status === "completed" && project.followup_check_report ? (
+              <p>{project.followup_check_report}</p>
+            ) : null}
           </div>
         </div>
       ) : null}

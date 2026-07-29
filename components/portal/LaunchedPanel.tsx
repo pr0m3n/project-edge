@@ -73,15 +73,21 @@ export function LaunchedPanel({ project, onPayFinal, onSelectMaintenance, onConf
       </div>
 
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "12px", display: "grid", gap: "8px" }}>
-        <strong>Egyszeri 30 napos utóellenőrzés</strong>
-        <p style={{ margin: 0, fontSize: "13px", lineHeight: "1.5", color: "var(--muted)" }}>
-          Az indulás után körülbelül egy hónappal átnézzük, hogy a weboldal a valós használat mellett is rendben működik-e.
-        </p>
+        <div className="followup-offer-head">
+          <span className="micro-label">30 nappal az indulás után</span>
+          <strong>Ne egy észrevétlen hiba miatt veszíts érdeklődőket.</strong>
+          <p>Az átadáskor minden működik, de az első hónap mutatja meg, hogyan teljesít az oldal valódi látogatók mellett. Ezt ellenőrizzük végig helyetted.</p>
+        </div>
         <div className="maintenance-scope">
-          <span>Elérhetőség, hibák és hibás hivatkozások ellenőrzése</span>
-          <span>Mobilos megjelenés és fő felhasználói útvonalak próbája</span>
-          <span>Űrlapok, alapvető integrációk és analitika ellenőrzése</span>
-          <span>Rövid állapotjelentés a talált problémákról és a következő lépésekről</span>
+          <span>Elérhetőség, hibás oldalak, linkek és mobilos megjelenés</span>
+          <span>Gombok, űrlapok, vásárlói útvonalak és beérkező üzenetek</span>
+          <span>Integrációk, analitika, konverziómérés és naplózott hibák</span>
+          <span>Betöltési sebesség, domain, SSL és biztonsági alapok</span>
+        </div>
+        <div className="followup-deliverables">
+          <div><b>01</b><span><strong>Közérthető eredmény</strong><small>Rendben / figyelmet igényel / hibás</small></span></div>
+          <div><b>02</b><span><strong>Kisebb korrekciók</strong><small>Az ellenőrzés közben talált apró beállítási hibák javítása</small></span></div>
+          <div><b>03</b><span><strong>Egyértelmű következő lépés</strong><small>Nagyobb munka csak külön ajánlattal és jóváhagyással</small></span></div>
         </div>
         <p className="maintenance-boundary"><strong>Fontos:</strong> ez állapotfelmérés, nem folyamatos karbantartás. A díj a projekt összetettségéhez igazodik. A feltárt nagyobb fejlesztésekre csak külön jóváhagyással készül ajánlat.</p>
         <p className="waiting-copy">Egyszeri szolgáltatás: nincs előfizetés, havidíj vagy automatikus megújulás.</p>

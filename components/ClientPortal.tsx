@@ -106,6 +106,8 @@ export type Project = {
   followup_check_transfer_reported: boolean;
   followup_check_due_at: string | null;
   followup_check_completed_at: string | null;
+  followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
+  followup_check_report: string | null;
   subscription_cancel_requested_at: string | null;
   deposit_transfer_reported: boolean;
   final_transfer_reported: boolean;
