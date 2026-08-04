@@ -16,6 +16,12 @@
   --cyan: #22d3ee;
   --mint: #34d399;
   --grad: linear-gradient(115deg, #7c5cff 0%, #a855f7 45%, #22d3ee 100%);
+  --shell: 1180px;
+  --pad: clamp(18px, 4vw, 32px);
+
+  /* pipa és × háttérképként — így pixelre középre esnek, nem csúszhatnak el */
+  --tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%2334d399' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 3.5 8.5 8.5M8.5 3.5 3.5 8.5' fill='none' stroke='%239299ab' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
 
   background: var(--bg);
   color: var(--text);
@@ -41,11 +47,11 @@
 }
 
 .vy-root em {
-  font-style: normal;
   background: var(--grad);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  font-style: normal;
 }
 
 .vy-root ::selection {
@@ -57,10 +63,10 @@
 
 [data-reveal] {
   opacity: 0;
-  transform: translateY(22px);
+  transform: translateY(24px);
   transition:
-    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-reveal].is-in {
@@ -73,6 +79,12 @@
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .vy-ticker-track,
+  .vy-orb,
+  .vy-dial-wrap::before {
+    animation: none !important;
   }
 }
 
@@ -166,13 +178,13 @@
 /* ── navigáció ── */
 
 .vy-nav {
+  border-bottom: 1px solid transparent;
   left: 0;
   position: sticky;
   right: 0;
   top: var(--demo-bar-h, 0px);
-  transition: background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
   z-index: 100;
-  border-bottom: 1px solid transparent;
 }
 
 .vy-nav.is-stuck {
@@ -186,8 +198,20 @@
   display: flex;
   gap: 24px;
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 16px clamp(18px, 4vw, 32px);
+  max-width: var(--shell);
+  padding: 16px var(--pad);
+}
+
+.vy-nav-progress {
+  background: var(--grad);
+  bottom: -1px;
+  display: block;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
 .vy-logo {
@@ -291,11 +315,16 @@
   width: 16px;
 }
 
-/* ── hero ── */
+/* ════ hero — aszimmetrikus, a mockup kifut a jobb szélen ════ */
 
 .vy-hero {
+  align-items: center;
+  display: grid;
+  gap: clamp(34px, 4vw, 56px);
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   overflow: clip;
-  padding: clamp(56px, 9vw, 110px) clamp(18px, 4vw, 32px) clamp(60px, 8vw, 96px);
+  padding: clamp(46px, 6vw, 88px) 0 clamp(56px, 7vw, 100px)
+    max(var(--pad), calc((100% - var(--shell)) / 2));
   position: relative;
 }
 
@@ -308,21 +337,21 @@
 }
 
 .vy-orb.one {
+  animation: vy-drift 18s ease-in-out infinite;
   background: radial-gradient(circle, rgba(124, 92, 255, 0.85), transparent 65%);
   height: 520px;
   left: -140px;
-  top: -160px;
+  top: -180px;
   width: 520px;
-  animation: vy-drift 18s ease-in-out infinite;
 }
 
 .vy-orb.two {
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.6), transparent 65%);
-  bottom: -220px;
-  height: 460px;
-  right: -120px;
-  width: 460px;
   animation: vy-drift 22s ease-in-out infinite reverse;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.55), transparent 65%);
+  bottom: -240px;
+  height: 460px;
+  right: -80px;
+  width: 460px;
 }
 
 @keyframes vy-drift {
@@ -341,19 +370,25 @@
     linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 58px 58px;
   inset: 0;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 30% 0%, #000 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 30% 0%, #000 20%, transparent 75%);
   pointer-events: none;
   position: absolute;
 }
 
-.vy-hero-inner {
-  align-items: center;
-  display: grid;
-  gap: clamp(36px, 5vw, 64px);
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
-  margin: 0 auto;
-  max-width: 1180px;
+/* kurzort követő fény */
+.vy-spotlight {
+  background: radial-gradient(
+    340px circle at var(--sx, -999px) var(--sy, -999px),
+    rgba(124, 92, 255, 0.16),
+    transparent 70%
+  );
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.vy-hero-copy {
   position: relative;
   z-index: 2;
 }
@@ -368,17 +403,17 @@
   font-size: 12.5px;
   font-weight: 500;
   gap: 9px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
   padding: 7px 14px;
 }
 
 .vy-dot {
+  animation: vy-pulse 2.4s ease-out infinite;
   background: var(--mint);
   border-radius: 50%;
   box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
   height: 7px;
   width: 7px;
-  animation: vy-pulse 2.4s ease-out infinite;
 }
 
 @keyframes vy-pulse {
@@ -391,16 +426,39 @@
 }
 
 .vy-hero-copy h1 {
-  font-size: clamp(42px, 6.4vw, 74px);
+  font-size: clamp(40px, 5.4vw, 68px);
   font-weight: 700;
+}
+
+/* a címsor középső sora: óriás gradiens szó + apró jegyzet mellette */
+.vy-h1-row {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.vy-h1-row em {
+  font-size: 1.32em;
+  line-height: 0.9;
+}
+
+.vy-h1-note {
+  border-left: 2px solid var(--violet);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
+  padding-left: 12px;
 }
 
 .vy-hero-copy > p {
   color: var(--muted);
-  font-size: clamp(16px, 1.6vw, 18px);
+  font-size: clamp(16px, 1.5vw, 18px);
   line-height: 1.62;
-  margin-top: 22px;
-  max-width: 46ch;
+  margin-top: 24px;
+  max-width: 42ch;
 }
 
 .vy-hero-actions {
@@ -428,16 +486,32 @@
 }
 
 .vy-hero-trust li::before {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%2334d399' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  background: var(--tick) center / contain no-repeat;
   content: "";
   height: 14px;
   width: 14px;
 }
 
-/* ── ablak-mockup ── */
+/* ── térbe döntött ablak ── */
 
-.vy-hero-art {
+.vy-hero-stage {
   position: relative;
+  z-index: 2;
+}
+
+.vy-tilt {
+  perspective: 1500px;
+}
+
+.vy-tilt .vy-window {
+  transform: rotateY(-17deg) rotateX(7deg) rotate(1.4deg);
+  transform-origin: left center;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 122%;
+}
+
+.vy-hero-stage:hover .vy-tilt .vy-window {
+  transform: rotateY(-8deg) rotateX(3deg) rotate(0.6deg);
 }
 
 .vy-window {
@@ -445,7 +519,7 @@
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow:
-    0 40px 90px rgba(0, 0, 0, 0.6),
+    0 50px 110px rgba(0, 0, 0, 0.66),
     0 0 0 1px rgba(255, 255, 255, 0.03) inset;
   overflow: hidden;
 }
@@ -472,11 +546,75 @@
   margin-left: 10px;
 }
 
+/* élő értesítés a mockup előtt */
+.vy-live {
+  align-items: center;
+  animation: vy-live-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(14px);
+  background: rgba(20, 23, 34, 0.94);
+  border: 1px solid var(--line-strong);
+  border-radius: 15px;
+  bottom: -18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  gap: 12px;
+  left: -34px;
+  padding: 12px 15px;
+  position: absolute;
+  z-index: 3;
+}
+
+@keyframes vy-live-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+
+.vy-live strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.vy-live span {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.vy-live-icon {
+  align-items: center;
+  background: rgba(124, 92, 255, 0.16);
+  border-radius: 11px;
+  color: #a894ff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.vy-live-icon svg {
+  height: 18px;
+  width: 18px;
+}
+
+.vy-live-badge {
+  background: rgba(52, 211, 153, 0.16);
+  border-radius: 999px;
+  color: var(--mint) !important;
+  font-size: 10.5px !important;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-left: 6px;
+  padding: 4px 9px;
+  text-transform: uppercase;
+}
+
+/* ── naptár képernyő ── */
+
 .vy-screen {
   padding: 16px;
 }
-
-/* naptár képernyő */
 
 .vy-cal-head {
   color: var(--muted);
@@ -499,17 +637,17 @@
 }
 
 .vy-cal-col {
-  background:
-    repeating-linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.045) 0 1px,
-      transparent 1px 42px
-    );
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.045) 0 1px,
+    transparent 1px 42px
+  );
   border-radius: 10px;
   position: relative;
 }
 
 .vy-slot {
+  animation: vy-slot-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -520,7 +658,12 @@
   padding: 6px 7px;
   position: absolute;
   right: 2px;
-  animation: vy-slot-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+.vy-slot.is-live {
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+  transform: scale(1.04);
 }
 
 .vy-cal-col:nth-child(1) .vy-slot {
@@ -562,178 +705,272 @@
   white-space: nowrap;
 }
 
-.tone-a {
+.vy-slot.tone-a {
   background: rgba(124, 92, 255, 0.22);
   border-left: 2px solid #7c5cff;
   color: #d3c8ff;
 }
 
-.tone-b {
+.vy-slot.tone-b {
   background: rgba(34, 211, 238, 0.18);
   border-left: 2px solid #22d3ee;
   color: #b6eef8;
 }
 
-.tone-c {
+.vy-slot.tone-c {
   background: rgba(52, 211, 153, 0.18);
   border-left: 2px solid #34d399;
   color: #b3ecd6;
 }
 
-/* lebegő értesítések */
+/* ════ ferde futószalag ════ */
 
-.vy-float {
-  align-items: center;
-  backdrop-filter: blur(14px);
-  background: rgba(20, 23, 34, 0.92);
-  border: 1px solid var(--line-strong);
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
-  display: flex;
-  gap: 11px;
-  padding: 11px 14px;
-  position: absolute;
-  z-index: 3;
-}
-
-.vy-float.one {
-  animation: vy-bob 6s ease-in-out infinite;
-  left: -34px;
-  top: 22%;
-}
-
-.vy-float.two {
-  animation: vy-bob 7.5s ease-in-out infinite reverse;
-  bottom: 8%;
-  right: -26px;
-}
-
-@keyframes vy-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-11px);
-  }
-}
-
-.vy-float strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 620;
-}
-
-.vy-float span {
-  color: var(--muted);
-  font-size: 11.5px;
-}
-
-.vy-float-icon {
-  align-items: center;
-  background: rgba(124, 92, 255, 0.16);
-  border-radius: 10px;
-  color: #a894ff;
-  display: flex;
-  height: 32px;
-  justify-content: center;
-  width: 32px;
-}
-
-.vy-float-icon.alt {
-  background: rgba(52, 211, 153, 0.16);
-  color: var(--mint);
-}
-
-.vy-float-icon svg {
-  height: 17px;
-  width: 17px;
-}
-
-/* ── számok sáv ── */
-
-.vy-stats {
+.vy-ticker {
+  background: linear-gradient(90deg, rgba(124, 92, 255, 0.07), rgba(34, 211, 238, 0.05));
   border-block: 1px solid var(--line);
   display: grid;
-  gap: 1px;
-  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: clamp(20px, 3vw, 40px) 0;
+  overflow: hidden;
+  padding: 22px 0;
+  transform: rotate(-1.5deg) scale(1.04);
+}
+
+.vy-ticker-row {
+  display: flex;
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  overflow: hidden;
+}
+
+.vy-ticker-track {
+  animation: vy-marquee 44s linear infinite;
+  display: flex;
+  flex: none;
+  gap: 14px;
+  padding-right: 14px;
+  will-change: transform;
+}
+
+.vy-ticker-row.reverse .vy-ticker-track {
+  animation-direction: reverse;
+  animation-duration: 58s;
+}
+
+@keyframes vy-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.vy-ticker-item {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  flex: none;
+  font-size: 12.5px;
+  gap: 9px;
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+.vy-ticker-item b {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+.vy-ticker-item i {
+  color: rgba(255, 255, 255, 0.35);
+  font-style: normal;
+}
+
+/* ════ a nap-tárcsa ════ */
+
+.vy-day {
+  padding: clamp(52px, 7vw, 100px) var(--pad);
+}
+
+.vy-day-inner {
+  align-items: center;
+  display: grid;
+  gap: clamp(36px, 5vw, 76px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   margin: 0 auto;
-  max-width: 1180px;
-  position: relative;
-  z-index: 2;
+  max-width: var(--shell);
 }
 
-.vy-stat {
-  padding: 34px 20px;
-  text-align: center;
+.vy-day-copy h2 {
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 700;
 }
 
-.vy-stat strong {
+.vy-day-copy > p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+  margin-top: 20px;
+  max-width: 50ch;
+}
+
+.vy-day-stats {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 34px;
+  padding-top: 26px;
+}
+
+.vy-day-stats strong {
   background: var(--grad);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   display: block;
-  font-size: clamp(28px, 3.4vw, 40px);
+  font-size: clamp(22px, 2.4vw, 30px);
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
-.vy-stat span {
+.vy-day-stats span {
   color: var(--muted);
   display: block;
-  font-size: 13px;
-  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 7px;
 }
 
-/* ── szekció fejek ── */
-
-.vy-section-head {
-  margin: 0 auto clamp(36px, 5vw, 56px);
-  max-width: 720px;
-  text-align: center;
+.vy-dial-wrap {
+  position: relative;
 }
 
-.vy-eyebrow {
-  color: var(--violet);
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 650;
+.vy-dial-wrap::before {
+  animation: vy-drift 26s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.32), transparent 62%);
+  content: "";
+  filter: blur(60px);
+  inset: 8%;
+  position: absolute;
+}
+
+.vy-dial {
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+  position: relative;
+  width: min(420px, 100%);
+}
+
+.vy-dial-track {
+  stroke: rgba(255, 255, 255, 0.055);
+}
+
+.vy-dial-arc {
+  transition: stroke-dasharray 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.vy-dial-arc.tone-a {
+  stroke: #7c5cff;
+}
+
+.vy-dial-arc.tone-b {
+  stroke: #22d3ee;
+}
+
+.vy-dial-arc.tone-c {
+  stroke: #34d399;
+}
+
+.vy-dial-hour {
+  fill: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.vy-dial-value {
+  fill: #fff;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-anchor: middle;
+}
+
+.vy-dial-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.18em;
-  margin-bottom: 16px;
+  text-anchor: middle;
   text-transform: uppercase;
 }
 
-.vy-section-head h2 {
-  font-size: clamp(30px, 4.2vw, 48px);
-  font-weight: 700;
+.vy-dial-sub {
+  fill: rgba(255, 255, 255, 0.32);
+  font-size: 11.5px;
+  text-anchor: middle;
 }
 
-.vy-section-head > p {
+.vy-dial-legend {
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1.62;
-  margin: 18px auto 0;
-  max-width: 56ch;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 10px 20px;
+  justify-content: center;
+  margin-top: 22px;
+  position: relative;
 }
 
-/* ── probléma / megoldás ── */
+.vy-dial-legend span {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.vy-dial-legend i {
+  border-radius: 3px;
+  height: 9px;
+  width: 16px;
+}
+
+.vy-dial-legend i.tone-a {
+  background: #7c5cff;
+}
+
+.vy-dial-legend i.tone-b {
+  background: #22d3ee;
+}
+
+.vy-dial-legend i.tone-c {
+  background: #34d399;
+}
+
+/* ════ probléma / megoldás — eltolt kártyák ════ */
 
 .vy-problem {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(64px, 9vw, 112px) clamp(18px, 4vw, 32px);
+  max-width: var(--shell);
+  padding: clamp(40px, 5vw, 70px) var(--pad) clamp(52px, 7vw, 96px);
 }
 
 .vy-problem-grid {
+  align-items: start;
   display: grid;
-  gap: 20px;
+  gap: 22px;
   grid-template-columns: repeat(2, 1fr);
 }
 
 .vy-problem-card {
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 22px;
   padding: 30px;
   position: relative;
 }
@@ -744,9 +981,11 @@
 
 .vy-problem-card.good {
   background:
-    linear-gradient(160deg, rgba(124, 92, 255, 0.12), rgba(34, 211, 238, 0.06)),
-    var(--panel);
-  border-color: rgba(124, 92, 255, 0.32);
+    linear-gradient(160deg, rgba(124, 92, 255, 0.14), rgba(34, 211, 238, 0.06)), var(--panel);
+  border-color: rgba(124, 92, 255, 0.34);
+  box-shadow: 0 34px 80px rgba(124, 92, 255, 0.14);
+  /* szándékos eltolás: ne két egyforma doboz legyen egymás mellett */
+  margin-top: 54px;
 }
 
 .vy-problem-tag {
@@ -788,24 +1027,18 @@
 
 .bad li::before,
 .good li::before {
-  align-items: center;
   border-radius: 50%;
-  display: flex;
+  content: "";
   flex: none;
   height: 20px;
-  justify-content: center;
   /* a sormagasság közepére igazítva, hogy ne csússzon el a szövegtől */
   margin-top: calc((1.55em - 20px) / 2);
   width: 20px;
 }
 
 .bad li::before {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.06) var(--cross) center / 11px 11px no-repeat;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  color: var(--muted);
-  content: "×";
-  font-size: 15px;
-  line-height: 1;
 }
 
 .good li {
@@ -813,277 +1046,160 @@
 }
 
 .good li::before {
-  background: rgba(52, 211, 153, 0.18) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%2334d399' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
-  content: "";
+  background: rgba(52, 211, 153, 0.18) var(--tick) center / 11px 11px no-repeat;
 }
 
-/* ── bento funkciók ── */
+/* ════ szekció fejek ════ */
 
-.vy-features {
-  margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
-}
-
-.vy-bento {
-  display: grid;
-  gap: 18px;
-  grid-auto-rows: minmax(190px, auto);
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.vy-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  grid-column: span 2;
-  overflow: hidden;
-  padding: 26px;
-  position: relative;
-  transition: border-color 0.3s ease, transform 0.3s ease;
-}
-
-.vy-card::before {
-  background: radial-gradient(400px circle at 50% 0%, rgba(124, 92, 255, 0.16), transparent 70%);
-  content: "";
-  inset: 0;
-  opacity: 0;
-  position: absolute;
-  transition: opacity 0.35s ease;
-}
-
-.vy-card:hover {
-  border-color: rgba(124, 92, 255, 0.4);
-  transform: translateY(-4px);
-}
-
-.vy-card:hover::before {
-  opacity: 1;
-}
-
-.vy-card > * {
-  position: relative;
-}
-
-.vy-card.wide {
-  grid-column: span 3;
-}
-
-.vy-card.tall {
-  grid-column: span 1;
-  grid-row: span 2;
-}
-
-.vy-card.one {
-  grid-column: span 1;
-}
-
-.vy-card.full {
-  grid-column: span 4;
-}
-
-.vy-card-icon {
-  align-items: center;
-  background: rgba(124, 92, 255, 0.14);
-  border: 1px solid rgba(124, 92, 255, 0.26);
-  border-radius: 12px;
-  color: #a894ff;
-  display: flex;
-  height: 40px;
-  justify-content: center;
-  margin-bottom: 20px;
-  width: 40px;
-}
-
-.vy-card-icon svg {
-  height: 20px;
-  width: 20px;
-}
-
-.vy-card h3 {
-  font-size: 18px;
-  font-weight: 640;
-  line-height: 1.25;
-}
-
-.vy-card p {
-  color: var(--muted);
-  font-size: 14.2px;
-  line-height: 1.6;
-  margin-top: 12px;
-}
-
-.vy-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: auto;
-  padding-top: 20px;
-}
-
-.vy-chips span {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 11.5px;
-  padding: 5px 11px;
-}
-
-/* ── lépések ── */
-
-.vy-steps {
-  margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
-}
-
-.vy-steps-grid {
-  counter-reset: step;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(3, 1fr);
-  position: relative;
-}
-
-.vy-steps-grid::before {
-  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
-  content: "";
-  height: 1px;
-  left: 8%;
-  position: absolute;
-  right: 8%;
-  top: 34px;
-}
-
-.vy-step {
-  background: var(--bg);
-  padding: 0 6px;
-  position: relative;
+.vy-section-head {
+  margin: 0 auto clamp(34px, 4vw, 52px);
+  max-width: 720px;
   text-align: center;
 }
 
-.vy-step-n {
-  align-items: center;
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  color: var(--text);
-  display: inline-flex;
-  font-size: 15px;
-  font-weight: 700;
-  height: 68px;
-  justify-content: center;
-  letter-spacing: -0.02em;
-  margin-bottom: 22px;
-  position: relative;
-  width: 68px;
+.vy-section-head.left {
+  margin-left: 0;
+  margin-right: auto;
+  max-width: 640px;
+  text-align: left;
 }
 
-.vy-step-n::after {
-  background: var(--grad);
-  border-radius: 50%;
-  content: "";
-  inset: -1px;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: xor;
-  padding: 1px;
-  position: absolute;
-}
-
-.vy-step h3 {
-  font-size: 18px;
-  font-weight: 640;
-}
-
-.vy-step p {
-  color: var(--muted);
-  font-size: 14.2px;
-  line-height: 1.6;
-  margin: 12px auto 0;
-  max-width: 34ch;
-}
-
-/* ── showcase ── */
-
-.vy-showcase {
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
-}
-
-.vy-showcase-inner {
-  align-items: center;
-  background:
-    radial-gradient(700px circle at 85% 20%, rgba(124, 92, 255, 0.16), transparent 60%),
-    var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  display: grid;
-  gap: clamp(32px, 5vw, 60px);
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
-  margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(32px, 5vw, 58px);
-}
-
-.vy-showcase-copy .vy-eyebrow {
+.vy-eyebrow {
+  color: var(--violet);
   display: block;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  margin-bottom: 16px;
+  text-transform: uppercase;
 }
 
-.vy-tabs {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  display: inline-flex;
-  gap: 4px;
-  margin-bottom: 26px;
-  padding: 4px;
-}
-
-.vy-tabs button {
-  background: none;
-  border: 0;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 570;
-  padding: 8px 16px;
-  transition: background 0.25s ease, color 0.25s ease;
-}
-
-.vy-tabs button.is-active {
-  background: var(--grad);
-  color: #fff;
-}
-
-.vy-showcase-copy h2 {
-  font-size: clamp(26px, 3.2vw, 36px);
+.vy-section-head h2 {
+  font-size: clamp(30px, 4.2vw, 48px);
   font-weight: 700;
 }
 
-.vy-showcase-copy > p {
+.vy-section-head > p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.62;
+  margin: 18px 0 0;
+  max-width: 56ch;
+}
+
+.vy-section-head:not(.left) > p {
+  margin-inline: auto;
+}
+
+/* ════ görgetéshez kötött termékbemutató ════ */
+
+.vy-story-section {
+  margin: 0 auto;
+  max-width: var(--shell);
+  padding: clamp(40px, 6vw, 80px) var(--pad);
+}
+
+.vy-story {
+  align-items: start;
+  display: grid;
+  gap: clamp(30px, 5vw, 70px);
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+}
+
+.vy-story-step {
+  opacity: 0.32;
+  padding: 20vh 0;
+  transition: opacity 0.45s ease;
+}
+
+.vy-story-step:first-child {
+  padding-top: 4vh;
+}
+
+.vy-story-step:last-child {
+  padding-bottom: 14vh;
+}
+
+.vy-story-step.is-active {
+  opacity: 1;
+}
+
+.vy-story-n {
+  align-items: center;
+  color: var(--violet);
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 12px;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+.vy-story-n em {
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.vy-story-n::after {
+  background: var(--line-strong);
+  content: "";
+  flex: 1;
+  height: 1px;
+  max-width: 90px;
+}
+
+.vy-story-step h3 {
+  font-size: clamp(24px, 2.9vw, 34px);
+  font-weight: 680;
+}
+
+.vy-story-step p {
   color: var(--muted);
   font-size: 15.5px;
-  line-height: 1.62;
-  margin: 16px 0 26px;
+  line-height: 1.65;
+  margin-top: 14px;
+  max-width: 44ch;
+}
+
+.vy-story-sticky {
+  position: sticky;
+  top: calc(var(--demo-bar-h, 0px) + 96px);
 }
 
 .vy-screen-swap {
-  animation: vy-fade 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: vy-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes vy-fade {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
+}
+
+.vy-story-dots {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.vy-story-dots span {
+  background: var(--line-strong);
+  border-radius: 999px;
+  height: 4px;
+  transition: background 0.3s ease, width 0.3s ease;
+  width: 16px;
+}
+
+.vy-story-dots span.is-on {
+  background: var(--grad);
+  width: 34px;
 }
 
 /* ügyféllista képernyő */
@@ -1115,6 +1231,21 @@
   justify-content: center;
   letter-spacing: 0;
   width: 36px;
+}
+
+.vy-avatar.tone-a {
+  background: rgba(124, 92, 255, 0.22);
+  color: #d3c8ff;
+}
+
+.vy-avatar.tone-b {
+  background: rgba(34, 211, 238, 0.18);
+  color: #b6eef8;
+}
+
+.vy-avatar.tone-c {
+  background: rgba(52, 211, 153, 0.18);
+  color: #b3ecd6;
 }
 
 .vy-client-meta {
@@ -1193,10 +1324,10 @@
 }
 
 .vy-rev-bar {
+  animation: vy-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   background: var(--grad);
   border-radius: 7px 7px 3px 3px;
   transform-origin: bottom;
-  animation: vy-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 .vy-rev-bar-wrap:nth-child(2) .vy-rev-bar {
@@ -1229,12 +1360,184 @@
   font-size: 11px;
 }
 
-/* ── idézet ── */
+/* ════ vízszintes funkció-sín ════ */
+
+.vy-features {
+  margin: 0 auto;
+  max-width: var(--shell);
+  overflow: clip;
+  padding: clamp(40px, 6vw, 80px) 0 clamp(40px, 6vw, 80px) var(--pad);
+}
+
+.vy-features .vy-section-head {
+  padding-right: var(--pad);
+}
+
+.vy-rail {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 6px 0 8px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.vy-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.vy-rail-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  display: flex;
+  flex: 0 0 min(350px, 76vw);
+  flex-direction: column;
+  padding: 28px;
+  position: relative;
+  scroll-snap-align: start;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.vy-rail-card:hover {
+  border-color: rgba(124, 92, 255, 0.42);
+  transform: translateY(-5px);
+}
+
+.vy-rail-pad {
+  flex: 0 0 var(--pad);
+}
+
+.vy-card-icon {
+  align-items: center;
+  background: rgba(124, 92, 255, 0.14);
+  border: 1px solid rgba(124, 92, 255, 0.26);
+  border-radius: 13px;
+  color: #a894ff;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  margin-bottom: 22px;
+  width: 42px;
+}
+
+.vy-card-icon svg {
+  height: 21px;
+  width: 21px;
+}
+
+.vy-rail-kicker {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.vy-rail-card h3 {
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.vy-rail-card p {
+  color: var(--muted);
+  font-size: 14.2px;
+  line-height: 1.62;
+  margin-top: 13px;
+}
+
+.vy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.vy-chips span {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11.5px;
+  padding: 5px 11px;
+}
+
+.vy-rail-controls {
+  align-items: center;
+  display: flex;
+  gap: 22px;
+  margin-top: 26px;
+  padding-right: var(--pad);
+}
+
+.vy-rail-track {
+  background: var(--line);
+  border-radius: 2px;
+  flex: 1;
+  height: 3px;
+  position: relative;
+}
+
+.vy-rail-track span {
+  background: var(--grad);
+  border-radius: 2px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  transition: left 0.15s linear;
+  width: 34%;
+}
+
+.vy-rail-arrows {
+  display: flex;
+  gap: 8px;
+}
+
+.vy-rail-arrows button {
+  align-items: center;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  width: 42px;
+}
+
+.vy-rail-arrows button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.vy-rail-arrows span {
+  border-right: 1.8px solid var(--text);
+  border-top: 1.8px solid var(--text);
+  display: block;
+  height: 9px;
+  width: 9px;
+}
+
+.vy-rail-arrows button:first-child span {
+  margin-left: 3px;
+  transform: rotate(-135deg);
+}
+
+.vy-rail-arrows button:last-child span {
+  margin-right: 3px;
+  transform: rotate(45deg);
+}
+
+/* ════ idézet ════ */
 
 .vy-quote {
   margin: 0 auto;
   max-width: 860px;
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
+  padding: clamp(44px, 6vw, 84px) var(--pad);
   text-align: center;
 }
 
@@ -1278,12 +1581,12 @@
   font-size: 12.5px;
 }
 
-/* ── árak ── */
+/* ════ árak ════ */
 
 .vy-pricing {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
+  max-width: var(--shell);
+  padding: clamp(44px, 6vw, 84px) var(--pad);
 }
 
 .vy-toggle {
@@ -1330,7 +1633,7 @@
 }
 
 .vy-plans {
-  align-items: start;
+  align-items: center;
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(3, 1fr);
@@ -1354,10 +1657,10 @@
 
 .vy-plan.is-featured {
   background:
-    radial-gradient(500px circle at 50% 0%, rgba(124, 92, 255, 0.2), transparent 65%),
-    var(--panel);
+    radial-gradient(500px circle at 50% 0%, rgba(124, 92, 255, 0.2), transparent 65%), var(--panel);
   border-color: rgba(124, 92, 255, 0.45);
   box-shadow: 0 30px 70px rgba(124, 92, 255, 0.16);
+  padding: 40px 30px;
 }
 
 .vy-plan-badge {
@@ -1424,7 +1727,7 @@
 }
 
 .vy-check {
-  background: rgba(52, 211, 153, 0.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%2334d399' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+  background: rgba(52, 211, 153, 0.16) var(--tick) center / 11px 11px no-repeat;
   border-radius: 50%;
   flex: none;
   height: 19px;
@@ -1436,12 +1739,12 @@
   margin-top: auto;
 }
 
-/* ── GYIK ── */
+/* ════ GYIK ════ */
 
 .vy-faq {
   margin: 0 auto;
-  max-width: 860px;
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px);
+  max-width: 900px;
+  padding: clamp(44px, 6vw, 84px) var(--pad);
 }
 
 .vy-faq-list {
@@ -1533,10 +1836,10 @@
   padding-bottom: 22px;
 }
 
-/* ── záró CTA ── */
+/* ════ záró CTA ════ */
 
 .vy-cta {
-  padding: clamp(48px, 7vw, 90px) clamp(18px, 4vw, 32px) clamp(64px, 8vw, 110px);
+  padding: clamp(44px, 6vw, 84px) var(--pad) clamp(64px, 8vw, 110px);
 }
 
 .vy-cta-inner {
@@ -1564,11 +1867,11 @@
   margin: 18px 0 30px;
 }
 
-/* ── lábléc ── */
+/* ════ lábléc ════ */
 
 .vy-footer {
   border-top: 1px solid var(--line);
-  padding: clamp(44px, 6vw, 64px) clamp(18px, 4vw, 32px) 28px;
+  padding: clamp(44px, 6vw, 64px) var(--pad) 28px;
 }
 
 .vy-footer-inner {
@@ -1576,7 +1879,7 @@
   gap: 40px;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr);
   margin: 0 auto;
-  max-width: 1180px;
+  max-width: var(--shell);
 }
 
 .vy-footer-brand p {
@@ -1594,9 +1897,9 @@
 }
 
 .vy-footer-cols div {
+  align-content: start;
   display: grid;
   gap: 11px;
-  align-content: start;
 }
 
 .vy-footer-cols span {
@@ -1625,7 +1928,7 @@
   gap: 12px;
   justify-content: space-between;
   margin: 44px auto 0;
-  max-width: 1180px;
+  max-width: var(--shell);
   padding-top: 24px;
 }
 
@@ -1638,71 +1941,88 @@
   color: var(--text);
 }
 
-/* ── reszponzív ── */
+/* ════ reszponzív ════ */
 
-@media (max-width: 1000px) {
-  .vy-hero-inner,
-  .vy-showcase-inner,
-  .vy-footer-inner {
+@media (max-width: 1040px) {
+  .vy-hero {
     grid-template-columns: 1fr;
+    padding-right: var(--pad);
   }
 
   .vy-hero-copy > p {
     max-width: none;
   }
 
-  .vy-bento {
-    grid-template-columns: repeat(2, 1fr);
+  .vy-tilt {
+    perspective: none;
   }
 
-  .vy-card.wide,
-  .vy-card.tall,
-  .vy-card.one,
-  .vy-card.full {
-    grid-column: span 2;
-    grid-row: span 1;
+  .vy-tilt .vy-window,
+  .vy-hero-stage:hover .vy-tilt .vy-window {
+    transform: none;
+    width: 100%;
   }
 
-  .vy-plans,
-  .vy-steps-grid {
+  .vy-live {
+    bottom: -14px;
+    left: 10px;
+  }
+
+  .vy-day-inner,
+  .vy-footer-inner {
     grid-template-columns: 1fr;
   }
 
-  .vy-steps-grid::before {
-    display: none;
+  .vy-day-object {
+    order: -1;
   }
 
-  .vy-stats {
-    grid-template-columns: repeat(2, 1fr);
+  .vy-plans {
+    grid-template-columns: 1fr;
   }
 
-  /* egyoszlopos hero: a lebegő kártyák a mockup üres sarkaiba kerülnek */
-  .vy-float.one {
-    bottom: 9%;
-    left: 10px;
-    top: auto;
+  .vy-plan.is-featured {
+    padding: 30px 26px;
   }
 
-  .vy-float.two {
-    bottom: auto;
-    right: 10px;
-    top: -18px;
+  /* a görgetéshez kötött blokk mobilon: a mockup tapad felül */
+  .vy-story {
+    grid-template-columns: 1fr;
+  }
+
+  .vy-story-stage {
+    order: -1;
+  }
+
+  .vy-story-sticky {
+    background: var(--bg);
+    padding-bottom: 16px;
+    top: calc(var(--demo-bar-h, 0px) + 72px);
+    z-index: 2;
+  }
+
+  .vy-story-step {
+    padding: 9vh 0;
+  }
+
+  .vy-story-step:first-child {
+    padding-top: 3vh;
   }
 }
 
 @media (max-width: 760px) {
   .vy-nav-links {
-    background: rgba(10, 12, 17, 0.97);
     backdrop-filter: blur(18px);
+    background: rgba(10, 12, 17, 0.97);
     border: 1px solid var(--line);
     border-radius: 16px;
     display: none;
     flex-direction: column;
     gap: 4px;
-    left: clamp(18px, 4vw, 32px);
+    left: var(--pad);
     padding: 14px;
     position: absolute;
-    right: clamp(18px, 4vw, 32px);
+    right: var(--pad);
     top: 72px;
   }
 
@@ -1731,36 +2051,43 @@
     padding: 9px 15px;
   }
 
-  .vy-problem-grid,
-  .vy-bento {
+  .vy-h1-note {
+    border-left: 0;
+    border-top: 2px solid var(--violet);
+    flex-basis: 100%;
+    padding: 10px 0 0;
+  }
+
+  .vy-problem-grid {
     grid-template-columns: 1fr;
   }
 
-  .vy-card,
-  .vy-card.wide,
-  .vy-card.tall,
-  .vy-card.one,
-  .vy-card.full {
-    grid-column: span 1;
+  .vy-problem-card.good {
+    margin-top: 0;
   }
 
-  .vy-float.one,
-  .vy-float.two {
-    scale: 0.88;
+  .vy-day-stats {
+    gap: 18px;
+    grid-template-columns: 1fr;
   }
 
   .vy-cal-body {
     height: 210px;
   }
+
+  .vy-rail-controls {
+    gap: 14px;
+  }
 }
 
 @media (max-width: 480px) {
-  .vy-stats {
-    grid-template-columns: 1fr;
-  }
-
   .vy-hero-actions .vy-btn,
   .vy-hero-actions .vy-ghost {
     flex: 1 1 100%;
+  }
+
+  .vy-live {
+    left: 0;
+    right: 0;
   }
 }

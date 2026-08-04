@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
 import { useDemoNotice } from "@/components/demo/DemoNotice";
 
@@ -12,78 +12,63 @@ const SIGNUP_NOTICE =
 
 const features = [
   {
-    span: "wide",
     icon: "calendar",
-    title: "Foglalási naptár, ami sosem duplázza le magát",
-    copy: "Online időpontfoglalás a saját oldaladról, valós idejű szabad idősávokkal. Ha valaki lefoglal egy időpontot, az a többi csatornán azonnal eltűnik.",
-    chips: ["Google Naptár szinkron", "Puffer idő", "Csoportos alkalmak"]
+    kicker: "Naptár",
+    title: "Sosem duplázza le magát",
+    copy: "Online foglalás a saját oldaladról, valós idejű szabad idősávokkal. Ha valaki lefoglal egy időpontot, az a többi csatornán azonnal eltűnik.",
+    chips: ["Google Naptár szinkron", "Puffer idő"]
   },
   {
-    span: "tall",
     icon: "bell",
-    title: "Automatikus emlékeztetők",
-    copy: "SMS és email 24 órával az időpont előtt. A meg nem jelenések a töredékére esnek vissza, neked pedig egy telefonhívásod sincs vele.",
+    kicker: "Emlékeztető",
+    title: "Nem neked kell telefonálni",
+    copy: "SMS és email 24 órával az időpont előtt, a te szövegeddel. A meg nem jelenések a töredékére esnek vissza.",
     chips: ["SMS", "Email", "Saját szöveg"]
   },
   {
-    span: "",
     icon: "card",
-    title: "Előleg és online fizetés",
-    copy: "Kérj foglaláskor előleget bankkártyával — a no-show ezzel gyakorlatilag megszűnik.",
-    chips: []
+    kicker: "Fizetés",
+    title: "Előleg már foglaláskor",
+    copy: "Kérj foglaláskor előleget bankkártyával — a no-show ezzel gyakorlatilag megszűnik, a pénz pedig ott van, mielőtt bejönne.",
+    chips: ["Bankkártya", "Számlázás"]
   },
   {
-    span: "one",
     icon: "users",
-    title: "Ügyfélkartonok",
-    copy: "Előzmények, jegyzetek, kedvenc szolgáltatás. Minden ott van, mielőtt beköszön az ajtón.",
-    chips: []
+    kicker: "Ügyfelek",
+    title: "Tudod, ki lép be az ajtón",
+    copy: "Előzmények, jegyzetek, kedvenc szolgáltatás, elköltött összeg. Minden ott van, mielőtt beköszön.",
+    chips: ["Kartonok", "Címkék"]
   },
   {
-    span: "full",
     icon: "chart",
-    title: "Bevétel és kihasználtság egy képernyőn",
-    copy: "Látod, melyik szolgáltatás hoz igazán pénzt, melyik napszak áll üresen, és mennyit ér egy visszatérő vendég. Nem érzésre döntesz, hanem számokból.",
-    chips: ["Napi bontás", "Szolgáltatásonként", "Export"]
+    kicker: "Bevétel",
+    title: "Számokból döntesz, nem érzésre",
+    copy: "Látod, melyik szolgáltatás hoz igazán pénzt, melyik napszak áll üresen, és mennyit ér egy visszatérő vendég.",
+    chips: ["Napi bontás", "Export"]
   }
 ];
 
-const steps = [
-  {
-    n: "01",
-    title: "Beállítod a szolgáltatásaid",
-    copy: "Név, időtartam, ár, ki végzi. Tizenöt perc, és kész a kínálat — sablonból is indulhatsz."
-  },
-  {
-    n: "02",
-    title: "Kiteszed a foglalási linket",
-    copy: "Weboldalra, Instagram bióba, Google profilra. Aki rákattint, két kattintással foglal."
-  },
-  {
-    n: "03",
-    title: "Te már csak dolgozol",
-    copy: "A naptár megtelik, az emlékeztetők mennek, a bevétel gyűlik a kimutatásban."
-  }
-];
-
-const tabs = [
+const storySteps = [
   {
     id: "naptar",
-    label: "Naptár",
-    title: "A heted egy képernyőn",
-    copy: "Húzd-ejtsd az időpontokat, láss minden kollégát egymás mellett, és szúrd ki egy pillantással az üresen álló sávokat."
+    n: "01",
+    label: "Reggel",
+    title: "Kinyitod, és már tudod, mi lesz ma",
+    copy: "Minden kolléga egymás mellett, húzd-ejtsd időpontokkal. Az üresen álló sávok azonnal kiszúrhatók — és be is tölthetők."
   },
   {
     id: "ugyfelek",
-    label: "Ügyfelek",
+    n: "02",
+    label: "Munka közben",
     title: "Mindenkiről tudsz mindent",
-    copy: "Ki mikor járt nálad, mennyit költött, mit szeret. A visszatérő vendég a legolcsóbb marketing."
+    copy: "Ki mikor járt nálad, mennyit költött, mit szeret, mire allergiás. A visszatérő vendég a legolcsóbb marketing."
   },
   {
     id: "bevetel",
-    label: "Bevétel",
-    title: "Számok, nem érzések",
-    copy: "Napi, heti, havi bontás szolgáltatásonként. Egy kattintással exportálod a könyvelőnek."
+    n: "03",
+    label: "Zárás után",
+    title: "Öt perc, és megvan a hét",
+    copy: "Napi, heti, havi bontás szolgáltatásonként. Egy kattintással exportálod a könyvelőnek, és nem kell táblázatot vezetned."
   }
 ];
 
@@ -149,6 +134,39 @@ const faqs = [
   }
 ];
 
+/* a fejléc alatti futószalag: érkező foglalások */
+const ticker = [
+  { t: "09:00", who: "Nagy Péter", what: "Hajvágás" },
+  { t: "09:45", who: "Tóth Réka", what: "Festés" },
+  { t: "10:30", who: "Kiss Bence", what: "Szakállvágás" },
+  { t: "11:15", who: "Fehér Mónika", what: "Melír" },
+  { t: "12:00", who: "Erdei Zsolt", what: "Konzultáció" },
+  { t: "13:30", who: "Szabó Lilla", what: "Hajvágás + szárítás" },
+  { t: "14:30", who: "Kovács Anna", what: "Festés" },
+  { t: "15:15", who: "Barna Gergő", what: "Szakállvágás" },
+  { t: "16:00", who: "Vas Dóra", what: "Melír" },
+  { t: "17:00", who: "Deák Ákos", what: "Hajvágás" }
+];
+
+/* a nap-tárcsa foglalásai — 7:00 és 21:00 közötti sávban */
+const dayBookings = [
+  { from: 8, to: 9, tone: "a", label: "Hajvágás" },
+  { from: 9.25, to: 10.5, tone: "b", label: "Festés" },
+  { from: 10.75, to: 11.5, tone: "c", label: "Szakáll" },
+  { from: 12.5, to: 14, tone: "b", label: "Melír" },
+  { from: 14.25, to: 15, tone: "a", label: "Hajvágás" },
+  { from: 15.25, to: 16.5, tone: "c", label: "Konzultáció" },
+  { from: 17, to: 18.5, tone: "b", label: "Festés" }
+];
+
+/* a hero mockupban körbejáró élő értesítések */
+const liveFeed = [
+  { slot: 0, who: "Nagy Péter", what: "Hajvágás", when: "ma 09:00" },
+  { slot: 4, who: "Szabó Lilla", what: "Melír", when: "ma 13:30" },
+  { slot: 2, who: "Kiss Bence", what: "Szakáll", when: "ma 10:30" },
+  { slot: 5, who: "Erdei Zsolt", what: "Konzultáció", when: "ma 16:00" }
+];
+
 /* ── ikonok ───────────────────────────────────────────────────────────── */
 
 function Icon({ name }: { name: string }) {
@@ -203,7 +221,14 @@ function Icon({ name }: { name: string }) {
   );
 }
 
-/* ── segéd: görgetésre megjelenő blokkok ──────────────────────────────── */
+/* ── segédek ──────────────────────────────────────────────────────────── */
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 function useReveal() {
   const root = useRef<HTMLDivElement>(null);
@@ -214,10 +239,7 @@ function useReveal() {
 
     const targets = Array.from(host.querySelectorAll<HTMLElement>("[data-reveal]"));
 
-    if (
-      typeof window === "undefined" ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (prefersReducedMotion()) {
       targets.forEach((el) => el.classList.add("is-in"));
       return;
     }
@@ -231,7 +253,7 @@ function useReveal() {
           }
         });
       },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.12 }
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.1 }
     );
 
     targets.forEach((el) => io.observe(el));
@@ -241,20 +263,43 @@ function useReveal() {
   return root;
 }
 
-/* ── termékképernyők (CSS/SVG mockupok) ───────────────────────────────── */
+function useInView<T extends HTMLElement>(threshold = 0.35) {
+  const ref = useRef<T>(null);
+  const [seen, setSeen] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { threshold }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+
+  return { ref, seen };
+}
+
+/* ── hero: 3D-be döntött, élő naptár ──────────────────────────────────── */
 
 const dayNames = ["H", "K", "Sze", "Cs", "P", "Szo"];
 
-function CalendarScreen() {
-  const slots = [
-    { day: 0, top: 6, h: 20, tone: "a", label: "Hajvágás", who: "Nagy P." },
-    { day: 1, top: 30, h: 26, tone: "b", label: "Festés", who: "Tóth R." },
-    { day: 2, top: 12, h: 16, tone: "c", label: "Szakáll", who: "Kiss B." },
-    { day: 3, top: 44, h: 22, tone: "a", label: "Hajvágás", who: "Fehér M." },
-    { day: 4, top: 20, h: 30, tone: "b", label: "Melír", who: "Szabó L." },
-    { day: 5, top: 58, h: 18, tone: "c", label: "Konzultáció", who: "Erdei Zs." }
-  ];
+const heroSlots = [
+  { day: 0, top: 6, h: 20, tone: "a", label: "Hajvágás", who: "Nagy P." },
+  { day: 1, top: 30, h: 26, tone: "b", label: "Festés", who: "Tóth R." },
+  { day: 2, top: 12, h: 16, tone: "c", label: "Szakáll", who: "Kiss B." },
+  { day: 3, top: 44, h: 22, tone: "a", label: "Hajvágás", who: "Fehér M." },
+  { day: 4, top: 20, h: 30, tone: "b", label: "Melír", who: "Szabó L." },
+  { day: 5, top: 58, h: 18, tone: "c", label: "Konzultáció", who: "Erdei Zs." }
+];
 
+function CalendarScreen({ active = -1 }: { active?: number }) {
   return (
     <div className="vy-screen vy-cal">
       <div className="vy-cal-head">
@@ -265,11 +310,11 @@ function CalendarScreen() {
       <div className="vy-cal-body">
         {dayNames.map((d, i) => (
           <div className="vy-cal-col" key={d}>
-            {slots
+            {heroSlots
               .filter((s) => s.day === i)
               .map((s) => (
                 <div
-                  className={`vy-slot tone-${s.tone}`}
+                  className={`vy-slot tone-${s.tone} ${active === i ? "is-live" : ""}`}
                   key={s.label}
                   style={{ height: `${s.h}%`, top: `${s.top}%` }}
                 >
@@ -338,9 +383,108 @@ function RevenueScreen() {
   );
 }
 
+/* ── nap-tárcsa: az oldal saját objektuma ─────────────────────────────── */
+
+const DIAL_R = 118;
+const DIAL_C = 2 * Math.PI * DIAL_R;
+const DAY_START = 7;
+const DAY_LENGTH = 14;
+
+function DayDial() {
+  const { ref, seen } = useInView<HTMLDivElement>(0.3);
+  const booked = dayBookings.reduce((sum, b) => sum + (b.to - b.from), 0);
+  const usage = Math.round((booked / DAY_LENGTH) * 100);
+
+  return (
+    <div className="vy-dial-wrap" ref={ref}>
+      <svg className={`vy-dial ${seen ? "is-in" : ""}`} viewBox="0 0 300 300">
+        <g transform="translate(150 150) rotate(-90)">
+          <circle
+            className="vy-dial-track"
+            cx="0"
+            cy="0"
+            fill="none"
+            r={DIAL_R}
+            strokeWidth="26"
+          />
+          {dayBookings.map((b, i) => {
+            const len = (DIAL_C * (b.to - b.from)) / DAY_LENGTH;
+            const offset = (-DIAL_C * (b.from - DAY_START)) / DAY_LENGTH;
+            return (
+              <circle
+                className={`vy-dial-arc tone-${b.tone}`}
+                cx="0"
+                cy="0"
+                fill="none"
+                key={b.label + b.from}
+                r={DIAL_R}
+                strokeDasharray={seen ? `${len} ${DIAL_C}` : `0 ${DIAL_C}`}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                strokeWidth="26"
+                style={{ transitionDelay: `${i * 90}ms` }}
+              />
+            );
+          })}
+        </g>
+
+        {/* óracímkék */}
+        {[8, 10, 12, 14, 16, 18, 20].map((h) => {
+          const angle = ((h - DAY_START) / DAY_LENGTH) * 360 - 90;
+          const rad = (angle * Math.PI) / 180;
+          const rr = DIAL_R + 27;
+          // kerekítve, különben a szerver és a kliens más tizedesjegyet ad,
+          // és a React hidratálási eltérést jelez
+          const round = (n: number) => Math.round(n * 100) / 100;
+          return (
+            <text
+              className="vy-dial-hour"
+              key={h}
+              x={round(150 + rr * Math.cos(rad))}
+              y={round(150 + rr * Math.sin(rad) + 4)}
+            >
+              {h}
+            </text>
+          );
+        })}
+
+        <text className="vy-dial-value" x="150" y="146">
+          {usage}%
+        </text>
+        <text className="vy-dial-label" x="150" y="170">
+          kihasználtság
+        </text>
+        <text className="vy-dial-sub" x="150" y="190">
+          kedd · 7 foglalás
+        </text>
+      </svg>
+
+      <div className="vy-dial-legend">
+        <span>
+          <i className="tone-a" /> Hajvágás
+        </span>
+        <span>
+          <i className="tone-b" /> Festés, melír
+        </span>
+        <span>
+          <i className="tone-c" /> Egyéb
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ── számláló ─────────────────────────────────────────────────────────── */
 
-function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: string; decimals?: number }) {
+function Counter({
+  to,
+  suffix = "",
+  decimals = 0
+}: {
+  to: number;
+  suffix?: string;
+  decimals?: number;
+}) {
   const [value, setValue] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -348,7 +492,7 @@ function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: strin
     const el = ref.current;
     if (!el) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (prefersReducedMotion()) {
       setValue(to);
       return;
     }
@@ -392,25 +536,198 @@ function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: strin
   );
 }
 
+/* ── vízszintes funkció-sín ───────────────────────────────────────────── */
+
+function FeatureRail() {
+  const rail = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  const onScroll = useCallback(() => {
+    const el = rail.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setProgress(max > 0 ? el.scrollLeft / max : 0);
+  }, []);
+
+  const nudge = (dir: number) => {
+    const el = rail.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".vy-rail-card");
+    const step = card ? card.offsetWidth + 20 : 360;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  return (
+    <div className="vy-rail-wrap">
+      <div className="vy-rail" onScroll={onScroll} ref={rail}>
+        {features.map((f) => (
+          <article className="vy-rail-card" key={f.title}>
+            <span className="vy-card-icon">
+              <Icon name={f.icon} />
+            </span>
+            <span className="vy-rail-kicker">{f.kicker}</span>
+            <h3>{f.title}</h3>
+            <p>{f.copy}</p>
+            <div className="vy-chips">
+              {f.chips.map((c) => (
+                <span key={c}>{c}</span>
+              ))}
+            </div>
+          </article>
+        ))}
+        <span className="vy-rail-pad" aria-hidden="true" />
+      </div>
+
+      <div className="vy-rail-controls">
+        <div className="vy-rail-track">
+          {/* a hüvelyk 34% széles, ezért 66%-nyi úton mozog végig */}
+          <span style={{ left: `${progress * 66}%` }} />
+        </div>
+        <div className="vy-rail-arrows">
+          <button aria-label="Előző" onClick={() => nudge(-1)} type="button">
+            <span />
+          </button>
+          <button aria-label="Következő" onClick={() => nudge(1)} type="button">
+            <span />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── görgetéshez kötött termékbemutató ────────────────────────────────── */
+
+function StoryScroller() {
+  const [active, setActive] = useState(0);
+  const steps = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const nodes = steps.current.filter(Boolean) as HTMLDivElement[];
+    if (!nodes.length) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = nodes.indexOf(entry.target as HTMLDivElement);
+            if (index >= 0) setActive(index);
+          }
+        });
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
+    );
+
+    nodes.forEach((n) => io.observe(n));
+    return () => io.disconnect();
+  }, []);
+
+  const current = storySteps[active];
+
+  return (
+    <div className="vy-story">
+      <div className="vy-story-steps">
+        {storySteps.map((s, i) => (
+          <div
+            className={`vy-story-step ${active === i ? "is-active" : ""}`}
+            key={s.id}
+            ref={(el) => {
+              steps.current[i] = el;
+            }}
+          >
+            <span className="vy-story-n">
+              {s.n}
+              <em>{s.label}</em>
+            </span>
+            <h3>{s.title}</h3>
+            <p>{s.copy}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="vy-story-stage">
+        <div className="vy-story-sticky">
+          <div className="vy-window">
+            <div className="vy-window-bar">
+              <span className="vy-wdot" />
+              <span className="vy-wdot" />
+              <span className="vy-wdot" />
+              <span className="vy-window-title">Veyra · {current.label}</span>
+            </div>
+            <div className="vy-screen-swap" key={current.id}>
+              {current.id === "naptar" && <CalendarScreen />}
+              {current.id === "ugyfelek" && <ClientsScreen />}
+              {current.id === "bevetel" && <RevenueScreen />}
+            </div>
+          </div>
+          <div className="vy-story-dots">
+            {storySteps.map((s, i) => (
+              <span className={active === i ? "is-on" : ""} key={s.id} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── oldal ────────────────────────────────────────────────────────────── */
 
 export function VeyraSite() {
   const root = useReveal();
   const notice = useDemoNotice();
   const [scrolled, setScrolled] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [tab, setTab] = useState(tabs[0].id);
   const [yearly, setYearly] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [feed, setFeed] = useState(0);
+  const [clock, setClock] = useState<string | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      const max = document.body.scrollHeight - window.innerHeight;
+      setScrolled(window.scrollY > 24);
+      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const activeTab = tabs.find((t) => t.id === tab) ?? tabs[0];
+  /* a hero mockupban körbejáró élő foglalás */
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const id = setInterval(() => setFeed((v) => (v + 1) % liveFeed.length), 4200);
+    return () => clearInterval(id);
+  }, []);
+
+  /* valódi óra — csak kliensen, hogy ne legyen hidratálási eltérés */
+  useEffect(() => {
+    const tick = () =>
+      setClock(
+        new Date().toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" })
+      );
+    tick();
+    const id = setInterval(tick, 20000);
+    return () => clearInterval(id);
+  }, []);
+
+  /* kurzort követő fény a heróban */
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || prefersReducedMotion()) return;
+    const onMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--sx", `${e.clientX - r.left}px`);
+      el.style.setProperty("--sy", `${e.clientY - r.top}px`);
+    };
+    el.addEventListener("pointermove", onMove);
+    return () => el.removeEventListener("pointermove", onMove);
+  }, []);
+
+  const live = liveFeed[feed];
 
   return (
     <div className="vy-root" ref={root}>
@@ -423,11 +740,11 @@ export function VeyraSite() {
             Veyra
           </a>
           <nav className={`vy-nav-links ${menuOpen ? "is-open" : ""}`}>
+            <a href="#nap" onClick={() => setMenuOpen(false)}>
+              Egy nap
+            </a>
             <a href="#funkciok" onClick={() => setMenuOpen(false)}>
               Funkciók
-            </a>
-            <a href="#hogyan" onClick={() => setMenuOpen(false)}>
-              Hogyan működik
             </a>
             <a href="#arak" onClick={() => setMenuOpen(false)}>
               Árak
@@ -454,48 +771,56 @@ export function VeyraSite() {
             </button>
           </div>
         </div>
+        <span className="vy-nav-progress" style={{ transform: `scaleX(${progress})` }} />
       </header>
 
       <main id="top">
-        {/* ── hero ── */}
-        <section className="vy-hero">
+        {/* ── hero: aszimmetrikus, térbe döntött mockuppal ── */}
+        <section className="vy-hero" ref={heroRef}>
           <div className="vy-orb one" aria-hidden="true" />
           <div className="vy-orb two" aria-hidden="true" />
           <div className="vy-grid-bg" aria-hidden="true" />
+          <div className="vy-spotlight" aria-hidden="true" />
 
-          <div className="vy-hero-inner">
-            <div className="vy-hero-copy" data-reveal>
-              <span className="vy-pill">
-                <span className="vy-dot" />
-                Új: előleg bekérés foglaláskor
+          <div className="vy-hero-copy" data-reveal>
+            <span className="vy-pill">
+              <span className="vy-dot" />
+              Élő: {clock ?? "14:32"} — most is érkezik foglalás
+            </span>
+            <h1>
+              A naptárad
+              <span className="vy-h1-row">
+                <em>tele.</em>
+                <span className="vy-h1-note">
+                  Heti 6,5 óra
+                  <br />
+                  adminisztráció nélkül.
+                </span>
               </span>
-              <h1>
-                A naptárad tele.
-                <br />
-                A fejed <em>üres.</em>
-              </h1>
-              <p>
-                A Veyra elintézi a foglalást, az emlékeztetőt és a fizetést, hogy te azzal
-                foglalkozz, amihez értesz. Szolgáltató vállalkozásoknak, akik unják a
-                telefonálgatást.
-              </p>
-              <div className="vy-hero-actions">
-                <button className="vy-btn lg" onClick={() => notice(SIGNUP_NOTICE)} type="button">
-                  14 napig ingyen
-                </button>
-                <a className="vy-ghost lg" href="#hogyan">
-                  <span className="vy-play" aria-hidden="true" />
-                  Hogyan működik
-                </a>
-              </div>
-              <ul className="vy-hero-trust">
-                <li>Bankkártya nélkül</li>
-                <li>15 perc alatt kész</li>
-                <li>Bármikor lemondható</li>
-              </ul>
+              A fejed üres.
+            </h1>
+            <p>
+              A Veyra elintézi a foglalást, az emlékeztetőt és a fizetést, hogy te azzal
+              foglalkozz, amihez értesz.
+            </p>
+            <div className="vy-hero-actions">
+              <button className="vy-btn lg" onClick={() => notice(SIGNUP_NOTICE)} type="button">
+                14 napig ingyen
+              </button>
+              <a className="vy-ghost lg" href="#nap">
+                <span className="vy-play" aria-hidden="true" />
+                Nézz meg egy napot
+              </a>
             </div>
+            <ul className="vy-hero-trust">
+              <li>Bankkártya nélkül</li>
+              <li>15 perc alatt kész</li>
+              <li>Bármikor lemondható</li>
+            </ul>
+          </div>
 
-            <div className="vy-hero-art" data-reveal>
+          <div className="vy-hero-stage" data-reveal>
+            <div className="vy-tilt">
               <div className="vy-window">
                 <div className="vy-window-bar">
                   <span className="vy-wdot" />
@@ -503,70 +828,98 @@ export function VeyraSite() {
                   <span className="vy-wdot" />
                   <span className="vy-window-title">Veyra · Naptár</span>
                 </div>
-                <CalendarScreen />
+                <CalendarScreen active={live.slot} />
               </div>
+            </div>
 
-              <div className="vy-float one">
-                <span className="vy-float-icon">
-                  <Icon name="bell" />
+            <div className="vy-live" key={feed}>
+              <span className="vy-live-icon">
+                <Icon name="bell" />
+              </span>
+              <div>
+                <strong>{live.who}</strong>
+                <span>
+                  {live.what} · {live.when}
                 </span>
-                <div>
-                  <strong>Új foglalás</strong>
-                  <span>Kovács Anna · ma 14:30</span>
-                </div>
               </div>
-
-              <div className="vy-float two">
-                <span className="vy-float-icon alt">
-                  <Icon name="chart" />
-                </span>
-                <div>
-                  <strong>+32% bevétel</strong>
-                  <span>az elmúlt negyedévben</span>
-                </div>
-              </div>
+              <span className="vy-live-badge">Új</span>
             </div>
           </div>
         </section>
 
-        {/* ── számok ── */}
-        <section className="vy-stats" data-reveal>
-          <div className="vy-stat">
-            <strong>
-              <Counter to={2400} suffix="+" />
-            </strong>
-            <span>szolgáltató használja</span>
+        {/* ── ferde futószalag ── */}
+        <section className="vy-ticker" aria-hidden="true">
+          <div className="vy-ticker-row">
+            <div className="vy-ticker-track">
+              {[...ticker, ...ticker].map((item, i) => (
+                <span className="vy-ticker-item" key={`a${i}`}>
+                  <b>{item.t}</b>
+                  {item.who}
+                  <i>{item.what}</i>
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="vy-stat">
-            <strong>
-              <Counter to={71} suffix="%" />
-            </strong>
-            <span>kevesebb meg nem jelenés</span>
-          </div>
-          <div className="vy-stat">
-            <strong>
-              <Counter decimals={1} to={6.5} suffix=" óra" />
-            </strong>
-            <span>megspórolt adminisztráció / hét</span>
-          </div>
-          <div className="vy-stat">
-            <strong>
-              <Counter decimals={1} to={4.9} />
-            </strong>
-            <span>átlagos értékelés</span>
+          <div className="vy-ticker-row reverse">
+            <div className="vy-ticker-track">
+              {[...ticker, ...ticker].reverse().map((item, i) => (
+                <span className="vy-ticker-item" key={`b${i}`}>
+                  <b>{item.t}</b>
+                  {item.who}
+                  <i>{item.what}</i>
+                </span>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ── probléma ── */}
-        <section className="vy-problem" data-reveal>
-          <div className="vy-section-head">
-            <span className="vy-eyebrow">A valóság</span>
-            <h2>
-              Nem a munka fáraszt ki. Hanem a <em>körülötte lévő zaj.</em>
-            </h2>
+        {/* ── nap-tárcsa + számok ── */}
+        <section className="vy-day" id="nap">
+          <div className="vy-day-inner">
+            <div className="vy-day-copy" data-reveal>
+              <span className="vy-eyebrow">Egy nap a Veyrával</span>
+              <h2>
+                Nem az a kérdés, hány órád van.
+                <br />
+                Hanem hogy <em>mennyi áll üresen.</em>
+              </h2>
+              <p>
+                A tárcsa egyetlen kedd. Minden ív egy foglalás, a rések a kiesett bevétel. A
+                Veyra ezeket a réseket tölti fel — emlékeztetővel, várólistával és online
+                foglalással, ami éjjel is dolgozik.
+              </p>
+              <div className="vy-day-stats">
+                <div>
+                  <strong>
+                    <Counter to={71} suffix="%" />
+                  </strong>
+                  <span>kevesebb meg nem jelenés</span>
+                </div>
+                <div>
+                  <strong>
+                    <Counter decimals={1} to={6.5} suffix=" óra" />
+                  </strong>
+                  <span>megspórolt admin hetente</span>
+                </div>
+                <div>
+                  <strong>
+                    <Counter to={2400} suffix="+" />
+                  </strong>
+                  <span>szolgáltató használja</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="vy-day-object" data-reveal>
+              <DayDial />
+            </div>
           </div>
+        </section>
+
+        {/* ── probléma / megoldás, eltolt kártyákkal ── */}
+        <section className="vy-problem">
           <div className="vy-problem-grid">
-            <div className="vy-problem-card bad">
+            <div className="vy-problem-card bad" data-reveal>
               <span className="vy-problem-tag">Enélkül</span>
               <ul>
                 <li>Foglalás öt csatornán: telefon, Messenger, DM, email, papír</li>
@@ -575,7 +928,7 @@ export function VeyraSite() {
                 <li>Fogalmad sincs, melyik szolgáltatás hoz igazán pénzt</li>
               </ul>
             </div>
-            <div className="vy-problem-card good">
+            <div className="vy-problem-card good" data-reveal>
               <span className="vy-problem-tag">Veyrával</span>
               <ul>
                 <li>Egy link, ahol az ügyfél magától foglal — éjjel is</li>
@@ -587,100 +940,27 @@ export function VeyraSite() {
           </div>
         </section>
 
-        {/* ── funkciók ── */}
+        {/* ── görgetéshez kötött termékbemutató ── */}
+        <section className="vy-story-section">
+          <div className="vy-section-head left" data-reveal>
+            <span className="vy-eyebrow">A felület</span>
+            <h2>
+              Reggeltől zárásig <em>egy helyen.</em>
+            </h2>
+          </div>
+          <StoryScroller />
+        </section>
+
+        {/* ── funkció-sín ── */}
         <section className="vy-features" id="funkciok">
-          <div className="vy-section-head" data-reveal>
+          <div className="vy-section-head left" data-reveal>
             <span className="vy-eyebrow">Funkciók</span>
             <h2>
-              Minden, amit egy tele naptár <em>megkövetel.</em>
+              Amit egy tele naptár <em>megkövetel.</em>
             </h2>
-            <p>
-              Nem funkciólista a funkciólista kedvéért — pontosan az, ami egy szolgáltató
-              vállalkozás napi működéséhez kell.
-            </p>
+            <p>Húzd oldalra — nem funkciólista a lista kedvéért.</p>
           </div>
-
-          <div className="vy-bento">
-            {features.map((f) => (
-              <article className={`vy-card ${f.span}`} data-reveal key={f.title}>
-                <span className="vy-card-icon">
-                  <Icon name={f.icon} />
-                </span>
-                <h3>{f.title}</h3>
-                <p>{f.copy}</p>
-                {f.chips.length > 0 && (
-                  <div className="vy-chips">
-                    {f.chips.map((c) => (
-                      <span key={c}>{c}</span>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* ── hogyan működik ── */}
-        <section className="vy-steps" id="hogyan">
-          <div className="vy-section-head" data-reveal>
-            <span className="vy-eyebrow">Hogyan működik</span>
-            <h2>
-              Három lépés, egy <em>délután.</em>
-            </h2>
-          </div>
-          <div className="vy-steps-grid">
-            {steps.map((s) => (
-              <article className="vy-step" data-reveal key={s.n}>
-                <span className="vy-step-n">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.copy}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* ── termékbemutató fülekkel ── */}
-        <section className="vy-showcase" data-reveal>
-          <div className="vy-showcase-inner">
-            <div className="vy-showcase-copy">
-              <span className="vy-eyebrow">A felület</span>
-              <div className="vy-tabs" role="tablist">
-                {tabs.map((t) => (
-                  <button
-                    aria-selected={tab === t.id}
-                    className={tab === t.id ? "is-active" : ""}
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
-                    role="tab"
-                    type="button"
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              <h2>{activeTab.title}</h2>
-              <p>{activeTab.copy}</p>
-              <button className="vy-ghost" onClick={() => notice(SIGNUP_NOTICE)} type="button">
-                Kipróbálom élesben
-              </button>
-            </div>
-
-            <div className="vy-showcase-art">
-              <div className="vy-window">
-                <div className="vy-window-bar">
-                  <span className="vy-wdot" />
-                  <span className="vy-wdot" />
-                  <span className="vy-wdot" />
-                  <span className="vy-window-title">Veyra · {activeTab.label}</span>
-                </div>
-                <div className="vy-screen-swap" key={tab}>
-                  {tab === "naptar" && <CalendarScreen />}
-                  {tab === "ugyfelek" && <ClientsScreen />}
-                  {tab === "bevetel" && <RevenueScreen />}
-                </div>
-              </div>
-            </div>
-          </div>
+          <FeatureRail />
         </section>
 
         {/* ── vélemény ── */}
@@ -762,7 +1042,7 @@ export function VeyraSite() {
 
         {/* ── GYIK ── */}
         <section className="vy-faq" id="gyik">
-          <div className="vy-section-head" data-reveal>
+          <div className="vy-section-head left" data-reveal>
             <span className="vy-eyebrow">GYIK</span>
             <h2>
               Amit <em>tényleg</em> kérdezni szoktak.
