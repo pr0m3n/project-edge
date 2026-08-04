@@ -115,7 +115,7 @@ export default function WorkPage() {
       </section>
 
       <section className="case-study">
-        <p className="micro-label dark">Esettanulmány / Checky.hu</p>
+        <p className="micro-label dark">Valós ügyfélmunka / Checky.hu</p>
         <a href="https://checky.hu" rel="noreferrer" target="_blank">
           <img alt="Checky.hu weboldal referencia" className="case-shot" src="/work/checky.png" />
         </a>
@@ -157,6 +157,90 @@ export default function WorkPage() {
             <span>kéz: frontend + backend</span>
           </div>
         </div>
+      </section>
+
+      <section className="demos-section">
+        <div className="section-head">
+          <p className="micro-label dark">Mintaprojektek</p>
+          <h2>Két teljes oldal, végigkattintható.</h2>
+          <p>
+            Ezeket magamnak építettem, hogy ne kelljen elhinned, mire vagyok képes — meg tudod
+            nézni. A márkák kitaláltak, a kód és a működés viszont éles: valódi kosár, valódi
+            interakciók, mobilon is.
+          </p>
+        </div>
+
+        <div className="demos-grid">
+          <article className="demo-card">
+            <a className="demo-preview veyra" href="/demo/veyra">
+              <span className="demo-tag">Mintaprojekt</span>
+              <span className="demo-mock-window">
+                <span className="demo-mock-bar">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span className="demo-mock-body">
+                  <span className="demo-mock-title" />
+                  <span className="demo-mock-line" />
+                  <span className="demo-mock-line short" />
+                  <span className="demo-mock-cta" />
+                </span>
+              </span>
+            </a>
+            <div className="demo-body">
+              <span className="demo-kind">Landing page</span>
+              <h3>Veyra — SaaS termékoldal</h3>
+              <p>
+                Egy foglalórendszer bemutatkozó oldala: animált hero, bento funkciórács, váltható
+                termékképernyők, havi/éves árváltó és nyíló GYIK. Sötét, prémium hangulat,
+                mozgásokkal — de úgy, hogy a szöveg marad a főszereplő.
+              </p>
+              <ul className="demo-points">
+                <li>Görgetésre megjelenő szekciók, animált számlálók</li>
+                <li>Interaktív árazás és GYIK</li>
+                <li>Fotó nélkül, tiszta kódból rajzolt felületek</li>
+              </ul>
+              <a className="button ghost" href="/demo/veyra">
+                Megnézem élőben
+              </a>
+            </div>
+          </article>
+
+          <article className="demo-card">
+            <a className="demo-preview zamat" href="/demo/zamat">
+              <span className="demo-tag">Mintaprojekt</span>
+              <span className="demo-mock-shop">
+                <span className="demo-mock-tile" />
+                <span className="demo-mock-tile" />
+                <span className="demo-mock-tile" />
+                <span className="demo-mock-tile" />
+              </span>
+            </a>
+            <div className="demo-body">
+              <span className="demo-kind">Webáruház</span>
+              <h3>Zamat — kávépörkölő webshop</h3>
+              <p>
+                Teljes vásárlási út: terméklista szűréssel és rendezéssel, termékoldal
+                kiszerelés- és őrlésválasztóval, működő kosár oldalsávval, ingyenes szállítás
+                csíkkal és összegzéssel. A kosár tartalma az újratöltést is túléli.
+              </p>
+              <ul className="demo-points">
+                <li>Valódi kosárlogika, variánsokkal és mennyiséggel</li>
+                <li>Külön termékoldalak, kapcsolódó termékekkel</li>
+                <li>Meleg, magazinos arculat — a SaaS demó ellentéte</li>
+              </ul>
+              <a className="button ghost" href="/demo/zamat">
+                Megnézem élőben
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <p className="cap-note">
+          A pénztár és a fizetés szándékosan nincs élesítve ezekben a demókban — a te oldaladon
+          viszont ez is a csomag része lehet.
+        </p>
       </section>
 
       <section className="cap-section">

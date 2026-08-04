@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MotionVars } from "@/components/MotionVars";
 import { SupportWidget } from "@/components/SupportWidget";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ChromeGate } from "@/components/ChromeGate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,8 +46,10 @@ export default function RootLayout({
       <body>
         <MotionVars />
         {children}
-        <SiteFooter />
-        <SupportWidget />
+        <ChromeGate>
+          <SiteFooter />
+          <SupportWidget />
+        </ChromeGate>
       </body>
     </html>
   );
