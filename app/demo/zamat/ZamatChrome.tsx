@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useDemoNotice } from "@/components/demo/DemoNotice";
 import { BagArt } from "./BagArt";
 import { linePrice, useCart } from "./CartContext";
 import { FREE_SHIPPING_LIMIT, findProduct, formatFt, grinds, sizes } from "./data";
@@ -17,6 +18,7 @@ const navLinks = [
 
 export function ZamatHeader() {
   const { count, setOpen } = useCart();
+  const notice = useDemoNotice();
   const [stuck, setStuck] = useState(false);
   const [menu, setMenu] = useState(false);
 
@@ -67,7 +69,14 @@ export function ZamatHeader() {
           </nav>
 
           <div className="zm-header-actions">
-            <button aria-label="Keresés" className="zm-icon-btn" type="button">
+            <button
+              aria-label="Keresés"
+              className="zm-icon-btn"
+              onClick={() =>
+                notice("A kereső ebben a mintaprojektben nincs élesítve — a kínálat egyben látszik.")
+              }
+              type="button"
+            >
               <svg fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.6-3.6" strokeLinecap="round" />

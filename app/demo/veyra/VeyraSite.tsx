@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
+import { useDemoNotice } from "@/components/demo/DemoNotice";
+
+/* a demóban nincs valódi fiók — a CTA-k ezt írják ki némán semmittevés helyett */
+const SIGNUP_NOTICE =
+  "A regisztráció és a belépés ebben a mintaprojektben nincs élesítve — éles projektnél ez a rész is elkészül.";
 
 /* ── tartalom ─────────────────────────────────────────────────────────── */
 
@@ -391,6 +396,7 @@ function Counter({ to, suffix = "", decimals = 0 }: { to: number; suffix?: strin
 
 export function VeyraSite() {
   const root = useReveal();
+  const notice = useDemoNotice();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [tab, setTab] = useState(tabs[0].id);
@@ -431,12 +437,12 @@ export function VeyraSite() {
             </a>
           </nav>
           <div className="vy-nav-cta">
-            <a className="vy-ghost" href="#arak">
+            <button className="vy-ghost" onClick={() => notice(SIGNUP_NOTICE)} type="button">
               Belépés
-            </a>
-            <a className="vy-btn" href="#arak">
+            </button>
+            <button className="vy-btn" onClick={() => notice(SIGNUP_NOTICE)} type="button">
               Ingyen kipróbálom
-            </a>
+            </button>
             <button
               aria-label="Menü"
               className="vy-burger"
@@ -474,9 +480,9 @@ export function VeyraSite() {
                 telefonálgatást.
               </p>
               <div className="vy-hero-actions">
-                <a className="vy-btn lg" href="#arak">
+                <button className="vy-btn lg" onClick={() => notice(SIGNUP_NOTICE)} type="button">
                   14 napig ingyen
-                </a>
+                </button>
                 <a className="vy-ghost lg" href="#hogyan">
                   <span className="vy-play" aria-hidden="true" />
                   Hogyan működik
@@ -654,9 +660,9 @@ export function VeyraSite() {
               </div>
               <h2>{activeTab.title}</h2>
               <p>{activeTab.copy}</p>
-              <a className="vy-ghost" href="#arak">
+              <button className="vy-ghost" onClick={() => notice(SIGNUP_NOTICE)} type="button">
                 Kipróbálom élesben
-              </a>
+              </button>
             </div>
 
             <div className="vy-showcase-art">
@@ -741,9 +747,13 @@ export function VeyraSite() {
                       </li>
                     ))}
                   </ul>
-                  <a className={p.featured ? "vy-btn full" : "vy-ghost full"} href="#top">
+                  <button
+                    className={p.featured ? "vy-btn full" : "vy-ghost full"}
+                    onClick={() => notice(SIGNUP_NOTICE)}
+                    type="button"
+                  >
                     {p.cta}
-                  </a>
+                  </button>
                 </article>
               );
             })}
@@ -780,9 +790,9 @@ export function VeyraSite() {
               A következő foglalásod már <em>magától</em> is beeshetne.
             </h2>
             <p>14 nap próba, bankkártya nélkül. Ha nem válik be, egy kattintással lelépsz.</p>
-            <a className="vy-btn lg" href="#top">
+            <button className="vy-btn lg" onClick={() => notice(SIGNUP_NOTICE)} type="button">
               Elindítom a próbaidőszakot
-            </a>
+            </button>
           </div>
         </section>
       </main>

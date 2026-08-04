@@ -1,28 +1,39 @@
-/* ════ Mintaprojekt-sáv — minden /demo oldal tetején ════ */
+/* ════ Mintaprojekt-sáv + demó értesítés — minden /demo oldalon ════ */
+
+:root {
+  /* a demó oldalak saját sticky fejléce ez alá tapad ki */
+  --demo-bar-h: 44px;
+}
 
 .demo-bar {
   background: #11171c;
+  border-bottom: 1px solid rgba(245, 245, 245, 0.12);
   color: #f5f5f5;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  position: relative;
-  z-index: 200;
+  height: var(--demo-bar-h);
+  left: 0;
+  position: sticky;
+  right: 0;
+  top: 0;
+  z-index: 300;
 }
 
 .demo-bar-inner {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 12px;
+  height: 100%;
   margin: 0 auto;
   max-width: 1180px;
-  padding: 10px clamp(16px, 4vw, 32px);
+  padding: 0 clamp(14px, 4vw, 32px);
 }
 
 .demo-bar-tag {
   background: #ff5722;
   border-radius: 999px;
   color: #fff;
+  flex: none;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -32,11 +43,18 @@
 }
 
 .demo-bar-text {
-  color: rgba(245, 245, 245, 0.72);
-  flex: 1 1 320px;
+  color: rgba(245, 245, 245, 0.7);
+  flex: 1 1 auto;
   font-size: 13px;
-  line-height: 1.5;
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-bar-text.short {
+  display: none;
 }
 
 .demo-bar-text strong {
@@ -45,12 +63,16 @@
 }
 
 .demo-bar-link {
+  align-items: center;
   border: 1px solid rgba(245, 245, 245, 0.28);
   border-radius: 999px;
   color: #f5f5f5;
+  display: inline-flex;
+  flex: none;
   font-size: 12px;
   font-weight: 600;
-  padding: 7px 14px;
+  gap: 7px;
+  padding: 6px 14px;
   transition: background 0.2s ease, border-color 0.2s ease;
   white-space: nowrap;
 }
@@ -58,4 +80,101 @@
 .demo-bar-link:hover {
   background: rgba(245, 245, 245, 0.1);
   border-color: rgba(245, 245, 245, 0.5);
+}
+
+.demo-bar-arrow {
+  border-bottom: 1.6px solid currentColor;
+  border-left: 1.6px solid currentColor;
+  display: block;
+  height: 7px;
+  transform: rotate(45deg);
+  width: 7px;
+}
+
+.demo-bar-link-short {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --demo-bar-h: 40px;
+  }
+
+  .demo-bar-tag,
+  .demo-bar-text:not(.short),
+  .demo-bar-link-long {
+    display: none;
+  }
+
+  .demo-bar-text.short {
+    display: block;
+  }
+
+  .demo-bar-link-short {
+    display: block;
+  }
+}
+
+/* ── demó értesítés (toast) ── */
+
+.demo-notice {
+  bottom: 22px;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  z-index: 400;
+}
+
+.demo-notice-inner {
+  align-items: center;
+  backdrop-filter: blur(16px);
+  background: rgba(17, 23, 28, 0.95);
+  border: 1px solid rgba(245, 245, 245, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  color: rgba(245, 245, 245, 0.82);
+  display: flex;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  gap: 12px;
+  line-height: 1.5;
+  margin: 0 16px;
+  max-width: 520px;
+  opacity: 0;
+  padding: 13px 17px;
+  transform: translateY(14px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.demo-notice.is-on .demo-notice-inner {
+  opacity: 1;
+  transform: none;
+}
+
+.demo-notice-tag {
+  background: #ff5722;
+  border-radius: 999px;
+  color: #fff;
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 4px 9px;
+  text-transform: uppercase;
+}
+
+.demo-notice p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-notice-inner {
+    transition: opacity 0.2s ease;
+  }
 }
