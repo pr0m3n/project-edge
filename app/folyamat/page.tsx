@@ -12,35 +12,35 @@ const steps = [
   {
     number: "01",
     title: "Átbeszéljük",
-    copy: "Az ügyfélkapun kitöltött projektindító adatlap alapján átnézem, mi van most, mi nem működik, és milyen ügyfeleket szeretnél elérni. Hívás nélkül is megy — de ha jobban szereted, beszélhetünk is.",
+    copy: "Kitöltesz egy adatlapot: mid van most, mi nem működik, kiket szeretnél elérni. Hívás nélkül is megy.",
     tag: "hívás nélkül is",
     Icon: IconMessageCircle
   },
   {
     number: "02",
     title: "Rendet rakok",
-    copy: "Összerakom az oldalszerkezetet, az ügyfélutat és a fontos döntési pontokat. Itt dől el, mire van tényleg szükség — és mire nem, hogy ne fizess feleslegesen.",
+    copy: "Összerakom, milyen oldalak kellenek és mi hova kerül. Itt dől el, mire nincs szükséged — hogy ne fizess feleslegesen.",
     tag: "1–2 nap",
     Icon: IconCompass
   },
   {
     number: "03",
     title: "Megtervezem",
-    copy: "Kapsz egy konkrét vizuális irányt, mielőtt bármit kódolnék. Nem sablonból: a te szolgáltatásodhoz és ügyfeleidhez szabva. Itt módosítunk, amíg nem stimmel.",
+    copy: "Kapsz egy látványtervet, mielőtt egy sort is kódolnék. Itt módosítunk, amíg nem tetszik.",
     tag: "jóváhagyásra váró irány",
     Icon: IconPenTool
   },
   {
     number: "04",
     title: "Felépítem",
-    copy: "Next.js, gyors betöltés, mobilnézet, domain és élesítés. Előfizetésnél minden technikai hátteret én kezelek; vásárlásnál a végén vezetetten átadom. Közben az ügyfélkapun végig látod a haladást.",
+    copy: "Megépítem, mobilra is. A domaint és az élesítést is én intézem. Közben végig látod, hol tartok.",
     tag: "a projekt nagy része",
     Icon: IconGear
   },
   {
     number: "05",
     title: "Finomítom",
-    copy: "Indulás után megnézem, hogyan viselkedik az oldal a valóságban, és javítok azon, ami csak éles használatban derül ki. Nem tűnök el a leszállítás után.",
+    copy: "Indulás után javítom, ami csak éles használatban derül ki. Nem tűnök el az átadás után.",
     tag: "indulás után is",
     Icon: IconSparkles
   }
@@ -50,22 +50,22 @@ const extras = [
   {
     Icon: IconMessageCircle,
     title: "Folyamatos kapcsolat",
-    copy: "Az ügyfélkapun ticketet nyitsz, követed a státuszt és visszanézed a beszélgetést. Nem vész el semmi emailben."
+    copy: "Írsz az ügyfélkapun, és ott is marad. Nem vész el semmi emailben."
   },
   {
     Icon: IconPackage,
     title: "Kétféle befejezés",
-    copy: "Előfizetésnél kész, felügyelt szolgáltatást kapsz folyamatos gondozással. Vásárlásnál a forráskódot és a hozzáféréseket is átadom."
+    copy: "Bérlésnél én üzemeltetem tovább. Vásárlásnál a forráskód és minden hozzáférés a tiéd."
   },
   {
     Icon: IconWrench,
     title: "Indulás után",
-    copy: "Előfizetésnél itt kezdődik a hosszú távú gondozás: felügyelet, frissítés és a csomagban foglalt módosítások."
+    copy: "Bérlésnél innentől figyelem és frissítem, és elvégzem a csomagban foglalt módosításokat."
   },
   {
     Icon: IconLock,
     title: "Hogyan indul a fizetés",
-    copy: "Előfizetésnél az első havi díj indítja a munkát, külön induló díj nélkül. Vásárlásnál egyedi ajánlat, foglaló és végső átadás marad."
+    copy: "Bérlésnél az első havidíj indítja a munkát, induló díj nincs. Vásárlásnál foglaló, majd átadás."
   }
 ];
 
@@ -75,11 +75,10 @@ export default function ProcessPage() {
       <SiteNav />
       <section className="page-hero compact inverse">
         <p className="micro-label">Folyamat</p>
-        <h1>Előbb kitalálom, mit kell mondania az oldalnak.</h1>
+        <h1>Így megy a közös munka, lépésről lépésre.</h1>
         <p className="process-intro">
-          Nem ugrunk fejest a designba. Először az üzleted és az ügyfeleid logikáját rakjuk rendbe —
-          utána jön a látvány és a kód. Így nem fél év múlva derül ki, hogy valami alapból nem
-          stimmel.
+          Nem a látvánnyal kezdünk. Előbb átnézzük, mit csinálsz és kiknek — utána jön a design és
+          a kód.
         </p>
       </section>
       <section className="proc-list">
@@ -109,7 +108,7 @@ export default function ProcessPage() {
         ))}
       </section>
       <section className="cta-band dark">
-        <h2>Ha szereted, amikor átlátható a munka, valószínűleg jól fogunk haladni.</h2>
+        <h2>Töltsd ki az adatlapot. Tizenöt perc, és tudom, mire van szükséged.</h2>
         <TransitionLink className="button primary" href="/ugyfelkapu">
           Projekt indítása
         </TransitionLink>

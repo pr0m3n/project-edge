@@ -22,10 +22,10 @@ export const metadata: Metadata = {
 };
 
 const services = [
-  ["Új, menedzselt weboldal", "Előfizetésnél mindig nulláról épül egy új oldal a választott csomag pontos keretei szerint. Domain, hosting és felügyelet egyben."],
-  ["Weboldal egyszeri megvásárlása", "Magasabb egyszeri díjért a forráskód és a technikai rendszer is átadásra kerül. Itt egyedi ajánlat és külön projektfolyamat készül."],
-  ["Folyamatos gondozás", "A menedzselt oldalt figyelem, frissítem és a csomag szerinti kisebb módosításokat is elvégzem. Az ügyfélnek nincs technikai feladata."],
-  ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu és összetett üzleti rendszer kizárólag egyszeri, egyedi ajánlatos projektként kérhető."]
+  ["Új, menedzselt weboldal", "Bérlésnél mindig új oldal épül, a választott csomag keretei szerint. Domain, tárhely és felügyelet egyben."],
+  ["Weboldal egyszeri megvásárlása", "Egyszeri díjért a forráskódot is átadom. Erre egyedi ajánlat készül."],
+  ["Folyamatos gondozás", "A bérelt oldalt figyelem, frissítem, és a csomag szerinti módosításokat elvégzem. Neked nincs technikai feladatod."],
+  ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu csak megvásárolható projektként kérhető."]
 ];
 
 // Ügyféltípus → megoldás → mire használjuk (az ár a lenti csúszkás becslőben van,
@@ -83,7 +83,7 @@ export default function ServicesPage() {
       <SiteNav />
       <section className="page-hero compact">
         <p className="micro-label dark">Szolgáltatások</p>
-        <h1>Annyit építek, amennyire az üzletednek valóban szüksége van.</h1>
+        <h1>Annyit építek, amennyi kell.</h1>
         <p>
           A legtöbben bérlik: havidíjat fizetsz, én pedig megépítem és üzemeltetem az oldalt — a
           domaintől a karbantartásig mindent én intézek, induló díj nélkül. Ha inkább a sajátod
@@ -139,8 +139,8 @@ export default function ServicesPage() {
         </div>
 
         <p className="solutions-note">
-          Az előfizetés első hónapja előre fizetendő, a munka megkezdése után nem visszatéríthető.
-          Nincs hűségidő: bármelyik hónapban lemondható vagy szüneteltethető.
+          A bérlés első hónapja előre fizetendő. Hűségidő nincs, bármikor lemondható vagy
+          szüneteltethető.
         </p>
       </section>
 
@@ -167,7 +167,7 @@ export default function ServicesPage() {
       </section>
 
       <section className="cta-band">
-        <h2>Ha most kell rendbe rakni az online jelenléted, kezdjük egy rövid igényfelméréssel.</h2>
+        <h2>Kezdjük egy rövid adatlappal.</h2>
         <TransitionLink className="button primary" href="/ugyfelkapu">
           Projektet indítok
         </TransitionLink>

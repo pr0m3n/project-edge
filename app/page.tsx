@@ -43,19 +43,19 @@ const faqs = [
   ],
   [
     "Mennyi idő alatt készül el?",
-    "Nem dolgozom rajta a szükségesnél tovább: egy kisebb, egyszerű oldal akár 1–2 nap alatt kész, egy összetettebb, egyedi rendszer pár hét. A pontos időt a terjedelem és a bonyolultság határozza meg."
+    "Egy egyszerűbb oldal 1–2 nap, egy összetettebb rendszer pár hét. A méret dönti el."
   ],
   [
     "Mi van, ha nem tetszik az irány?",
-    "Először egy vizuális irányt kapsz, mielőtt bármit véglegesítenénk. Ott módosítunk, amíg jó nem lesz — nem a végén derül ki, hogy nem ezt szeretted volna."
+    "Előbb kapsz egy látványtervet, és azon módosítunk, amíg jó nem lesz. Nem a végén derül ki, hogy nem ezt szeretted volna."
   ],
   [
     "Kell hozzá saját domain és tárhely?",
-    "Előfizetésnél nem: a domaint, a tárhelyet, az SSL-t és minden technikai beállítást én intézek. Vásárlásnál a kész rendszert és a hozzáféréseket átadom neked."
+    "Bérlésnél nem kell: a domaint és a tárhelyet is én intézem. Vásárlásnál mindent átadok neked."
   ],
   [
     "Mi van a leszállítás után?",
-    "A projekt lezárásától 30 napig díjmentes technikai garanciát adok: ha az átadott működésben hiba van, kivizsgálom és javítom. Új funkció és új tartalom nem tartozik ide, de igény szerint havi karbantartás kérhető."
+    "30 napig díjmentesen javítom, ha hiba van. Új funkció nem tartozik ide, arra külön karbantartás kérhető."
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
@@ -74,13 +74,13 @@ export default function Home() {
           <div className="hero-editorial">
             <p className="micro-label">ProjectEdge / Digital Build Studio</p>
             <h1 className="hero-statement">
-              <span>Nem csak elkészítem.</span>
-              <span className="outlined">Működtetem is</span>
-              <span>helyetted.</span>
+              <span>Weboldal, amit</span>
+              <span className="hero-accent">bérelsz.</span>
+              <span>Én építem, én üzemeltetem.</span>
             </h1>
             <p className="hero-lead">
-              Nincs induló díj, domainvásárlás vagy technikai ügyintézés. Megtervezem, élesítem és
-              folyamatosan felügyelem az oldaladat egyetlen kiszámítható havidíjért.
+              Nincs induló díj. A domaint, a tárhelyet és a karbantartást is én intézem — egy
+              havidíjért. Ha inkább a sajátod lenne, meg is veheted.
             </p>
             <div className="hero-command">
               <TransitionLink className="button primary" href="/szolgaltatasok#arak">Csomagok megtekintése</TransitionLink>
@@ -161,8 +161,8 @@ export default function Home() {
 
       <section className="route-section">
         <div className="route-intro">
-          <p className="micro-label dark">Válassz belépési pontot</p>
-          <h2>Nézd meg külön, ami most érdekel.</h2>
+          <p className="micro-label dark">Hova tovább?</p>
+          <h2>Mi érdekel?</h2>
         </div>
         <div className="route-grid">
           {paths.map((path) => (
@@ -199,10 +199,6 @@ export default function Home() {
             mindent maga csinál. Nálad nem lesz kihez passzolgatni a felelősséget — velem beszélsz,
             én építem, és én is felelek érte.
           </p>
-          <p>
-            A gyorsaság nálam nem kapkodást jelent: rövid döntési utak, modern technológia és egyetlen
-            felelős viszi végig a munkát. Minden döntésnél a vállalkozásod célja az első.
-          </p>
           <div className="founder-tags">
             <span>Next.js</span>
             <span>Supabase</span>
@@ -216,11 +212,10 @@ export default function Home() {
       <section className="no-call">
         <div>
           <p className="micro-label">Ügyfélkapu</p>
-          <h2>Minden egy helyen — de ha szeretnél, beszélhetünk is.</h2>
+          <h2>Nem kell telefonálnod.</h2>
           <p className="nc-copy">
-            Nem kell időpontot egyeztetni vagy e-mailekben kutakodni. Az
-            ügyfélkapun elindítod a projektet, kitöltöd a projektindító adatlapot, követed a haladást, fizetsz és
-            kérdezel — akkor, amikor neked kényelmes. Ha gyorsabb szóban, természetesen egyeztetünk.
+            Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
+            neked jó. Ha szóban gyorsabb, azért beszélhetünk.
           </p>
           <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
@@ -228,20 +223,18 @@ export default function Home() {
         </div>
         <ul className="nc-list">
           <li>Nincs kötelező telefonhívás</li>
-          <li>Nincs időpont-egyeztetés</li>
-          <li>Minden egy helyen: adatlap, státusz, fizetés</li>
-          <li>Kérdés bármikor, ticketen</li>
-          <li>A saját idődben haladsz</li>
+          <li>Adatlap, státusz és fizetés egy helyen</li>
+          <li>Kérdés bármikor, írásban</li>
         </ul>
       </section>
 
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Előfizetés vagy saját weboldal. Te választasz.</h2>
+          <h2>Béreled vagy megveszed.</h2>
           <p>
-            Előfizetésnél nincs induló díj és technikai teendő. Ha inkább birtokolnád a teljes
-            rendszert, egyszeri díjért a forráskódot és a hozzáféréseket is átadom.
+            Bérlésnél nincs induló díj, és semmilyen technikai teendőd. Vásárlásnál a forráskód és
+            minden hozzáférés a tiéd lesz.
           </p>
         </div>
         <PriceEstimator />
@@ -250,13 +243,13 @@ export default function Home() {
       <section className="orbit-section">
         <div className="orbit-copy">
           <p className="micro-label">3D / Motion / Karakter</p>
-          <h2>Legyen emlékezetes, de maradjon használható.</h2>
+          <h2>Mozgás, ami nem zavar.</h2>
           <p>
-            A mozgás és a 3D akkor működik jól, ha nem akadályozza az olvasást. Itt pont ez a cél:
-            adjon karaktert, de ne vigye el a figyelmet arról, amit el akarsz mondani.
+            A 3D és az animáció akkor jó, ha nem nehezíti az olvasást. Karaktert ad, de nem viszi el
+            a figyelmet a lényegről.
           </p>
           <TransitionLink className="button spectral" href="/munkak">
-            Mire vagyok képes?
+            Példák a munkáimból
           </TransitionLink>
         </div>
         <div className="planet-stage">
@@ -277,13 +270,13 @@ export default function Home() {
       <section className="voices-section">
         <div className="section-head">
           <p className="micro-label dark">Mire számíthatsz</p>
-          <h2>Amit vállalok — nem ügyfélidézetek, hanem konkrét ígéretek.</h2>
+          <h2>Ezt kapod tőlem.</h2>
         </div>
         <div className="voices-grid">
           <article className="voice-card feature">
             <p className="voice-claim">
-              Egyedi kód sablon helyett, és menet közben végig látod, hol tart a projekt. Nincs
-              feketedoboz: az ügyfélkapun bármikor megnézed a státuszt és a következő lépést.
+              Nem sablonból dolgozom, és nem kell írogatnod, hogy hol tart. Belépsz, és látod, mi
+              készült el és mi jön ezután.
             </p>
             <div className="voice-author">
               <div>
@@ -294,8 +287,8 @@ export default function Home() {
           </article>
           <article className="voice-card">
             <p className="voice-claim">
-              Gyors, mobilbarát oldal, ami tényleg segít megtalálni téged — nem csak szép, hanem a
-              megkeresésekre optimalizált.
+              Aki rákeres a szolgáltatásodra, megtalálja az oldalad, és két koppintással ír neked.
+              Telefonon is.
             </p>
             <div className="voice-author">
               <div>
@@ -306,8 +299,8 @@ export default function Home() {
           </article>
           <article className="voice-card">
             <p className="voice-claim">
-              A végén minden hozzáférés a tiéd: domain, futtatás, adatbázis, forráskód. Az átadás
-              lépésenként, az ügyfélkapun megy — nem telefonon.
+              Ha megveszed, a végén minden a tiéd: domain, forráskód, adatbázis. Az átadás
+              lépésenként megy, írásban.
             </p>
             <div className="voice-author">
               <div>

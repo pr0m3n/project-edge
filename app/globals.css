@@ -469,9 +469,10 @@ p {
   margin-top: 12px;
 }
 
-.outlined {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--aqua);
+/* A korábbi körvonalas (text-stroke) kiemelés helyett tömör szín: kisebb
+   kijelzőn a körvonal vékonyodott és nehezen olvasható lett. */
+.hero-accent {
+  color: var(--aqua);
 }
 
 .hero-lead {
