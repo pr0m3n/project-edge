@@ -4,12 +4,12 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 /**
- * A görgetésre megjelenő blokkok. A Chrome ezeket CSS-ből, `animation-timeline:
- * view()`-val animálja (lásd globals.css) — Safariban és Firefoxban viszont ez
- * még nem támogatott, ott ez a lista kapja meg a JS-es tartalékot.
+ * A görgetésre megjelenő blokkok.
  *
- * FONTOS: ha ide új szelektort veszel fel, tedd be a globals.css `reveal-up`
- * szabálylistájába is, különben Chrome-ban nem fog animálódni.
+ * Korábban ezt CSS-ből, `animation-timeline: view()`-val oldottuk meg, de a
+ * lap alján lévő elemeknél (pl. záró CTA) az animation-range sosem ért véget —
+ * nem volt hova tovább görgetni —, így félig áttetszőn ragadtak. Emiatt minden
+ * böngésző ugyanezt a JS-es utat kapja: egy kódút, kiszámítható végállapot.
  */
 const REVEAL_SELECTOR = [
   ".section-head",
@@ -86,17 +86,9 @@ export function MotionVars() {
     };
   }, []);
 
-  /* ── görgetésre megjelenés ott, ahol a CSS scroll-timeline nem megy ── */
+  /* ── görgetésre megjelenés (minden böngészőben ugyanígy) ── */
   useEffect(() => {
     if (isDemo || prefersReducedMotion()) return;
-
-    const hasViewTimeline =
-      typeof CSS !== "undefined" &&
-      typeof CSS.supports === "function" &&
-      CSS.supports("animation-timeline", "view()");
-
-    // Chrome-ban a CSS elintézi, nincs dolgunk
-    if (hasViewTimeline) return;
 
     const targets = Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
     if (!targets.length) return;
@@ -134,38 +126,6 @@ export function MotionVars() {
 
     return () => io.disconnect();
   }, [isDemo, pathname]);
-
-  /* ── mágneses gombok: a kurzor felé húznak egy kicsit ── */
-  useEffect(() => {
-    if (isDemo || prefersReducedMotion()) return;
-    if (window.matchMedia("(hover: none)").matches) return;
-
-    function onMove(event: PointerEvent) {
-      const button = (event.target as HTMLElement | null)?.closest<HTMLElement>(".button");
-      if (!button) return;
-
-      const rect = button.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      button.style.setProperty("--bx", `${(x * 10).toFixed(1)}px`);
-      button.style.setProperty("--by", `${(y * 6).toFixed(1)}px`);
-    }
-
-    function onLeave(event: PointerEvent) {
-      const button = (event.target as HTMLElement | null)?.closest<HTMLElement>(".button");
-      if (!button) return;
-      button.style.removeProperty("--bx");
-      button.style.removeProperty("--by");
-    }
-
-    document.addEventListener("pointermove", onMove, { passive: true });
-    document.addEventListener("pointerout", onLeave, { passive: true });
-
-    return () => {
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerout", onLeave);
-    };
-  }, [isDemo]);
 
   return null;
 }
