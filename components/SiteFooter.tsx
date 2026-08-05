@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TransitionLink } from "@/components/TransitionLink";
 
 const navLinks = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -30,18 +30,18 @@ export function SiteFooter() {
         <nav className="footer-col" aria-label="Oldaltérkép">
           <span className="footer-col-title">Oldalak</span>
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <TransitionLink key={link.href} href={link.href}>
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
         </nav>
 
         <nav className="footer-col" aria-label="Jogi információk">
           <span className="footer-col-title">Jogi</span>
           {legalLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <TransitionLink key={link.href} href={link.href}>
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
         </nav>
       </div>

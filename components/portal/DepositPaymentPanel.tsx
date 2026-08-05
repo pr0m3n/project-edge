@@ -1,5 +1,6 @@
 import type { Project } from "@/components/ClientPortal";
 import { formatPrice } from "@/components/ClientPortal";
+import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 
 type DepositPaymentPanelProps = {
   project: Project;
@@ -7,6 +8,17 @@ type DepositPaymentPanelProps = {
 };
 
 export function DepositPaymentPanel({ project, onStartPayment }: DepositPaymentPanelProps) {
+  if (project.commercial_model === "subscription") {
+    const plan = subscriptionPlan(project.subscription_plan);
+    return (
+      <div className="first-payment-card">
+        <div className="first-payment-icon"><span>01</span><i /></div>
+        <div className="first-payment-copy"><span>Első számlázási időszak</span><h4>Indítsd el a {plan.name} előfizetést.</h4><p>Az első havi díj előre fizetendő és ez indítja el a weboldal elkészítését. Külön induló díj nincs. A munka megkezdése után ez az összeg nem visszatéríthető.</p></div>
+        <div className="first-payment-price"><strong>{formatHuf(project.monthly_price ?? plan.price)}</strong><span>Az első hónap díja</span></div>
+        <button className="button primary" type="button" onClick={onStartPayment}>Utalási adatok megnyitása</button>
+      </div>
+    );
+  }
   return (
     <div style={{ background: "rgba(118, 171, 174, 0.08)", border: "1px solid rgba(118, 171, 174, 0.15)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "12px" }}>
       <h4 style={{ margin: 0, fontSize: "18px" }}>Fizetési részletek (Foglaló)</h4>

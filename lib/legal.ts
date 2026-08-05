@@ -1,33 +1,25 @@
-/**
- * A szolgáltató jogi adatai — EGY helyen.
- *
- * Az impresszum, az ÁSZF és a vállalkozási szerződés (ügyfélkapu) ugyanezt
- * használja, így amikor a tevékenységi forma változik (pl. egyéni vállalkozás
- * vagy cég bejegyzése), egyetlen fájlt kell átírni, és nem marad ellentmondás a
- * három oldal között.
- *
- * Bejegyzés után kitöltendő: `taxNumber`, `registrationNumber`, és a `legalForm`
- * / `formNote` szövegek pontosítása.
- */
+/** A szolgáltató ellenőrzött cégadatai egyetlen központi forrásban. */
 
 export const PROVIDER = {
   /** Márkanév — marketing felületeken ez jelenik meg. */
   brand: "ProjectEdge",
   brandLong: "ProjectEdge Digital Build Studio",
   /** Jogilag azonosítható fél — szerződésben és impresszumban ez kell. */
-  legalName: "Boczán Patrik",
-  legalForm: "magánszemély, jelenleg nem bejegyzett egyéni tevékenység",
-  address: "Budapest, 1141",
+  legalName: '"TRADE 24" Kereskedelmi és Szolgáltató Betéti Társaság',
+  shortName: '"TRADE 24" Bt.',
+  legalForm: "betéti társaság",
+  address: "8248 Nemesvámos, Malom utca 3.",
+  contactName: "Boczán Patrik",
   email: "info@projectedge.hu",
   phone: "+36 20 406 4954",
   website: "projectedge.hu",
-  taxNumber: null as string | null,
-  registrationNumber: null as string | null,
-  /** Számlázási képesség — az ÁSZF és a szerződés is ezt hivatkozza. */
-  invoicing: "nyugta/elismervény (ÁFA-s számla kiállítására jelenleg nincs lehetőség)"
+  taxNumber: "22303442-2-19",
+  registrationNumber: "19-06-508423",
+  registrationAuthority: "Veszprémi Törvényszék Cégbírósága",
+  invoicing: "számla"
 } as const;
 
 /** A szerződésben szereplő fél megnevezése: márkanév + azonosítható jogi adatok. */
 export function providerContractParty() {
-  return `${PROVIDER.brandLong} — ${PROVIDER.legalName} (${PROVIDER.legalForm}), ${PROVIDER.address}, ${PROVIDER.email}`;
+  return `${PROVIDER.legalName} (rövid név: ${PROVIDER.shortName}; székhely: ${PROVIDER.address}; cégjegyzékszám: ${PROVIDER.registrationNumber}; adószám: ${PROVIDER.taxNumber}; kapcsolattartó: ${PROVIDER.contactName}; e-mail: ${PROVIDER.email}; telefon: ${PROVIDER.phone})`;
 }

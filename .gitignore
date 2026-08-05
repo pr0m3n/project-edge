@@ -15,3 +15,17 @@ coverage
 /checky.png
 .env*
 .venv
+
+# Supabase CLI helyi állapota (projekt-ref, pooler URL) — nem tartozik a repóba
+supabase/.temp
+
+# PDF-generálás munkakönyvtára; a kiszolgált másolatok a public/guides alatt vannak
+tmp/
+output/
+
+# marketing export, nem forráskód
+ProjectEdge hideg email kampány/
+
+# gyökérbe pottyant, sehol nem hivatkozott képek
+/logo.png
+/profilkép.png

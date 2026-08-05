@@ -22,10 +22,10 @@ export const metadata: Metadata = {
 };
 
 const services = [
-  ["Új weboldal", "Ha most indulsz, kapsz egy tiszta, gyors, igényes oldalt. Nem sablonhangulatot, hanem saját arcot."],
-  ["Meglévő oldal javítása", "Ha már van weboldalad, megnézem, hol gyenge: szöveg, sebesség, mobilnézet, ügyfélút vagy bizalomépítés."],
-  ["Ügyfélkapu és projektindítás", "A megkeresések nem vesznek el emailben: belépés után projekt, ticket és beszélgetési előzmény is egy helyen van."],
-  ["Admin háttér", "Egyszerű felület a beérkező ügyfeleknek, státuszoknak, ticketeknek és jegyzeteknek. Később tovább automatizálható."]
+  ["Új, menedzselt weboldal", "Előfizetésnél mindig nulláról épül egy új oldal a választott csomag pontos keretei szerint. Domain, hosting és felügyelet egyben."],
+  ["Weboldal egyszeri megvásárlása", "Magasabb egyszeri díjért a forráskód és a technikai rendszer is átadásra kerül. Itt egyedi ajánlat és külön projektfolyamat készül."],
+  ["Folyamatos gondozás", "A menedzselt oldalt figyelem, frissítem és a csomag szerinti kisebb módosításokat is elvégzem. Az ügyfélnek nincs technikai feladata."],
+  ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu és összetett üzleti rendszer kizárólag egyszeri, egyedi ajánlatos projektként kérhető."]
 ];
 
 // Ügyféltípus → megoldás → mire használjuk (az ár a lenti csúszkás becslőben van,
@@ -46,12 +46,12 @@ const solutions: Array<{
     stack: "Egyedi prémium oldal — Next.js + Vercel, igény szerint ügyfélkapuval és ajánlatkérő folyamattal."
   },
   {
-    type: "Már van WordPress oldalad",
+    type: "Már van WordPress oldalad — egyszeri projekt",
     who: "Van működő oldalad, de lassú, elavult vagy nem hoz ügyfelet — vagy csak frissítés kell.",
     stack: "Megnézem, mi van benne. Ha jó az alap, marad a WordPress és csak felújítom. Ha gátol, átültetem modern rendszerre — a tartalmat áthozom."
   },
   {
-    type: "Egyedi rendszer, ügyfélkapu, admin",
+    type: "Egyedi rendszer, ügyfélkapu, admin — egyszeri projekt",
     who: "Belépés, adatkezelés, dashboard, foglalás, automatizált folyamatok kellenek.",
     stack: "Egyedi webapp — Next.js + Supabase (adatbázis, belépés, jogosultság) + Vercel. Pont ilyen a ProjectEdge ügyfélkapu is."
   }
@@ -65,8 +65,8 @@ const specialCases: Array<[string, string, string]> = [
 ];
 
 const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: string; copy: string }> = [
-  { Icon: IconGlobe, title: "Domain", copy: "A weboldal címe (pl. vallalkozas.hu). Ha még nincs, segítek regisztrálni." },
-  { Icon: IconKey, title: "Tárhely-hozzáférés", copy: "Ha van már oldalad vagy domained, a beállításhoz hozzáférés kell — vagy együtt intézzük." },
+  { Icon: IconGlobe, title: "Vágyott domain", copy: "Írj három névötletet prioritási sorrendben. Előfizetésnél a regisztrációt és a megújítást én intézem." },
+  { Icon: IconKey, title: "Technikai teendők", copy: "Előfizetésnél nincs Vercel-, Supabase- vagy tárhelyfiók: minden infrastruktúrát a ProjectEdge kezel." },
   { Icon: IconShapes, title: "Logó", copy: "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)." },
   { Icon: IconDroplet, title: "Színek, betűtípus", copy: "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod." },
   { Icon: IconPen, title: "Szövegek", copy: "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem." },
@@ -85,9 +85,9 @@ export default function ServicesPage() {
         <p className="micro-label dark">Szolgáltatások</p>
         <h1>Annyit építek, amennyire az üzletednek valóban szüksége van.</h1>
         <p>
-          Van, ahol egy gyors, jól megírt landing elég. Máshol kell ügyfélkapu, admin felület,
-          több aloldal vagy teljes újratervezés. Ha van már WordPress oldalad, azt sem dobom ki
-          feleslegesen. Először mindig azt tisztázom, neked melyik a jó.
+          Választhatsz menedzselt előfizetést nulla induló díjjal, vagy megvásárolhatod a teljes
+          weboldalt. Előfizetésnél mindig teljesen új oldalt készítek, a domaintől a karbantartásig
+          mindent én intézek helyetted. Meglévő oldal átalakítása és webapp csak egyszeri projektként kérhető.
         </p>
       </section>
 
@@ -107,8 +107,7 @@ export default function ServicesPage() {
           <h2>Megnézem, hol tartasz — és pontosan azt ajánlom, ami kell.</h2>
           <p>
             Nem akarlak rábeszélni egy összetett rendszerre, ha egy jól felépített landing is elég.
-            50 000 Ft-tól indulnak az áraim — próbáld ki lent a becslővel, milyen nagyságrendre
-            számíthatsz.
+            Először a használati módot választod ki, utána pontosan azt a csomagot, amire szükséged van.
           </p>
         </div>
         <div className="solutions-grid">
@@ -139,8 +138,8 @@ export default function ServicesPage() {
         </div>
 
         <p className="solutions-note">
-          Az árak tájékoztató jellegűek, bruttó nagyságrendek a magyar piacon. A végleges ajánlat a
-          projekt terjedelmétől függ — ezért kezdünk mindig egy rövid projektindító adatlappal.
+          Az előfizetés első hónapja előre fizetendő, a munka megkezdése után nem visszatéríthető.
+          Nincs hűségidő: bármelyik hónapban lemondható vagy szüneteltethető.
         </p>
       </section>
 

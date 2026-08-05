@@ -3,7 +3,6 @@ import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
-import { ContactButton } from "@/components/ContactButton";
 
 const paths = [
   {
@@ -40,7 +39,7 @@ const proof = [
 const faqs = [
   [
     "Mennyibe kerül egy weboldal?",
-    "50 000 Ft-tól indulnak az áraim. A pontos árat mindig a cél, a szükséges oldalak és funkciók alapján adom meg — a fenti becslővel előre láthatod a várható nagyságrendet."
+    "A menedzselt weboldal-előfizetés 19 900 Ft/hó összegtől indul, 0 Ft induló díjjal. Ha inkább saját tulajdonú oldalt szeretnél, egyszeri vásárlásra is van lehetőség 349 000 Ft-tól."
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -52,7 +51,7 @@ const faqs = [
   ],
   [
     "Kell hozzá saját domain és tárhely?",
-    "Ha van, bekötöm. Ha nincs, segítek beszerezni. A tárhely modern, gyors (Vercel), és a beállításokat én intézem."
+    "Előfizetésnél nem: a domaint, a tárhelyet, az SSL-t és minden technikai beállítást én intézek. Vásárlásnál a kész rendszert és a hozzáféréseket átadom neked."
   ],
   [
     "Mi van a leszállítás után?",
@@ -60,7 +59,7 @@ const faqs = [
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
-    "Mindent a te (vagy a céged) fiókjába adok át: domain, Vercel, ha kell adatbázis és levélküldés, valamint a forráskód. Az átadás az ügyfélkapun lépésenként, linkekkel és útmutatóval megy — jelszót egyszer sem kérek. A szolgáltatások díjai (pl. a domain éves megújítása) az átadás után nálad futnak."
+    "Menedzselt előfizetésnél minden technikai fiókot és költséget a ProjectEdge kezel, neked ezzel nincs feladatod. Egyszeri vásárlásnál a forráskódot, a domaint és a szükséges hozzáféréseket vezetett folyamatban átadom."
   ]
 ];
 
@@ -75,19 +74,16 @@ export default function Home() {
           <div className="hero-editorial">
             <p className="micro-label">ProjectEdge / Digital Build Studio</p>
             <h1 className="hero-statement">
-              <span>Nem weboldalt</span>
-              <span>adok át.</span>
-              <span className="outlined">Egy rendszert,</span>
-              <span>amin ügyfelek érkeznek.</span>
+              <span>Nem csak elkészítem.</span>
+              <span className="outlined">Működtetem is</span>
+              <span>helyetted.</span>
             </h1>
             <p className="hero-lead">
-              A szövegtől és a designtól az ügyfélkapuig mindent egy kézben építek meg — gyorsan,
-              átláthatóan és sablonok nélkül.
+              Nincs induló díj, domainvásárlás vagy technikai ügyintézés. Megtervezem, élesítem és
+              folyamatosan felügyelem az oldaladat egyetlen kiszámítható havidíjért.
             </p>
             <div className="hero-command">
-              <ContactButton className="button primary" intent="review">
-                Kérek egy rövid weboldal-áttekintést
-              </ContactButton>
+              <TransitionLink className="button primary" href="/szolgaltatasok#arak">Csomagok megtekintése</TransitionLink>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>
@@ -242,10 +238,10 @@ export default function Home() {
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Nem nagy sávok — próbáld ki, mennyibe kerülne a tiéd.</h2>
+          <h2>Előfizetés vagy saját weboldal. Te választasz.</h2>
           <p>
-            50 000 Ft-tól indulnak az áraim. Válaszd ki, mihez hasonlót szeretnél, és a csúszkával
-            pontosítsd — azonnal látod a hozzávetőleges árat és átfutási időt.
+            Előfizetésnél nincs induló díj és technikai teendő. Ha inkább birtokolnád a teljes
+            rendszert, egyszeri díjért a forráskódot és a hozzáféréseket is átadom.
           </p>
         </div>
         <PriceEstimator />

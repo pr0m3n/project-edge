@@ -7,6 +7,7 @@ import { activeHandoverStep, handoverTurn, isHandoverComplete } from "@/lib/hand
  * is azt írta, hogy „nálunk a labda, nincs teendőd".
  */
 function needsDomainFromClient(project: Project) {
+  if (project.commercial_model === "subscription") return false;
   return project.brief_data?.domainStatus === "need" && project.brief_data?.domainPurchaseState !== "submitted";
 }
 
@@ -51,6 +52,11 @@ function buildGuide(project: Project): Guide | null {
         detail: "Ez indítja el a munkát — olvasd át és fogadd el lent."
       };
     case "deposit_pending":
+      if (project.commercial_model === "subscription") {
+        return project.deposit_transfer_reported
+          ? { who: "studio", headline: "Ellenőrizzük az első havidíjat", detail: "Jelezted az utalást. Amint jóváhagytuk, elindul a weboldal elkészítése." }
+          : { who: "client", headline: "Fizesd be az első havidíjat", detail: "Nincs induló díj: az első havi szolgáltatási díj indítja el a kivitelezést." };
+      }
       return project.deposit_transfer_reported
         ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }
         : { who: "client", headline: "Fizesd be a foglalót", detail: "A szerződés megvan — utald el, majd lent jelezd az utalást." };
@@ -102,6 +108,15 @@ function buildGuide(project: Project): Guide | null {
             detail: "Nézd meg az elkészült verziót lent, és írd meg, mit javítsunk — vagy hagyd jóvá."
           };
     case "launched": {
+      if (project.commercial_model === "subscription") {
+        return {
+          who: project.subscription_status === "paused" ? "neutral" : "studio",
+          headline: project.subscription_status === "paused" ? "A weboldal szünetel" : "A weboldalad működik, mi pedig felügyeljük",
+          detail: project.subscription_status === "paused"
+            ? "A domain és a rendszer parkolóállapotban megmarad. Bármikor kérheted az újraaktiválást."
+            : "Nincs technikai teendőd. Módosítást vagy előfizetési változtatást lent kérhetsz."
+        };
+      }
       if (!project.final_payment_paid) {
         return project.final_transfer_reported
           ? { who: "studio", headline: "Ellenőrizzük a hátralékot", detail: "Jelezted az utalást. Most nincs teendőd." }

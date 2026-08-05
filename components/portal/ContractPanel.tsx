@@ -1,110 +1,58 @@
 import type { Project } from "@/components/ClientPortal";
 import { escHtml, formatPrice } from "@/components/ClientPortal";
 import { PROVIDER, providerContractParty } from "@/lib/legal";
+import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 
-type ContractPanelProps = {
-  project: Project;
-  contractChecked: boolean;
-  onContractCheckedChange: (checked: boolean) => void;
-  /** A 14 napon belüli teljesítéskezdés kifejezett kérése (45/2014. Korm. r.). */
-  performanceConsent: boolean;
-  onPerformanceConsentChange: (checked: boolean) => void;
-  onAccept: () => void;
-};
+type Props = { project: Project; contractChecked: boolean; onContractCheckedChange: (checked: boolean) => void; performanceConsent: boolean; onPerformanceConsentChange: (checked: boolean) => void; onAccept: () => void };
+
+function sections(project: Project) {
+  const managed = project.commercial_model === "subscription";
+  const plan = subscriptionPlan(project.subscription_plan);
+  const price = managed ? `${formatHuf(project.monthly_price ?? plan.price)} / hónap` : formatPrice(project.offer_price, project.offer_currency || "Ft");
+  return [
+    ["1", "A szerződés tárgya", managed
+      ? `A Szolgáltató elkészíti, üzemelteti, technikailag felügyeli és a csomag keretei között karbantartja a „${project.title}” weboldalt. A szolgáltatás menedzselt hozzáférés, nem részletfizetéses adásvétel.`
+      : `A Szolgáltató elkészíti a „${project.title}” egyedi weboldalt/digitális rendszert az elfogadott ajánlat és brief szerint.`],
+    ["2", "Csomag és terjedelem", `${managed ? `${plan.name}: ${plan.short}.` : project.offer_scope || "Az elfogadott ajánlat szerint."} A csomagon kívüli funkció, teljes újratervezés vagy többletmunka külön írásos megrendelés tárgya.`],
+    ["3", "Díj és fizetés", managed
+      ? `Díj: ${price}, előre fizetve. Nincs külön induló díj. Az első havidíj beérkezésének visszaigazolása indítja a kivitelezést, a további díjak minden szolgáltatási időszak elején esedékesek. A Szolgáltató számlát állít ki.`
+      : `Vállalási díj: ${price}. Foglaló: ${formatPrice(project.deposit_amount, project.offer_currency || "Ft")}; a fennmaradó díj jóváhagyás után, a teljes átadás előtt esedékes. A Szolgáltató számlát állít ki.`],
+    ["4", "Határidő és együttműködés", `${project.offer_timeline || (managed ? "A kivitelezés ütemezése az első havidíj jóváírása és a szükséges anyagok hiánytalan átadása után indul." : "Az elfogadott ajánlat szerint.")} Az ügyfél késedelmes anyagátadása vagy visszajelzése a határidőt arányosan kitolja.`],
+    ["5", "Domain és technikai infrastruktúra", managed
+      ? `A kiválasztott domain regisztrációját, megújítását, tárhelyét, SSL-tanúsítványát és technikai fiókjait a Szolgáltató intézi és kezeli. Az ügyfél a rendezett előfizetés alatt kizárólagosan használhatja a domaint a saját márkájához. A domain és a technikai rendszer nem kerül automatikusan átadásra a szolgáltatás megszűnésekor.`
+      : `A domain, hosting és külső szolgáltatások az ügyfél saját fiókjaiba kerülnek; folyamatos díjuk és megújításuk az ügyfelet terheli. Hozzáférésátadás csak a teljes díj rendezése után történik.`],
+    ["6", "Szellemi tulajdon és tartalom", managed
+      ? `Az ügyfél neve, márkája, logója, adatai és átadott tartalmai az ügyfélnél maradnak. A weboldal forráskódja, komponensei és technikai fiókjai feletti rendelkezési jog a Szolgáltatónál marad; az ügyfél a rendezett előfizetés idejére kap használati jogot.`
+      : `A teljes díj megfizetésével az ügyfél időben és területileg korlátlan felhasználási jogot kap az egyedileg létrehozott, átadható munkarészekre. Harmadik fél elemeire azok saját licence irányadó.`],
+    ["7", managed ? "Időtartam, szüneteltetés és felmondás" : "Átadás és hibajavítás", managed
+      ? `A szerződés határozatlan időre jön létre, hűségidő nélkül. Bármely hónapban felmondható; a felmondás a folyó, kifizetett időszak végén hatályos. Szüneteltetés a mindenkori parkolási díj mellett kérhető. A weboldal külön vételáron megvásárolható, de a korábbi havidíjak nem vételárrészletek.`
+      : `Az átadás az Ügyfélkapu vezetett folyamatában történik. A lezárástól számított 30 napig a Szolgáltató díjmentesen kijavítja az átadáskor vállalt működés igazolt hibáit; ez nem terjed ki új funkcióra, új tartalomra vagy harmadik fél módosítására.`],
+    ["8", "Fogyasztói nyilatkozat", `Fogyasztó ügyfél szolgáltatási szerződésnél 14 napon belül indokolás nélkül felmondhat. Ha külön kéri a teljesítés korábbi megkezdését, felmondáskor a már teljesített szolgáltatás arányos díját köteles megfizetni. A teljes szolgáltatás befejezésével a jog csak előzetes kifejezett kérés és tudomásulvétel mellett szűnik meg.`],
+    ["9", "Felelősség, panasz és záró szabályok", `A felek együttműködnek és a másikat érintő körülményről késedelem nélkül tájékoztatnak. A Szolgáltató nem felel az ügyfél jogsértő tartalmáért vagy ellenőrzési körén kívüli szolgáltatáskiesésért, a kötelező jogszabályi felelősség korlátozása nélkül. Panasz: ${PROVIDER.email}. Az egyedi szerződés, az elfogadott brief és az ÁSZF együtt alkotja a megállapodást; eltérésnél az egyedi szerződés az elsődleges. Irányadó jog: magyar jog.`]
+  ] as const;
+}
+
+export function contractPlainText(project: Project) {
+  const title = project.commercial_model === "subscription" ? "MENEDZSELT WEBOLDAL-SZOLGÁLTATÁSI SZERZŐDÉS" : "EGYEDI VÁLLALKOZÁSI SZERZŐDÉS";
+  return [title, `Verzió: 2026-08-04`, `Szolgáltató: ${providerContractParty()}`, `Ügyfél: ${project.company || project.contact_name || "Megrendelő"} (${project.contact_email})`, `Projekt: ${project.title}`, ...sections(project).map(([, sectionTitle, copy]) => `${sectionTitle}\n${copy}`), `Az ÁSZF elérhetősége: https://projectedge.hu/aszf`].join("\n\n");
+}
 
 function printContract(project: Project) {
-  const win = window.open("", "_blank");
-  if (!win) return;
-  const scopeHtml = escHtml(project.offer_scope || "Egyedi weboldal").replace(/\n/g, "<br/>");
-  win.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Szerződés – ${escHtml(project.title)}</title>` +
-    `<style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6}h1,h2,h3{color:#111}.signature{margin-top:50px;display:flex;justify-content:space-between}</style></head>` +
-    `<body>` +
-    `<h2 style="text-align:center">VÁLLALKOZÁSI SZERZŐDÉS</h2>` +
-    `<p>Kelt: ${new Date().toLocaleDateString("hu-HU")}</p>` +
-    `<p><strong>Vállalkozó:</strong> ${escHtml(providerContractParty())}</p>` +
-    `<p><strong>Megrendelő:</strong> ${escHtml(project.company || "Megrendelő")} (${escHtml(project.contact_name)}, ${escHtml(project.contact_email)})</p>` +
-    `<hr/>` +
-    `<h3>1. A szerződés tárgya</h3>` +
-    `<p>Megrendelő megrendeli a Vállalkozótól a &ldquo;${escHtml(project.title)}&rdquo; elnevezésű weboldalt / digitális rendszert.</p>` +
-    `<h3>2. Tartalom és funkciók</h3><p>${scopeHtml}</p>` +
-    `<h3>3. Határidő és ütemezés</h3><p>${escHtml(project.offer_timeline || "Megállapodás szerint.")}</p>` +
-    `<h3>4. Vállalkozói díj</h3>` +
-    `<p>Összesen: ${escHtml(formatPrice(project.offer_price, project.offer_currency || "Ft"))}</p>` +
-    `<p>Fizetendő foglaló (a munka megkezdésének feltétele): ${escHtml(formatPrice(project.deposit_amount, project.offer_currency || "Ft"))}</p>` +
-    `<p>Hátralék (átadáskor esedékes): ${escHtml(formatPrice((project.offer_price ?? 0) - (project.deposit_amount ?? 0), project.offer_currency || "Ft"))}</p>` +
-    `<h3>5. Szerzői jog</h3><p>A teljes vállalási díj megfizetése után a Megrendelő korlátlan felhasználási jogot kap az elkészült egyedi munkára. A díj teljes megfizetéséig a szerzői jogok a Vállalkozót illetik.</p>` +
-    `<h3>6. Elállás</h3><p>Fogyasztó Megrendelő a szerződéskötéstől számított 14 napon belül elállhat. A teljesítés kifejezett kérésre történő megkezdése után az elállási jog a már teljesített, arányos rész erejéig megszűnik.</p>` +
-    `<h3>7. Üzemeltetés és átadás</h3><p>A weboldal harmadik felek szolgáltatásain fut (domain regisztrátor, Vercel, szükség szerint Supabase és Resend). Ezek a Megrendelő saját fiókjába kerülnek, díjaikat — a domain éves megújítását is — a Megrendelő fizeti. Az átadás az Ügyfélkapu vezetett átadási folyamatában, meghívásos hozzáférésekkel történik; jelszót és titkos kulcsot egyik fél sem küld a másiknak. A hozzáférések teljes átadása a teljes vállalási díj megfizetése után történik. Részletek az ÁSZF 7. pontjában.</p>` +
-    `<h3>8. Technikai garancia</h3><p>A projekt lezárásától számított 30 napig a Vállalkozó díjmentesen javítja az átadáskor vállalt működés igazolt hibáit. Új funkció, új tartalom és utólagos módosítás nem tartozik ide.</p>` +
-    `<div class="signature"><div>Vállalkozó: ${escHtml(PROVIDER.legalName)}</div><div>Megrendelő: Digitálisan elfogadva</div></div>` +
-    `<script>window.print();<\/script></body></html>`
-  );
+  const win = window.open("", "_blank"); if (!win) return;
+  const body = sections(project).map(([n, title, copy]) => `<section><b>${n.padStart(2, "0")}</b><div><h2>${escHtml(title)}</h2><p>${escHtml(copy)}</p></div></section>`).join("");
+  win.document.write(`<!doctype html><html lang="hu"><head><meta charset="utf-8"><title>Szerződés – ${escHtml(project.title)}</title><style>@page{margin:18mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#253039;line-height:1.55;margin:0}.cover{border-bottom:3px solid #76abae;padding-bottom:24px;margin-bottom:24px}.tag{color:#497f82;font-size:10px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:28px;margin:8px 0}.meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:11px}.meta div{background:#f4f7f7;padding:12px;border-radius:8px}section{display:grid;grid-template-columns:34px 1fr;gap:12px;border-top:1px solid #dfe6e7;padding:16px 0;break-inside:avoid}section>b{color:#76abae}h2{font-size:14px;margin:0 0 4px}p{font-size:11px;margin:0}.foot{font-size:10px;margin-top:28px;color:#68757c}</style></head><body><div class="cover"><span class="tag">ProjectEdge · elektronikus szerződés</span><h1>${project.commercial_model === "subscription" ? "Menedzselt weboldal-szolgáltatási szerződés" : "Egyedi vállalkozási szerződés"}</h1><div class="meta"><div><strong>Szolgáltató</strong><br>${escHtml(providerContractParty())}</div><div><strong>Ügyfél</strong><br>${escHtml(project.company || project.contact_name || "Megrendelő")}<br>${escHtml(project.contact_email)}</div></div></div>${body}<p class="foot">Létrehozva: ${new Date().toLocaleString("hu-HU")} · Elektronikus elfogadáskor a rendszer időbélyeget rögzít. Az ÁSZF a szerződés része.</p><script>window.print();<\/script></body></html>`);
   win.document.close();
 }
 
-export function ContractPanel({
-  project,
-  contractChecked,
-  onContractCheckedChange,
-  performanceConsent,
-  onPerformanceConsentChange,
-  onAccept
-}: ContractPanelProps) {
-  return (
-    <div style={{ background: "rgba(48, 56, 65, 0.02)", border: "1px solid rgba(48, 56, 65, 0.08)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "14px" }}>
-      <h4 style={{ margin: 0, fontSize: "18px" }}>Vállalkozási Szerződés</h4>
-
-      <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-        Vállalási díj: bruttó {formatPrice(project.offer_price, project.offer_currency || "Ft")}. A munka megkezdésének
-        feltétele {formatPrice(project.deposit_amount, project.offer_currency || "Ft")} foglaló megfizetése; a
-        fennmaradó összeg az átadáskor esedékes.
-      </p>
-
-      <details className="disclosure">
-        <summary>Szerződés szövegének elolvasása</summary>
-        <div className="disclosure-body">
-          <div id="contract-view" style={{ maxHeight: "200px", overflowY: "auto", background: "#fff", border: "1px solid rgba(0,0,0,0.1)", padding: "16px", borderRadius: "12px", fontSize: "13px", lineHeight: "1.5", color: "#333" }}>
-            <h4 style={{ textAlign: "center", marginTop: 0 }}>EGYEDI VÁLLALKOZÁSI SZERZŐDÉS</h4>
-            <p>
-              Mely létrejött egyrészről a <strong>{PROVIDER.brandLong}</strong> — {PROVIDER.legalName} (
-              {PROVIDER.legalForm}), {PROVIDER.address} (Vállalkozó), másrészről a{" "}
-              <strong>{project.company || "Megrendelő"}</strong> (Megrendelő) között az alábbi projekt megvalósítására:
-            </p>
-            <p><strong>Projekt címe:</strong> {project.offer_title || project.title}</p>
-            <p><strong>Vállalási díj:</strong> bruttó {formatPrice(project.offer_price, project.offer_currency || "Ft")}. A munka megkezdésének feltétele {formatPrice(project.deposit_amount, project.offer_currency || "Ft")} foglaló megfizetése; a fennmaradó összeg az átadáskor esedékes.</p>
-            <p><strong>Mit tartalmaz:</strong> {project.offer_scope || "A részletezett ajánlat szerint."}</p>
-            <p><strong>Határidő/Ütemezés:</strong> {project.offer_timeline || "Megállapodás szerint."}</p>
-            <p><strong>Szerzői jog:</strong> a teljes vállalási díj megfizetése után a Megrendelő korlátlan felhasználási jogot kap az elkészült egyedi munkára.</p>
-            <p><strong>Elállás:</strong> fogyasztó Megrendelő a szerződéskötéstől 14 napon belül elállhat; a teljesítés kifejezett kérésre történő megkezdése után az elállási jog a már teljesített, arányos rész erejéig megszűnik.</p>
-            <p style={{ fontSize: "12px", color: "#666" }}>A részletes feltételeket az <a href="/aszf" target="_blank">ÁSZF</a> tartalmazza. Megrendelő a lenti elfogadással elektronikus jognyilatkozatot tesz a szerződés elfogadásáról, amelyet a rendszer időbélyeggel rögzít.</p>
-          </div>
-
-          <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-            <button className="button secondary" type="button" onClick={() => printContract(project)}>Szerződés nyomtatása</button>
-          </div>
-        </div>
-      </details>
-
-      <label style={{ display: "flex", gap: "8px", alignItems: "flex-start", cursor: "pointer", fontSize: "13px" }}>
-        <input type="checkbox" checked={contractChecked} onChange={(e) => onContractCheckedChange(e.target.checked)} />
-        <span>Elfogadom a vállalkozási szerződésben és az ÁSZF-ben foglalt feltételeket.</span>
-      </label>
-
-      {/* Az ÁSZF elállási pontja arra épül, hogy a Megrendelő kifejezetten kéri a
-          teljesítés 14 napon belüli megkezdését — ezt a nyilatkozatot külön, saját
-          szövegével kell bekérni, nem elég az általános feltétel-elfogadás. */}
-      <label style={{ display: "flex", gap: "8px", alignItems: "flex-start", cursor: "pointer", fontSize: "13px" }}>
-        <input type="checkbox" checked={performanceConsent} onChange={(e) => onPerformanceConsentChange(e.target.checked)} />
-        <span>
-          Kifejezetten kérem, hogy a munka a 14 napos elállási határidő lejárta előtt induljon el. Tudomásul veszem,
-          hogy a teljesítés megkezdése után az elállási jogom a már teljesített, arányos rész tekintetében megszűnik.
-        </span>
-      </label>
-
-      <button className="button primary" disabled={!contractChecked || !performanceConsent} type="button" onClick={onAccept}>
-        Szerződés aláírása & tovább a foglalóhoz
-      </button>
-    </div>
-  );
+export function ContractPanel({ project, contractChecked, onContractCheckedChange, performanceConsent, onPerformanceConsentChange, onAccept }: Props) {
+  const managed = project.commercial_model === "subscription"; const plan = subscriptionPlan(project.subscription_plan);
+  return <article className="contract-document">
+    <header className="contract-cover"><div><span className="contract-kicker">PROJECTEDGE · SZERZŐDÉS</span><h3>{managed ? "Menedzselt weboldal-szolgáltatás" : "Egyedi vállalkozási szerződés"}</h3><p>Átlátható feltételek, egy helyen. Elfogadás előtt a teljes dokumentum nyomtatható.</p></div><div className="contract-seal"><span>{managed ? plan.name : "EGYEDI"}</span><strong>{managed ? formatHuf(project.monthly_price ?? plan.price) : formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong><small>{managed ? "havonta" : "vállalási díj"}</small></div></header>
+    <div className="contract-parties"><div><span>Szolgáltató</span><strong>{PROVIDER.shortName}</strong><small>{PROVIDER.address}<br/>Kapcsolattartó: {PROVIDER.contactName}</small></div><div><span>Ügyfél</span><strong>{project.company || project.contact_name || "Megrendelő"}</strong><small>{project.contact_email}<br/>{project.title}</small></div></div>
+    <div className="contract-highlights"><div><b>{managed ? "0 Ft" : formatPrice(project.deposit_amount, project.offer_currency || "Ft")}</b><span>{managed ? "induló díj" : "foglaló"}</span></div><div><b>{managed ? "Nincs" : "30 nap"}</b><span>{managed ? "hűségidő" : "hibajavítás"}</span></div><div><b>{managed ? "Teljes" : "Vezetett"}</b><span>{managed ? "technikai kezelés" : "átadás"}</span></div></div>
+    <div className="contract-clauses">{sections(project).map(([n,title,copy]) => <section key={n}><b>{n.padStart(2,"0")}</b><div><h4>{title}</h4><p>{copy}</p></div></section>)}</div>
+    <button className="contract-print" type="button" onClick={() => printContract(project)}>↗ Nyomtatható szerződés megnyitása</button>
+    <div className="contract-consents"><label><input type="checkbox" checked={contractChecked} onChange={(e) => onContractCheckedChange(e.target.checked)}/><span><strong>Elolvastam és elfogadom</strong> az egyedi szerződést és a szerződés részét képező <a href="/aszf" target="_blank">ÁSZF-et</a>.</span></label><label><input type="checkbox" checked={performanceConsent} onChange={(e) => onPerformanceConsentChange(e.target.checked)}/><span><strong>Kifejezetten kérem a teljesítés megkezdését</strong> a 14 napos határidő lejárta előtt. Tudomásul veszem, hogy felmondáskor az addig teljesített szolgáltatás arányos díja fizetendő, és az egyszeri szolgáltatás teljes befejezésével – az előzetes kérésem alapján – a felmondási jogom megszűnik.</span></label></div>
+    <div className="contract-sign"><div><span>Elektronikus elfogadás</span><small>Az időpontot a rendszer automatikusan rögzíti és e-mailben visszaigazolja.</small></div><button className="button primary" disabled={!contractChecked || !performanceConsent} type="button" onClick={onAccept}>{managed ? "Szerződés elfogadása — tovább a havidíjhoz" : "Szerződés elfogadása — tovább a foglalóhoz"}</button></div>
+  </article>;
 }

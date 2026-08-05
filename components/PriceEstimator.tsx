@@ -1,124 +1,76 @@
 "use client";
 
 import { useState } from "react";
-
-type ProjectBand = {
-  key: string;
-  label: string;
-  copy: string;
-  minPrice: number;
-  maxPrice: number;
-  minDays: number;
-  maxDays: number;
-};
-
-const bands: ProjectBand[] = [
-  {
-    key: "landing",
-    label: "Landing / bemutatkozó",
-    copy: "Egy gyors, meggyőző oldal, ha most indulsz.",
-    minPrice: 50000,
-    maxPrice: 150000,
-    minDays: 2,
-    maxDays: 7
-  },
-  {
-    key: "business",
-    label: "Céges weboldal, több aloldallal",
-    copy: "Bizalomépítés, szolgáltatások bemutatása, ajánlatkérés.",
-    minPrice: 150000,
-    maxPrice: 350000,
-    minDays: 7,
-    maxDays: 21
-  },
-  {
-    key: "refresh",
-    label: "Meglévő oldal felújítása",
-    copy: "WordPress vagy egyedi — megnézem, mi gátol.",
-    minPrice: 50000,
-    maxPrice: 180000,
-    minDays: 2,
-    maxDays: 14
-  },
-  {
-    key: "system",
-    label: "Egyedi rendszer / ügyfélkapu",
-    copy: "Belépés, admin, adatkezelés, automatizáció.",
-    minPrice: 350000,
-    maxPrice: 900000,
-    minDays: 21,
-    maxDays: 28
-  }
-];
-
-function formatPrice(value: number) {
-  return `${new Intl.NumberFormat("hu-HU").format(value)} Ft`;
-}
-
-function formatDays(days: number) {
-  if (days <= 10) {
-    return `${days} nap`;
-  }
-  const weeks = Math.round(days / 7);
-  return `${weeks} hét`;
-}
+import { PURCHASE_PRICES, SUBSCRIPTION_PLANS, formatHuf, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { TransitionLink } from "@/components/TransitionLink";
 
 export function PriceEstimator() {
-  const [selected, setSelected] = useState(bands[0].key);
-  const [complexity, setComplexity] = useState(35);
-
-  const band = bands.find((item) => item.key === selected) ?? bands[0];
-  const ratio = complexity / 100;
-  const estimatedPrice = Math.round((band.minPrice + (band.maxPrice - band.minPrice) * ratio) / 5000) * 5000;
-  const estimatedDays = Math.round(band.minDays + (band.maxDays - band.minDays) * ratio);
+  const [mode, setMode] = useState<"subscription" | "purchase">("subscription");
+  const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
+  const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
 
   return (
-    <div className="estimator">
-      <div className="estimator-types">
-        {bands.map((item) => (
-          <button
-            className={item.key === selected ? "selected" : ""}
-            key={item.key}
-            onClick={() => setSelected(item.key)}
-            type="button"
-          >
-            <strong>{item.label}</strong>
-            <span>{item.copy}</span>
-          </button>
-        ))}
+    <section className="model-pricing" id="arak">
+      <div className="model-switch" role="tablist" aria-label="Weboldal konstrukció">
+        <button className={mode === "subscription" ? "active" : ""} onClick={() => setMode("subscription")} role="tab" aria-selected={mode === "subscription"} type="button">
+          <span>01</span>
+          <strong>Menedzselt előfizetés</strong>
+          <small>0 Ft induló díj, minden technikai teendővel</small>
+        </button>
+        <button className={mode === "purchase" ? "active" : ""} onClick={() => setMode("purchase")} role="tab" aria-selected={mode === "purchase"} type="button">
+          <span>02</span>
+          <strong>Saját weboldal vásárlása</strong>
+          <small>Egyszeri díj, forráskóddal és technikai átadással</small>
+        </button>
+        <i className={mode === "purchase" ? "right" : ""} aria-hidden="true" />
       </div>
 
-      <div className="estimator-slider">
-        <label htmlFor="complexity-slider">Mennyire összetett, amit szeretnél?</label>
-        <input
-          id="complexity-slider"
-          type="range"
-          min={0}
-          max={100}
-          value={complexity}
-          onChange={(event) => setComplexity(Number(event.target.value))}
-        />
-        <div className="estimator-slider-labels">
-          <span>Egyszerű, alap funkciók</span>
-          <span>Igényes, sok funkció</span>
+      {mode === "subscription" ? (
+        <div className="subscription-pricing-panel" role="tabpanel">
+          <div className="pricing-promise">
+            <span className="live-pulse" />
+            <p><strong>Nincs induló díj.</strong> Mi vesszük meg és kezeljük a domaint, biztosítjuk a tárhelyet, figyeljük és frissítjük az oldalt.</p>
+          </div>
+          <div className="subscription-plan-grid">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <article className={`subscription-plan ${plan.featured ? "featured" : ""}`} key={plan.key}>
+                {plan.featured ? <span className="plan-ribbon">Legnépszerűbb</span> : null}
+                <div className="plan-number">{plan.key === "presence" ? "01" : plan.key === "business" ? "02" : "03"}</div>
+                <h3>{plan.name}</h3>
+                <p>{plan.short}</p>
+                <div className="plan-fit"><span>Kinek való?</span><p>{plan.idealFor}</p></div>
+                <div className="plan-price"><strong>{formatHuf(plan.price)}</strong><span>/ hó</span></div>
+                <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                <div className="plan-meta"><span>{plan.changes}</span><span>{plan.response}</span></div>
+                <button className="plan-detail-trigger" type="button" onClick={() => { setDetailPlan(plan.key); window.setTimeout(() => document.getElementById("csomag-reszletek")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}>Részletes tartalom</button>
+                <TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${plan.key}`}>Ezt választom</TransitionLink>
+              </article>
+            ))}
+          </div>
+          <section className="plan-detail-panel" id="csomag-reszletek">
+            <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
+            <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
+            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak a {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{activePlan.name} csomagot választom</TransitionLink></footer>
+          </section>
+          <div className="subscription-footnotes">
+            <span>0 Ft induló díj</span><span>Bármikor lemondható</span><span>Első hónap előre fizetendő</span><span>Szüneteltethető</span>
+          </div>
         </div>
-      </div>
-
-      <div className="estimator-result">
-        <div>
-          <span>Becsült ár</span>
-          <strong>{formatPrice(estimatedPrice)}</strong>
+      ) : (
+        <div className="purchase-pricing-panel" role="tabpanel">
+          <div className="purchase-intro">
+            <div><span className="micro-label dark">Egyszeri projekt</span><h3>A rendszer a tiéd lesz.</h3></div>
+            <p>A forráskódot, a domaint és a szükséges hozzáféréseket átadom. A későbbi hosting, üzemeltetés és módosítás nem része a vételárnak, de külön gondozási csomag kérhető.</p>
+          </div>
+          <div className="purchase-list">
+            {PURCHASE_PRICES.map((item, index) => <div key={item.name}><span>0{index + 1}</span><strong>{item.name}</strong><b>{item.price}</b></div>)}
+          </div>
+          <div className="purchase-actions">
+            <TransitionLink className="button primary" href="/ugyfelkapu?model=purchase">Egyedi ajánlatot kérek</TransitionLink>
+            <p>Technikai átadás · forráskód · 30 nap hibagarancia</p>
+          </div>
         </div>
-        <div>
-          <span>Becsült átfutás</span>
-          <strong>{formatDays(estimatedDays)}</strong>
-        </div>
-      </div>
-      <p className="estimator-note">
-        Ez egy tájékoztató becslés — a pontos árat és határidőt mindig a projektindító adatlapod alapján adom meg. Nem
-        dolgozom rajta feleslegesen tovább a szükségesnél: egy kisebb oldal akár 1–2 nap alatt is
-        elkészülhet.
-      </p>
-    </div>
+      )}
+    </section>
   );
 }

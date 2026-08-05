@@ -33,7 +33,7 @@ const steps = [
   {
     number: "04",
     title: "Felépítem",
-    copy: "Next.js, Supabase, gyors betöltés, mobilnézet, domain és Vercel deploy. A szövegeket megírom, a hozzáféréseket bekötöm. Közben az ügyfélkapun végig látod a haladást.",
+    copy: "Next.js, gyors betöltés, mobilnézet, domain és élesítés. Előfizetésnél minden technikai hátteret én kezelek; vásárlásnál a végén vezetetten átadom. Közben az ügyfélkapun végig látod a haladást.",
     tag: "a projekt nagy része",
     Icon: IconGear
   },
@@ -54,18 +54,18 @@ const extras = [
   },
   {
     Icon: IconPackage,
-    title: "Mit kapsz a végén",
-    copy: "Kész, élő oldal saját domainen, a hozzáférésekkel együtt. A tiéd — nem zárlak be egy rendszerbe, amiből nem tudsz kilépni."
+    title: "Kétféle befejezés",
+    copy: "Előfizetésnél kész, felügyelt szolgáltatást kapsz folyamatos gondozással. Vásárlásnál a forráskódot és a hozzáféréseket is átadom."
   },
   {
     Icon: IconWrench,
     title: "Indulás után",
-    copy: "Igény szerint havi karbantartás: frissítés, mentés, mérés és apró fejlesztések, hogy az oldal ne öregedjen el."
+    copy: "Előfizetésnél itt kezdődik a hosszú távú gondozás: felügyelet, frissítés és a csomagban foglalt módosítások."
   },
   {
     Icon: IconLock,
-    title: "Miért van foglaló",
-    copy: "Egy alacsony, fix összegű foglaló indítja a projektet — ez csak annyit szűr, hogy komoly szándékkal vágjunk bele. A teljes díjat csak a kész oldal átadásakor kérem, tehát nálad nincs kockázat."
+    title: "Hogyan indul a fizetés",
+    copy: "Előfizetésnél az első havi díj indítja a munkát, külön induló díj nélkül. Vásárlásnál egyedi ajánlat, foglaló és végső átadás marad."
   }
 ];
 
