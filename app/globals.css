@@ -8573,14 +8573,21 @@ p {
 
 
 /* ── Konstrukció-váltó: legyen ránézésre is látszik, hogy váltható ── */
+/* A felirat a váltó FÖLÖTT, világos oldalháttéren ül — sötét szöveg kell,
+   nem a panel világos szövegszíne. */
 .model-switch-hint {
   align-items: center;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--ink);
   display: flex;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   gap: 9px;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+}
+
+/* ha valaha sötét szekcióba kerülne, ott váltson világosra */
+.dark-page .model-switch-hint {
+  color: var(--paper);
 }
 
 .model-switch-hint span {
