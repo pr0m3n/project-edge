@@ -29,6 +29,7 @@ import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference } from "@/lib/storage-assets";
 import { completeHandoverStep, type HandoverStepState } from "@/lib/handover";
 import { SUBSCRIPTION_PLANS, formatHuf, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { trackLeadConversion } from "@/lib/analytics";
 
 function noticeKind(message: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet|nincs aktív/i.test(message)) {
@@ -1646,6 +1647,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setBriefConfirmed(false);
     setProjectSaving(false);
     setProjectSubmitted(true);
+    // Google Ads konverzió: innen tudja a licitálás, melyik hirdetés hozott érdeklődőt
+    trackLeadConversion(isSubscription ? selectedSubscription.price : undefined);
     setSubmittedProjectTitle(isSubscription ? `${projectForm.company} · ${selectedSubscription.name}` : projectForm.title);
     setNotice(isSubscription ? "A menedzselt weboldal adatlapja elkészült. Következő lépés a szolgáltatási szerződés." : "Elmentettük és elküldtük a tervet. Hamarosan jelentkezünk a következő lépésekkel.");
     loadPortal(true);

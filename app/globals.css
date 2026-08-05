@@ -8636,3 +8636,113 @@ p {
     opacity: 1;
   }
 }
+
+/* ════ Süti-hozzájárulás ════ */
+.cookie-banner {
+  align-items: center;
+  background: var(--night);
+  border: 1px solid rgba(245, 245, 245, 0.14);
+  border-radius: 22px;
+  bottom: 22px;
+  box-shadow: 0 30px 80px rgba(17, 23, 28, 0.4);
+  color: var(--paper);
+  display: flex;
+  gap: 22px;
+  left: 22px;
+  max-width: 620px;
+  padding: 20px 22px;
+  position: fixed;
+  z-index: 500;
+  animation: cookie-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cookie-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.cookie-copy strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.cookie-copy p {
+  color: rgba(245, 245, 245, 0.68);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.cookie-copy a {
+  color: var(--aqua);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cookie-actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cookie-accept,
+.cookie-ghost {
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 11px 18px;
+  transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+  white-space: nowrap;
+}
+
+.cookie-accept {
+  background: var(--ember);
+  border: 1px solid var(--ember);
+  color: var(--white);
+}
+
+.cookie-accept:hover {
+  transform: translateY(-2px);
+}
+
+.cookie-ghost {
+  background: none;
+  border: 1px solid rgba(245, 245, 245, 0.28);
+  color: var(--paper);
+}
+
+.cookie-ghost:hover {
+  background: rgba(245, 245, 245, 0.08);
+}
+
+@media (max-width: 760px) {
+  .cookie-banner {
+    /* a chat gomb fölé, hogy ne takarják egymást */
+    bottom: 92px;
+    flex-direction: column;
+    gap: 16px;
+    left: 14px;
+    right: 14px;
+  }
+
+  .cookie-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .cookie-accept,
+  .cookie-ghost {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cookie-banner {
+    animation: none;
+  }
+}

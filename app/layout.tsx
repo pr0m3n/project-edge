@@ -3,6 +3,8 @@ import { MotionVars } from "@/components/MotionVars";
 import { SupportWidget } from "@/components/SupportWidget";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ChromeGate } from "@/components/ChromeGate";
+import { Analytics } from "@/components/Analytics";
+import { CookieBanner } from "@/components/CookieBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,11 +47,13 @@ export default function RootLayout({
     <html lang="hu">
       <body>
         <MotionVars />
+        <Analytics />
         {children}
         <ChromeGate>
           <SiteFooter />
           <SupportWidget />
         </ChromeGate>
+        <CookieBanner />
       </body>
     </html>
   );
