@@ -533,7 +533,7 @@ export function buildBriefText(form: BriefFormValues) {
     : "";
 
   return [
-    `Konstrukció: ${form.commercialModel === "subscription" ? `Menedzselt előfizetés — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Saját weboldal vásárlása"}`,
+    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Weboldal megvásárlása"}`,
     `Cél: ${form.goals}`,
     form.audience ? `Célközönség / vásárlók: ${form.audience}` : "",
     form.primaryAction ? `Elsődleges látogatói művelet: ${form.primaryAction}` : "",

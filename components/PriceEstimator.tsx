@@ -11,16 +11,20 @@ export function PriceEstimator() {
 
   return (
     <section className="model-pricing" id="arak">
+      <p className="model-switch-hint">
+        <span aria-hidden="true" />
+        Kétféleképpen dolgozom. Kattints, és megnézed a másikat is.
+      </p>
       <div className="model-switch" role="tablist" aria-label="Weboldal konstrukció">
         <button className={mode === "subscription" ? "active" : ""} onClick={() => setMode("subscription")} role="tab" aria-selected={mode === "subscription"} type="button">
-          <span>01</span>
-          <strong>Menedzselt előfizetés</strong>
-          <small>0 Ft induló díj, minden technikai teendővel</small>
+          <span>01 · A leggyakoribb</span>
+          <strong>Weboldal bérlése</strong>
+          <small>Havidíjat fizetsz, az oldal az enyém marad — a domaint, a tárhelyet és a karbantartást is én intézem.</small>
         </button>
         <button className={mode === "purchase" ? "active" : ""} onClick={() => setMode("purchase")} role="tab" aria-selected={mode === "purchase"} type="button">
           <span>02</span>
-          <strong>Saját weboldal vásárlása</strong>
-          <small>Egyszeri díj, forráskóddal és technikai átadással</small>
+          <strong>Weboldal megvásárlása</strong>
+          <small>Egyszeri díjat fizetsz, és az oldal a forráskóddal együtt a tiéd lesz.</small>
         </button>
         <i className={mode === "purchase" ? "right" : ""} aria-hidden="true" />
       </div>

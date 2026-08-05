@@ -85,9 +85,10 @@ export default function ServicesPage() {
         <p className="micro-label dark">Szolgáltatások</p>
         <h1>Annyit építek, amennyire az üzletednek valóban szüksége van.</h1>
         <p>
-          Választhatsz menedzselt előfizetést nulla induló díjjal, vagy megvásárolhatod a teljes
-          weboldalt. Előfizetésnél mindig teljesen új oldalt készítek, a domaintől a karbantartásig
-          mindent én intézek helyetted. Meglévő oldal átalakítása és webapp csak egyszeri projektként kérhető.
+          A legtöbben bérlik: havidíjat fizetsz, én pedig megépítem és üzemeltetem az oldalt — a
+          domaintől a karbantartásig mindent én intézek, induló díj nélkül. Ha inkább a sajátod
+          legyen, meg is veheted, akkor a forráskódot is átadom. Meglévő oldal átalakítása és webapp
+          csak megvásárolható projektként kérhető.
         </p>
       </section>
 

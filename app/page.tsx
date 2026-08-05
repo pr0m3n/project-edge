@@ -39,7 +39,7 @@ const proof = [
 const faqs = [
   [
     "Mennyibe kerül egy weboldal?",
-    "A menedzselt weboldal-előfizetés 19 900 Ft/hó összegtől indul, 0 Ft induló díjjal. Ha inkább saját tulajdonú oldalt szeretnél, egyszeri vásárlásra is van lehetőség 349 000 Ft-tól."
+    "Kétféleképpen lehet. Bérlésnél 19 900 Ft/hó-tól indulsz, induló díj nincs — az oldal az enyém marad, én üzemeltetem. Ha inkább a sajátod legyen, meg is veheted 349 000 Ft-tól, akkor a forráskóddal együtt átadom."
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -59,7 +59,7 @@ const faqs = [
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
-    "Menedzselt előfizetésnél minden technikai fiókot és költséget a ProjectEdge kezel, neked ezzel nincs feladatod. Egyszeri vásárlásnál a forráskódot, a domaint és a szükséges hozzáféréseket vezetett folyamatban átadom."
+    "Bérlésnél nálam: a domaint, a tárhelyet és a számlákat is én kezelem, neked ezzel nincs dolgod. Vásárlásnál a tiéd lesz minden — a forráskódot, a domaint és a hozzáféréseket lépésről lépésre átadom."
   ]
 ];
 
