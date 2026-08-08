@@ -173,23 +173,20 @@ export default function WorkPage() {
           </p>
         </div>
 
+        <div className="demo-role-map">
+          <article><span>01 / SaaS</span><strong>Veyra</strong><p>Termékbemutatás, dashboard UI, interaktív árazás és mozgás.</p></article>
+          <article><span>02 / Webshop</span><strong>Zamat</strong><p>Termékvariánsok, kosár, termékoldalak és megőrzött állapot.</p></article>
+          <article><span>03 / Lead</span><strong>Varga Villany</strong><p>Helyi ügyfélszerzés, árkalkulátor, körzetellenőrzés és gyors ajánlatkérés.</p></article>
+          <article><span>04 / Foglalás</span><strong>Liget</strong><p>Prémium márka és teljes, több lépéses időpontfoglalási folyamat.</p></article>
+          <article><span>05 / Katalógus</span><strong>Budai Otthonok</strong><p>Szűrés, mentés, részletes adatlap, hitelbecslés és érdeklődés.</p></article>
+        </div>
+
         <div className="demos-grid">
           <article className="demo-card">
             <a className="demo-preview veyra" href="/demo/veyra">
               <span className="demo-tag">Mintaprojekt</span>
-              <span className="demo-mock-window">
-                <span className="demo-mock-bar">
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span className="demo-mock-body">
-                  <span className="demo-mock-title" />
-                  <span className="demo-mock-line" />
-                  <span className="demo-mock-line short" />
-                  <span className="demo-mock-cta" />
-                </span>
-              </span>
+              <span className="demo-goal">SAAS + DASHBOARD</span>
+              <img alt="Veyra SaaS termékoldal előnézete" src="/work/demos/veyra.webp" />
             </a>
             <div className="demo-body">
               <span className="demo-kind">Landing page</span>
@@ -199,9 +196,9 @@ export default function WorkPage() {
                 főszereplő.
               </p>
               <ul className="demo-points">
-                <li>Görgetésre megjelenő szekciók, animált számlálók</li>
-                <li>Interaktív árazás és GYIK</li>
-                <li>Fotó nélkül, tiszta kódból rajzolt felületek</li>
+                <li>Termékstratégia és dashboard felület</li>
+                <li>Interaktív árazás, állapotkezelés és GYIK</li>
+                <li>Animációk és összetett, kódból rajzolt UI</li>
               </ul>
               <a className="button ghost" href="/demo/veyra">
                 Megnézem élőben
@@ -212,12 +209,8 @@ export default function WorkPage() {
           <article className="demo-card">
             <a className="demo-preview zamat" href="/demo/zamat">
               <span className="demo-tag">Mintaprojekt</span>
-              <span className="demo-mock-shop">
-                <span className="demo-mock-tile" />
-                <span className="demo-mock-tile" />
-                <span className="demo-mock-tile" />
-                <span className="demo-mock-tile" />
-              </span>
+              <span className="demo-goal">WEBSHOP + KOSÁR</span>
+              <img alt="Zamat kávéwebshop előnézete" src="/work/demos/zamat.webp" />
             </a>
             <div className="demo-body">
               <span className="demo-kind">Webáruház</span>
@@ -229,7 +222,7 @@ export default function WorkPage() {
               <ul className="demo-points">
                 <li>Valódi kosárlogika, variánsokkal és mennyiséggel</li>
                 <li>Külön termékoldalak, kapcsolódó termékekkel</li>
-                <li>Meleg, magazinos arculat — a SaaS demó ellentéte</li>
+                <li>Újratöltés után is megmaradó kosár és előfizetés</li>
               </ul>
               <a className="button ghost" href="/demo/zamat">
                 Megnézem élőben
@@ -241,13 +234,13 @@ export default function WorkPage() {
             <a className="demo-preview fixora" href="/demo/varga-villany">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">ÉRDEKLŐDŐSZERZÉS</span>
-              <span className="demo-screen-copy"><b>Áram legyen.<br />Meglepetés ne.</b><i>Gyors árbecslés →</i></span>
+              <img alt="Varga Villanyszerelés oldal előnézete" src="/work/demos/varga-villany.webp" />
             </a>
             <div className="demo-body">
               <span className="demo-kind">Helyi szolgáltató + ajánlatkérés</span>
               <h3>Varga Villanyszerelés</h3>
               <p>Bizalomépítő szolgáltatói oldal, ami a látogatót egy perc alatt konkrét ajánlatkérésig vezeti.</p>
-              <ul className="demo-points"><li>Működő, szolgáltatásalapú árbecslő</li><li>Helyi bizalmi elemek és esettanulmány</li><li>Telefonra és gyors kapcsolatfelvételre tervezve</li></ul>
+              <ul className="demo-points"><li>Működő, szolgáltatásalapú árbecslő</li><li>Irányítószámos kiszállási körzetellenőrzés</li><li>Helyi bizalmi elemek és esettanulmány</li></ul>
               <a className="button ghost" href="/demo/varga-villany">Megnézem élőben</a>
             </div>
           </article>
@@ -256,13 +249,13 @@ export default function WorkPage() {
             <a className="demo-preview noma" href="/demo/liget-borstudio">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">IDŐPONTFOGLALÁS</span>
-              <span className="demo-screen-copy light"><b>A bőröd nem trend.<br />Történet.</b><i>Időpontot foglalok →</i></span>
+              <img alt="Liget Bőrstúdió oldal előnézete" src="/work/demos/liget-borstudio.webp" />
             </a>
             <div className="demo-body">
               <span className="demo-kind">Szépségstúdió + online foglalás</span>
               <h3>Liget Bőrstúdió</h3>
               <p>Nyugodt, magazinos márkaoldal valódi, több lépéses szolgáltatás- és időpontválasztással.</p>
-              <ul className="demo-points"><li>Kezelés-, nap- és időpontválasztás</li><li>Mobilon is használható foglalási panel</li><li>Prémium arculat saját vizuális világgal</li></ul>
+              <ul className="demo-points"><li>Kezelés-, nap-, időpont- és szakemberválasztás</li><li>Kapcsolati adatokkal záruló foglalási folyamat</li><li>Prémium arculat saját vizuális világgal</li></ul>
               <a className="button ghost" href="/demo/liget-borstudio">Megnézem élőben</a>
             </div>
           </article>
@@ -271,13 +264,13 @@ export default function WorkPage() {
             <a className="demo-preview nest" href="/demo/budai-otthonok">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">KERESÉS + KATALÓGUS</span>
-              <span className="demo-screen-copy"><b>Nem négyzetmétert.<br />Életet választasz.</b><i>Ingatlanok böngészése →</i></span>
+              <img alt="Budai Otthonok ingatlankatalógus előnézete" src="/work/demos/budai-otthonok.webp" />
             </a>
             <div className="demo-body">
               <span className="demo-kind">Ingatlankatalógus + mentés</span>
               <h3>Budai Otthonok</h3>
-              <p>Kereshető prémium kínálat kerület- és árszűrővel, menthető ingatlanokkal és eladói szolgáltatásbemutatóval.</p>
-              <ul className="demo-points"><li>Azonnal reagáló szűrés és találatszám</li><li>Menthető ingatlanok és állapotkezelés</li><li>Erős, szerkesztőségi ingatlanmárka</li></ul>
+              <p>Kereshető prémium kínálat külön ingatlanfotókkal és teljes, felugró részletes adatlappal.</p>
+              <ul className="demo-points"><li>Összetett szűrés, rendezés és mentett nézet</li><li>Részletmodal alaprajzzal és felszereltséggel</li><li>Hitelbecslő és megtekintési érdeklődés</li></ul>
               <a className="button ghost" href="/demo/budai-otthonok">Megnézem élőben</a>
             </div>
           </article>

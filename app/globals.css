@@ -8318,6 +8318,44 @@ p {
   margin-top: 40px;
 }
 
+.demo-role-map {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 42px;
+}
+
+.demo-role-map article {
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  min-height: 180px;
+  padding: 22px 18px;
+}
+
+.demo-role-map article:last-child {
+  border-right: 0;
+}
+
+.demo-role-map span {
+  color: var(--aqua);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.demo-role-map strong {
+  font-size: 18px;
+}
+
+.demo-role-map p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
 .demo-card {
   background: var(--white);
   border: 1px solid var(--line);
@@ -8337,10 +8375,32 @@ p {
   align-items: center;
   display: flex;
   justify-content: center;
-  min-height: 240px;
+  min-height: 320px;
   overflow: hidden;
   padding: 32px;
   position: relative;
+}
+
+.demo-preview > img {
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  object-position: top center;
+  position: absolute;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+}
+
+.demo-card:hover .demo-preview > img {
+  transform: scale(1.025);
+}
+
+.demo-preview::after {
+  background: linear-gradient(180deg, rgba(9, 14, 18, 0.05), rgba(9, 14, 18, 0.28));
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
 }
 
 .demo-preview.veyra {
@@ -8378,14 +8438,19 @@ p {
 }
 
 .demo-goal {
+  background: rgba(9, 14, 18, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 9px;
   font-weight: 850;
   letter-spacing: 0.16em;
   position: absolute;
-  right: 20px;
+  padding: 7px 10px;
+  right: 18px;
   text-transform: uppercase;
   top: 24px;
+  z-index: 2;
 }
 
 .demo-screen-copy {
@@ -8422,7 +8487,7 @@ p {
 }
 
 .demo-card-wide .demo-preview {
-  min-height: 390px;
+  min-height: 320px;
 }
 
 .demo-tag {
@@ -8643,6 +8708,26 @@ p {
   .case-title-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .demo-role-map {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .demo-role-map article {
+    border-bottom: 1px solid var(--line);
+    min-height: 150px;
+  }
+}
+
+@media (max-width: 560px) {
+  .demo-role-map {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-role-map article {
+    border-right: 0;
+    min-height: 0;
   }
 }
 /* ── ProjectEdge / menedzselt weboldal konstrukció ─────────────────── */

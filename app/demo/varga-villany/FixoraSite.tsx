@@ -16,9 +16,12 @@ export function FixoraSite() {
   const notice = useDemoNotice();
   const [service, setService] = useState("hiba");
   const [size, setSize] = useState(50);
+  const [postcode, setPostcode] = useState("");
+  const [areaStatus, setAreaStatus] = useState<"idle" | "inside" | "outside">("idle");
   const estimate = useMemo(() => prices[service] + Math.max(size - 30, 0) * (service === "felujitas" ? 3200 : 850), [service, size]);
 
   const send = () => notice("A kalkulátor működik, de ez egy mintaprojekt: az ajánlatkérés nem kerül elküldésre.");
+  const checkArea = () => setAreaStatus(/^1\d{3}$/.test(postcode.trim()) ? "inside" : "outside");
 
   return (
     <div className="fxr-root" id="top">
@@ -59,6 +62,11 @@ export function FixoraSite() {
           <div className="fxr-form">
             <div className="fxr-options">{[["hiba","Hibafeltárás"],["felujitas","Hálózatfelújítás"],["okos","Okosotthon"]].map(([value,label]) => <button className={service === value ? "active" : ""} key={value} onClick={() => setService(value)} type="button">{label}</button>)}</div>
             <label><span>Ingatlan mérete</span><strong>{size} m²</strong><input min="30" max="180" onChange={(e) => setSize(Number(e.target.value))} type="range" value={size} /></label>
+            <div className="fxr-area-check">
+              <div><span>Kiszállási terület ellenőrzése</span><strong>Add meg az irányítószámot</strong></div>
+              <div><input aria-label="Irányítószám" inputMode="numeric" maxLength={4} onChange={(event) => { setPostcode(event.target.value); setAreaStatus("idle"); }} placeholder="pl. 1024" value={postcode} /><button onClick={checkArea} type="button">Ellenőrzés</button></div>
+              {areaStatus !== "idle" && <p className={areaStatus}>{areaStatus === "inside" ? "✓ A címed a kiszállási területünkön belül van." : "Ez a körzet egyedi egyeztetést igényel — kérj visszahívást."}</p>}
+            </div>
             <div className="fxr-result"><span>Várható induló költség</span><strong>{estimate.toLocaleString("hu-HU")} Ft-tól</strong><small>Kiszállással és alapanyaggal becsülve</small></div>
             <button className="fxr-submit" onClick={send} type="button">Kérek pontos ajánlatot <span>→</span></button>
           </div>
