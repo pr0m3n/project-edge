@@ -36,10 +36,10 @@ const REVEAL_SELECTOR = [
   ".cta-band"
 ].join(",");
 
-function prefersReducedMotion() {
+function prefersStaticMotion() {
   return (
     typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px), (hover: none) and (pointer: coarse)").matches
   );
 }
 
@@ -50,6 +50,13 @@ export function MotionVars() {
 
   /* ── egérpozíció és görgetési arány CSS változóban ── */
   useEffect(() => {
+    if (prefersStaticMotion()) {
+      document.documentElement.style.setProperty("--mx", "0");
+      document.documentElement.style.setProperty("--my", "0");
+      document.documentElement.style.setProperty("--page-scroll", "0");
+      return;
+    }
+
     let frame = 0;
 
     function setPointer(event: PointerEvent) {
@@ -88,7 +95,7 @@ export function MotionVars() {
 
   /* ── görgetésre megjelenés (minden böngészőben ugyanígy) ── */
   useEffect(() => {
-    if (isDemo || prefersReducedMotion()) return;
+    if (isDemo || prefersStaticMotion()) return;
     let io: IntersectionObserver | null = null;
 
     // A teljes Next/React fa hidratálása után nyúlunk csak a DOM-osztályokhoz.

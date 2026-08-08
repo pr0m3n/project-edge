@@ -242,19 +242,25 @@ export default function Home() {
 
       <section className="orbit-section">
         <div className="orbit-copy">
-          <p className="micro-label">3D / Motion / Karakter</p>
-          <h2>Mozgás, ami nem zavar.</h2>
+          <p className="micro-label">Egy kézben / az ötlettől az indulásig</p>
+          <h2>Végigviszem az egész pályát.</h2>
           <p>
-            A 3D és az animáció akkor jó, ha nem nehezíti az olvasást. Karaktert ad, de nem viszi el
-            a figyelmet a lényegről.
+            Nem kell külön tervezőt, fejlesztőt és technikai kapcsolattartót összehangolnod. A
+            felépítéstől az éles indulásig egy kézben marad a projekt, ezért gyorsabbak a döntések
+            és kevesebb részlet vész el útközben.
           </p>
-          <TransitionLink className="button spectral" href="/munkak">
-            Példák a munkáimból
+          <ul className="orbit-facts">
+            <li>Struktúra és vizuális tervezés</li>
+            <li>Fejlesztés és rendszerkapcsolatok</li>
+            <li>Mobilos finomhangolás és élesítés</li>
+          </ul>
+          <TransitionLink className="button spectral" href="/folyamat">
+            Megnézem, hogyan dolgozol
           </TransitionLink>
         </div>
         <div className="planet-stage">
           <ModelViewer
-            alt="Pixel bolygó 3D modell"
+            alt="A teljes projektfolyamatot jelképező pixelbolygó"
             className="model-frame planet-model"
             exposure="0.9"
             src="/models/pixel_planet_trappist-1-e.glb"

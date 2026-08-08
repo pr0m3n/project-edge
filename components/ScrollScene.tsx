@@ -11,6 +11,11 @@ export function ScrollScene() {
       return;
     }
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 767px), (hover: none) and (pointer: coarse)").matches) {
+      scene.style.setProperty("--scroll", "0");
+      return;
+    }
+
     function update() {
       const scroll = Math.min(window.scrollY / 700, 1);
       scene?.style.setProperty("--scroll", scroll.toFixed(3));

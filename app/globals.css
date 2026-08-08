@@ -909,6 +909,33 @@ p {
   max-width: 620px;
 }
 
+.orbit-facts {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: -6px 0 2px;
+  padding: 0;
+}
+
+.orbit-facts li {
+  align-items: center;
+  color: rgba(245, 245, 245, 0.88);
+  display: flex;
+  font-size: 14px;
+  font-weight: 750;
+  gap: 12px;
+}
+
+.orbit-facts li::before {
+  background: var(--aqua);
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(118, 171, 174, 0.12);
+  content: "";
+  flex: 0 0 auto;
+  height: 7px;
+  width: 7px;
+}
+
 .planet-stage {
   min-height: 620px;
 }
@@ -1236,6 +1263,28 @@ p {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/* Telefonon és érintős eszközökön minden görgetéshez kötött állapot statikus.
+   Így a tartalom azonnal látszik, és Safari alatt sem ragadhat fél-fade állapotban. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .js-reveal,
+  .js-reveal.is-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    transition-delay: 0ms !important;
+    will-change: auto !important;
+  }
+
+  .planet-model {
+    transform: translate(-50%, -50%) !important;
+    transition: none !important;
   }
 }
 
