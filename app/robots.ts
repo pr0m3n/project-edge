@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // Privát / autentikált felületek kizárása az indexelésből.
-      disallow: ["/admin", "/ugyfelkapu/dashboard"]
+      disallow: ["/admin", "/ugyfelkapu/dashboard", "/api/"]
     },
     sitemap: `${baseUrl}/sitemap.xml`
   };

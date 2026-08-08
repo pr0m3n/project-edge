@@ -89,42 +89,45 @@ export function MotionVars() {
   /* ── görgetésre megjelenés (minden böngészőben ugyanígy) ── */
   useEffect(() => {
     if (isDemo || prefersReducedMotion()) return;
+    let io: IntersectionObserver | null = null;
 
-    const targets = Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
-    if (!targets.length) return;
+    // A teljes Next/React fa hidratálása után nyúlunk csak a DOM-osztályokhoz.
+    // Streaming közben egy korábban lefutó effect különben módosíthatna olyan
+    // elemeket, amelyeket React még éppen hidratál.
+    const timer = window.setTimeout(() => {
+      const targets = Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
+      if (!targets.length) return;
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-in");
-          io.unobserve(entry.target);
-        });
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
-    );
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-in");
+            io?.unobserve(entry.target);
+          });
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+      );
 
-    targets.forEach((el) => {
-      // a rejtést maga a JS teszi rá — így ha nem fut le, semmi nem tűnik el
-      el.classList.add("js-reveal");
+      targets.forEach((el) => {
+        el.classList.add("js-reveal");
+        const siblings = el.parentElement ? Array.from(el.parentElement.children) : [];
+        const index = siblings.indexOf(el);
+        if (index > 0 && index < 8) el.style.setProperty("--reveal-i", String(index));
 
-      // rácson belüli sorrend a lépcsőzetes megjelenéshez
-      const siblings = el.parentElement ? Array.from(el.parentElement.children) : [];
-      const index = siblings.indexOf(el);
-      if (index > 0 && index < 8) {
-        el.style.setProperty("--reveal-i", String(index));
-      }
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.92) {
+          requestAnimationFrame(() => el.classList.add("is-in"));
+        } else {
+          io?.observe(el);
+        }
+      });
+    }, 220);
 
-      // ami már eleve a képernyőn van, azonnal látszódjon
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.92) {
-        requestAnimationFrame(() => el.classList.add("is-in"));
-      } else {
-        io.observe(el);
-      }
-    });
-
-    return () => io.disconnect();
+    return () => {
+      window.clearTimeout(timer);
+      io?.disconnect();
+    };
   }, [isDemo, pathname]);
 
   return null;

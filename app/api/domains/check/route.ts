@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { domainToASCII } from "node:url";
+import { checkRateLimit, rateLimitResponse } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 
 const POPULAR_TLDS = ["hu", "com", "eu", "net", "org", "co", "io", "dev", "app", "online", "site", "shop", "studio", "digital", "agency", "tech", "design", "info", "me"];
 let tldCache: { values: Set<string>; rdap: Set<string>; expires: number } | null = null;
+const domainResultCache = new Map<string, { expires: number; results: Array<{ domain: string; status: string; source: string }> }>();
 
 async function validTlds() {
   if (tldCache && tldCache.expires > Date.now()) return tldCache;
@@ -47,6 +49,11 @@ async function checkDomain(domain: string, hasRdap: boolean) {
 }
 
 export async function GET(request: NextRequest) {
+  const rate = checkRateLimit(request, "domain-check", 20, 60 * 1000);
+  if (!rate.allowed) {
+    return rateLimitResponse(rate.retryAfterSeconds);
+  }
+
   const raw = request.nextUrl.searchParams.get("name") ?? "";
   const normalized = normalize(raw);
   if (!normalized || normalized.length > 253 || normalized.includes("/") || normalized.includes(" ")) {
@@ -62,7 +69,20 @@ export async function GET(request: NextRequest) {
       return labels.every((label) => /^(xn--)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) && registries.values.has(labels.at(-1)!);
     });
     if (!checked.length) return NextResponse.json({ error: "Ez a végződés nem szerepel az IANA aktív domainlistáján." }, { status: 400 });
+
+    const cacheKey = checked.join(",");
+    const cached = domainResultCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return NextResponse.json({ results: cached.results, checkedAt: new Date().toISOString(), preliminary: true, cached: true });
+    }
+
     const results = await Promise.all(checked.map((domain) => checkDomain(domain, registries.rdap.has(domain.split(".").at(-1)!))));
+    if (domainResultCache.size > 1_000) {
+      for (const [key, entry] of domainResultCache) {
+        if (entry.expires <= Date.now()) domainResultCache.delete(key);
+      }
+    }
+    domainResultCache.set(cacheKey, { results, expires: Date.now() + 5 * 60 * 1000 });
     return NextResponse.json({ results, checkedAt: new Date().toISOString(), preliminary: true });
   } catch {
     return NextResponse.json({ error: "A nyilvántartói ellenőrzés most nem elérhető. Próbáld újra rövidesen." }, { status: 503 });

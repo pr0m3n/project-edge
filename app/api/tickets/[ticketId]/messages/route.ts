@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
+import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type Params = {
@@ -19,6 +20,20 @@ function clean(value: unknown) {
 
 export async function POST(request: Request, { params }: Params) {
   const { ticketId } = await params;
+  if (!isUuid(ticketId)) {
+    return NextResponse.json({ error: "Invalid ticket id." }, { status: 400 });
+  }
+
+  const rate = checkRateLimit(request, "support-ticket-message", 20, 10 * 60 * 1000);
+  if (!rate.allowed) {
+    return rateLimitResponse(rate.retryAfterSeconds);
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > 7_000) {
+    return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
+  }
+
   let payload: MessagePayload;
 
   try {
@@ -30,11 +45,11 @@ export async function POST(request: Request, { params }: Params) {
   const token = clean(payload.token);
   const body = clean(payload.body);
 
-  if (!token || !body) {
+  if (!token || !body || token.length > 128 || body.length > 5_000) {
     return NextResponse.json({ error: "Missing message." }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerSupabaseAdminClient();
   const { data: ticket, error: ticketError } = await supabase
     .from("support_tickets")
     .select("id, name, email, visitor_token, status")
@@ -65,7 +80,7 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const emailResult = await sendProjectEdgeEmail({
-    to: "admin@projectedge.hu",
+    to: process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu",
     subject: `Új üzenet a ticketben: ${ticket.name}`,
     eyebrow: "PROJECTEDGE · SUPPORT",
     preheader: `${ticket.name} új választ küldött a support beszélgetésben.`,

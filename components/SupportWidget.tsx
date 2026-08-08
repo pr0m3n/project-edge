@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 
 type ChatMessage = {
   id: string;
@@ -65,48 +64,9 @@ export function SupportWidget() {
 
     loadMessages(ticket);
     const fallbackInterval = window.setInterval(() => loadMessages(ticket, true), 30000);
-    const channel = supabase
-      .channel(`support-ticket-${ticket.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          filter: `ticket_id=eq.${ticket.id}`,
-          schema: "public",
-          table: "support_ticket_messages"
-        },
-        (payload) => {
-          const nextMessage = payload.new as ChatMessage;
-          setMessages((current) =>
-            current.some((message) => message.id === nextMessage.id) ? current : [...current, nextMessage]
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          filter: `id=eq.${ticket.id}`,
-          schema: "public",
-          table: "support_tickets"
-        },
-        (payload) => {
-          const nextTicket = payload.new as {
-            rating?: number | null;
-            rating_comment?: string | null;
-            status?: TicketState;
-          };
-          if (nextTicket.status) {
-            setTicketStatus(nextTicket.status);
-          }
-          setHasRated(Boolean(nextTicket.rating || nextTicket.rating_comment));
-        }
-      )
-      .subscribe();
 
     return () => {
       window.clearInterval(fallbackInterval);
-      supabase.removeChannel(channel);
     };
   }, [ticket, open]);
 
@@ -190,6 +150,7 @@ export function SupportWidget() {
     }
 
     const data = await response.json();
+    const emailFailed = data.emailSent === false;
     const nextTicket = {
       email: data.ticket.email,
       id: data.ticket.id,
@@ -203,8 +164,10 @@ export function SupportWidget() {
     setTicketStatus(data.ticket.status ?? "open");
     setHasRated(false);
     setForm(initialForm);
-    setStatus("success");
-    setNotice("Megkaptam. Itt tudjuk folytatni a beszélgetést.");
+    setStatus(emailFailed ? "error" : "success");
+    setNotice(emailFailed
+      ? "Az üzenetet elmentettem, de az értesítő email nem ment ki. Rövidesen ellenőrizzük."
+      : "Megkaptam. Itt tudjuk folytatni a beszélgetést.");
   }
 
   async function sendReply(event: FormEvent<HTMLFormElement>) {
@@ -232,8 +195,13 @@ export function SupportWidget() {
     const data = await response.json();
     setMessages((current) => [...current, data.message]);
     setReply("");
-    setStatus("idle");
-    setNotice("");
+    if (data.emailSent === false) {
+      setStatus("error");
+      setNotice("Az üzenetet elmentettem, de az értesítő email nem ment ki. Rövidesen ellenőrizzük.");
+    } else {
+      setStatus("idle");
+      setNotice("");
+    }
   }
 
   async function submitRating(event: FormEvent<HTMLFormElement>) {
@@ -318,6 +286,7 @@ export function SupportWidget() {
               <form className="chat-reply" onSubmit={sendReply}>
                 <textarea
                   disabled={ticketStatus === "closed"}
+                  maxLength={5000}
                   required
                   value={reply}
                   onChange={(event) => setReply(event.target.value)}
@@ -346,6 +315,7 @@ export function SupportWidget() {
                         ))}
                       </div>
                       <textarea
+                        maxLength={1000}
                         value={ratingComment}
                         onChange={(event) => setRatingComment(event.target.value)}
                         placeholder="Pár szóban megírhatod, mi volt jó vagy min javítsak."
@@ -361,12 +331,14 @@ export function SupportWidget() {
           ) : (
             <form onSubmit={startConversation}>
               <input
+                maxLength={120}
                 required
                 value={form.name}
                 onChange={(event) => updateField("name", event.target.value)}
                 placeholder="Név"
               />
               <input
+                maxLength={160}
                 required
                 type="email"
                 value={form.email}
@@ -374,6 +346,7 @@ export function SupportWidget() {
                 placeholder="Email"
               />
               <textarea
+                maxLength={5000}
                 required
                 value={form.message}
                 onChange={(event) => updateField("message", event.target.value)}

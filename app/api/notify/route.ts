@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, rateLimitResponse } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 /** A stúdió értesítési címe — ügyfél-jelzések ide futnak be. */
-const STUDIO_NOTIFICATION_EMAIL = process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+const STUDIO_NOTIFICATION_EMAIL = process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu";
 
 // Csak belső, relatív útvonalat engedünk a levél gombjában (nyílt átirányítás ellen).
 function safeInternalLink(link: unknown) {
@@ -14,11 +15,21 @@ function safeInternalLink(link: unknown) {
 
 export async function POST(request: Request) {
   try {
+    const rate = checkRateLimit(request, "notification", 30, 10 * 60 * 1000);
+    if (!rate.allowed) {
+      return rateLimitResponse(rate.retryAfterSeconds);
+    }
+
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > 6_000) {
+      return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
       return NextResponse.json({ error: "Missing Supabase env vars" }, { status: 500 });
     }
 
@@ -56,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing title" }, { status: 400 });
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey || supabaseAnonKey, {
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false }
     });
 
@@ -84,6 +95,15 @@ export async function POST(request: Request) {
     let targetEmail: string | null = null;
 
     if (!targetUserId) {
+      if (!isAdmin) {
+        const [{ count: projectCount }, { count: ticketCount }] = await Promise.all([
+          callerClient.from("client_projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          callerClient.from("client_tickets").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+        ]);
+        if (!projectCount && !ticketCount) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
       targetEmail = STUDIO_NOTIFICATION_EMAIL;
     } else if (targetUserId === user.id) {
       targetEmail = user.email ?? null;
@@ -145,7 +165,8 @@ export async function POST(request: Request) {
     // A DB értesítés ettől még megmarad, de a választásból egyértelműen látszik,
     // ha a levélküldő nincs beállítva vagy a szolgáltató elutasította a levelet.
     return NextResponse.json({ success: !dbError, emailSent, emailError });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Ismeretlen szerverhiba.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

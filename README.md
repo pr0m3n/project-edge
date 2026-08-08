@@ -26,9 +26,12 @@ SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=ProjectEdge Studio <info@projectedge.hu>
 RESEND_REPLY_TO=info@projectedge.hu
+RESEND_NOTIFICATION_EMAIL=info@projectedge.hu
+NEXT_PUBLIC_SITE_URL=https://www.projectedge.hu
 ```
 
-The service role key is reserved for future server-only automations. Never expose it in client code.
+The service role key is used by trusted server routes for public support and account
+deletion flows. Never expose it in client code.
 
 Transactional emails are sent through Resend and use the same visual language as the
 ProjectEdge cold-email campaign. Verify `projectedge.hu` in Resend, then add
@@ -57,17 +60,19 @@ the cover PNGs. Rackhost screenshots come from `tmp/pdfs/domain-guide/`.
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
-2. Run `supabase/migrations/001_projectedge_crm.sql`.
-3. Run `supabase/migrations/002_support_tickets.sql`.
+2. Run migrations `001` through `009`, then `011` through `022`, in filename order.
+3. Do not run `010_lock_financial_columns.sql`; it is obsolete.
 4. Create an admin user in Supabase Auth.
 5. Add the admin user to `public.admin_users`.
 
 Migrations are applied manually, in filename order. Note that
 `010_lock_financial_columns.sql` is **obsolete — do not run it**; it is superseded by
-`019_client_write_guard.sql`, which restricts client writes without breaking the
-current (mocked) payment flow. `018_private_client_assets.sql` makes the
+`019_client_write_guard.sql`, which restricts client writes while the payment
+integration is being replaced by Stripe. `018_private_client_assets.sql` makes the
 `client-assets` and `client-logos` buckets private: uploads are addressed by object
 path and opened through short-lived signed URLs (`lib/storage-assets.ts`).
+`022_security_hardening.sql` removes anonymous table access from support tickets and
+notifications; the public support widget uses the server API instead.
 
 Example:
 
@@ -83,9 +88,17 @@ values (
 ## Vercel setup
 
 1. Connect this repository to the existing Vercel project.
-2. Add the same environment variables in Vercel Project Settings.
-3. Push to `main`.
-4. Vercel will deploy the new `www.projectedge.hu` production site.
+2. Add the same environment variables in Vercel Project Settings for Production,
+   Preview and Development as appropriate.
+3. Verify the Resend sending domain and set `RESEND_NOTIFICATION_EMAIL` to the
+   actual internal inbox.
+4. Push to `main`.
+5. Vercel will deploy the new `www.projectedge.hu` production site.
+
+Before accepting a real client, test registration, login, project creation, file
+upload, admin reply, notification email, support ticket reply and account deletion
+against the production Supabase project. Take a database backup before applying a
+new migration.
 
 ## Pages
 

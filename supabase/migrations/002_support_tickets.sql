@@ -20,10 +20,9 @@ as $projectedge$
   );
 $projectedge$;
 
-drop table if exists public.support_ticket_messages cascade;
-drop table if exists public.support_tickets cascade;
-
-create table public.support_tickets (
+-- This migration is intentionally non-destructive. Never drop live support data
+-- while applying or repairing the schema.
+create table if not exists public.support_tickets (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -40,7 +39,7 @@ create table public.support_tickets (
   admin_reply text
 );
 
-create table public.support_ticket_messages (
+create table if not exists public.support_ticket_messages (
   id uuid primary key default gen_random_uuid(),
   ticket_id uuid not null references public.support_tickets(id) on delete cascade,
   created_at timestamptz not null default now(),
@@ -79,8 +78,10 @@ create trigger support_tickets_set_updated_at
 before update on public.support_tickets
 for each row execute function public.set_updated_at();
 
-grant select, insert, update on public.support_tickets to anon;
-grant select, insert on public.support_ticket_messages to anon;
+revoke all on public.support_tickets from anon;
+revoke all on public.support_ticket_messages from anon;
+revoke all on public.support_tickets from authenticated;
+revoke all on public.support_ticket_messages from authenticated;
 grant select, insert, update, delete on public.support_tickets to authenticated;
 grant select, insert, update, delete on public.support_ticket_messages to authenticated;
 
@@ -90,50 +91,19 @@ alter table public.support_ticket_messages enable row level security;
 alter table public.support_tickets replica identity full;
 alter table public.support_ticket_messages replica identity full;
 
-drop policy if exists "Visitors can create support tickets" on public.support_tickets;
-create policy "Visitors can create support tickets"
-on public.support_tickets for insert
-to anon, authenticated
-with check (true);
-
-drop policy if exists "Visitors can read support tickets by app route" on public.support_tickets;
-create policy "Visitors can read support tickets by app route"
-on public.support_tickets for select
-to anon, authenticated
-using (true);
-
 drop policy if exists "Admins can manage support tickets" on public.support_tickets;
 create policy "Admins can manage support tickets"
 on public.support_tickets for all
 to authenticated
-using (true)
-with check (true);
-
-drop policy if exists "Visitors can rate closed support tickets" on public.support_tickets;
-create policy "Visitors can rate closed support tickets"
-on public.support_tickets for update
-to anon
-using (true)
-with check (true);
-
-drop policy if exists "Visitors can create customer messages" on public.support_ticket_messages;
-create policy "Visitors can create customer messages"
-on public.support_ticket_messages for insert
-to anon, authenticated
-with check (sender = 'customer');
-
-drop policy if exists "Visitors can read ticket messages by app route" on public.support_ticket_messages;
-create policy "Visitors can read ticket messages by app route"
-on public.support_ticket_messages for select
-to anon, authenticated
-using (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "Admins can manage ticket messages" on public.support_ticket_messages;
 create policy "Admins can manage ticket messages"
 on public.support_ticket_messages for all
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin())
+with check (public.is_admin());
 
 do $projectedge_realtime$
 begin

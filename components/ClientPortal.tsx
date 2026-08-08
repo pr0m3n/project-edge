@@ -931,13 +931,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const resData = await res.json();
       if (res.ok && resData.success) {
         setNotice("Fiókod sikeresen törölve lett. Kijelentkeztetés...");
-        await triggerNotification(
-          null,
-          "admin@projectedge.hu",
-          "Fiók törölve",
-          `Az ügyfél (${email}) véglegesen törölte a fiókját a rendszerből.`,
-          "/admin"
-        );
         setTimeout(() => {
           supabase.auth.signOut().then(() => {
             window.location.href = "/ugyfelkapu";

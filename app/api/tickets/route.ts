@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type TicketPayload = {
@@ -13,6 +14,16 @@ function clean(value: unknown) {
 }
 
 export async function POST(request: Request) {
+  const rate = checkRateLimit(request, "support-ticket-create", 5, 10 * 60 * 1000);
+  if (!rate.allowed) {
+    return rateLimitResponse(rate.retryAfterSeconds);
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > 8_000) {
+    return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
+  }
+
   let payload: TicketPayload;
 
   try {
@@ -29,12 +40,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
 
-  if (!email.includes("@") || email.length > 160) {
+  if (name.length > 120 || message.length > 5_000) {
+    return NextResponse.json({ error: "A név vagy az üzenet túl hosszú." }, { status: 400 });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 160) {
     return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
   }
 
   const visitorToken = crypto.randomUUID();
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerSupabaseAdminClient();
 
   const { data: ticket, error: ticketError } = await supabase
     .from("support_tickets")
@@ -70,7 +85,7 @@ export async function POST(request: Request) {
   }
 
   const emailResult = await sendProjectEdgeEmail({
-    to: "admin@projectedge.hu",
+    to: process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu",
     subject: `Új üzenet a weboldalról: ${name}`,
     eyebrow: "PROJECTEDGE · ÚJ ÜZENET",
     preheader: `${name} új support üzenetet küldött a projectedge.hu oldalon.`,

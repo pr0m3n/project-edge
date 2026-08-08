@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 export async function POST(request: Request) {
   try {
@@ -38,9 +39,34 @@ export async function POST(request: Request) {
     if (deleteError) {
       return NextResponse.json({ error: `Fiók törlése sikertelen: ${deleteError.message}` }, { status: 500 });
     }
+
+    const notificationEmail = process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+    const notificationMessage = `Az ügyfél (${user.email ?? "ismeretlen email"}) véglegesen törölte a fiókját a rendszerből.`;
+    const { error: notificationError } = await adminSupabase.from("notifications").insert({
+      user_id: null,
+      title: "Fiók törölve",
+      message: notificationMessage,
+      link: "/admin"
+    });
+    if (notificationError) {
+      console.error("Account deletion notification insert failed", notificationError);
+    }
+    const emailResult = await sendProjectEdgeEmail({
+      to: notificationEmail,
+      subject: "Fiók törölve",
+      message: notificationMessage,
+      link: "/admin",
+      eyebrow: "PROJECTEDGE · FIÓK TÖRLÉS",
+      preheader: "Egy ügyfélfiók véglegesen törölve lett.",
+      details: [{ label: "Email", value: user.email ?? "ismeretlen" }]
+    });
+    if (!emailResult.ok) {
+      console.error("Account deletion notification email failed", emailResult.error);
+    }
     
     return NextResponse.json({ success: true, message: "A fiók sikeresen és véglegesen törölve lett." });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Ismeretlen szerverhiba.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

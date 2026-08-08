@@ -109,12 +109,18 @@ export default function WorkPage() {
         <p className="micro-label dark">Munkák</p>
         <h1>Nézd meg, mit építettem.</h1>
         <p>
-          Egy valós ügyfélmunka és két végigkattintható mintaprojekt.
+          Egy éles full-stack rendszer és öt végigkattintható mintaprojekt — öt különböző üzleti célra.
         </p>
       </section>
 
       <section className="case-study">
-        <p className="micro-label dark">Valós ügyfélmunka / Checky.hu</p>
+        <div className="case-title-row">
+          <div>
+            <p className="micro-label dark">Valós ügyfélmunka / Checky.hu</p>
+            <h2>Nem látványterv. Naponta használt rendszer.</h2>
+          </div>
+          <a className="case-live-link" href="https://checky.hu" rel="noreferrer" target="_blank">Élő oldal megnyitása ↗</a>
+        </div>
         <a href="https://checky.hu" rel="noreferrer" target="_blank">
           <img alt="Checky.hu weboldal referencia" className="case-shot" src="/work/checky.png" />
         </a>
@@ -122,37 +128,37 @@ export default function WorkPage() {
           <article className="case-block">
             <span>A helyzet</span>
             <p>
-              Nem bemutatkozó oldal kellett, hanem működő rendszer: felület, háttér-logika és
-              adatkezelés együtt.
+              Nem bemutatkozó oldal kellett, hanem olyan felület, ahol a felhasználói folyamatok,
+              az adatok és az üzleti logika egy rendszerben működnek.
             </p>
           </article>
           <article className="case-block">
             <span>A megoldás</span>
             <p>
-              Egy kézben csináltam a frontendet és a backendet is, Next.js alapon — gyorsra és
-              bővíthetőre.
+              A felhasználói felülettől az adatkezelésig és a háttérfolyamatokig teljes egészében
+              én terveztem és fejlesztettem a rendszert.
             </p>
           </article>
           <article className="case-block">
             <span>Az eredmény</span>
             <p>
-              Élesben használt rendszer, ami egy felületen fogja össze az adatokat és a
-              folyamatokat.
+              Egy élesben elérhető, bővíthető termék született — nem különálló oldalak, hanem
+              egymásra épülő, végigvezetett folyamatok.
             </p>
           </article>
         </div>
         <div className="case-metrics">
           <div className="case-metric">
-            <strong>100%</strong>
-            <span>egyedi kód, sablon nélkül</span>
+            <strong>Éles</strong>
+            <span>valós felhasználóknak készült rendszer</span>
           </div>
           <div className="case-metric">
             <strong>Full-stack</strong>
-            <span>felület és háttérrendszer együtt</span>
+            <span>felület, adat és háttérfolyamat együtt</span>
           </div>
           <div className="case-metric">
-            <strong>1</strong>
-            <span>kéz: frontend + backend</span>
+            <strong>End-to-end</strong>
+            <span>tervezéstől az éles indulásig</span>
           </div>
         </div>
       </section>
@@ -160,9 +166,10 @@ export default function WorkPage() {
       <section className="demos-section">
         <div className="section-head">
           <p className="micro-label dark">Mintaprojektek</p>
-          <h2>Két teljes oldal, végigkattintható.</h2>
+          <h2>Öt teljes oldal, végigkattintható.</h2>
           <p>
-            A márkák kitaláltak, a kód és a működés viszont éles.
+            A márkák kitaláltak, a felületek és az interakciók viszont működnek. Válaszd azt, amelyik
+            a te üzleti célodhoz áll a legközelebb.
           </p>
         </div>
 
@@ -229,20 +236,65 @@ export default function WorkPage() {
               </a>
             </div>
           </article>
+
+          <article className="demo-card">
+            <a className="demo-preview fixora" href="/demo/varga-villany">
+              <span className="demo-tag">Mintaprojekt</span>
+              <span className="demo-goal">ÉRDEKLŐDŐSZERZÉS</span>
+              <span className="demo-screen-copy"><b>Áram legyen.<br />Meglepetés ne.</b><i>Gyors árbecslés →</i></span>
+            </a>
+            <div className="demo-body">
+              <span className="demo-kind">Helyi szolgáltató + ajánlatkérés</span>
+              <h3>Varga Villanyszerelés</h3>
+              <p>Bizalomépítő szolgáltatói oldal, ami a látogatót egy perc alatt konkrét ajánlatkérésig vezeti.</p>
+              <ul className="demo-points"><li>Működő, szolgáltatásalapú árbecslő</li><li>Helyi bizalmi elemek és esettanulmány</li><li>Telefonra és gyors kapcsolatfelvételre tervezve</li></ul>
+              <a className="button ghost" href="/demo/varga-villany">Megnézem élőben</a>
+            </div>
+          </article>
+
+          <article className="demo-card">
+            <a className="demo-preview noma" href="/demo/liget-borstudio">
+              <span className="demo-tag">Mintaprojekt</span>
+              <span className="demo-goal">IDŐPONTFOGLALÁS</span>
+              <span className="demo-screen-copy light"><b>A bőröd nem trend.<br />Történet.</b><i>Időpontot foglalok →</i></span>
+            </a>
+            <div className="demo-body">
+              <span className="demo-kind">Szépségstúdió + online foglalás</span>
+              <h3>Liget Bőrstúdió</h3>
+              <p>Nyugodt, magazinos márkaoldal valódi, több lépéses szolgáltatás- és időpontválasztással.</p>
+              <ul className="demo-points"><li>Kezelés-, nap- és időpontválasztás</li><li>Mobilon is használható foglalási panel</li><li>Prémium arculat saját vizuális világgal</li></ul>
+              <a className="button ghost" href="/demo/liget-borstudio">Megnézem élőben</a>
+            </div>
+          </article>
+
+          <article className="demo-card demo-card-wide">
+            <a className="demo-preview nest" href="/demo/budai-otthonok">
+              <span className="demo-tag">Mintaprojekt</span>
+              <span className="demo-goal">KERESÉS + KATALÓGUS</span>
+              <span className="demo-screen-copy"><b>Nem négyzetmétert.<br />Életet választasz.</b><i>Ingatlanok böngészése →</i></span>
+            </a>
+            <div className="demo-body">
+              <span className="demo-kind">Ingatlankatalógus + mentés</span>
+              <h3>Budai Otthonok</h3>
+              <p>Kereshető prémium kínálat kerület- és árszűrővel, menthető ingatlanokkal és eladói szolgáltatásbemutatóval.</p>
+              <ul className="demo-points"><li>Azonnal reagáló szűrés és találatszám</li><li>Menthető ingatlanok és állapotkezelés</li><li>Erős, szerkesztőségi ingatlanmárka</li></ul>
+              <a className="button ghost" href="/demo/budai-otthonok">Megnézem élőben</a>
+            </div>
+          </article>
         </div>
 
         <p className="cap-note">
-          A fizetés ezekben a demókban nincs élesítve — a te oldaladon lehet.
+          A fizetés és az adatküldés a demókban nincs élesítve — a te oldaladon természetesen lehet.
         </p>
       </section>
 
       <section className="cap-section">
         <div className="section-head">
-          <p className="micro-label dark">Vizuális eszközök</p>
-          <h2>Effektek, amiket az oldaladba tehetek.</h2>
+          <p className="micro-label dark">Vizuális részletek</p>
+          <h2>A működés mellé karakter is jár.</h2>
           <p>
-            Ezek nem képek — élő, mozgó elemek, itt a böngésződben. Pont ezekből rakom össze azt a
-            karaktert, amitől egy oldal emlékezetes marad.
+            A jó felület először használható, aztán emlékezetes. Ezekből a finom, élő részletekből
+            csak annyit használok, amennyi a márkádat erősíti.
           </p>
         </div>
         <EffectsRail capabilities={capabilities} />
@@ -253,8 +305,8 @@ export default function WorkPage() {
 
       <section className="voices-section">
         <div className="section-head">
-          <p className="micro-label dark">Mire számíthatsz</p>
-          <h2>Ezt kapod tőlem.</h2>
+          <p className="micro-label dark">Így dolgozom</p>
+          <h2>Három vállalásom minden projektnél.</h2>
         </div>
         <div className="voices-grid">
           {voices.map((voice) => (

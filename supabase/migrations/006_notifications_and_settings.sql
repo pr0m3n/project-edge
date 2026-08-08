@@ -10,8 +10,9 @@ create table if not exists public.notifications (
 );
 
 -- Grant permissions
+revoke all on public.notifications from anon;
 grant select, insert, update on public.notifications to authenticated;
-grant select, insert, update on public.notifications to anon;
+grant delete on public.notifications to authenticated;
 
 -- Enable Row Level Security
 alter table public.notifications enable row level security;
@@ -20,8 +21,8 @@ alter table public.notifications enable row level security;
 drop policy if exists "Users can read own notifications" on public.notifications;
 create policy "Users can read own notifications"
   on public.notifications for select
-  to authenticated, anon
-  using (user_id = auth.uid() or (user_id is null and public.is_admin()) or (auth.uid() is null)); -- Let anon view if needed, but RLS restricts by user_id mostly
+  to authenticated
+  using (user_id = auth.uid() or (user_id is null and public.is_admin()));
 
 drop policy if exists "Users can update own notifications" on public.notifications;
 create policy "Users can update own notifications"
@@ -30,11 +31,11 @@ create policy "Users can update own notifications"
   using (user_id = auth.uid() or (user_id is null and public.is_admin()))
   with check (user_id = auth.uid() or (user_id is null and public.is_admin()));
 
-drop policy if exists "Anyone can insert notifications" on public.notifications;
-create policy "Anyone can insert notifications"
+drop policy if exists "Admins can insert notifications" on public.notifications;
+create policy "Admins can insert notifications"
   on public.notifications for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (public.is_admin());
 
 -- Enable realtime for notifications
 do $projectedge_realtime_notifications$

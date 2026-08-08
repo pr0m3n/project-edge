@@ -185,7 +185,7 @@ export default function Home() {
             sizes="(max-width: 880px) calc(100vw - 36px), 42vw"
             src="/profile/patrik.png"
           />
-          <span className="founder-photo-tag">// Szia, Patrik vagyok.</span>
+          <span className="founder-photo-tag">{"// Szia, Patrik vagyok."}</span>
           <div className="founder-badge">
             <strong>Patrik</strong>
             <span>alapító · fejlesztő · ProjectEdge</span>
