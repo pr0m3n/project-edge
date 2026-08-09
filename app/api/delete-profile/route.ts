@@ -1,6 +1,37 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
+
+async function removeUserStorage(
+  adminSupabase: SupabaseClient<any, "public", "public", any, any>,
+  userId: string,
+  bucket: string
+) {
+  const paths: string[] = [];
+  let offset = 0;
+  const pageSize = 100;
+
+  while (true) {
+    const { data, error } = await adminSupabase.storage.from(bucket).list(userId, {
+      limit: pageSize,
+      offset,
+      sortBy: { column: "name", order: "asc" }
+    });
+    if (error) {
+      if (/bucket.*not found/i.test(error.message)) return;
+      throw new Error(`${bucket} tárhely listázása sikertelen: ${error.message}`);
+    }
+    const files = (data ?? []).filter((item) => item.id);
+    paths.push(...files.map((item) => `${userId}/${item.name}`));
+    if ((data?.length ?? 0) < pageSize) break;
+    offset += pageSize;
+  }
+
+  if (paths.length) {
+    const { error } = await adminSupabase.storage.from(bucket).remove(paths);
+    if (error) throw new Error(`${bucket} tárhely törlése sikertelen: ${error.message}`);
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +65,23 @@ export async function POST(request: Request) {
       auth: { persistSession: false }
     });
     
-    // Delete auth user (cascades to public.client_profiles, projects, tickets etc. due to ON DELETE CASCADE)
+    const [{ count: projectCount, error: projectError }, { count: ticketCount, error: ticketError }] = await Promise.all([
+      adminSupabase.from("client_projects").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      adminSupabase.from("client_tickets").select("id", { count: "exact", head: true }).eq("user_id", user.id)
+    ]);
+    if (projectError || ticketError) {
+      return NextResponse.json({ error: "A kapcsolódó üzleti adatok ellenőrzése nem sikerült." }, { status: 500 });
+    }
+    if ((projectCount ?? 0) > 0 || (ticketCount ?? 0) > 0) {
+      return NextResponse.json({
+        error: "A fiókhoz projekt vagy ügyfélszolgálati ügy tartozik, ezért önkiszolgáló módon nem törölhető. Kérd a lezárást az ügyfélszolgálattól."
+      }, { status: 409 });
+    }
+
+    await removeUserStorage(adminSupabase, user.id, "client-assets");
+    await removeUserStorage(adminSupabase, user.id, "client-logos");
+
+    // Csak üres fiók törölhető; így nem vesznek el szerződéses és üzleti nyilvántartások.
     const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(user.id);
     if (deleteError) {
       return NextResponse.json({ error: `Fiók törlése sikertelen: ${deleteError.message}` }, { status: 500 });

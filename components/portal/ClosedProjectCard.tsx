@@ -15,6 +15,9 @@ type ClosedProjectCardProps = {
 };
 
 export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onSubmitReview }: ClosedProjectCardProps) {
+  const cancelledSubscription = project.commercial_model === "subscription" && project.subscription_status === "cancelled";
+  const completedPurchase = project.commercial_model === "purchase" && Boolean(project.warranty_started_at || project.final_payment_paid_at || project.final_payment_paid);
+  const closedWithoutDelivery = !cancelledSubscription && !completedPurchase;
   const warrantyUntil = project.warranty_expires_at
     ? new Date(project.warranty_expires_at)
     : project.final_payment_paid_at
@@ -34,7 +37,7 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
         gap: "12px"
       }}
     >
-      {!project.client_rating ? (
+      {completedPurchase && !project.client_rating ? (
         <div className="completion-celebration" aria-hidden="true">
           {Array.from({ length: 18 }).map((_, index) => <i key={index} />)}
           <span>🎉</span>
@@ -59,20 +62,36 @@ export function ClosedProjectCard({ project, reviewForm, onReviewFormChange, onS
             fontWeight: "bold"
           }}
         >
-          Lezárva
+          {cancelledSubscription ? "Előfizetés lezárva" : completedPurchase ? "Projekt lezárva" : project.offer_status === "declined" ? "Ajánlat elutasítva" : "Projekt megszakítva"}
         </span>
       </div>
 
-      <div className="subscription-card warranty-summary">
+      {cancelledSubscription ? (
+        <div className="subscription-card cancellation-summary">
+          <div>
+            <span className="micro-label">Menedzselt szolgáltatás lezárva</span>
+            <strong>{project.cancel_effective_at ? `${new Date(project.cancel_effective_at).toLocaleDateString("hu-HU")}-i hatállyal` : "A lemondás feldolgozva"}</strong>
+            <small>A weboldal leállt, és a havi üzemeltetés megszűnt. Ez nem projektátadás, ezért nem jár hozzá forráskód vagy 30 napos technikai garancia.</small>
+          </div>
+        </div>
+      ) : closedWithoutDelivery ? (
+        <div className="subscription-card cancellation-summary">
+          <div>
+            <span className="micro-label">Lezárt ügy</span>
+            <strong>{project.offer_status === "declined" ? "Az ajánlatot elutasítottad" : "A projekt teljesítés nélkül lezárult"}</strong>
+            <small>Nem történt kész weboldal-átadás, ezért ehhez a lezáráshoz nem tartozik technikai garancia vagy projektértékelés.</small>
+          </div>
+        </div>
+      ) : <div className="subscription-card warranty-summary">
         <div className="warranty-summary-icon">30</div>
         <div>
           <span className="micro-label">Díjmentes technikai garancia</span>
           <strong>{warrantyUntil ? `${warrantyUntil.toLocaleDateString("hu-HU")}-ig` : "30 napig az átadástól"}</strong>
           <small>Az általunk elkészített működés hibáját az ügyfélkapuban jelentheted. Új funkció és utólagos módosítás nem garanciális javítás.</small>
         </div>
-      </div>
+      </div>}
 
-      {project.client_rating ? (
+      {!completedPurchase ? null : project.client_rating ? (
         <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(48, 56, 65, 0.08)", paddingTop: "10px" }}>
           <span style={{ fontSize: "13px", color: "var(--muted)" }}>Értékelésed:</span>
           <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(project.client_rating)}</div>

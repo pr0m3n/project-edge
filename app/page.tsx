@@ -39,7 +39,7 @@ const proof = [
 const faqs = [
   [
     "Mennyibe kerül egy weboldal?",
-    "Kétféleképpen lehet. Bérlésnél 19 900 Ft/hó-tól indulsz, induló díj nincs — az oldal az enyém marad, én üzemeltetem. Ha inkább a sajátod legyen, meg is veheted 349 000 Ft-tól, akkor a forráskóddal együtt átadom."
+    "Kétféleképpen lehet. Bérlésnél 14 900 Ft/hó-tól indulsz, induló díj nincs — az oldal az enyém marad, én üzemeltetem. Ha inkább a sajátod legyen, meg is veheted 179 000 Ft-tól, akkor a forráskóddal együtt átadom."
   ],
   [
     "Mennyi idő alatt készül el?",

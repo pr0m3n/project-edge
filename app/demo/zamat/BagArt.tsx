@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { Product } from "./data";
 
 /**
@@ -6,7 +7,8 @@ import type { Product } from "./data";
  */
 export function BagArt({ product, small = false }: { product: Product; small?: boolean }) {
   const { palette, name, roast } = product;
-  const id = product.slug;
+  const instanceId = useId().replace(/:/g, "");
+  const id = `${product.slug}-${instanceId}`;
 
   return (
     <svg

@@ -21,6 +21,9 @@ export function CookieBanner() {
   useEffect(() => {
     if (!measurementEnabled) return;
     if (readConsent() === null) setVisible(true);
+    const openSettings = () => setVisible(true);
+    window.addEventListener("projectedge:open-cookie-settings", openSettings);
+    return () => window.removeEventListener("projectedge:open-cookie-settings", openSettings);
   }, []);
 
   function decide(choice: ConsentChoice) {

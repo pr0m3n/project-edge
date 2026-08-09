@@ -324,7 +324,7 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     title: "Erősítsd meg: minden hozzáférés nálad van",
     detail:
       "Utolsó lépés. Nézd át, hogy a domain, a Vercel csapat, az adatbázis, a levélküldés és a forráskód a te (vagy a céged) fiókjában van-e, és hogy a megújítási számlák hozzád futnak-e be. Ha igen, itt zárd le az átadást.",
-    where: "Ezután tudod lezárni a projektet, és ekkor indul a 30 napos díjmentes technikai garancia."
+    where: "Ezután tudod lezárni a projektet. A 30 napos díjmentes technikai garancia az utolsó igazolt átadási lépéstől számít."
   }
 ];
 

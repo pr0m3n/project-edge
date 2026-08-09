@@ -10,7 +10,7 @@ type ReviewFeedbackPanelProps = {
 export function ReviewFeedbackPanel({ project, feedbackRoundNote, onFeedbackRoundNoteChange, onSubmit }: ReviewFeedbackPanelProps) {
   return (
     <div style={{ background: "rgba(255, 87, 34, 0.04)", border: "1px solid rgba(255, 87, 34, 0.12)", padding: "20px", borderRadius: "22px", marginTop: "8px", display: "grid", gap: "12px" }}>
-      <h4 style={{ margin: 0, fontSize: "18px" }}>Projekt átnézése</h4>
+      <h4 style={{ margin: 0, fontSize: "18px" }}>Előnézet és visszajelzés</h4>
       <p style={{ margin: 0, fontSize: "14px" }}>A fejlesztési szakasz lezárult. Kérlek, vizsgáld felül az oldalt.</p>
       <div style={{ fontSize: "14px", background: "rgba(0,0,0,0.02)", padding: "8px 12px", borderRadius: "8px", width: "fit-content" }}>
         <strong>Visszajelzési körök: {project.feedback_round} / 2</strong>

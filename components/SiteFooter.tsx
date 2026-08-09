@@ -1,4 +1,5 @@
 import { TransitionLink } from "@/components/TransitionLink";
+import { CookieSettingsButton } from "@/components/CookieSettingsButton";
 
 const navLinks = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -43,6 +44,7 @@ export function SiteFooter() {
               {link.label}
             </TransitionLink>
           ))}
+          <CookieSettingsButton />
         </nav>
       </div>
 

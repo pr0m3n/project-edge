@@ -60,7 +60,7 @@ the cover PNGs. Rackhost screenshots come from `tmp/pdfs/domain-guide/`.
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
-2. Run migrations `001` through `009`, then `011` through `022`, in filename order.
+2. Run migrations `001` through `009`, then `011` through `025`, in filename order.
 3. Do not run `010_lock_financial_columns.sql`; it is obsolete.
 4. Create an admin user in Supabase Auth.
 5. Add the admin user to `public.admin_users`.
@@ -72,7 +72,13 @@ integration is being replaced by Stripe. `018_private_client_assets.sql` makes t
 `client-assets` and `client-logos` buckets private: uploads are addressed by object
 path and opened through short-lived signed URLs (`lib/storage-assets.ts`).
 `022_security_hardening.sql` removes anonymous table access from support tickets and
-notifications; the public support widget uses the server API instead.
+notifications; the public support widget uses the server API instead. `023` makes client
+assets private and deduplicates purchase requests, `024` adds the bank-transfer purchase
+state machine, and `025` enforces the current lower prices and AAM billing wording for new
+projects.
+
+To verify the 023–025 database changes without modifying anything, run the read-only
+checks in `supabase/verify_023_025.sql` from the Supabase SQL Editor.
 
 Example:
 

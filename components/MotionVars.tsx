@@ -97,11 +97,11 @@ export function MotionVars() {
   useEffect(() => {
     if (isDemo || prefersStaticMotion()) return;
     let io: IntersectionObserver | null = null;
+    let firstFrame = 0;
+    let secondFrame = 0;
+    let timer = 0;
 
-    // A teljes Next/React fa hidratálása után nyúlunk csak a DOM-osztályokhoz.
-    // Streaming közben egy korábban lefutó effect különben módosíthatna olyan
-    // elemeket, amelyeket React még éppen hidratál.
-    const timer = window.setTimeout(() => {
+    function initializeReveal() {
       const targets = Array.from(document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
       if (!targets.length) return;
 
@@ -129,9 +129,32 @@ export function MotionVars() {
           io?.observe(el);
         }
       });
-    }, 220);
+    }
+
+    // A komponens a gyökérlayout végén fut. A `load` esemény és két
+    // renderkocka megvárása után a streamelt oldalág is hidratált, így nem
+    // módosítunk olyan class/style attribútumot, amelyet React még egyeztet.
+    function scheduleReveal() {
+      firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => {
+          // A Next streamelt oldalága lassabb eszközön a gyökérlayout effektje
+          // után is hidratálhat. Rövid türelmi idővel nem írjuk át a React által
+          // még egyeztetett class/style attribútumokat (hydration mismatch).
+          timer = window.setTimeout(initializeReveal, 500);
+        });
+      });
+    }
+
+    if (document.readyState === "complete") {
+      scheduleReveal();
+    } else {
+      window.addEventListener("load", scheduleReveal, { once: true });
+    }
 
     return () => {
+      window.removeEventListener("load", scheduleReveal);
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
       window.clearTimeout(timer);
       io?.disconnect();
     };

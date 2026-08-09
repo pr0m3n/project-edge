@@ -1,4 +1,6 @@
--- A menedzselt konstrukció ár- és infrastruktúra-mezőit a kliens nem írhatja át.
+-- Az új, alacsonyabb árak meglévő adatbázisban is érvényesüljenek az új
+-- projektindításokra. A már elfogadott projektek tárolt díját nem írjuk át.
+
 create or replace function public.guard_managed_website_writes()
 returns trigger
 language plpgsql
@@ -10,33 +12,21 @@ declare
   expected_purchase integer;
   allowed_subscription_transition boolean;
 begin
-  if public.is_admin() or auth.uid() is null then
-    return new;
-  end if;
+  if public.is_admin() or auth.uid() is null then return new; end if;
 
-  if tg_op = 'INSERT' then
-    if new.commercial_model = 'subscription' then
-      expected_monthly := case new.subscription_plan
-        when 'presence' then 14900
-        when 'business' then 24900
-        when 'custom' then 39900
-        else null
-      end;
-      expected_purchase := case new.subscription_plan
-        when 'presence' then 179000
-        when 'business' then 329000
-        when 'custom' then 599000
-        else null
-      end;
-      if expected_monthly is null
-         or new.monthly_price is distinct from expected_monthly
-         or new.deposit_amount is distinct from expected_monthly
-         or new.offer_price is distinct from expected_monthly
-         or new.purchase_option_price is distinct from expected_purchase
-         or new.subscription_status is distinct from 'agreement_pending'
-         or new.status is distinct from 'contract_pending' then
-        raise exception 'Érvénytelen menedzselt csomag vagy díj.';
-      end if;
+  if tg_op = 'INSERT' and new.commercial_model = 'subscription' then
+    expected_monthly := case new.subscription_plan
+      when 'presence' then 14900 when 'business' then 24900 when 'custom' then 39900 else null end;
+    expected_purchase := case new.subscription_plan
+      when 'presence' then 179000 when 'business' then 329000 when 'custom' then 599000 else null end;
+    if expected_monthly is null
+       or new.monthly_price is distinct from expected_monthly
+       or new.deposit_amount is distinct from expected_monthly
+       or new.offer_price is distinct from expected_monthly
+       or new.purchase_option_price is distinct from expected_purchase
+       or new.subscription_status is distinct from 'agreement_pending'
+       or new.status is distinct from 'contract_pending' then
+      raise exception 'Érvénytelen menedzselt csomag vagy díj.';
     end if;
     return new;
   end if;
@@ -71,26 +61,17 @@ begin
     end if;
   end if;
 
-  if new.pause_requested_at is distinct from old.pause_requested_at
-     and new.subscription_status <> 'pause_requested' then
+  if new.pause_requested_at is distinct from old.pause_requested_at and new.subscription_status <> 'pause_requested' then
     raise exception 'Érvénytelen szüneteltetési kérelem.';
   end if;
-  if new.resume_requested_at is distinct from old.resume_requested_at
-     and new.subscription_status <> 'resume_requested' then
+  if new.resume_requested_at is distinct from old.resume_requested_at and new.subscription_status <> 'resume_requested' then
     raise exception 'Érvénytelen újraaktiválási kérelem.';
   end if;
-  if new.subscription_cancel_requested_at is distinct from old.subscription_cancel_requested_at
-     and new.subscription_status <> 'cancel_requested' then
+  if new.subscription_cancel_requested_at is distinct from old.subscription_cancel_requested_at and new.subscription_status <> 'cancel_requested' then
     raise exception 'Érvénytelen lemondási kérelem.';
   end if;
-
   return new;
 end;
 $$;
-
-drop trigger if exists guard_managed_website_writes on public.client_projects;
-create trigger guard_managed_website_writes
-  before insert or update on public.client_projects
-  for each row execute function public.guard_managed_website_writes();
 
 notify pgrst, 'reload schema';

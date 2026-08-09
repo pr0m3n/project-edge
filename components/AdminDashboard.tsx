@@ -14,7 +14,7 @@ import {
 import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan, type HandoverStepState } from "@/lib/handover";
-import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
+import { formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
 
 function messageKind(text: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
@@ -132,6 +132,7 @@ type ClientProject = {
   final_payment_paid: boolean;
   final_payment_paid_at: string | null;
   estimated_deadline: string | null;
+  logo_url: string | null;
   commercial_model: "subscription" | "purchase";
   subscription_plan: "presence" | "business" | "custom" | null;
   monthly_price: number | null;
@@ -172,6 +173,10 @@ type ChangeRequest = {
   included_in_plan: boolean | null;
   admin_note: string | null;
   requested_at: string;
+  quoted_amount: number | null;
+  payment_reference: string | null;
+  transfer_reported_at: string | null;
+  paid_at: string | null;
 };
 
 const statuses = [
@@ -196,7 +201,7 @@ const projectStatuses = [
   ["deposit_pending", "Foglaló fizetésre vár"],
   ["contract_pending", "Szerződés aláírásra vár"],
   ["in_progress", "Kivitelezés"],
-  ["review", "Átnézés"],
+  ["review", "Ügyfél-visszajelzés"],
   ["launched", "Élesítve"],
   ["paused", "Szünetel"],
   ["closed", "Lezárva"],
@@ -232,7 +237,7 @@ const projectFlow = [
   ["contract_pending", "Szerződés"],
   ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
-  ["review", "Review"],
+  ["review", "Jóváhagyás"],
   ["launched", "Éles"]
 ];
 
@@ -425,10 +430,12 @@ export function AdminDashboard() {
         })
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.emailSent === false) {
+      if (!response.ok || result.success === false || result.emailSent === false) {
         const reason = typeof result.emailError === "string" ? ` (${result.emailError})` : "";
-        console.error("A rendszerértesítés rögzült, de az email nem ment ki.", result);
-        setMessage(`Értesítés rögzítve, de az email nem ment ki${reason}`);
+        console.error("A rendszerértesítés egyik kézbesítési csatornája hibázott.", result);
+        setMessage(result.success === false && result.emailSent
+          ? "Az email kiment, de az ügyfélkapus értesítést nem sikerült rögzíteni."
+          : `Az ügyfélkapus értesítés rögzülhetett, de az email nem ment ki${reason}`);
       }
     } catch (err) {
       console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
@@ -655,8 +662,64 @@ export function AdminDashboard() {
       setMessage("Nem sikerült frissíteni a módosítási kérést.");
       return;
     }
-    setChangeRequests((current) => current.map((request) => request.id === id ? { ...request, ...patch } : request));
-    setMessage("Módosítási kérés frissítve.");
+    const request = changeRequests.find((item) => item.id === id);
+    const project = request ? clientProjects.find((item) => item.id === request.project_id) : null;
+    setChangeRequests((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+    if (request && project && (patch.status || patch.admin_note !== undefined)) {
+      const purchase = isWebsitePurchaseRequest(request.description);
+      const statusLabel = patch.status === "waiting_client"
+        ? "A következő lépés rád vár"
+        : patch.status === "completed"
+          ? "Lezárva"
+          : patch.status === "declined"
+            ? "Nem folytatható"
+            : patch.status === "in_progress"
+              ? "Folyamatban"
+              : patch.status === "planned"
+                ? "Előkészítés alatt"
+                : "Frissítve";
+      await triggerNotification(
+        project.user_id,
+        project.contact_email,
+        purchase ? "Frissítés a weboldal megvásárlásáról" : "Módosítási kérés frissült",
+        `${statusLabel} a(z) "${project.title}" ${purchase ? "megvásárlási folyamatában" : "módosítási kérésében"}.${patch.admin_note ? `\n\nÜzenet: ${patch.admin_note}` : ""}`,
+        "/ugyfelkapu/dashboard#statuses"
+      );
+    }
+    setMessage("Módosítási kérés frissítve, az ügyfél értesítést kapott.");
+  }
+
+  async function completeWebsitePurchase(request: ChangeRequest, project: ClientProject) {
+    if (!request.transfer_reported_at) {
+      setMessage("Az ügyfél még nem jelezte az átutalást.");
+      return;
+    }
+    const ok = await confirm({
+      title: "Vételár jóváhagyása",
+      message: "Csak akkor hagyd jóvá, ha a vételár ténylegesen megérkezett a bankszámlára. Ezzel megszűnik az előfizetés és elindul a technikai átadás.",
+      confirmLabel: "Beérkezett, átadás indítása",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+
+    const handover = buildHandoverPlan(["vercel", "github", "dns"]);
+    const { error } = await supabase.rpc("complete_website_purchase", {
+      request_id: request.id,
+      handover
+    });
+    if (error) {
+      setMessage(`A vásárlás lezárása nem sikerült: ${error.message}`);
+      return;
+    }
+    await triggerNotification(
+      project.user_id,
+      project.contact_email,
+      "A weboldal vételára beérkezett",
+      `A(z) "${project.title}" weboldal vételárát jóváhagytuk. Az előfizetés lezárult, a technikai átadási lista megnyílt az ügyfélkapuban.`,
+      "/ugyfelkapu/dashboard#statuses"
+    );
+    setMessage("Vételár jóváhagyva, a technikai átadás elindult.");
+    await loadLeads(true);
   }
 
   async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>) {
@@ -700,8 +763,8 @@ export function AdminDashboard() {
         await triggerNotification(
           project.user_id,
           project.contact_email,
-          "Projekt státusz módosult",
-          `A(z) "${project.title}" projekt státusza megváltozott: ${projectStatusLabel[patch.status] || patch.status}.`,
+          "Frissítés érkezett a projektedhez",
+          `A(z) "${project.title}" projekt új szakaszba lépett: ${projectStatusLabel[patch.status] || patch.status}.${patch.next_step ? `\n\nTeendő / következő lépés: ${patch.next_step}` : ""}`,
           "/ugyfelkapu/dashboard#statuses"
         );
       } else if (patch.next_step && patch.next_step !== project.next_step) {
@@ -821,27 +884,27 @@ export function AdminDashboard() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("support_ticket_messages")
-      .insert({
-        ticket_id: ticketId,
-        sender: "admin",
-        body
-      })
-      .select("*")
-      .single();
-
-    if (error || !data) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const response = await fetch(`/api/tickets/${ticketId}/admin-reply`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+      },
+      body: JSON.stringify({ body })
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.message) {
       setMessage("Nem sikerült elküldeni a választ.");
       return;
     }
 
-    addTicketMessage(data);
+    addTicketMessage(result.message);
     setTicketReplies((current) => ({ ...current, [ticketId]: "" }));
     setTickets((current) =>
       current.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "answered" } : ticket))
     );
-    setMessage("Válasz elküldve.");
+    setMessage(result.emailSent ? "Válasz elküldve és emailben is kézbesítve." : `Válasz mentve, de az email nem ment ki: ${result.emailError ?? "ismeretlen hiba"}`);
   }
 
   async function sendClientTicketReply(ticketId: string) {
@@ -880,9 +943,9 @@ export function AdminDashboard() {
       await triggerNotification(
         ticket.user_id,
         ticket.contact_email,
-        "Új válasz érkezett az üzenetedre",
-        `Válaszoltunk az üzenetedre: "${ticket.subject}".`,
-        "/ugyfelkapu/dashboard#support"
+        "Új üzeneted érkezett",
+        `ProjectEdge válaszolt a(z) "${ticket.subject}" beszélgetésben:\n\n${body.slice(0, 500)}`,
+        `/ugyfelkapu/dashboard#support:${ticketId}`
       );
     }
 
@@ -1008,6 +1071,25 @@ export function AdminDashboard() {
     const review = project.client_review;
     const warrantyUntil = project.warranty_expires_at ? new Date(project.warranty_expires_at) : null;
     const warrantyActive = warrantyUntil ? warrantyUntil.getTime() > Date.now() : false;
+    if (project.commercial_model === "subscription" && project.subscription_status === "cancelled") {
+      return (
+        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
+          <div><strong style={{ color: "#fff" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "#ff9d9d" }}>Előfizetés lezárva</span></div>
+          <p style={{ color: "rgba(255,255,255,.58)", margin: 0 }}>Ez lemondott menedzselt szolgáltatás, nem elkészült és átadott projekt. Nem tartozik hozzá projektlezárási értékelés vagy 30 napos technikai garancia.</p>
+          <small style={{ color: "rgba(255,255,255,.4)" }}>Leállítás dátuma: {project.cancel_effective_at ? new Date(project.cancel_effective_at).toLocaleDateString("hu-HU") : "nincs rögzítve"}</small>
+        </article>
+      );
+    }
+    const completedPurchase = project.commercial_model === "purchase" && Boolean(project.warranty_started_at || project.final_payment_paid_at || project.final_payment_paid);
+    if (!completedPurchase) {
+      return (
+        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
+          <div><strong style={{ color: "#fff" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "rgba(255,255,255,.5)" }}>{project.offer_status === "declined" ? "Ajánlat elutasítva" : "Teljesítés nélkül lezárva"}</span></div>
+          <p style={{ color: "rgba(255,255,255,.58)", margin: 0 }}>Nem történt kész weboldal-átadás, ezért ehhez az ügyhöz nem tartozik projektértékelés vagy 30 napos technikai garancia.</p>
+          <button className="admin-delete-project" type="button" onClick={() => approveDeletion(project)}>Projekt végleges törlése</button>
+        </article>
+      );
+    }
     return (
       <article className="admin-project-card compact-closed" key={project.id} style={{
         background: "rgba(255, 255, 255, 0.02)",
@@ -1088,7 +1170,7 @@ export function AdminDashboard() {
   const wizardNextLabel: Record<string, string> = {
     request_received: "Ajánlat előkészítése",
     planning: "Ajánlat elküldése",
-    in_progress: "Küldés átnézésre",
+    in_progress: "Előnézet küldése az ügyfélnek",
     review: "Élesítés"
   };
 
@@ -1109,7 +1191,7 @@ export function AdminDashboard() {
         }
         break;
       case "in_progress":
-        updateClientProject(project.id, { status: "review", next_step: "Elkészült egy átnézhető verzió. Kérlek nézd át, és jelezd a visszajelzésed." });
+        updateClientProject(project.id, { status: "review", next_step: "Elkészült az előnézeti verzió. Nyisd meg, majd kérj módosítást vagy hagyd jóvá az élesítéshez." });
         break;
       case "review":
         if (project.review_approved) {
@@ -1176,12 +1258,12 @@ export function AdminDashboard() {
         who: "admin",
         step: "3. lépés",
         headline: "Fejlesztés",
-        detail: "Folyik a munka. Frissítsd a mérföldköveket, oszd meg a staging (előnézeti) linket és a tervezett átadás dátumát. Ha kész egy átnézhető verzió, küldd átnézésre.",
-        actions: [{ label: "Küldés átnézésre", onClick: () => updateClientProject(project.id, { status: "review", next_step: "Elkészült egy átnézhető verzió. Kérlek nézd át, és jelezd a visszajelzésed." }) }]
+        detail: "Folyik a munka. Frissítsd a mérföldköveket, oszd meg az előnézeti linket és a tervezett átadás dátumát. Ha kész a bemutatható verzió, küldd el ügyfél-visszajelzésre.",
+        actions: [{ label: "Előnézet küldése az ügyfélnek", onClick: () => updateClientProject(project.id, { status: "review", next_step: "Elkészült az előnézeti verzió. Nyisd meg, majd kérj módosítást vagy hagyd jóvá az élesítéshez." }) }]
       },
       review: {
         who: project.review_approved ? "admin" : "client",
-        headline: project.review_approved ? "Az ügyfél jóváhagyta — élesítsd az oldalt" : "Ügyfél átnézésére vár",
+        headline: project.review_approved ? "Az ügyfél jóváhagyta — élesítsd az oldalt" : "Ügyfél-visszajelzésre vár",
         detail: project.review_approved
           ? "A tartalom és a megjelenés jóváhagyva. Ellenőrizd az átadási pontokat, majd élesíts."
           : "Az ügyfél most vagy módosítást kér, vagy jóváhagyja az oldalt. Addig ne léptesd tovább.",
@@ -1206,7 +1288,7 @@ export function AdminDashboard() {
       paused: {
         who: "admin",
         headline: "A projekt szünetel",
-        detail: "A fenti státusz-választóval tudod újraindítani (Kivitelezés vagy Átnézés), ha folytatódik a munka."
+        detail: "A fenti státusz-választóval tudod újraindítani (Kivitelezés vagy Ügyfél-visszajelzés), ha folytatódik a munka."
       },
       deletion_pending: {
         who: "admin",
@@ -1667,6 +1749,12 @@ export function AdminDashboard() {
               ["Kapcsolati email", brief["Kapcsolati email"]],
               ["Telefon", brief["Telefon"]],
               ["Közösségi linkek", brief["Közösségi linkek"]],
+              ["Facebook", project.brief_data?.facebookUrl || brief["Facebook"]],
+              ["Instagram", project.brief_data?.instagramUrl || brief["Instagram"]],
+              ["LinkedIn", project.brief_data?.linkedinUrl || brief["LinkedIn"]],
+              ["TikTok", project.brief_data?.tiktokUrl || brief["TikTok"]],
+              ["YouTube", project.brief_data?.youtubeUrl || brief["YouTube"]],
+              ["Egyéb linkek", project.brief_data?.otherSocialLinks || brief["Egyéb linkek"]],
               ["Analytics", brief["Analytics"]],
               ["Számlázási adatok", brief["Számlázási adatok"]]
             ].filter(([, value]) => Boolean(value));
@@ -1728,8 +1816,34 @@ export function AdminDashboard() {
                     <label><span>Domain megújítás</span><input type="date" defaultValue={project.domain_renewal_at?.slice(0, 10) ?? ""} onBlur={(event) => updateClientProject(project.id, { domain_renewal_at: event.target.value ? new Date(`${event.target.value}T12:00:00`).toISOString() : null })} /></label>
                     <label><span>Oldal állapota</span><select value={project.site_health_status ?? "unknown"} onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}><option value="unknown">Még nincs ellenőrizve</option><option value="healthy">Rendben</option><option value="attention">Figyelmet kér</option><option value="offline">Leállítva</option></select></label>
                   </div>
-                  {["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "") ? <div className="managed-admin-request"><div><strong>Ügyfélkérelem: {project.subscription_status === "pause_requested" ? "szüneteltetés" : project.subscription_status === "resume_requested" ? "újraaktiválás" : "lemondás"}</strong><p>A kérelmet az ügyfélkapuból küldték. Az állapot módosítása után az ügyfél azonnal az új státuszt látja.</p></div><div>{project.subscription_status === "pause_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "paused", status: "paused", paused_at: new Date().toISOString(), site_health_status: "offline", next_step: "A menedzselt weboldal parkolóállapotba került. Bármikor kérheted az újraaktiválást." })}>Szüneteltetés jóváhagyása</button> : null}{project.subscription_status === "resume_requested" ? <button className="button primary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "active", status: "launched", paused_at: null, resume_requested_at: null, site_health_status: "healthy", last_health_check_at: new Date().toISOString(), next_step: "A weboldal újra aktív és felügyelet alatt áll." })}>Újraaktiválás</button> : null}{project.subscription_status === "cancel_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "cancelled", status: "closed", cancelled_at: new Date().toISOString(), cancel_effective_at: project.next_billing_at ?? new Date().toISOString(), site_health_status: "offline", next_step: "Az előfizetés lezárult." })}>Lemondás lezárása</button> : null}</div></div> : null}
-                  {changeRequests.some((request) => request.project_id === project.id) ? <div className="managed-request-list"><div className="managed-request-list-head"><strong>Módosítási kérések</strong><span>{changeRequests.filter((request) => request.project_id === project.id && request.status !== "completed" && request.status !== "declined").length} nyitott</span></div>{changeRequests.filter((request) => request.project_id === project.id).map((request) => <article key={request.id}><div><span>{request.category === "content" ? "Tartalom" : request.category === "design" ? "Design" : request.category === "technical" ? "Technikai" : "Új funkció"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</span><p>{request.description}</p></div><div><select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select><select value={request.status} onChange={(event) => updateChangeRequest(request.id, { status: event.target.value as ChangeRequest["status"] })}><option value="new">Új</option><option value="planned">Tervezve</option><option value="in_progress">Folyamatban</option><option value="waiting_client">Ügyfélre vár</option><option value="completed">Kész</option><option value="declined">Elutasítva</option></select></div></article>)}</div> : null}
+                  {["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "") ? <div className="managed-admin-request"><div><strong>Ügyfélkérelem: {project.subscription_status === "pause_requested" ? "szüneteltetés" : project.subscription_status === "resume_requested" ? "újraaktiválás" : "lemondás"}</strong><p>A kérelmet az ügyfélkapuból küldték. Az állapot módosítása után az ügyfél azonnal az új státuszt látja.</p></div><div>{project.subscription_status === "pause_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "paused", status: "paused", paused_at: new Date().toISOString(), site_health_status: "offline", next_step: "A menedzselt weboldal parkolóállapotba került. Bármikor kérheted az újraaktiválást." })}>Szüneteltetés jóváhagyása</button> : null}{project.subscription_status === "resume_requested" ? <button className="button primary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "active", status: "launched", paused_at: null, resume_requested_at: null, site_health_status: "healthy", last_health_check_at: new Date().toISOString(), next_step: "A weboldal újra aktív és felügyelet alatt áll." })}>Újraaktiválás</button> : null}{project.subscription_status === "cancel_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "cancelled", status: "closed", cancelled_at: new Date().toISOString(), cancel_effective_at: project.next_billing_at ?? new Date().toISOString(), site_health_status: "offline", warranty_started_at: null, warranty_expires_at: null, next_step: "A menedzselt szolgáltatás lezárult. A weboldal leállt; forráskód-átadás és projektgarancia nem tartozik a lemondáshoz." })}>Lemondás lezárása</button> : null}</div></div> : null}
+                  {changeRequests.some((request) => request.project_id === project.id) ? (
+                    <div className="managed-request-list">
+                      <div className="managed-request-list-head">
+                        <strong>Módosítások és vásárlási ügyek</strong>
+                        <span>{changeRequests.filter((request) => request.project_id === project.id && !["completed", "declined"].includes(request.status)).length} nyitott</span>
+                      </div>
+                      {changeRequests.filter((request) => request.project_id === project.id).map((request) => {
+                        const purchase = isWebsitePurchaseRequest(request.description);
+                        return (
+                          <article className={purchase ? "purchase-admin-request" : ""} key={request.id}>
+                            <div>
+                              <span>{purchase ? "WEBOLDAL MEGVÁSÁRLÁSA" : request.category === "content" ? "Tartalom" : request.category === "design" ? "Design" : request.category === "technical" ? "Technikai" : "Új funkció"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</span>
+                              <p>{purchase ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "") : request.description}</p>
+                              {purchase ? <small>Folyamat: átadási összefoglaló → fizetési adatok → fizetés ellenőrzése → forráskód és hozzáférések átadása → előfizetés lezárása.</small> : null}
+                            </div>
+                            <div>
+                              {!purchase ? <select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select> : null}
+                              <select value={request.status} onChange={(event) => updateChangeRequest(request.id, { status: event.target.value as ChangeRequest["status"] })}><option value="new">Igény beérkezett</option><option value="planned">Átadás előkészítése</option><option value="in_progress">Folyamatban</option><option value="waiting_client">Ügyfél fizetésére / válaszára vár</option><option value="completed" disabled={purchase}>Lezárva{purchase ? " — csak fizetésigazolással" : ""}</option><option value="declined">Nem folytatható</option></select>
+                              <textarea defaultValue={request.admin_note ?? ""} onBlur={(event) => { if (event.target.value !== (request.admin_note ?? "")) updateChangeRequest(request.id, { admin_note: event.target.value || null }); }} placeholder={purchase ? "Ügyfélnek látható átadási vagy fizetési információ…" : "Ügyfélnek látható megjegyzés…"} />
+                              {purchase && request.quoted_amount ? <small>Vételár: {formatHuf(request.quoted_amount)} · Közlemény: {request.payment_reference ?? "nincs"}</small> : null}
+                              {purchase && request.transfer_reported_at && request.status === "in_progress" && !request.paid_at ? <button className="button primary" type="button" onClick={() => completeWebsitePurchase(request, project)}>Beérkezett — átadás indítása</button> : null}
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </section>
               ) : null}
 
@@ -1789,6 +1903,15 @@ export function AdminDashboard() {
                         <strong>{value}</strong>
                       </div>
                     ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {project.logo_url ? (
+                <section className="admin-assets-block">
+                  <span className="admin-assets-title">Feltöltött logó</span>
+                  <div className="asset-preview-grid logo-asset-preview">
+                    <AssetImage value={project.logo_url} alt={`${project.company || project.title} logó`} />
                   </div>
                 </section>
               ) : null}
@@ -1867,7 +1990,7 @@ export function AdminDashboard() {
                   ["contract_pending", "Szerződés"],
                   ["deposit_pending", "Első havidíj"],
                   ["in_progress", "Építés"],
-                  ["review", "Átnézés"],
+                  ["review", "Jóváhagyás"],
                   ["launched", "Aktív"]
                 ] : projectFlow).map(([value, label]) => (
                   <span className={project.status === value ? "active" : ""} key={value}>

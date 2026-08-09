@@ -81,6 +81,7 @@ export async function POST(request: Request) {
 
   if (messageError || !firstMessage) {
     console.error("Support ticket message insert failed", messageError);
+    await supabase.from("support_tickets").delete().eq("id", ticket.id);
     return NextResponse.json({ error: "Could not save message." }, { status: 500 });
   }
 

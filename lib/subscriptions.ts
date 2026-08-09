@@ -1,6 +1,24 @@
 export type CommercialModel = "subscription" | "purchase";
 export type SubscriptionPlanKey = "presence" | "business" | "custom";
 
+export const PURCHASE_REQUEST_PREFIX = "[WEBOLDAL_MEGVASARLAS]";
+
+export const PURCHASE_OPTION_PRICES: Record<SubscriptionPlanKey, number> = {
+  presence: 179000,
+  business: 329000,
+  custom: 599000
+};
+
+export const PRICE_TAX_NOTE = "Alanyi adómentes szolgáltatás: áfa nem kerül felszámításra. A feltüntetett összeg a fizetendő végösszeg.";
+
+export function isWebsitePurchaseRequest(description?: string | null) {
+  return Boolean(description?.startsWith(PURCHASE_REQUEST_PREFIX));
+}
+
+export function websitePurchaseRequestText(price: number) {
+  return `${PURCHASE_REQUEST_PREFIX} Szeretném megvásárolni a weboldalt a jelzett ${formatHuf(price)} vételi opción.`;
+}
+
 export type SubscriptionPlan = {
   key: SubscriptionPlanKey;
   name: string;
@@ -24,7 +42,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     key: "presence",
     name: "Jelenlét",
-    price: 19900,
+    price: 14900,
     short: "Egy tiszta, gyors oldal az induláshoz.",
     pages: "1 oldal",
     changes: "Évente 3 kisebb módosítás",
@@ -44,7 +62,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     key: "business",
     name: "Üzleti",
-    price: 29900,
+    price: 24900,
     short: "Többoldalas rendszer, ami ajánlatkérést hoz.",
     pages: "Legfeljebb 5 aloldal",
     changes: "Havi 1 kisebb módosítás",
@@ -66,7 +84,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     key: "custom",
     name: "Egyedi",
-    price: 49900,
+    price: 39900,
     short: "Karakteresebb design és összetettebb működés.",
     pages: "Legfeljebb 8–10 aloldal",
     changes: "Havi 2 kisebb módosítás",
@@ -87,14 +105,19 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export const PURCHASE_PRICES = [
-  { name: "Landing oldal", price: "349 000 Ft-tól" },
-  { name: "Üzleti weboldal", price: "649 000 Ft-tól" },
-  { name: "Egyedi weboldal", price: "990 000 Ft-tól" },
+  { name: "Landing oldal", price: "179 000 Ft-tól" },
+  { name: "Üzleti weboldal", price: "329 000 Ft-tól" },
+  { name: "Egyedi weboldal", price: "599 000 Ft-tól" },
   { name: "Webapp / ügyfélkapu", price: "Egyedi ajánlat" }
 ];
 
 export function subscriptionPlan(key?: string | null) {
   return SUBSCRIPTION_PLANS.find((plan) => plan.key === key) ?? SUBSCRIPTION_PLANS[1];
+}
+
+export function purchaseOptionPrice(key?: string | null) {
+  const plan = subscriptionPlan(key);
+  return PURCHASE_OPTION_PRICES[plan.key];
 }
 
 export function formatHuf(value: number) {

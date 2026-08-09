@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { PROVIDER } from "@/lib/legal";
+import { PRICE_TAX_NOTE } from "@/lib/subscriptions";
 
 export const metadata: Metadata = {
   title: "ÁSZF | ProjectEdge",
@@ -24,7 +25,7 @@ export default function TermsPage() {
         <h2>1. A szolgáltató</h2>
         <p>
           {PROVIDER.legalName} ({PROVIDER.shortName}; {PROVIDER.legalForm}), székhely: {PROVIDER.address},
-          cégjegyzékszám: {PROVIDER.registrationNumber}, adószám: {PROVIDER.taxNumber}, e-mail:{" "}
+          EV-nyilvántartási szám: {PROVIDER.registrationNumber}, adószám: {PROVIDER.taxNumber}, {PROVIDER.taxStatus}, e-mail:{" "}
           {PROVIDER.email} (a továbbiakban: Szolgáltató). Kapcsolattartó: {PROVIDER.contactName}. A részletes adatokat az{" "}
           <a href="/impresszum">Impresszum</a> tartalmazza.
         </p>
@@ -59,7 +60,7 @@ export default function TermsPage() {
           elején esedékesek. Egyszeri vásárlásnál a vállalási díj az egyedi ajánlatban szerepel, a
           munka megkezdésének feltétele pedig 10 000 Ft foglaló, amely a végösszegbe beleszámít. A
           fizetés banki átutalással történik, az Ügyfélkapun megjelenő adatok alapján; a beérkezést
-          a Szolgáltató ellenőrzi és igazolja vissza. A Szolgáltató a fizetésről számlát állít ki.
+          a Szolgáltató ellenőrzi és igazolja vissza. {PRICE_TAX_NOTE} A Szolgáltató a fizetésről számlát állít ki.
         </p>
         <p>
           Egyszeri vásárlásnál a teljesítés sorrendje: a Vállalkozó az elkészült oldalt a Megrendelő jóváhagyása után
@@ -136,7 +137,7 @@ export default function TermsPage() {
 
         <h2>9. Díjmentes technikai garancia és folyamatos felügyelet</h2>
         <p>
-          Egyszeri vásárlásnál a projekt Ügyfélkapun történő lezárásától számított 30 napig a Vállalkozó díjmentesen
+          Egyszeri vásárlásnál az utolsó, Ügyfélkapuban igazolt technikai átadási lépéstől számított 30 napig a Vállalkozó díjmentesen
           kivizsgálja és javítja az átadáskor vállalt működés igazolt hibáit. A garancia nem
           tartalmaz új funkciót, új tartalmat, utólagos módosítást, harmadik felek szolgáltatásainak
           kieséséből eredő hibát, sem a Megrendelő vagy harmadik fél által végzett módosítások
@@ -181,7 +182,7 @@ export default function TermsPage() {
 
         <p className="legal-note">
           Lásd még az <a href="/impresszum">Impresszumot</a> és az{" "}
-          <a href="/adatkezeles">Adatkezelési tájékoztatót</a>. Hatályos: 2026. augusztus 4.
+          <a href="/adatkezeles">Adatkezelési tájékoztatót</a>. Hatályos: 2026. augusztus 9.
         </p>
       </section>
     </main>

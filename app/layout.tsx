@@ -46,7 +46,6 @@ export default function RootLayout({
   return (
     <html lang="hu">
       <body>
-        <MotionVars />
         <Analytics />
         {children}
         <ChromeGate>
@@ -54,6 +53,8 @@ export default function RootLayout({
           <SupportWidget />
         </ChromeGate>
         <CookieBanner />
+        {/* Keep DOM-mutating reveal effects after the streamed page subtree. */}
+        <MotionVars />
       </body>
     </html>
   );

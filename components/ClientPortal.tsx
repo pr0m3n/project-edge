@@ -26,9 +26,9 @@ import { HandoverPanel } from "@/components/portal/HandoverPanel";
 import { ManagedWebsitePanel } from "@/components/portal/ManagedWebsitePanel";
 import { DomainAvailabilityPicker } from "@/components/portal/DomainAvailabilityPicker";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
-import { assetReference } from "@/lib/storage-assets";
+import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { completeHandoverStep, type HandoverStepState } from "@/lib/handover";
-import { SUBSCRIPTION_PLANS, formatHuf, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { trackLeadConversion } from "@/lib/analytics";
 
 function noticeKind(message: string): ToastKind {
@@ -99,6 +99,12 @@ export type Project = {
     domainStatus?: string;
     domainProofUrl?: string;
     domainPurchaseState?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+    linkedinUrl?: string;
+    tiktokUrl?: string;
+    youtubeUrl?: string;
+    otherSocialLinks?: string;
   } | null;
   last_modified_at: string | null;
   last_modified_by: string | null;
@@ -189,6 +195,10 @@ export type ClientChangeRequest = {
   included_in_plan: boolean | null;
   admin_note: string | null;
   requested_at: string;
+  quoted_amount: number | null;
+  payment_reference: string | null;
+  transfer_reported_at: string | null;
+  paid_at: string | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -198,7 +208,7 @@ const statusLabels: Record<string, string> = {
   deposit_pending: "Foglaló fizetésre vár",
   contract_pending: "Szerződés aláírásra vár",
   in_progress: "Kivitelezés",
-  review: "Átnézés",
+  review: "Visszajelzés és jóváhagyás",
   launched: "Élesítve",
   paused: "Szünetel",
   closed: "Lezárva",
@@ -243,7 +253,15 @@ const initialProject = {
   contentFileUrls: [] as string[],
   photoSource: "",
   photoUrls: [] as string[],
+  // A régi, egyetlen socialLinks mezőt olvasási kompatibilitás miatt
+  // megtartjuk, az új adatlap viszont platformonként kér használható URL-t.
   socialLinks: "",
+  facebookUrl: "",
+  instagramUrl: "",
+  linkedinUrl: "",
+  tiktokUrl: "",
+  youtubeUrl: "",
+  otherSocialLinks: "",
   contactEmail: "",
   contactPhone: "",
   analyticsAccess: "",
@@ -367,7 +385,7 @@ const projectFlow = [
   ["contract_pending", "Szerződés"],
   ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
-  ["review", "Átnézés"],
+  ["review", "Jóváhagyás"],
   ["launched", "Élesítés"]
 ];
 
@@ -533,6 +551,16 @@ export function buildBriefText(form: BriefFormValues) {
       }`
     : "";
 
+  const socialLines = [
+    form.facebookUrl ? `Facebook: ${form.facebookUrl}` : "",
+    form.instagramUrl ? `Instagram: ${form.instagramUrl}` : "",
+    form.linkedinUrl ? `LinkedIn: ${form.linkedinUrl}` : "",
+    form.tiktokUrl ? `TikTok: ${form.tiktokUrl}` : "",
+    form.youtubeUrl ? `YouTube: ${form.youtubeUrl}` : "",
+    form.otherSocialLinks ? `Egyéb linkek: ${form.otherSocialLinks}` : "",
+    form.socialLinks ? `Korábbi közösségi linkek: ${form.socialLinks}` : ""
+  ].filter(Boolean);
+
   return [
     `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Weboldal megvásárlása"}`,
     `Cél: ${form.goals}`,
@@ -557,7 +585,7 @@ export function buildBriefText(form: BriefFormValues) {
     form.photoUrls.length ? `Feltöltött képek: ${form.photoUrls.length} db` : "",
     form.contactEmail ? `Kapcsolati email: ${form.contactEmail}` : "",
     form.contactPhone ? `Telefon: ${form.contactPhone}` : "",
-    form.socialLinks ? `Közösségi linkek: ${form.socialLinks}` : "",
+    socialLines.length ? `Közösségi linkek:\n${socialLines.join("\n")}` : "",
     analyticsLabels[form.analyticsAccess] ? `Analytics: ${analyticsLabels[form.analyticsAccess]}` : "",
     form.billingDetails ? `Számlázási adatok: ${form.billingDetails}` : ""
   ]
@@ -808,10 +836,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         })
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.emailSent === false) {
+      if (!response.ok || result.success === false || result.emailSent === false) {
         const reason = typeof result.emailError === "string" ? ` (${result.emailError})` : "";
-        console.error("A rendszerértesítés adatbázisba kerülhetett, de az email nem ment ki.", result);
-        setNotice(`Értesítés rögzítve, de az email nem ment ki${reason}`);
+        console.error("A rendszerértesítés egyik kézbesítési csatornája hibázott.", result);
+        setNotice(result.success === false && result.emailSent
+          ? "Az email kiment, de az ügyfélkapus értesítést nem sikerült rögzíteni."
+          : `Az ügyfélkapus értesítés rögzülhetett, de az email nem ment ki${reason}`);
         return false;
       }
       return true;
@@ -826,14 +856,17 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   // saved with #statuses/#projects/#support/#account/#notifications hashes
   // (from the old 6-tab layout) must keep resolving correctly indefinitely,
   // even though those tabs no longer exist as such.
-  async function markNotificationAsRead(id: string, link?: string | null) {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  function openNotificationLink(link?: string | null) {
     if (link) {
       if (link.includes("#projects")) {
         setOpenPanel(null);
         setHomeView("new-brief");
       } else if (link.includes("#support")) {
+        const ticketId = link.match(/#support:([a-f0-9-]+)/i)?.[1];
+        if (ticketId) {
+          setActiveTicketId(ticketId);
+          setSupportThreadOpen(true);
+        }
         setOpenPanel("support");
       } else if (link.includes("#account")) {
         setOpenPanel("account");
@@ -845,6 +878,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       }
     }
   }
+
+  async function markNotificationAsRead(id: string, link?: string | null) {
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    openNotificationLink(link);
+  }
+
+  const latestUnreadNotification = notifications.find((item) => !item.read) ?? null;
 
   async function markAllNotificationsAsRead() {
     if (!userId) return;
@@ -967,8 +1008,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   const activeProjects = useMemo(() => projects.filter((p) => p.status !== "closed"), [projects]);
   const closedProjects = useMemo(() => projects.filter((p) => p.status === "closed"), [projects]);
-  const highlightedClosedProject = closedProjects.find((project) => project.id === recentlyClosedProjectId)
-    ?? closedProjects.find((project) => !project.client_rating)
+  const highlightedClosedProject = closedProjects.find((project) => project.id === recentlyClosedProjectId && project.commercial_model !== "subscription" && Boolean(project.warranty_started_at || project.final_payment_paid_at || project.final_payment_paid))
+    ?? closedProjects.find((project) => project.commercial_model !== "subscription" && Boolean(project.warranty_started_at || project.final_payment_paid_at || project.final_payment_paid) && !project.client_rating)
     ?? null;
 
   // Default selection: prefer a project where the client actually has
@@ -1370,18 +1411,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     setLogoUploading(true);
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-    const path = `${userId}/${Date.now()}-${safeName}`;
 
-    const { error: uploadError } = await supabase.storage.from("client-logos").upload(path, file);
+    // Ugyanazt a privát, már a képekhez és dokumentumokhoz is használt
+    // bucketet használjuk. A külön client-logos bucket több telepítésben nem
+    // létezett, ezért a brief egyetlen feltöltése következetesen elhasalt.
+    const assetPath = `${userId}/logo-${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage.from("client-assets").upload(assetPath, file);
     if (uploadError) {
       setLogoUploading(false);
-      setNotice("Nem sikerült feltölteni a logót. Lehet, hogy a Storage még nincs beállítva — próbáld újra később.");
+      setNotice(`Nem sikerült feltölteni a logót: ${uploadError.message}`);
       return;
     }
 
     // Privát bucket (018-as migráció): az útvonalat tároljuk, a megnyitás
     // signed URL-lel történik (lib/storage-assets.ts).
-    setProjectForm((current) => ({ ...current, logoUrl: assetReference("client-logos", path) }));
+    const previousLogo = projectForm.logoUrl;
+    setProjectForm((current) => ({ ...current, logoUrl: assetReference("client-assets", assetPath) }));
+    if (previousLogo) await deleteDraftAsset(previousLogo);
     setLogoUploading(false);
     setNotice("Logó sikeresen feltöltve.");
   }
@@ -1400,6 +1446,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
       const { error } = await supabase.storage.from("client-assets").upload(path, file);
       if (error) {
+        await Promise.all(uploaded.map(deleteDraftAsset));
         setAssetUploading(false);
         setNotice("Az egyik kép feltöltése nem sikerült. Próbáld újra.");
         return;
@@ -1409,6 +1456,17 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setProjectForm((current) => ({ ...current, photoUrls: [...current.photoUrls, ...uploaded] }));
     setAssetUploading(false);
     setNotice(`${uploaded.length} kép sikeresen feltöltve.`);
+  }
+
+  async function deleteDraftAsset(value: string) {
+    const asset = parseAssetReference(value);
+    if (!asset || !userId || !asset.path.startsWith(`${userId}/`)) return;
+    await supabase.storage.from(asset.bucket).remove([asset.path]);
+  }
+
+  async function removeProjectPhoto(value: string) {
+    await deleteDraftAsset(value);
+    setProjectForm((current) => ({ ...current, photoUrls: current.photoUrls.filter((item) => item !== value) }));
   }
 
   async function uploadContentFiles(files: File[]) {
@@ -1429,6 +1487,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const path = `${userId}/copy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
       const { error } = await supabase.storage.from("client-assets").upload(path, file);
       if (error) {
+        await Promise.all(uploaded.map(deleteDraftAsset));
         setContentUploading(false);
         setNotice("A szöveges anyag feltöltése nem sikerült. Próbáld újra.");
         return;
@@ -1597,9 +1656,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       offer_scope: isSubscription ? selectedSubscription.features.join("\n") : null,
       offer_price: isSubscription ? selectedSubscription.price : null,
       offer_currency: "Ft",
-      offer_status: isSubscription ? "accepted" : null,
+      offer_status: isSubscription ? "accepted" : "draft",
       deposit_amount: isSubscription ? selectedSubscription.price : null,
-      purchase_option_price: isSubscription ? (selectedSubscription.key === "presence" ? 349000 : selectedSubscription.key === "business" ? 649000 : 990000) : null,
+      purchase_option_price: isSubscription ? purchaseOptionPrice(selectedSubscription.key) : null,
       next_step: isSubscription ? "Olvasd el és fogadd el a menedzselt weboldal szolgáltatási szerződését." : null,
       // logo_url mező csak a 011-es migráció után létezik — csak akkor
       // küldjük, ha tényleg van feltöltött logó (ami maga is csak a
@@ -2088,16 +2147,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     });
     if (!ok) return;
     setNotice("Projekt lezárása...");
-    const warrantyStartedAt = new Date();
-    const warrantyExpiresAt = new Date(warrantyStartedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const { error } = await supabase.from("client_projects").update({
-      maintenance_option: null,
-      followup_check_status: null,
-      status: "closed",
-      warranty_started_at: warrantyStartedAt.toISOString(),
-      warranty_expires_at: warrantyExpiresAt.toISOString(),
-      next_step: "A projekt lezárult. Az átadástól számított 30 napig díjmentes technikai garancia védi az elkészült működést."
-    }).eq("id", project.id);
+    const { error } = await supabase.rpc("close_completed_project", { project_id: project.id });
     if (error) {
       setNotice("Nem sikerült elmenteni a döntést.");
     } else {
@@ -2107,11 +2157,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         null,
         "admin@projectedge.hu",
         "Projekt lezárva",
-        `Az ügyfél (${email}) lezárta a(z) "${project.title}" projektet. A 30 napos technikai garancia elindult.`,
+        `Az ügyfél (${email}) lezárta a(z) "${project.title}" projektet. A 30 napos technikai garancia az utolsó igazolt átadási lépéstől számít.`,
         "/admin"
       );
       await triggerNotification(userId, email, "Projekt sikeresen lezárva",
-        `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.\n\nAz átadástól számított 30 napig díjmentes technikai garanciát biztosítunk az általunk elkészített működésre. Ha hibát találsz, jelentsd az ügyfélkapuban.`,
+        `Köszönjük az együttműködést! A(z) "${project.title}" projektet sikeresen lezártuk.\n\nAz utolsó igazolt technikai átadási lépéstől számított 30 napig díjmentes technikai garanciát biztosítunk az általunk elkészített működésre. Ha hibát találsz, jelentsd az ügyfélkapuban.`,
         "/ugyfelkapu/dashboard#statuses");
       loadPortal(true);
     }
@@ -2129,15 +2179,49 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const { error } = await supabase.from("client_projects").update({ subscription_status: copy.status, [copy.field]: now }).eq("id", project.id);
     if (error) { setNotice("A kérést nem sikerült elküldeni."); return; }
     await triggerNotification(null, "admin@projectedge.hu", copy.title, `Az ügyfél (${email}) elküldte a kérelmet: ${project.title}.`, "/admin");
+    await triggerNotification(
+      userId,
+      email,
+      `${copy.title} — kérelem rögzítve`,
+      action === "cancel"
+        ? `A(z) "${project.title}" előfizetés lemondási kérelmét rögzítettük. A weboldal a kifizetett időszak végén áll le; ez nem projektátadás, és nem indít technikai garanciát.`
+        : `A(z) "${project.title}" szolgáltatáshoz tartozó kérelmedet rögzítettük. Az adminisztrátor feldolgozza, az eredményről új értesítést kapsz.`,
+      "/ugyfelkapu/dashboard#statuses"
+    );
     setNotice("A kérelmet elküldtük. Hamarosan visszajelzünk.");
     loadPortal(true);
   }
 
   async function createChangeRequest(project: Project, category: string, description: string) {
+    if (isWebsitePurchaseRequest(description)) {
+      const existing = changeRequests.find(
+        (request) => request.project_id === project.id && isWebsitePurchaseRequest(request.description) && !["completed", "declined"].includes(request.status)
+      );
+      if (existing) {
+        setNotice("A weboldal megvásárlási igényét már elküldted. Az aktuális állapotot a kérések között látod.");
+        return;
+      }
+    }
     const { error } = await supabase.from("change_requests").insert({ project_id: project.id, user_id: userId, category, description });
     if (error) { setNotice("A módosítási kérést nem sikerült elküldeni."); return; }
-    await triggerNotification(null, "admin@projectedge.hu", "Új weboldal-módosítás", `Új kérés érkezett a(z) "${project.title}" menedzselt weboldalhoz.`, "/admin");
-    setNotice("A módosítási kérést elküldtük.");
+    const purchase = isWebsitePurchaseRequest(description);
+    await triggerNotification(null, "admin@projectedge.hu", purchase ? "Weboldal-megvásárlási igény" : "Új weboldal-módosítás", purchase ? `Az ügyfél (${email}) elindította a(z) "${project.title}" weboldal megvásárlási folyamatát. Készítsd elő az átadás és a fizetés részleteit.` : `Új kérés érkezett a(z) "${project.title}" menedzselt weboldalhoz.`, "/admin");
+    setNotice(purchase ? "A megvásárlási folyamatot elindítottuk. Az átadási és fizetési részletekről itt és emailben értesítünk." : "A módosítási kérést elküldtük.");
+  }
+
+  async function reportPurchaseTransfer(requestId: string) {
+    const ok = await confirm({
+      title: "Átutalás jelzése",
+      message: "Csak akkor folytasd, ha az összeget már elutaltad a kapott közleménnyel. Az adminisztrátor külön ellenőrzi a bankszámlán.",
+      confirmLabel: "Elutaltam",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("report_website_purchase_transfer", { request_id: requestId });
+    if (error) { setNotice(`Az utalás jelzését nem sikerült menteni: ${error.message}`); return; }
+    setNotice("Az utalás jelzését elküldtük. A beérkezést az adminisztrátor ellenőrzi.");
+    await triggerNotification(null, "admin@projectedge.hu", "Kivásárlási utalás ellenőrzése", "Az ügyfél jelezte, hogy elutalta a weboldal vételárát. Ellenőrizd a bankszámlán, majd indítsd el az átadást.", "/admin");
+    loadPortal(true);
   }
 
   async function approveReview(project: Project) {
@@ -2576,7 +2660,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         )}
 
         {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && (project.commercial_model === "subscription" ? (
-          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} />
+          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} />
         ) : (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ))}
@@ -2835,6 +2919,32 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           </button>
         </div>
       </header>
+
+      {latestUnreadNotification ? (
+        <aside className="portal-unread-alert" aria-live="polite">
+          <span className="portal-unread-alert-dot" aria-hidden="true" />
+          <div>
+            <small>ÚJ ÉRTESÍTÉS</small>
+            <strong>{latestUnreadNotification.title}</strong>
+            <p>{latestUnreadNotification.message}</p>
+          </div>
+          <button
+            className="portal-unread-alert-open"
+            type="button"
+            onClick={() => openNotificationLink(latestUnreadNotification.link)}
+          >
+            Megnyitás
+          </button>
+          <button
+            className="portal-unread-alert-close"
+            type="button"
+            aria-label="Értesítés bezárása"
+            onClick={() => markNotificationAsRead(latestUnreadNotification.id)}
+          >
+            ×
+          </button>
+        </aside>
+      ) : null}
 
       <OfflineBanner online={online} />
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
@@ -3678,7 +3788,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           {projectForm.photoUrls.length ? (
                             <div className="asset-preview-grid">
                               {projectForm.photoUrls.map((url, index) => (
-                                <div key={url}><img src={url} alt={`Feltöltött kép ${index + 1}`} /><button type="button" onClick={() => setProjectForm((current) => ({ ...current, photoUrls: current.photoUrls.filter((item) => item !== url) }))}>×</button></div>
+                                <div key={url}><AssetImage value={url} alt={`Feltöltött kép ${index + 1}`} /><button type="button" aria-label={`${index + 1}. kép eltávolítása`} onClick={() => removeProjectPhoto(url)}>×</button></div>
                               ))}
                             </div>
                           ) : null}
@@ -3707,15 +3817,36 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         />
                       </div>
                     </div>
-                    <div className="field">
-                      <label htmlFor="social-links">Közösségi oldalak linkjei</label>
-                      <textarea
-                        id="social-links"
-                        value={projectForm.socialLinks}
-                        onChange={(event) => setProjectForm((current) => ({ ...current, socialLinks: event.target.value }))}
-                        placeholder="Facebook, Instagram, LinkedIn, Google Cégprofil..."
-                      />
-                    </div>
+                    <fieldset className="field social-link-fieldset">
+                      <legend>Közösségi oldalak linkjei</legend>
+                      <p>Csak azt töltsd ki, amit szeretnél megjeleníteni a weboldalon.</p>
+                      {([
+                        ["Facebook", "facebookUrl", "https://facebook.com/…"],
+                        ["Instagram", "instagramUrl", "https://instagram.com/…"],
+                        ["LinkedIn", "linkedinUrl", "https://linkedin.com/company/…"],
+                        ["TikTok", "tiktokUrl", "https://tiktok.com/@…"],
+                        ["YouTube", "youtubeUrl", "https://youtube.com/@…"]
+                      ] as const).map(([label, key, placeholder]) => (
+                        <label className="social-link-row" key={key}>
+                          <span>{label}:</span>
+                          <input
+                            type="url"
+                            inputMode="url"
+                            value={projectForm[key]}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, [key]: event.target.value }))}
+                            placeholder={placeholder}
+                          />
+                        </label>
+                      ))}
+                      <label className="social-link-row social-link-other">
+                        <span>Egyéb:</span>
+                        <textarea
+                          value={projectForm.otherSocialLinks}
+                          onChange={(event) => setProjectForm((current) => ({ ...current, otherSocialLinks: event.target.value }))}
+                          placeholder="Google Cégprofil vagy bármilyen más link — soronként egy"
+                        />
+                      </label>
+                    </fieldset>
 
                     {/* Analytics */}
                     {projectForm.websiteStatus === "yes" ? <div className="field">
@@ -4168,7 +4299,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             </div>
             <form onSubmit={deleteAccount} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
               <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: "1.4" }}>
-                A fiók törlésével minden projektindító adatlap, ajánlat, üzenet és adat véglegesen törlődik a rendszerből.
+                Az üres, projekt és ügyfélszolgálati ügy nélküli fiókot itt végleg törölheted. Ha már van projekted vagy üzenetváltásod, az üzleti és számlázási nyilvántartások miatt előbb a lezárást kell kérned az ügyfélszolgálattól; a rendszer ezeket nem törli automatikusan.
               </p>
               <div className="field" style={{ margin: 0 }}>
                 <label htmlFor="settings-delete" style={{ color: "var(--muted)" }}>Megerősítéshez írd be: TÖRLÉS</label>

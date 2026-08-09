@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PURCHASE_PRICES, SUBSCRIPTION_PLANS, formatHuf, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { PRICE_TAX_NOTE, PURCHASE_PRICES, SUBSCRIPTION_PLANS, formatHuf, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { TransitionLink } from "@/components/TransitionLink";
 
 export function PriceEstimator() {
@@ -57,7 +57,7 @@ export function PriceEstimator() {
             <footer><p><strong>A brief is ehhez igazodik.</strong> Csak a {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{activePlan.name} csomagot választom</TransitionLink></footer>
           </section>
           <div className="subscription-footnotes">
-            <span>0 Ft induló díj</span><span>Bármikor lemondható</span><span>Első hónap előre fizetendő</span><span>Szüneteltethető</span>
+            <span>0 Ft induló díj</span><span>Bármikor lemondható</span><span>Első hónap előre fizetendő</span><span>Szüneteltethető</span><small>{PRICE_TAX_NOTE}</small>
           </div>
         </div>
       ) : (
@@ -71,7 +71,7 @@ export function PriceEstimator() {
           </div>
           <div className="purchase-actions">
             <TransitionLink className="button primary" href="/ugyfelkapu?model=purchase">Egyedi ajánlatot kérek</TransitionLink>
-            <p>Technikai átadás · forráskód · 30 nap hibagarancia</p>
+            <p>Technikai átadás · forráskód · 30 nap hibagarancia<br /><small>{PRICE_TAX_NOTE}</small></p>
           </div>
         </div>
       )}

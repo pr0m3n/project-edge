@@ -48,7 +48,10 @@ export function AssetImage({
   if (isPdfAsset(value)) {
     return <AssetLink className={className} label="PDF megnyitása" value={value} />;
   }
-  if (!url) {
+  if (url === null) {
+    return <span className="asset-link-error">A kép előnézete nem érhető el.</span>;
+  }
+  if (url === undefined) {
     return <span className="asset-link-loading">előnézet...</span>;
   }
 
@@ -62,22 +65,19 @@ export function AssetImage({
 
 /** `undefined` = még tölt, `null` = nem sikerült, string = kész link. */
 export function useSignedAsset(value: string | null | undefined) {
-  const [url, setUrl] = useState<string | null | undefined>(undefined);
+  const [resolved, setResolved] = useState<{ value: string; url: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    if (!value) {
-      setUrl(null);
-      return;
-    }
-    setUrl(undefined);
+    if (!value) return;
     signedAssetUrl(value).then((signed) => {
-      if (!cancelled) setUrl(signed);
+      if (!cancelled) setResolved({ value, url: signed });
     });
     return () => {
       cancelled = true;
     };
   }, [value]);
 
-  return url;
+  if (!value) return null;
+  return resolved?.value === value ? resolved.url : undefined;
 }

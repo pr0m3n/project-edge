@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <h2>5. Jogorvoslat</h2><p>Panasz tehető a Nemzeti Adatvédelmi és Információszabadság Hatóságnál (1055 Budapest, Falk Miksa utca 9–11.; naih.hu), továbbá bírósághoz lehet fordulni.</p>
       <h2>6. Sütik, mérés és hirdetés</h2><p>A belépéshez és a biztonsághoz szükséges sütik hozzájárulás nélkül használhatók. Statisztikai és hirdetési célú sütiket — Google Analytics 4 és Google Ads — kizárólag előzetes, kifejezett hozzájárulás alapján helyezünk el; a hozzájárulás megadásáig ezek tiltott állapotban vannak (Google Consent Mode). A hozzájárulás bármikor visszavonható a böngésző tárolt adatainak törlésével, ezt követően a sáv újra megjelenik. E sütik célja a látogatottság mérése és a hirdetések eredményességének követése; adatkezelő ilyenkor a Google Ireland Limited is. Nem végzünk joghatással járó automatizált döntéshozatalt. Nem kötelező adatot megadni, de a szerződéshez szükséges adatok hiányában a szolgáltatás nem teljesíthető.</p>
       <h2>7. Biztonság és módosítás</h2><p>Hozzáférés-szabályozást, titkosított adatkapcsolatot, naplózást és mentési eljárásokat alkalmazunk. A tájékoztató érdemi változásáról az ügyfeleket az ügyfélkapuban vagy e-mailben tájékoztatjuk.</p>
-      <p className="legal-note">Hatályos: 2026. augusztus 4. · <a href="/impresszum">Impresszum</a> · <a href="/aszf">ÁSZF</a></p>
+      <p className="legal-note">Hatályos: 2026. augusztus 9. · <a href="/impresszum">Impresszum</a> · <a href="/aszf">ÁSZF</a></p>
     </section>
   </main>;
 }
