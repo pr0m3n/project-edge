@@ -20,18 +20,6 @@ export const PROVIDER = {
   taxNumber: "92276084-1-39",
   registrationNumber: "62666901",
   registrationAuthority: "Nemzeti Adó- és Vámhivatal · Egyéni Vállalkozók Nyilvántartása",
-  statisticalNumber: "92276084-6210-231-19",
-  startedAt: "2026. augusztus 9.",
-  mainActivity: "621001 – Számítógépes programozás m.n.s.",
-  activities: [
-    "621004 – Weblap tervezése (webdizájn)",
-    "631003 – Adatfeldolgozási szolgáltatás",
-    "639201 – Egyéb információs szolgáltatás",
-    "741201 – Grafikai tervezés, vizuális kommunikáció",
-    "855902 – Informatikai oktatás",
-    "731101 – Reklámtervezés, -készítés, -elhelyezés",
-    "731201 – Reklámfelület ügynöki értékesítése"
-  ],
   taxStatus: "Alanyi adómentes",
   invoicing: "alanyi adómentes számla"
 } as const;

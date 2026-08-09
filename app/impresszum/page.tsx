@@ -12,15 +12,10 @@ export default function ImpressumPage() {
       <ul>
         <li><strong>Név / vállalkozó:</strong> {PROVIDER.legalName}</li><li><strong>Rövidített megjelölés:</strong> {PROVIDER.shortName}</li>
         <li><strong>Székhely:</strong> {PROVIDER.address}</li><li><strong>EV-nyilvántartási szám:</strong> {PROVIDER.registrationNumber}</li>
-        <li><strong>Adószám:</strong> {PROVIDER.taxNumber}</li><li><strong>Statisztikai számjel:</strong> {PROVIDER.statisticalNumber}</li>
+        <li><strong>Adószám:</strong> {PROVIDER.taxNumber}</li>
         <li><strong>Nyilvántartás:</strong> {PROVIDER.registrationAuthority}</li>
-        <li><strong>Tevékenység kezdete:</strong> {PROVIDER.startedAt}</li><li><strong>Főtevékenység:</strong> {PROVIDER.mainActivity}</li>
-        <li><strong>Áfa-státusz:</strong> {PROVIDER.taxStatus}</li>
-        <li><strong>Kapcsolattartó:</strong> {PROVIDER.contactName}</li><li><strong>E-mail:</strong> {PROVIDER.email}</li>
-        <li><strong>Telefon:</strong> {PROVIDER.phone}</li><li><strong>Weboldal:</strong> {PROVIDER.website}</li>
+        <li><strong>E-mail:</strong> {PROVIDER.email}</li><li><strong>Weboldal:</strong> {PROVIDER.website}</li>
       </ul>
-      <h3>Nyilvántartott tevékenységek</h3>
-      <ul>{PROVIDER.activities.map((activity) => <li key={activity}>{activity}</li>)}</ul>
       <h2>Tárhely- és infrastruktúra-szolgáltató</h2>
       <ul><li><strong>Név:</strong> Vercel Inc.</li><li><strong>Web:</strong> vercel.com</li><li><strong>Kapcsolat:</strong> privacy@vercel.com</li></ul>
       <h2>További technikai szolgáltatók</h2>

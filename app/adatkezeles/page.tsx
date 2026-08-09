@@ -8,7 +8,7 @@ export default function PrivacyPage() {
   return <main className="site-shell light-page"><SiteNav />
     <section className="page-hero compact"><p className="micro-label dark">Adatvédelem</p><h1>Adatkezelési tájékoztató</h1><p>Átlátható információ arról, milyen adatot, milyen célból és meddig kezelünk.</p></section>
     <section className="legal-prose">
-      <h2>1. Adatkezelő</h2><p><strong>{PROVIDER.legalName}</strong> ({PROVIDER.shortName}), {PROVIDER.address}; adószám: {PROVIDER.taxNumber}; e-mail: {PROVIDER.email}; telefon: {PROVIDER.phone}. Kapcsolattartó: {PROVIDER.contactName}.</p>
+      <h2>1. Adatkezelő</h2><p><strong>{PROVIDER.legalName}</strong> ({PROVIDER.shortName}), {PROVIDER.address}; adószám: {PROVIDER.taxNumber}; e-mail: {PROVIDER.email}.</p>
       <h2>2. Adatkezelések</h2>
       <h3>Kapcsolatfelvétel és ajánlatkérés</h3><p>Adatok: név, e-mail, telefon, üzenet és az önként megadott üzleti információk. Cél: válaszadás és szerződéskötést megelőző egyeztetés. Jogalap: GDPR 6. cikk (1) b), illetve nem az érintett által indított megkeresésnél f). Megőrzés: az ügy lezárásától legfeljebb 1 év, kivéve ha szerződés jön létre.</p>
       <h3>Ügyfélkapu, brief, szerződés és teljesítés</h3><p>Adatok: fiókazonosító, név, e-mail, brief, feltöltött fájlok, üzenetek, domainválasztás, elfogadási időpontok és projektelőzmények. Cél és jogalap: szerződés előkészítése és teljesítése (GDPR 6. cikk (1) b)), jogi igényeknél jogos érdek (f). Megőrzés: a szerződés megszűnésétől számított általános elévülési idő végéig, rendszerint 5 év.</p>

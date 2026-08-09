@@ -108,5 +108,6 @@ test("provider legal data is the registered individual entrepreneur", () => {
   assert.match(legal, /Alanyi adómentes/);
   assert.doesNotMatch(legal, /TRADE 24|22303442|19-06-508423|8248 Nemesvámos/);
   assert.match(impressum, /EV-nyilvántartási szám/);
-  assert.match(impressum, /Statisztikai számjel/);
+  assert.match(impressum, /Adószám/);
+  assert.doesNotMatch(impressum, /Statisztikai számjel|Tevékenység kezdete|Főtevékenység|Nyilvántartott tevékenységek/);
 });
