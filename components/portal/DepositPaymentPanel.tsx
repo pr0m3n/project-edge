@@ -5,9 +5,10 @@ import { PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions
 type DepositPaymentPanelProps = {
   project: Project;
   onStartPayment: () => void;
+  paymentStarting?: boolean;
 };
 
-export function DepositPaymentPanel({ project, onStartPayment }: DepositPaymentPanelProps) {
+export function DepositPaymentPanel({ project, onStartPayment, paymentStarting = false }: DepositPaymentPanelProps) {
   if (project.commercial_model === "subscription") {
     const plan = subscriptionPlan(project.subscription_plan);
     return (
@@ -15,7 +16,10 @@ export function DepositPaymentPanel({ project, onStartPayment }: DepositPaymentP
         <div className="first-payment-icon"><span>01</span><i /></div>
         <div className="first-payment-copy"><span>Első számlázási időszak</span><h4>Indítsd el a {plan.name} előfizetést.</h4><p>Az első havi díj előre fizetendő és ez indítja el a weboldal elkészítését. Külön induló díj nincs. A munka megkezdése után ez az összeg nem visszatéríthető.</p></div>
         <div className="first-payment-price"><strong>{formatHuf(project.monthly_price ?? plan.price)}</strong><span>Az első hónap díja</span><small>{PRICE_TAX_NOTE}</small></div>
-        <button className="button primary" type="button" onClick={onStartPayment}>Utalási adatok megnyitása</button>
+        <button className="button primary" type="button" disabled={paymentStarting} onClick={onStartPayment}>
+          {paymentStarting ? "Stripe megnyitása…" : "Biztonságos bankkártyás fizetés"}
+        </button>
+        <small>A további havidíjakat a Stripe automatikusan terheli. A kártyaadatok nem kerülnek a ProjectEdge rendszerébe.</small>
       </div>
     );
   }

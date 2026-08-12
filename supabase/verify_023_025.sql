@@ -77,3 +77,16 @@ where schemaname = 'storage'
   )
 order by policyname;
 -- Elvárt: mind a 3 policy szerepel; mindegyik authenticated szerepkörre vonatkozik.
+
+-- 8) A 026 Stripe/Billingo migráció ellenőrzése.
+select column_name, data_type
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'client_projects'
+  and column_name in ('stripe_customer_id', 'stripe_subscription_id', 'stripe_checkout_session_id', 'stripe_subscription_status', 'stripe_current_period_end')
+order by column_name;
+-- Elvárt: mind az 5 oszlop szerepel.
+
+select to_regclass('public.stripe_webhook_events') as stripe_webhook_events_table,
+       to_regclass('public.subscription_payments_stripe_invoice_uidx') as stripe_invoice_unique_index;
+-- Elvárt: egyik érték sem null.

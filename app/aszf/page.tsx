@@ -59,8 +59,11 @@ export default function TermsPage() {
           havidíj előre történő megfizetése. Az ezt követő havidíjak minden szolgáltatási időszak
           elején esedékesek. Egyszeri vásárlásnál a vállalási díj az egyedi ajánlatban szerepel, a
           munka megkezdésének feltétele pedig 10 000 Ft foglaló, amely a végösszegbe beleszámít. A
-          fizetés banki átutalással történik, az Ügyfélkapun megjelenő adatok alapján; a beérkezést
-          a Szolgáltató ellenőrzi és igazolja vissza. {PRICE_TAX_NOTE} A Szolgáltató a fizetésről számlát állít ki.
+          menedzselt előfizetés díjának megfizetése bankkártyával, a Stripe biztonságos fizetési
+          felületén történik; a kártyát a Stripe a későbbi ismétlődő díjakhoz elmenti. Az egyszeri
+          vásárlás foglalója, végösszege és a weboldal vételára banki átutalással fizetendő, az
+          Ügyfélkapun megjelenő adatok alapján; a beérkezést a Szolgáltató ellenőrzi és igazolja vissza.
+          {PRICE_TAX_NOTE} A Szolgáltató a fizetésről számlát állít ki.
         </p>
         <p>
           Egyszeri vásárlásnál a teljesítés sorrendje: a Vállalkozó az elkészült oldalt a Megrendelő jóváhagyása után

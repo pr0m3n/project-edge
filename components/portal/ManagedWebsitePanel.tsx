@@ -10,17 +10,19 @@ type Props = {
   onPause: () => void;
   onResume: () => void;
   onCancel: () => void;
+  onManageBilling: () => void;
   onReportPurchaseTransfer: (requestId: string) => Promise<void>;
   onRequestChange: (category: string, description: string) => Promise<void>;
 };
 
-export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onReportPurchaseTransfer, onRequestChange }: Props) {
+export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onReportPurchaseTransfer, onRequestChange }: Props) {
   const plan = subscriptionPlan(project.subscription_plan);
   const [composer, setComposer] = useState(false);
   const [category, setCategory] = useState("content");
   const [description, setDescription] = useState("");
   const [purchaseSending, setPurchaseSending] = useState(false);
   const paused = project.subscription_status === "paused" || project.status === "paused";
+  const paymentProblem = project.subscription_status === "past_due";
   const cancelPending = project.subscription_status === "cancel_requested";
   const pausePending = project.subscription_status === "pause_requested";
   const resumePending = project.subscription_status === "resume_requested";
@@ -32,7 +34,7 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
     <section className="managed-hub">
       <header className="managed-hub-head">
         <div><span className={`health-dot ${project.site_health_status === "attention" ? "warn" : ""}`} /><div><small>MENEDZSELT WEBOLDAL</small><h3>{project.managed_domain_name || project.brief_data?.domainName || "A weboldalad"}</h3></div></div>
-        <span className={`subscription-state ${paused ? "paused" : ""}`}>{paused ? "Szüneteltetve" : "● Aktív és felügyelt"}</span>
+        <span className={`subscription-state ${paused || paymentProblem ? "paused" : ""}`}>{paused ? "Szüneteltetve" : paymentProblem ? "Fizetési probléma" : "● Aktív és felügyelt"}</span>
       </header>
 
       <div className="managed-metrics">
@@ -53,6 +55,7 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
 
       <details className="subscription-manage">
         <summary>Előfizetés kezelése</summary>
+        <article className="purchase-option-card"><strong>Bankkártya és Stripe-számlázás</strong><p>A Stripe biztonságos felületén frissítheted a kártyát és ellenőrizheted a fizetési adatokat.</p><button className="button secondary" onClick={onManageBilling} type="button">Stripe számlázás megnyitása</button></article>
         <div><div><strong>Szüneteltetés</strong><p>Az oldal parkolóállapotba kerül, a domain és a rendszer megmarad. Parkolási díj: 2 900 Ft/hó.</p>{pausePending || resumePending ? <div className="purchase-request-state"><strong>Kérelem elküldve</strong><span>Az adminisztrátor feldolgozza, az eredményről itt és emailben is értesítést kapsz.</span></div> : paused ? <button className="button secondary" onClick={onResume} type="button">Újraaktiválás kérése</button> : <button className="button secondary" onClick={onPause} type="button">Szüneteltetés kérése</button>}</div><div className="purchase-option-card"><strong>Weboldal megvásárlása</strong><p>Egyszeri {formatHuf(purchasePrice)} összegért a forráskód és a technikai rendszer a tiéd lesz. A kérés után elkészítjük az átadási összefoglalót és a fizetési adatokat; fizetés után átadjuk a forráskódot és a hozzáféréseket, a havi előfizetés pedig lezárul.</p><ol><li>Vásárlási igény elküldése</li><li>Átadási összefoglaló és fizetési adatok</li><li>Fizetés ellenőrzése</li><li>Forráskód és hozzáférések átadása</li></ol>{purchaseRequestPending || purchaseSending ? <div className="purchase-request-state"><strong>{purchaseSending ? "Igény küldése…" : "Igény elküldve"}</strong><span>{purchaseRequest?.status === "waiting_client" ? "A következő lépés nálad van — nézd meg a fenti kérések között az admin üzenetét." : "Dolgozunk az átadási összefoglalón. Itt és emailben is értesítünk."}</span></div> : <button className="button secondary" type="button" disabled={cancelPending} onClick={async () => { setPurchaseSending(true); await onRequestChange("new_feature", websitePurchaseRequestText(purchasePrice)); setPurchaseSending(false); }}>{purchaseRequest?.status === "declined" ? "Új vásárlási igény küldése" : "Megvásárlási folyamat indítása"}</button>}</div><div className="danger-zone"><strong>Lemondás</strong><p>A weboldal a kifizetett időszak végén leáll. Ez nem projektátadás és nem jár forráskóddal vagy 30 napos garanciával. Ha szeretnéd megtartani az oldalt, előbb a megvásárlási folyamatot indítsd el.</p>{cancelPending ? <div className="purchase-request-state"><strong>Lemondási kérelem elküldve</strong><span>A szolgáltatás a kifizetett időszak végén zárul le. Az időpontról értesítést kapsz.</span></div> : <button className="button secondary" onClick={onCancel} type="button">Előfizetés lemondása</button>}</div></div>
       </details>
     </section>

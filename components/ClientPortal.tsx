@@ -164,6 +164,9 @@ export type Project = {
   purchase_option_price: number | null;
   site_health_status: string | null;
   last_health_check_at: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_subscription_status?: string | null;
 };
 
 type Ticket = {
@@ -618,8 +621,9 @@ export function formatPrice(value: number | null, currency = "Ft") {
 }
 
 export const BANK_TRANSFER_DETAILS = {
-  name: "Boczán Patrik",
-  iban: "HU66 3020 0014 1991 3410 3979 7092",
+  name: "Patrik Boczán",
+  accountNumber: "30200014-19613410-97673621",
+  iban: "HU51 3020 0014 1961 3410 9767 3621",
   bic: "REVOHUHB"
 };
 
@@ -693,6 +697,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [paymentMode, setPaymentMode] = useState<"deposit" | "final">("deposit");
   const [paymentError, setPaymentError] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [stripeLoadingProjectId, setStripeLoadingProjectId] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [contractChecked, setContractChecked] = useState(false);
   const [performanceConsent, setPerformanceConsent] = useState(false);
@@ -754,6 +759,37 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setHomeView("new-brief");
     if (view === "dashboard") window.sessionStorage.removeItem("projectedge-commercial-choice");
   }, [view]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentResult = params.get("payment");
+    if (!paymentResult) return;
+    setNotice(paymentResult === "success"
+      ? "A Stripe-fizetés sikeres. Az előfizetés állapota rövidesen automatikusan frissül."
+      : "A fizetést megszakítottad; az előfizetés még nem indult el.");
+    params.delete("payment");
+    window.history.replaceState({}, "", `${window.location.pathname}${params.size ? `?${params}` : ""}${window.location.hash}`);
+  }, []);
+
+  async function openStripe(project: Project, endpoint: "checkout" | "portal") {
+    setStripeLoadingProjectId(project.id);
+    setPaymentError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("A munkamenet lejárt. Jelentkezz be újra.");
+      const response = await fetch(`/api/stripe/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ projectId: project.id })
+      });
+      const result = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error || "A Stripe felülete nem nyitható meg.");
+      window.location.assign(result.url);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "A Stripe felülete nem nyitható meg.");
+      setStripeLoadingProjectId(null);
+    }
+  }
 
   useEffect(() => {
     if (!validationTarget) return;
@@ -2175,8 +2211,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         : { title: "Előfizetés lemondása", message: "A weboldal a kifizetett időszak végén leáll. A már kifizetett havidíj nem visszatéríthető.", status: "cancel_requested", field: "subscription_cancel_requested_at" };
     const ok = await confirm({ title: copy.title, message: copy.message, confirmLabel: "Kérelem elküldése", cancelLabel: "Mégse", danger: action === "cancel" });
     if (!ok) return;
+    if (action === "cancel" && project.stripe_subscription_id) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setNotice("A munkamenet lejárt. Jelentkezz be újra."); return; }
+      const response = await fetch("/api/stripe/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ projectId: project.id, action: "cancel" })
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) { setNotice(result.error || "A lemondás nem sikerült."); return; }
+    }
     const now = new Date().toISOString();
-    const { error } = await supabase.from("client_projects").update({ subscription_status: copy.status, [copy.field]: now }).eq("id", project.id);
+    const { error } = action === "cancel" && project.stripe_subscription_id
+      ? { error: null }
+      : await supabase.from("client_projects").update({ subscription_status: copy.status, [copy.field]: now }).eq("id", project.id);
     if (error) { setNotice("A kérést nem sikerült elküldeni."); return; }
     await triggerNotification(null, "admin@projectedge.hu", copy.title, `Az ügyfél (${email}) elküldte a kérelmet: ${project.title}.`, "/admin");
     await triggerNotification(
@@ -2614,7 +2663,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         {project.status === "deposit_pending" && (
           <DepositPaymentPanel
             project={project}
-            onStartPayment={() => { setPaymentMode("deposit"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
+            paymentStarting={stripeLoadingProjectId === project.id}
+            onStartPayment={() => project.commercial_model === "subscription"
+              ? openStripe(project, "checkout")
+              : (setPaymentMode("deposit"), setShowPaymentModalProjectId(project.id), setPaymentError(""))}
           />
         )}
 
@@ -2660,7 +2712,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         )}
 
         {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && (project.commercial_model === "subscription" ? (
-          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} />
+          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} />
         ) : (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ))}
@@ -4456,6 +4508,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
               <div style={{ background: '#15171B', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '2px 18px' }}>
                 {copyRow('name', 'Kedvezményezett', BANK_TRANSFER_DETAILS.name)}
+                {copyRow('account', 'Belföldi számlaszám', BANK_TRANSFER_DETAILS.accountNumber)}
                 {copyRow('iban', 'IBAN', BANK_TRANSFER_DETAILS.iban)}
                 {copyRow('bic', 'BIC / SWIFT', BANK_TRANSFER_DETAILS.bic)}
                 {copyRow('reference', 'Közlemény (fontos!)', reference, true)}

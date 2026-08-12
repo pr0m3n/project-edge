@@ -15,7 +15,7 @@ function sections(project: Project) {
       : `A Szolgáltató elkészíti a „${project.title}” egyedi weboldalt/digitális rendszert az elfogadott ajánlat és brief szerint.`],
     ["2", "Csomag és terjedelem", `${managed ? `${plan.name}: ${plan.short}.` : project.offer_scope || "Az elfogadott ajánlat szerint."} A csomagon kívüli funkció, teljes újratervezés vagy többletmunka külön írásos megrendelés tárgya.`],
     ["3", "Díj és fizetés", managed
-      ? `Díj: ${price}, előre fizetve. Nincs külön induló díj. Az első havidíj beérkezésének visszaigazolása indítja a kivitelezést, a további díjak minden szolgáltatási időszak elején esedékesek. ${PRICE_TAX_NOTE}`
+      ? `Díj: ${price}, előre fizetve bankkártyával a Stripe biztonságos felületén. Nincs külön induló díj. Az első havidíj sikeres terhelése indítja a kivitelezést; a további díjakat a Stripe minden szolgáltatási időszak elején automatikusan terheli. A kártyaadatot a Szolgáltató nem tárolja. ${PRICE_TAX_NOTE}`
       : `Vállalási díj: ${price}. Foglaló: ${formatPrice(project.deposit_amount, project.offer_currency || "Ft")}; a fennmaradó díj jóváhagyás után, a teljes átadás előtt esedékes. ${PRICE_TAX_NOTE}`],
     ["4", "Határidő és együttműködés", `${project.offer_timeline || (managed ? "A kivitelezés ütemezése az első havidíj jóváírása és a szükséges anyagok hiánytalan átadása után indul." : "Az elfogadott ajánlat szerint.")} Az ügyfél késedelmes anyagátadása vagy visszajelzése a határidőt arányosan kitolja.`],
     ["5", "Domain és technikai infrastruktúra", managed
