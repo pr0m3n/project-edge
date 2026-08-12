@@ -3,6 +3,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
+  initialBriefForm,
+  PUBLIC_BRIEF_DRAFT_KEY,
+  readPublicBriefDraft,
+  type BriefFormValues
+} from "@/lib/brief-draft";
+import {
   useToasts,
   ToastStack,
   useConfirm,
@@ -220,63 +226,8 @@ const statusLabels: Record<string, string> = {
   answered: "Megválaszolva"
 };
 
-const initialProject = {
-  commercialModel: "subscription" as CommercialModel,
-  subscriptionPlan: "business" as SubscriptionPlanKey,
-  audience: "",
-  budget: "",
-  company: "",
-  features: "",
-  goals: "",
-  pages: "",
-  palette: "",
-  projectType: "",
-  priority: "",
-  primaryAction: "",
-  style: "",
-  title: "",
-  vibe: "",
-  website: "",
-  websiteStatus: "",
-  // Anyagok és hozzáférések (5. lépés)
-  domainStatus: "",
-  domainName: "",
-  domainIdeas: "",
-  domainProofUrl: "",
-  domainPurchaseState: "",
-  hostingAccess: "",
-  existingPlatform: "",
-  wpAccess: "",
-  logoStatus: "",
-  wantLogoDesign: "",
-  brandColors: "",
-  fontPreference: "",
-  contentSource: "",
-  contentBrief: "",
-  contentFileUrls: [] as string[],
-  photoSource: "",
-  photoUrls: [] as string[],
-  // A régi, egyetlen socialLinks mezőt olvasási kompatibilitás miatt
-  // megtartjuk, az új adatlap viszont platformonként kér használható URL-t.
-  socialLinks: "",
-  facebookUrl: "",
-  instagramUrl: "",
-  linkedinUrl: "",
-  tiktokUrl: "",
-  youtubeUrl: "",
-  otherSocialLinks: "",
-  contactEmail: "",
-  contactPhone: "",
-  analyticsAccess: "",
-  billingDetails: "",
-  customBg: "#F5F5F5",
-  customAccent: "#76ABAE",
-  customText: "#303841",
-  customCta: "#FF5722",
-  logoUrl: ""
-};
-
-export type BriefFormValues = typeof initialProject;
+const initialProject = initialBriefForm;
+export type { BriefFormValues } from "@/lib/brief-draft";
 
 /**
  * A wizard step csak akkor engedhető tovább, ha az adott képernyőn minden
@@ -726,6 +677,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [domainProofUrl, setDomainProofUrl] = useState("");
   const [domainProofUploading, setDomainProofUploading] = useState(false);
   const [handoverSaving, setHandoverSaving] = useState(false);
+  const [publicBriefPending, setPublicBriefPending] = useState(false);
+  const [publicBriefImported, setPublicBriefImported] = useState(false);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -733,6 +686,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setPublicBriefPending(params.get("brief") === "continue" || Boolean(readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY))));
     const modelFromUrl = params.get("model");
     const planFromUrl = params.get("plan");
     if (modelFromUrl === "subscription" || modelFromUrl === "purchase") {
@@ -759,6 +713,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setHomeView("new-brief");
     if (view === "dashboard") window.sessionStorage.removeItem("projectedge-commercial-choice");
   }, [view]);
+
+  useEffect(() => {
+    if (view !== "dashboard" || !userId || publicBriefImported) return;
+    const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
+    if (!saved) return;
+    setProjectForm((current) => ({ ...current, ...saved.data }));
+    setProjectStep(4);
+    setProjectSubmitted(false);
+    setBriefConfirmed(false);
+    setHomeView("new-brief");
+    setPublicBriefImported(true);
+    setNotice("A nyilvános brief válaszait betöltöttük. Egészítsd ki a privát anyagokkal, majd ellenőrzés után küldd be.");
+  }, [publicBriefImported, userId, view]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -820,6 +787,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     if (!draftKey || draftRestored.done || projectSubmitted) return;
     draftRestored.done = true;
     try {
+      if (readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY))) return;
       const raw = window.localStorage.getItem(draftKey);
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -1727,6 +1695,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
     try {
       if (draftKey) window.localStorage.removeItem(draftKey);
+      window.localStorage.removeItem(PUBLIC_BRIEF_DRAFT_KEY);
     } catch {
       /* ignore */
     }
@@ -2773,12 +2742,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     return (
       <section className="portal-auth">
         <div className="portal-auth-copy">
-          <p className="micro-label">Ügyfélkapu</p>
-          <h1>Saját projektfelület, nem elvesző emailek.</h1>
-          <p>
-            Itt tudsz projektet indítani, üzenetet küldeni, visszanézni a beszélgetéseket és látni,
-            hol tart a közös munka.
-          </p>
+          <p className="micro-label">{publicBriefPending ? "Brief kész · mentés következik" : "Ügyfélkapu"}</p>
+          <h1>{publicBriefPending ? "A válaszaid megvannak." : "Saját projektfelület, nem elvesző emailek."}</h1>
+          <p>{publicBriefPending ? "Lépj be vagy hozz létre fiókot. Utána a brief automatikusan megnyílik, és a privát anyagokkal kiegészítve te küldheted be." : "Itt tudsz projektet indítani, üzenetet küldeni, visszanézni a beszélgetéseket és látni, hol tart a közös munka."}</p>
+          {publicBriefPending ? <div className="brief-handoff-note"><span>✓</span><div><strong>Biztonságosan elmentve ezen az eszközön</strong><small>A fiók létrehozása nem küldi be automatikusan a projektet.</small></div></div> : null}
         </div>
         <form className="portal-card" onSubmit={submitAuth}>
           <div className="portal-tabs">

@@ -3,6 +3,7 @@ import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import { PublicBriefWizard } from "@/components/PublicBriefWizard";
 
 const paths = [
   {
@@ -83,7 +84,8 @@ export default function Home() {
               havidíjért. Ha inkább a sajátod lenne, meg is veheted.
             </p>
             <div className="hero-command">
-              <TransitionLink className="button primary" href="/szolgaltatasok#arak">Csomagok megtekintése</TransitionLink>
+              <a className="button primary" href="#projektbrief">Projektbrief indítása</a>
+              <TransitionLink className="button spectral" href="/szolgaltatasok#arak">Csomagok és árak</TransitionLink>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>
@@ -125,6 +127,8 @@ export default function Home() {
           <span key={metric}>{metric}</span>
         ))}
       </section>
+
+      <PublicBriefWizard />
 
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
