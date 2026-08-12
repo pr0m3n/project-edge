@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
 import { authenticatedUser } from "@/lib/server-auth";
-import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
+import { createServerSupabaseAdminClient, createServerSupabaseUserClient } from "@/lib/supabase/server";
 import { getStripe, siteUrl } from "@/lib/stripe";
 import { subscriptionPlan } from "@/lib/subscriptions";
 
@@ -20,11 +20,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Érvénytelen projektazonosító." }, { status: 400 });
     }
 
-    const admin = createServerSupabaseAdminClient();
-    const { data: project, error } = await admin.from("client_projects")
+    const accessToken = request.headers.get("authorization")?.slice("Bearer ".length).trim();
+    if (!accessToken) return NextResponse.json({ error: "Érvénytelen vagy lejárt munkamenet." }, { status: 401 });
+
+    // A projektet a felhasználó saját RLS-jogosultságával olvassuk. Így egy
+    // hibás deployment service-role kulcs nem látszik többé hamisan 404-nek.
+    const userClient = createServerSupabaseUserClient(accessToken);
+    const { data: project, error: projectError } = await userClient.from("client_projects")
       .select("id,user_id,title,company,commercial_model,subscription_plan,monthly_price,contract_accepted,contract_accepted_at,subscription_status,stripe_customer_id,stripe_subscription_id")
-      .eq("id", body.projectId).eq("user_id", user.id).maybeSingle();
-    if (error || !project) return NextResponse.json({ error: "A projekt nem található." }, { status: 404 });
+      .eq("id", body.projectId).maybeSingle();
+    if (projectError) {
+      console.error("Stripe checkout project lookup failed", { code: projectError.code, message: projectError.message });
+      return NextResponse.json({ error: "A projekt fizetési adatai most nem tölthetők be. Próbáld újra rövidesen." }, { status: 500 });
+    }
+    if (!project) return NextResponse.json({ error: "A projekt nem található, vagy nincs hozzáférésed." }, { status: 404 });
+
+    const admin = createServerSupabaseAdminClient();
+    const { data: adminProject, error: adminCheckError } = await admin.from("client_projects").select("id").eq("id", project.id).maybeSingle();
+    if (adminCheckError || !adminProject) {
+      console.error("Stripe checkout admin connection failed", {
+        code: adminCheckError?.code ?? "project_not_visible",
+        message: adminCheckError?.message ?? "Project is not visible to the configured admin client."
+      });
+      return NextResponse.json({ error: "A fizetési kapcsolat szerverbeállítása hibás. Kérj segítséget az ügyfélkapuban." }, { status: 503 });
+    }
     if (project.commercial_model !== "subscription" || !project.contract_accepted) {
       return NextResponse.json({ error: "Ehhez a projekthez még nincs elfogadott előfizetési szerződés." }, { status: 409 });
     }

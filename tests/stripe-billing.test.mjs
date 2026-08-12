@@ -10,10 +10,23 @@ test("subscription checkout is server-priced and webhook verified", () => {
   assert.match(checkout, /subscriptionPlan\(project\.subscription_plan\)/);
   assert.match(checkout, /unit_amount: monthlyPrice/);
   assert.doesNotMatch(checkout, /body\.(amount|price)/);
+  assert.match(checkout, /createServerSupabaseUserClient\(accessToken\)/);
+  assert.match(checkout, /Stripe checkout admin connection failed/);
+  assert.doesNotMatch(checkout, /if \(error \|\| !project\).*A projekt nem található/);
   assert.match(webhook, /constructEvent\(await request\.text\(\), signature, secret\)/);
   assert.match(webhook, /stripe_webhook_events/);
   assert.match(webhook, /invoice\.paid/);
   assert.match(webhook, /invoice\.payment_failed/);
+});
+
+test("public brief supports a saved custom palette", () => {
+  const brief = read("components/PublicBriefWizard.tsx");
+  assert.match(brief, /palette: "custom"/);
+  assert.match(brief, /form\.customBg/);
+  assert.match(brief, /form\.customAccent/);
+  assert.match(brief, /form\.customText/);
+  assert.match(brief, /form\.customCta/);
+  assert.match(brief, /public-preview-hero/);
 });
 
 test("one-off transfers use the new dedicated HUF account", () => {

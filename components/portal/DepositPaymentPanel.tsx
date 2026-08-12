@@ -13,13 +13,27 @@ export function DepositPaymentPanel({ project, onStartPayment, paymentStarting =
     const plan = subscriptionPlan(project.subscription_plan);
     return (
       <div className="first-payment-card">
-        <div className="first-payment-icon"><span>01</span><i /></div>
-        <div className="first-payment-copy"><span>Első számlázási időszak</span><h4>Indítsd el a {plan.name} előfizetést.</h4><p>Az első havi díj előre fizetendő és ez indítja el a weboldal elkészítését. Külön induló díj nincs. A munka megkezdése után ez az összeg nem visszatéríthető.</p></div>
-        <div className="first-payment-price"><strong>{formatHuf(project.monthly_price ?? plan.price)}</strong><span>Az első hónap díja</span><small>{PRICE_TAX_NOTE}</small></div>
-        <button className="button primary" type="button" disabled={paymentStarting} onClick={onStartPayment}>
-          {paymentStarting ? "Stripe megnyitása…" : "Biztonságos bankkártyás fizetés"}
-        </button>
-        <small>A további havidíjakat a Stripe automatikusan terheli. A kártyaadatok nem kerülnek a ProjectEdge rendszerébe.</small>
+        <div className="first-payment-copy">
+          <span>ELSŐ SZÁMLÁZÁSI IDŐSZAK</span>
+          <h4>Indítsd el a {plan.name} előfizetést.</h4>
+          <p>Az első havi díj indítja el a weboldal elkészítését. Külön induló díj nincs.</p>
+        </div>
+        <div className="first-payment-price">
+          <span>Most fizetendő</span>
+          <strong>{formatHuf(project.monthly_price ?? plan.price)}</strong>
+          <small>{PRICE_TAX_NOTE}</small>
+        </div>
+        <div className="first-payment-assurances" aria-label="Fizetési információk">
+          <span><b>✓</b> Biztonságos Stripe Checkout</span>
+          <span><b>✓</b> Automatikus havi megújulás</span>
+          <span><b>✓</b> A kártyaadatokat nem tároljuk</span>
+        </div>
+        <div className="first-payment-action">
+          <button className="button primary" type="button" disabled={paymentStarting} onClick={onStartPayment}>
+            {paymentStarting ? "Stripe megnyitása…" : "Előfizetés indítása bankkártyával →"}
+          </button>
+          <small>A további havidíjakat a Stripe automatikusan terheli. Az előfizetést az ügyfélkapuban kezelheted.</small>
+        </div>
       </div>
     );
   }

@@ -18,6 +18,29 @@ export function createServerSupabaseClient() {
 }
 
 /**
+ * Server-side client acting with an already verified user's access token.
+ * RLS remains active, so ownership checks do not depend on the service-role
+ * configuration of the deployment.
+ */
+export function createServerSupabaseUserClient(accessToken: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing Supabase environment variables.");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+}
+
+/**
  * Server-only client for routes that have already performed their own
  * authorization and must not depend on public-table grants.
  *

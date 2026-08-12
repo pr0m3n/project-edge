@@ -96,6 +96,9 @@ export function PublicBriefWizard() {
   const selectedPlan = subscriptionPlan(form.subscriptionPlan);
   const selectedVibe = vibes.find(([key]) => key === form.vibe) ?? vibes[1];
   const selectedPalette = palettes.find(([key]) => key === form.palette) ?? palettes[0];
+  const previewColors = form.palette === "custom"
+    ? [form.customBg, form.customAccent, form.customText, form.customCta]
+    : selectedPalette[2];
   const progress = Math.round(((step + 1) / steps.length) * 100);
   const savedLabel = useMemo(() => {
     if (!savedAt) return "A válaszaid ezen az eszközön mentődnek";
@@ -120,7 +123,9 @@ export function PublicBriefWizard() {
   }
 
   function continueToAccount() {
-    const paletteName = palettes.find(([key]) => key === form.palette)?.[1] ?? "Rátok bízom";
+    const paletteName = form.palette === "custom"
+      ? "Egyedi paletta"
+      : palettes.find(([key]) => key === form.palette)?.[1] ?? "Rátok bízom";
     const prepared: BriefFormValues = {
       ...form,
       title: form.title || `${form.company} weboldal`,
@@ -193,6 +198,21 @@ export function PublicBriefWizard() {
               <header><span>04 / Megjelenés</span><h3>Milyen érzést adjon a márka?</h3><p>Nem kell színeket vagy szakmai kifejezéseket ismerned — válassz az irányok közül.</p></header>
               <div className="public-choice-grid two">{vibes.map(([value, label, copy]) => <button className={form.vibe === value ? "selected" : ""} key={value} onClick={() => update({ vibe: value })} type="button"><strong>{label}</strong><p>{copy}</p></button>)}</div>
               <div className="public-palette-grid">{palettes.map(([value, label, colors]) => <button className={form.palette === value ? "selected" : ""} key={value} onClick={() => update({ palette: value })} type="button"><span>{colors.map((color) => <i key={color} style={{ background: color }} />)}</span><strong>{label}</strong></button>)}</div>
+              <button className={`public-custom-palette-option ${form.palette === "custom" ? "selected" : ""}`} onClick={() => update({ palette: "custom" })} type="button">
+                <span>{[form.customBg, form.customAccent, form.customText, form.customCta].map((color, index) => <i key={`${color}-${index}`} style={{ background: color }} />)}</span>
+                <div><strong>Saját színpaletta</strong><small>Állítsd be pontosan a márkád színeit.</small></div>
+              </button>
+              {form.palette === "custom" ? <div className="public-custom-palette-picker">
+                {([
+                  ["customBg", "Háttér"],
+                  ["customAccent", "Kiemelő szín"],
+                  ["customText", "Szöveg"],
+                  ["customCta", "Gomb (CTA)"]
+                ] as Array<["customBg" | "customAccent" | "customText" | "customCta", string]>).map(([field, label]) => <label key={field}>
+                  <input aria-label={label} type="color" value={form[field]} onChange={(event) => update({ [field]: event.target.value })} />
+                  <span><b>{label}</b><small>{form[field].toUpperCase()}</small></span>
+                </label>)}
+              </div> : null}
               <div className="public-choice-grid two">
                 <div><span className="public-question">Van már logód?</span><div className="public-chip-grid"><button className={form.logoStatus === "yes" ? "selected" : ""} onClick={() => update({ logoStatus: "yes" })} type="button">Igen</button><button className={form.logoStatus === "no" ? "selected" : ""} onClick={() => update({ logoStatus: "no" })} type="button">Még nincs</button></div></div>
                 <div><span className="public-question">Vannak saját képeid?</span><div className="public-chip-grid"><button className={form.photoSource === "own" ? "selected" : ""} onClick={() => update({ photoSource: "own" })} type="button">Igen</button><button className={form.photoSource === "help" ? "selected" : ""} onClick={() => update({ photoSource: "help" })} type="button">Segítséget kérek</button></div></div>
@@ -206,7 +226,7 @@ export function PublicBriefWizard() {
                 <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Saját tulajdonú projekt"}</strong></div>
                 <div><span>Márka</span><strong>{form.company}</strong></div>
                 <div><span>Elsődleges cél</span><strong>{form.primaryAction}</strong></div>
-                <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {selectedPalette[1]}</strong></div>
+                <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {form.palette === "custom" ? "Egyedi paletta" : selectedPalette[1]}</strong></div>
               </div>
               <div className="public-auth-gate"><div><span>UTOLSÓ LÉPÉS</span><h4>Mentsd a saját ügyfélfiókodba.</h4><p>Ha már van fiókod, csak lépj be. Ha nincs, kevesebb mint egy perc alatt létrehozhatod.</p></div><button className="button primary" onClick={continueToAccount} type="button">Belépés vagy regisztráció →</button></div>
             </div> : null}
@@ -221,11 +241,13 @@ export function PublicBriefWizard() {
 
           <aside className="public-brief-preview">
             <span>ÉLŐ ELŐNÉZET</span>
-            <div style={{ background: selectedPalette[2][0], color: selectedPalette[2][2] }}>
-              <small style={{ color: selectedPalette[2][1] }}>{selectedVibe[1]}</small>
-              <strong>{form.company || "A márkád"}</strong>
-              <p>{form.goals || "Ahogy válaszolsz, itt összeáll a projekted iránya."}</p>
-              <b style={{ background: selectedPalette[2][3] }}>{form.primaryAction || "Ajánlatot kérek"}</b>
+            <div className="public-preview-canvas" style={{ background: previewColors[0], color: previewColors[2] }}>
+              <header><small style={{ color: previewColors[1] }}>{selectedVibe[1]}</small><i style={{ background: previewColors[1] }} /></header>
+              <div className="public-preview-hero">
+                <strong>{form.company || "A márkád"}</strong>
+                <p>{form.goals || "Ahogy válaszolsz, itt összeáll a projekted iránya."}</p>
+                <b style={{ background: previewColors[3] }}>{form.primaryAction || "Ajánlatot kérek"}</b>
+              </div>
             </div>
             <dl><div><dt>Célközönség</dt><dd>{form.audience || "Még nincs megadva"}</dd></div><div><dt>Tartalom</dt><dd>{parts(form.pages).slice(0, 4).join(" · ") || "A következő lépésben választod ki"}</dd></div></dl>
           </aside>
