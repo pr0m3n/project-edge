@@ -58,7 +58,6 @@ export default async function OpenGraphImage() {
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={markSrc} alt="ProjectEdge" width={132} height={72} style={{ objectFit: "contain" }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <div style={{ fontSize: 26, letterSpacing: 3, color: "#76abae", fontWeight: 700 }}>PROJECTEDGE</div>

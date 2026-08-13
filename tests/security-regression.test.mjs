@@ -35,8 +35,13 @@ test("public support routes use the server-only client and limits", () => {
 
   for (const route of [createRoute, messageRoute, detailRoute]) {
     assert.match(route, /createServerSupabaseAdminClient/);
-    assert.match(route, /checkRateLimit/);
+    assert.match(route, /check(Durable)?RateLimit/);
   }
+  // Az író, emailt kiváltó nyilvános műveletek telepítés-szintű korlátot
+  // kapnak; a memóriás változat serverless-en példányonként számolt.
+  assert.match(createRoute, /await checkDurableRateLimit\(request, "support-ticket-create"/);
+  assert.match(messageRoute, /await checkDurableRateLimit\(request, "support-ticket-message"/);
+  assert.match(detailRoute, /await checkDurableRateLimit\(request, "support-ticket-rating"/);
   assert.match(createRoute, /message\.length > 5_000/);
   assert.match(messageRoute, /body\.length > 5_000/);
   assert.match(detailRoute, /isUuid\(ticketId\)/);

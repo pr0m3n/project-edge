@@ -1,7 +1,8 @@
+import type { Project } from "@/components/portal/types";
+import { parseBrief } from "@/components/portal/format";
+import { paletteByName } from "@/components/portal/brief-fields";
 import { FormEvent } from "react";
-import type { Project } from "@/components/ClientPortal";
 import type { BriefFormValues } from "@/lib/brief-draft";
-import { parseBrief, paletteByName } from "@/components/ClientPortal";
 
 type BriefPanelProps = {
   project: Project;

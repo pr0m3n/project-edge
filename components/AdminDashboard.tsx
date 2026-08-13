@@ -12,9 +12,27 @@ import {
   type ToastKind
 } from "@/components/ui/feedback";
 import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
+import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
-import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan, type HandoverStepState } from "@/lib/handover";
+import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
 import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
+// Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
+// saját másolatot tartott ezekből, és külön-külön csúszhattak el.
+import { parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
+import { paletteByName } from "@/components/portal/brief-fields";
+import type {
+  BillingoIssue,
+  ChangeRequest,
+  ClientProject,
+  ClientTicket,
+  Lead,
+  Ticket,
+  TicketMessage
+} from "@/components/admin/types";
+
+function formatPrice(value: number | null, currency = "Ft") {
+  return formatPriceWithFallback(value, currency, "Nincs ár megadva");
+}
 
 function messageKind(text: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
@@ -28,171 +46,6 @@ function messageKind(text: string): ToastKind {
 
 const TICKET_STALE_MS = 48 * 60 * 60 * 1000;
 
-type Lead = {
-  id: string;
-  created_at: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  company: string | null;
-  website: string | null;
-  project_type: string;
-  budget: string | null;
-  goals: string;
-  status: string;
-  notes: string | null;
-};
-
-type Ticket = {
-  id: string;
-  created_at: string;
-  name: string;
-  email: string;
-  message: string;
-  rating: number | null;
-  rating_comment: string | null;
-  status: string;
-  admin_reply: string | null;
-};
-
-type TicketMessage = {
-  id: string;
-  ticket_id: string;
-  created_at: string;
-  sender: "customer" | "admin";
-  body: string;
-};
-
-type ClientProject = {
-  id: string;
-  user_id: string;
-  created_at: string;
-  contact_email: string | null;
-  contact_name: string | null;
-  title: string;
-  company: string | null;
-  website: string | null;
-  project_type: string;
-  budget: string | null;
-  goals: string;
-  status: string;
-  next_step: string | null;
-  admin_notes: string | null;
-  offer_title: string | null;
-  offer_summary: string | null;
-  offer_scope: string | null;
-  offer_timeline: string | null;
-  offer_deliverables: string | null;
-  offer_price: number | null;
-  offer_currency: string | null;
-  offer_note: string | null;
-  offer_status: string | null;
-  offer_sent_at: string | null;
-  client_decision_note: string | null;
-  brief_data: any;
-  last_modified_at: string | null;
-  last_modified_by: string | null;
-  last_modified_by_name: string | null;
-  delete_requested: boolean;
-  delete_requested_at: string | null;
-  status_before_delete_request: string | null;
-  deposit_amount: number | null;
-  payment_status: "unpaid" | "deposit_paid" | "fully_paid";
-  contract_accepted: boolean;
-  contract_accepted_at: string | null;
-  milestones: Array<{ title: string; done: boolean }> | null;
-  feedback_round: number;
-  feedback_notes: string | null;
-  /** Régi, szabad szöveges átadási lista — csak a 017 előtti projekteknél. */
-  handover_checklist: Array<{ title: string; done: boolean }> | null;
-  /** Vezetett átadás állapota (lib/handover.ts). */
-  handover_steps: HandoverStepState[] | null;
-  maintenance_option: string | null;
-  maintenance_monthly_fee: number | null;
-  maintenance_currency: string | null;
-  subscription_status: string | null;
-  subscription_started_at: string | null;
-  subscription_cancel_requested_at: string | null;
-  followup_check_fee: number | null;
-  followup_check_status: string | null;
-  followup_check_transfer_reported: boolean;
-  followup_check_due_at: string | null;
-  followup_check_completed_at: string | null;
-  followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
-  followup_check_report: string | null;
-  warranty_started_at: string | null;
-  warranty_expires_at: string | null;
-  deposit_transfer_reported: boolean;
-  final_transfer_reported: boolean;
-  review_approved: boolean;
-  client_rating: number | null;
-  client_review: string | null;
-  reference_permitted: boolean;
-  staging_url: string | null;
-  final_payment_paid: boolean;
-  final_payment_paid_at: string | null;
-  estimated_deadline: string | null;
-  logo_url: string | null;
-  commercial_model: "subscription" | "purchase";
-  subscription_plan: "presence" | "business" | "custom" | null;
-  monthly_price: number | null;
-  next_billing_at: string | null;
-  billing_cycle_started_at: string | null;
-  pause_requested_at: string | null;
-  paused_at: string | null;
-  resume_requested_at: string | null;
-  cancel_effective_at: string | null;
-  cancelled_at: string | null;
-  managed_domain_name: string | null;
-  domain_renewal_at: string | null;
-  domain_status: string | null;
-  purchase_option_price: number | null;
-  site_health_status: string | null;
-  last_health_check_at: string | null;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  stripe_subscription_status: string | null;
-  stripe_current_period_end: string | null;
-  stripe_parked_at: string | null;
-};
-
-type ClientTicket = {
-  id: string;
-  user_id: string;
-  project_id: string | null;
-  contact_email: string | null;
-  contact_name: string | null;
-  subject: string;
-  status: string;
-  rating: number | null;
-  rating_comment: string | null;
-  last_message_at: string;
-};
-
-/** Beérkezett befizetés, amihez még nem készült AAM-számla. */
-type BillingoIssue = {
-  id: string;
-  project_id: string;
-  amount: number;
-  paid_at: string | null;
-  stripe_invoice_id: string | null;
-  billingo_error: string | null;
-};
-
-type ChangeRequest = {
-  id: string;
-  project_id: string;
-  category: "content" | "design" | "technical" | "new_feature";
-  description: string;
-  status: "new" | "planned" | "in_progress" | "waiting_client" | "completed" | "declined";
-  included_in_plan: boolean | null;
-  admin_note: string | null;
-  requested_at: string;
-  quoted_amount: number | null;
-  payment_reference: string | null;
-  transfer_reported_at: string | null;
-  paid_at: string | null;
-};
 
 const statuses = [
   ["new", "Új"],
@@ -225,26 +78,6 @@ const projectStatuses = [
 
 const projectStatusLabel = Object.fromEntries(projectStatuses);
 
-// Melyik státuszból hova lehet lépni (kényszer)
-const allowedNextStatuses: Record<string, string[]> = {
-  request_received: ["planning", "paused", "closed"],
-  planning:         ["offer_sent", "request_received", "paused", "closed"],
-  offer_sent:       ["planning", "paused", "closed"],
-  contract_pending: ["offer_sent"],
-  deposit_pending:  ["in_progress"],
-  in_progress:      ["review", "paused"],
-  review:           ["in_progress", "launched"],
-  launched:         ["closed"],
-  paused:           ["in_progress", "review", "closed"],
-  closed:           [],
-  deletion_pending: ["planning", "closed"]
-};
-
-function allowedStatusOptions(current: string) {
-  const allowed = allowedNextStatuses[current] ?? [];
-  return projectStatuses.filter(([val]) => val === current || allowed.includes(val));
-}
-
 const projectFlow = [
   ["request_received", "Igény"],
   ["planning", "Tervezés"],
@@ -264,63 +97,12 @@ const defaultOfferDeliverables = [
   "Az oldal élesítése a saját domainoden, teljes beállítással"
 ].join("\n");
 
-const adminPaletteOptions: Array<[string, string[]]> = [
-  ["ProjectEdge", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]],
-  ["Monokróm tech", ["#F7F7F2", "#D9E2DF", "#20242A", "#111111"]],
-  ["Meleg prémium", ["#FFF7EF", "#E8C6A4", "#32302F", "#E6532E"]],
-  ["Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]],
-  ["Luxus sötét", ["#F4EFE7", "#C6A15B", "#1E2329", "#0E1116"]],
-  ["Editorial", ["#FAF7F0", "#D8D0C5", "#2F343B", "#B94D3A"]],
-  ["Electric tech", ["#F8FAFF", "#8DE3FF", "#2630FF", "#111827"]],
-  ["Organikus", ["#FAF8EF", "#BFD7B5", "#36594C", "#D96C3B"]],
-  ["Rose premium", ["#FFF7F8", "#E8B4BC", "#332B31", "#C44569"]],
-  ["Blueprint", ["#F3F8FF", "#9DB7D6", "#1D3557", "#457B9D"]],
-  ["Sunset", ["#FFF1E6", "#F7B267", "#2B2D42", "#F25C54"]],
-  ["Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]]
-];
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("hu-HU", {
     day: "2-digit",
     month: "short",
     year: "numeric"
   }).format(new Date(value));
-}
-
-function formatPrice(value: number | null, currency = "Ft") {
-  if (!value) {
-    return "Nincs ár megadva";
-  }
-
-  return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
-}
-
-function transferReference(project: { id: string }) {
-  return `PE-${project.id.slice(0, 8).toUpperCase()}`;
-}
-
-function splitLines(value: string | null) {
-  return (value ?? "")
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function parseBrief(value: string | null) {
-  const pairs = splitLines(value).map((line) => {
-    const separatorIndex = line.indexOf(":");
-    if (separatorIndex === -1) {
-      return ["Megjegyzés", line] as const;
-    }
-
-    return [line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim()] as const;
-  });
-
-  return Object.fromEntries(pairs) as Record<string, string>;
-}
-
-function paletteByName(name?: string) {
-  return adminPaletteOptions.find(([label]) => label === name)?.[1] ?? adminPaletteOptions[0][1];
 }
 
 export function AdminDashboard() {
@@ -348,7 +130,6 @@ export function AdminDashboard() {
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
-  const [showAllControls, setShowAllControls] = useState<Record<string, boolean>>({});
   const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
   const [showClosedTickets, setShowClosedTickets] = useState(false);
 
@@ -1822,39 +1603,12 @@ export function AdminDashboard() {
         <div><span>TEENDŐ</span><strong>{clientProjects.filter((project) => ["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "")).length}</strong><small>előfizetési kérelem</small></div>
       </section>
 
-      {billingoIssues.length ? (
-        <section className="billingo-issues">
-          <header>
-            <div>
-              <span>SZÁMLÁZÁSI TEENDŐ</span>
-              <h3>{billingoIssues.length} beérkezett befizetéshez nem készült számla</h3>
-              <p>A pénz megérkezett a Stripe-on, az AAM-számla viszont nem jött létre. Ezeket ki kell számlázni.</p>
-            </div>
-          </header>
-          <ul>
-            {billingoIssues.map((issue) => {
-              const project = clientProjects.find((item) => item.id === issue.project_id);
-              return (
-                <li key={issue.id}>
-                  <div>
-                    <strong>{project?.title ?? "Ismeretlen projekt"} · {formatHuf(issue.amount)}</strong>
-                    <small>{issue.paid_at ? new Date(issue.paid_at).toLocaleString("hu-HU") : "ismeretlen időpont"}{issue.stripe_invoice_id ? ` · ${issue.stripe_invoice_id}` : ""}</small>
-                    {issue.billingo_error ? <em>{issue.billingo_error}</em> : null}
-                  </div>
-                  <button
-                    className="button secondary"
-                    type="button"
-                    disabled={billingoRetryId === issue.id}
-                    onClick={() => retryBillingoInvoice(issue.id)}
-                  >
-                    {billingoRetryId === issue.id ? "Számlázás…" : "Számla újrapróbálása"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+      <BillingoIssuesCard
+        issues={billingoIssues}
+        projects={clientProjects}
+        retryingId={billingoRetryId}
+        onRetry={retryBillingoInvoice}
+      />
 
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
 
@@ -1947,7 +1701,6 @@ export function AdminDashboard() {
               ["Számlázási adatok", brief["Számlázási adatok"]]
             ].filter(([, value]) => Boolean(value));
 
-            const showAll = !!showAllControls[project.id];
             const s = project.status;
             const showPrepare = s === "request_received" || s === "planning";
             const showOffer = s === "request_received" || s === "planning";

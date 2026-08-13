@@ -1,7 +1,7 @@
 "use client";
 
+import type { ClientChangeRequest, Project } from "@/components/portal/types";
 import { useState } from "react";
-import type { ClientChangeRequest, Project } from "@/components/ClientPortal";
 import { formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, websitePurchaseRequestText } from "@/lib/subscriptions";
 
 type Props = {

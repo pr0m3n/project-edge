@@ -1,5 +1,5 @@
+import type { Project } from "@/components/portal/types";
 import { FormEvent } from "react";
-import type { Project } from "@/components/ClientPortal";
 
 type ReviewFormValues = {
   rating: number;

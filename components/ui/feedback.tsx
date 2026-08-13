@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 
 /* ---------------------------------------------------------------------------
  * Toasts
@@ -40,8 +40,11 @@ export function useToasts() {
   );
 
   useEffect(() => {
+    // A ref objektumát elkapjuk a takarításhoz: a `timers.current` a cleanup
+    // lefutásakor már másra mutathat, és akkor élő időzítők maradnának bent.
+    const pending = timers.current;
     return () => {
-      Object.values(timers.current).forEach(clearTimeout);
+      Object.values(pending).forEach(clearTimeout);
     };
   }, []);
 
@@ -165,22 +168,30 @@ export function Skeleton({
  * Online / offline detection
  * ------------------------------------------------------------------------- */
 
+/**
+ * A böngésző online állapota külső forrás, ezért `useSyncExternalStore` való
+ * hozzá, nem `useState` + `useEffect`.
+ *
+ * A korábbi változat a legelső effektben állította be a valódi értéket, tehát
+ * minden betöltéskor lefutott egy fölösleges újrarenderelés — és egy pillanatra
+ * akkor is "online"-t mutatott, ha a látogató offline volt. A szerveroldali
+ * pillanatkép `true`, hogy a hidratálás ne térjen el a kiszolgált HTML-től.
+ */
+function subscribeToOnlineStatus(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+
 export function useOnline() {
-  const [online, setOnline] = useState(true);
-
-  useEffect(() => {
-    setOnline(typeof navigator === "undefined" ? true : navigator.onLine);
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
-
-  return online;
+  return useSyncExternalStore(
+    subscribeToOnlineStatus,
+    () => navigator.onLine,
+    () => true
+  );
 }
 
 export function OfflineBanner({ online }: { online: boolean }) {

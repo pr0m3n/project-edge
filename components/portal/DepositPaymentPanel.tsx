@@ -1,5 +1,5 @@
-import type { Project } from "@/components/ClientPortal";
-import { formatPrice } from "@/components/ClientPortal";
+import type { Project } from "@/components/portal/types";
+import { formatPrice } from "@/components/portal/format";
 import { PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 
 type DepositPaymentPanelProps = {

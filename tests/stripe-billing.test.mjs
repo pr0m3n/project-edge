@@ -33,10 +33,13 @@ test("public brief supports a saved custom palette", () => {
 });
 
 test("one-off transfers use the new dedicated HUF account", () => {
-  const portal = read("components/ClientPortal.tsx");
-  assert.match(portal, /30200014-19613410-97673621/);
-  assert.match(portal, /HU51 3020 0014 1961 3410 9767 3621/);
-  assert.doesNotMatch(portal, /HU66 3020 0014 1991 3410 3979 7092/);
+  // A banki adatok a ClientPortal szétbontásakor a format modulba kerültek.
+  const format = read("components/portal/format.ts");
+  assert.match(format, /30200014-19613410-97673621/);
+  assert.match(format, /HU51 3020 0014 1961 3410 9767 3621/);
+  assert.doesNotMatch(format, /HU66 3020 0014 1991 3410 3979 7092/);
+  // A régi számla sehol máshol se maradhasson bent.
+  assert.doesNotMatch(read("components/ClientPortal.tsx"), /HU66 3020 0014 1991 3410 3979 7092/);
 });
 
 test("Billingo invoices are AAM and tied to the Stripe invoice", () => {

@@ -1,4 +1,4 @@
-import type { Project } from "@/components/ClientPortal";
+import type { Project } from "@/components/portal/types";
 import { activeHandoverStep, handoverTurn, isHandoverComplete } from "@/lib/handover";
 
 /**

@@ -5,8 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import {
   initialBriefForm,
   PUBLIC_BRIEF_DRAFT_KEY,
-  readPublicBriefDraft,
-  type BriefFormValues
+  readPublicBriefDraft
 } from "@/lib/brief-draft";
 import {
   useToasts,
@@ -19,6 +18,8 @@ import {
 } from "@/components/ui/feedback";
 import { ProjectTurnGuide, isClientTurn } from "@/components/portal/ProjectTurnGuide";
 import { IconPaperclip, IconPen, IconBell } from "@/components/icons";
+import { AuthScreen } from "@/components/portal/AuthScreen";
+import { TransferModal } from "@/components/portal/TransferModal";
 import { ProjectSwitcher } from "@/components/portal/ProjectSwitcher";
 import { BriefPanel } from "@/components/portal/BriefPanel";
 import { OfferPanel } from "@/components/portal/OfferPanel";
@@ -33,9 +34,36 @@ import { ManagedWebsitePanel } from "@/components/portal/ManagedWebsitePanel";
 import { DomainAvailabilityPicker } from "@/components/portal/DomainAvailabilityPicker";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
-import { completeHandoverStep, type HandoverStepState } from "@/lib/handover";
+import { completeHandoverStep } from "@/lib/handover";
 import { SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { trackLeadConversion } from "@/lib/analytics";
+import type { Project, Ticket, TicketMessage, ClientChangeRequest } from "@/components/portal/types";
+import {
+  audienceChips,
+  briefSteps,
+  buildBriefText,
+  curatedFonts,
+  featureChips,
+  pageChips,
+  paletteOptions,
+  priorityLabels,
+  projectTypeOptions,
+  splitListValue,
+  toggleLimitedListValue,
+  toggleListValue,
+  validateProjectStep,
+  validationTargetFor,
+  vibeOptions
+} from "@/components/portal/brief-fields";
+import {
+  formatPrice,
+  parseBrief,
+  projectFlow,
+  statusLabels,
+  transferReference
+} from "@/components/portal/format";
+
+const initialProject = initialBriefForm;
 
 function noticeKind(message: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet|nincs aktív/i.test(message)) {
@@ -51,280 +79,7 @@ function noticeKind(message: string): ToastKind {
   return "info";
 }
 
-export type Project = {
-  id: string;
-  contact_email: string | null;
-  contact_name: string | null;
-  title: string;
-  company: string | null;
-  website: string | null;
-  project_type: string;
-  budget: string | null;
-  goals: string;
-  status: string;
-  next_step: string | null;
-  created_at: string;
-  offer_title: string | null;
-  offer_summary: string | null;
-  offer_scope: string | null;
-  offer_timeline: string | null;
-  offer_deliverables: string | null;
-  offer_price: number | null;
-  offer_currency: string | null;
-  offer_note: string | null;
-  offer_status: string | null;
-  offer_sent_at: string | null;
-  client_decision_note: string | null;
-  brief_data: {
-    commercialModel?: CommercialModel;
-    subscriptionPlan?: SubscriptionPlanKey;
-    title?: string;
-    company?: string;
-    website?: string;
-    projectType?: string;
-    goals?: string;
-    audience?: string;
-    priority?: string;
-    pages?: string;
-    features?: string;
-    budget?: string;
-    vibe?: string;
-    palette?: string;
-    style?: string;
-    customBg?: string;
-    customAccent?: string;
-    customText?: string;
-    customCta?: string;
-    websiteStatus?: string;
-    contentBrief?: string;
-    contentFileUrls?: string[];
-    brandColors?: string;
-    photoUrls?: string[];
-    domainName?: string;
-    domainIdeas?: string;
-    domainStatus?: string;
-    domainProofUrl?: string;
-    domainPurchaseState?: string;
-    facebookUrl?: string;
-    instagramUrl?: string;
-    linkedinUrl?: string;
-    tiktokUrl?: string;
-    youtubeUrl?: string;
-    otherSocialLinks?: string;
-  } | null;
-  last_modified_at: string | null;
-  last_modified_by: string | null;
-  last_modified_by_name: string | null;
-  delete_requested: boolean;
-  delete_requested_at: string | null;
-  status_before_delete_request: string | null;
-  deposit_amount: number | null;
-  payment_status: "unpaid" | "deposit_paid" | "fully_paid";
-  contract_accepted: boolean;
-  contract_accepted_at: string | null;
-  milestones: Array<{ title: string; done: boolean }> | null;
-  feedback_round: number;
-  feedback_notes: string | null;
-  /** Régi, szabad szöveges átadási lista — csak a 017 előtt indult projekteknél. */
-  handover_checklist: Array<{ title: string; done: boolean }> | null;
-  /** Vezetett átadás állapota (lib/handover.ts). */
-  handover_steps: HandoverStepState[] | null;
-  maintenance_option: string | null;
-  maintenance_monthly_fee: number | null;
-  maintenance_currency: string | null;
-  subscription_status: string | null;
-  followup_check_fee: number | null;
-  followup_check_status: string | null;
-  followup_check_transfer_reported: boolean;
-  followup_check_due_at: string | null;
-  followup_check_completed_at: string | null;
-  followup_checklist: Array<{ key: string; label: string; done: boolean }> | null;
-  followup_check_report: string | null;
-  warranty_started_at: string | null;
-  warranty_expires_at: string | null;
-  subscription_cancel_requested_at: string | null;
-  deposit_transfer_reported: boolean;
-  final_transfer_reported: boolean;
-  review_approved: boolean;
-  client_rating: number | null;
-  client_review: string | null;
-  reference_permitted: boolean;
-  staging_url: string | null;
-  final_payment_paid: boolean;
-  final_payment_paid_at: string | null;
-  estimated_deadline: string | null;
-  logo_url: string | null;
-  commercial_model: CommercialModel;
-  subscription_plan: SubscriptionPlanKey | null;
-  monthly_price: number | null;
-  billing_cycle_started_at: string | null;
-  next_billing_at: string | null;
-  pause_requested_at: string | null;
-  paused_at: string | null;
-  resume_requested_at: string | null;
-  cancel_effective_at: string | null;
-  cancelled_at: string | null;
-  managed_domain_name: string | null;
-  domain_renewal_at: string | null;
-  domain_status: string | null;
-  purchase_option_price: number | null;
-  site_health_status: string | null;
-  last_health_check_at: string | null;
-  stripe_customer_id?: string | null;
-  stripe_subscription_id?: string | null;
-  stripe_subscription_status?: string | null;
-};
 
-type Ticket = {
-  id: string;
-  project_id: string | null;
-  contact_email: string | null;
-  contact_name: string | null;
-  subject: string;
-  status: string;
-  rating: number | null;
-  rating_comment: string | null;
-  last_message_at: string;
-};
-
-type TicketMessage = {
-  id: string;
-  ticket_id: string;
-  sender: "customer" | "admin";
-  body: string;
-  created_at: string;
-};
-
-export type ClientChangeRequest = {
-  id: string;
-  project_id: string;
-  category: string;
-  description: string;
-  status: string;
-  included_in_plan: boolean | null;
-  admin_note: string | null;
-  requested_at: string;
-  quoted_amount: number | null;
-  payment_reference: string | null;
-  transfer_reported_at: string | null;
-  paid_at: string | null;
-};
-
-const statusLabels: Record<string, string> = {
-  request_received: "Igény beérkezett",
-  planning: "Tervezés",
-  offer_sent: "Ajánlat elküldve",
-  deposit_pending: "Foglaló fizetésre vár",
-  contract_pending: "Szerződés aláírásra vár",
-  in_progress: "Kivitelezés",
-  review: "Visszajelzés és jóváhagyás",
-  launched: "Élesítve",
-  paused: "Szünetel",
-  closed: "Lezárva",
-  deletion_pending: "Törlés jóváhagyásra vár",
-  open: "Nyitott",
-  answered: "Megválaszolva"
-};
-
-const initialProject = initialBriefForm;
-export type { BriefFormValues } from "@/lib/brief-draft";
-
-/**
- * A wizard step csak akkor engedhető tovább, ha az adott képernyőn minden
- * döntési blokkhoz érkezett legalább egy válasz vagy használható információ.
- * A feltételes mezőket csak akkor ellenőrizzük, amikor tényleg megjelennek.
- */
-function validateProjectStep(step: number, form: BriefFormValues): string | null {
-  if (step === 0) {
-    if (form.commercialModel === "purchase" && form.title.trim().length < 2) return "Add meg a projekt nevét legalább 2 karakterrel.";
-    if (form.company.trim().length < 2) return "Add meg a cég vagy márka nevét legalább 2 karakterrel.";
-    if (form.commercialModel === "purchase" && !splitListValue(form.projectType).length) return "Válassz legalább egy projekt típust.";
-    if (form.commercialModel === "purchase" && !form.websiteStatus) return "Jelöld, hogy van-e már weboldalad.";
-    if (form.commercialModel === "purchase" && form.websiteStatus === "yes" && !form.website.trim()) return "Add meg a meglévő weboldal címét.";
-  }
-
-  if (step === 1) {
-    if (form.goals.trim().length < 10) return "Írd le legalább egy rövid mondatban, mit szeretnél elérni az oldallal.";
-    if (form.audience.trim().length < 5) return "Írd le legalább néhány szóval, kiknek készül az oldal.";
-    if (form.commercialModel === "subscription" && !form.primaryAction.trim()) return "Válaszd ki, mi legyen a weboldal elsődleges művelete.";
-    if (form.commercialModel === "purchase" && !splitListValue(form.priority).length) return "Válassz legalább egy vágyott eredményt.";
-  }
-
-  if (step === 2) {
-    if (form.pages.trim().length < 3) return "Adj meg legalább egy fontos oldalt.";
-    if (form.features.trim().length < 3) return "Adj meg legalább egy kért funkciót, vagy írd azt, hogy „nincs”.";
-    if (form.commercialModel === "purchase" && !form.budget) return "Válassz költségkeretet, vagy jelöld, hogy még nem tudod.";
-  }
-
-  if (step === 3) {
-    if (!form.vibe) return "Válassz vizuális hangulatot.";
-    if (!form.palette) return "Válassz színirányt.";
-  }
-
-  if (step === 4) {
-    if (form.commercialModel === "subscription" && !form.domainName.trim()) return "Keress és válassz ki egy előzetesen elérhető domainnevet.";
-    if (form.commercialModel === "purchase" && !form.domainStatus) return "Válaszd ki, hogy van-e már domained.";
-    if (form.commercialModel === "purchase" && form.domainStatus === "have" && !form.domainName.trim()) return "Add meg a meglévő domain nevét.";
-    if (form.commercialModel === "purchase" && form.domainStatus === "have" && !form.hostingAccess) return "Válaszd ki, hogyan lesz elérhető a tárhely/domain hozzáférés.";
-    if (form.commercialModel === "purchase" && form.websiteStatus === "yes" && !form.existingPlatform) return "Válaszd ki, milyen rendszerben fut a jelenlegi weboldal.";
-    if (form.commercialModel === "purchase" && form.websiteStatus === "yes" && form.existingPlatform === "wordpress" && !form.wpAccess) return "Válaszd ki, tudsz-e WordPress hozzáférést adni.";
-    if (!form.logoStatus) return "Válaszd ki, van-e már logód.";
-    if (form.logoStatus === "yes" && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
-    if (form.commercialModel === "purchase" && form.logoStatus === "no" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
-    if (!form.brandColors.trim()) return "Adj meg legalább egy márkaszínt, vagy írd azt, hogy: rátok bízom.";
-    if (!form.fontPreference.trim()) return "Válassz betűtípus-stílust, vagy válaszd a nincs preferencia lehetőséget.";
-    if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
-    if (form.contentSource === "studio" && form.contentBrief.trim().length < 30) return "Mutasd be röviden a céget, hogy hiteles szöveget tudjunk írni.";
-    if (form.contentSource === "client" && form.contentBrief.trim().length < 30 && form.contentFileUrls.length === 0) return "Írj be vagy tölts fel legalább egy használható szöveges anyagot.";
-    if (!form.photoSource) return "Válaszd ki, honnan lesznek a képek.";
-    if (form.photoSource === "own" && form.photoUrls.length === 0) return "Tölts fel legalább egy saját képet.";
-    if (!form.contactEmail.trim() && !form.contactPhone.trim()) return "Adj meg legalább egy kapcsolati email címet vagy telefonszámot.";
-    if (form.contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) return "Adj meg érvényes kapcsolati email címet.";
-    if (form.contactPhone.trim() && form.contactPhone.replace(/\D/g, "").length < 7) return "Adj meg érvényes telefonszámot.";
-    if (form.commercialModel === "purchase" && form.websiteStatus === "yes" && !form.analyticsAccess) return "Válaszd ki, hogyan kezeljük a régi oldal mérését.";
-    if (!form.billingDetails.trim()) return "Add meg a számlázási adatokat, vagy írd azt, hogy: magánszemély.";
-  }
-
-  return null;
-}
-
-function validationTargetFor(message: string) {
-  const targets: Array<[RegExp, string]> = [
-    [/projekt nevét/i, "project-title"],
-    [/cég vagy márka/i, "project-company"],
-    [/projekt típust/i, "project-types"],
-    [/van-e már weboldalad/i, "website-status"],
-    [/weboldal címét/i, "project-website"],
-    [/mit szeretnél elérni/i, "project-goals"],
-    [/kiknek készül/i, "project-audience"],
-    [/elsődleges művelet/i, "primary-action"],
-    [/vágyott eredményt|prioritást/i, "project-priorities"],
-    [/fontos oldalt/i, "project-pages"],
-    [/kért funkciót/i, "project-features"],
-    [/költségkeretet/i, "project-budget"],
-    [/vizuális hangulatot/i, "project-vibe"],
-    [/színirányt/i, "project-palette"],
-    [/domained/i, "domain-status"],
-    [/domain nevét/i, "domain-name"],
-    [/tárhely|domain hozzáférés/i, "hosting-access"],
-    [/milyen rendszerben/i, "existing-platform"],
-    [/WordPress hozzáférést/i, "wp-access"],
-    [/van-e már logód/i, "logo-status"],
-    [/Töltsd fel a logót/i, "logo-upload"],
-    [/logótervezést/i, "logo-design"],
-    [/márkaszínt/i, "brand-colors"],
-    [/betűtípus/i, "font-preference"],
-    [/ki írja a szövegeket/i, "content-source"],
-    [/Mutasd be röviden/i, "content-brief"],
-    [/szöveges anyagot/i, "content-client-material"],
-    [/honnan lesznek a képek/i, "photo-source"],
-    [/saját képet/i, "photo-upload"],
-    [/kapcsolati email|telefonszámot/i, "contact-details"],
-    [/régi oldal mérését/i, "analytics-access"],
-    [/számlázási adatokat/i, "billing-details"]
-  ];
-  return targets.find(([pattern]) => pattern.test(message))?.[1] ?? "";
-}
 
 const initialTicket = {
   body: "",
@@ -332,276 +87,6 @@ const initialTicket = {
   subject: ""
 };
 
-const projectFlow = [
-  ["request_received", "Adatlap"],
-  ["planning", "Tervezés"],
-  ["offer_sent", "Ajánlat"],
-  ["contract_pending", "Szerződés"],
-  ["deposit_pending", "Foglaló"],
-  ["in_progress", "Építés"],
-  ["review", "Jóváhagyás"],
-  ["launched", "Élesítés"]
-];
-
-const briefSteps = [
-  "Alapok",
-  "Vágyott eredmény",
-  "Oldalak és funkciók",
-  "Vizuális irány",
-  "Anyagok és hozzáférések",
-  "Összegzés"
-];
-
-const projectTypeOptions: Array<[string, string, string]> = [
-  ["premium-business-site", "Prémium céges weboldal", "Bemutatkozás, bizalomépítés, ajánlatkérés."],
-  ["redesign", "Meglévő oldal fejlesztése", "Van már alap, de jobb szerkezet és design kell."],
-  ["web-app", "Webapp / admin rendszer", "Belépés, adatkezelés, dashboard, folyamatok."],
-  ["client-portal", "Ügyfélkapu / dashboard", "Privát ügyfélfelület, státuszok, ticketek."],
-  ["care-plan", "Karbantartás és növekedés", "Folyamatos javítás, mérés, fejlesztés."]
-];
-
-const vibeOptions: Array<[string, string, string]> = [
-  ["premium", "Prémium", "Nagy kontraszt, erős első benyomás, drágább érzet."],
-  ["clean", "Letisztult", "Sok levegő, egyszerű döntések, gyors megértés."],
-  ["bold", "Merész", "Nagy tipó, karakteres blokkok, emlékezetes oldal."],
-  ["friendly", "Barátságos", "Közvetlenebb hang, puhább ritmus, könnyű kapcsolatfelvétel."]
-];
-
-const paletteOptions: Array<[string, string, string[]]> = [
-  ["edge", "ProjectEdge", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]],
-  ["mono", "Monokróm tech", ["#F7F7F2", "#D9E2DF", "#20242A", "#111111"]],
-  ["warm", "Meleg prémium", ["#FFF7EF", "#E8C6A4", "#32302F", "#E6532E"]],
-  ["fresh", "Friss SaaS", ["#F7FBF9", "#92D1C3", "#29353D", "#2F8F83"]],
-  ["luxury", "Luxus sötét", ["#F4EFE7", "#C6A15B", "#1E2329", "#0E1116"]],
-  ["editorial", "Editorial", ["#FAF7F0", "#D8D0C5", "#2F343B", "#B94D3A"]],
-  ["electric", "Electric tech", ["#F8FAFF", "#8DE3FF", "#2630FF", "#111827"]],
-  ["nature", "Organikus", ["#FAF8EF", "#BFD7B5", "#36594C", "#D96C3B"]],
-  ["rose", "Rose premium", ["#FFF7F8", "#E8B4BC", "#332B31", "#C44569"]],
-  ["blueprint", "Blueprint", ["#F3F8FF", "#9DB7D6", "#1D3557", "#457B9D"]],
-  ["sunset", "Sunset", ["#FFF1E6", "#F7B267", "#2B2D42", "#F25C54"]],
-  ["minimal", "Minimal fehér", ["#FFFFFF", "#E9ECEF", "#343A40", "#ADB5BD"]],
-  ["custom", "Egyedi paletta", ["#F5F5F5", "#76ABAE", "#303841", "#FF5722"]]
-];
-
-// [tárolt érték, közelítő betűkészlet az előnézethez] — az előnézet rendszer-
-// fontokkal közelít, mert a valódi webfontok csak a kész oldalon lesznek.
-const curatedFonts: Array<[string, string]> = [
-  ["Modern groteszk (pl. Inter, Helvetica-szerű)", '"Helvetica Neue", Arial, sans-serif'],
-  ["Elegáns serif (pl. Playfair, Georgia-szerű)", 'Georgia, "Times New Roman", serif'],
-  ["Barátságos kerekded (pl. Poppins, Nunito-szerű)", '"Arial Rounded MT Bold", "Trebuchet MS", sans-serif'],
-  ["Klasszikus időtlen (pl. Garamond-szerű)", 'Garamond, "Palatino Linotype", serif'],
-  ["Technikai monospace", '"Courier New", monospace'],
-  ["Kézírásos / egyedi", '"Snell Roundhand", "Brush Script MT", cursive'],
-  ["Nincs preferencia — bízom a stúdióra", "inherit"]
-];
-
-// Gyorsválasztó chipek a szabad szöveges mezőkhöz — a kiválasztás vesszős
-// listaként ugyanabba a mezőbe íródik, így az adatszerkezet változatlan,
-// és a szöveges finomítás is megmarad.
-const audienceChips = ["Helyi lakosok", "Magánszemélyek", "Cégek (B2B)", "Családok", "Fiatalok", "Turisták"];
-const pageChips = ["Főoldal", "Szolgáltatások", "Áraink", "Galéria", "Rólunk", "Kapcsolat", "Blog", "Gyakori kérdések"];
-const featureChips = [
-  "Időpontfoglalás",
-  "Kapcsolati űrlap",
-  "Térkép",
-  "Galéria",
-  "Vélemények",
-  "Hírlevél-feliratkozás",
-  "Webshop",
-  "Többnyelvű oldal"
-];
-
-function splitListValue(value: string) {
-  return value.split(",").map((part) => part.trim()).filter(Boolean);
-}
-
-function toggleListValue(current: string, item: string) {
-  const parts = splitListValue(current);
-  return parts.includes(item) ? parts.filter((part) => part !== item).join(", ") : [...parts, item].join(", ");
-}
-
-function toggleLimitedListValue(current: string, item: string, limit: number) {
-  const parts = splitListValue(current);
-  if (parts.includes(item)) return parts.filter((part) => part !== item).join(", ");
-  return parts.length >= limit ? current : [...parts, item].join(", ");
-}
-
-const priorityLabels: Record<string, string> = {
-  automation: "Automatizált folyamatok",
-  conversion: "Több érdeklődő / jobb konverzió",
-  quality: "Minőség és prémium megjelenés",
-  scalable: "Később bővíthető rendszer",
-  speed: "Gyors indulás"
-};
-
-const hostingAccessLabels: Record<string, string> = {
-  yes: "tud hozzáférést adni",
-  later: "hozzáférés később",
-  unknown: "nem tudja, hol van"
-};
-
-const platformLabels: Record<string, string> = {
-  wordpress: "WordPress",
-  wix: "Wix / Squarespace",
-  custom: "egyedi fejlesztés",
-  other: "egyéb / nem tudja"
-};
-
-const wpAccessLabels: Record<string, string> = {
-  yes: "tud admin hozzáférést adni",
-  no: "nincs hozzáférés, de a tartalmat elküldi"
-};
-
-const logoLabels: Record<string, string> = {
-  yes: "van, feltöltve",
-  no: "nincs logó",
-  vector: "van, vektoros",
-  raster: "van, csak képként",
-  none: "nincs logó"
-};
-
-const analyticsLabels: Record<string, string> = {
-  yes: "van, tud hozzáférést adni",
-  setup: "nincs, de szeretne mérést",
-  no: "nincs / nem fontos"
-};
-
-/**
- * A brief emberi olvasásra szánt szöveges változata (`client_projects.goals`).
- *
- * FONTOS: ezt a beküldés ÉS a későbbi szerkesztés is ugyaninnen kapja. Korábban
- * két külön builder volt, és a szerkesztő csak 8 sort írt vissza — így az ügyfél
- * első módosításánál eltűnt a Domain, Logó, Szövegek, Kapcsolat és Számlázás sor
- * az admin nézetéből (ami ebből a szövegből parse-ol). Ha új brief mező készül,
- * elég itt felvenni.
- */
-export function buildBriefText(form: BriefFormValues) {
-  const vibe = vibeOptions.find(([value]) => value === form.vibe) ?? vibeOptions[0];
-  const palette = paletteOptions.find(([value]) => value === form.palette) ?? paletteOptions[0];
-  const customColors = [form.customBg, form.customAccent, form.customText, form.customCta];
-
-  const domainLine = form.commercialModel === "subscription"
-    ? ""
-    : form.domainStatus === "have"
-      ? `Domain: ${form.domainName || "saját domain"}${
-          hostingAccessLabels[form.hostingAccess] ? ` (${hostingAccessLabels[form.hostingAccess]})` : ""
-        }`
-      : form.domainStatus === "need"
-        ? "Domain: még nincs — segítséget kér a regisztrációhoz"
-        : "";
-
-  const platformLine =
-    form.commercialModel === "purchase" && form.websiteStatus === "yes" && form.existingPlatform
-      ? `Jelenlegi rendszer: ${platformLabels[form.existingPlatform] ?? form.existingPlatform}${
-          form.existingPlatform === "wordpress" && wpAccessLabels[form.wpAccess] ? ` — ${wpAccessLabels[form.wpAccess]}` : ""
-        }`
-      : "";
-
-  const logoLine = form.logoStatus
-    ? `Logó: ${logoLabels[form.logoStatus]}${
-        form.logoStatus === "no" && form.wantLogoDesign
-          ? ` — ${form.wantLogoDesign === "yes" ? "logótervezést kér (extra)" : "egyelőre nem kér logótervezést"}`
-          : ""
-      }`
-    : "";
-
-  const socialLines = [
-    form.facebookUrl ? `Facebook: ${form.facebookUrl}` : "",
-    form.instagramUrl ? `Instagram: ${form.instagramUrl}` : "",
-    form.linkedinUrl ? `LinkedIn: ${form.linkedinUrl}` : "",
-    form.tiktokUrl ? `TikTok: ${form.tiktokUrl}` : "",
-    form.youtubeUrl ? `YouTube: ${form.youtubeUrl}` : "",
-    form.otherSocialLinks ? `Egyéb linkek: ${form.otherSocialLinks}` : "",
-    form.socialLinks ? `Korábbi közösségi linkek: ${form.socialLinks}` : ""
-  ].filter(Boolean);
-
-  return [
-    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Weboldal megvásárlása"}`,
-    `Cél: ${form.goals}`,
-    form.audience ? `Célközönség / vásárlók: ${form.audience}` : "",
-    form.primaryAction ? `Elsődleges látogatói művelet: ${form.primaryAction}` : "",
-    form.pages ? `Fontos oldalak: ${form.pages}` : "",
-    form.features ? `Kért funkciók: ${form.features}` : "",
-    form.style ? `Stílus / hangulat: ${form.style}` : "",
-    `Vizuális karakter: ${vibe[1]}`,
-    `Színirány: ${palette[1]}${form.palette === "custom" ? ` (${customColors.join(", ")})` : ""}`,
-    `Prioritás: ${splitListValue(form.priority).map((value) => priorityLabels[value] ?? value).join(", ")}`,
-    domainLine,
-    form.commercialModel === "subscription" && form.domainName ? `Kiválasztott domain: ${form.domainName}` : "",
-    platformLine,
-    logoLine,
-    form.brandColors ? `Márkaszín: ${form.brandColors}` : "",
-    form.fontPreference ? `Betűtípus: ${form.fontPreference}` : "",
-    `Szövegek: ${form.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
-    form.contentBrief ? `Cégbemutató a szövegíráshoz: ${form.contentBrief}` : "",
-    form.contentFileUrls.length ? `Feltöltött szöveges anyagok: ${form.contentFileUrls.length} db` : "",
-    form.photoSource ? `Képek: ${form.photoSource === "own" ? "saját képek" : "stock / segítség kell"}` : "",
-    form.photoUrls.length ? `Feltöltött képek: ${form.photoUrls.length} db` : "",
-    form.contactEmail ? `Kapcsolati email: ${form.contactEmail}` : "",
-    form.contactPhone ? `Telefon: ${form.contactPhone}` : "",
-    socialLines.length ? `Közösségi linkek:\n${socialLines.join("\n")}` : "",
-    analyticsLabels[form.analyticsAccess] ? `Analytics: ${analyticsLabels[form.analyticsAccess]}` : "",
-    form.billingDetails ? `Számlázási adatok: ${form.billingDetails}` : ""
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-export function escHtml(value: string | null | undefined) {
-  return (value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-export function splitLines(value: string | null) {
-  return (value ?? "")
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-export function formatPrice(value: number | null, currency = "Ft") {
-  if (!value) {
-    return "Egyeztetés alapján";
-  }
-
-  return `${new Intl.NumberFormat("hu-HU").format(value)} ${currency}`;
-}
-
-export const BANK_TRANSFER_DETAILS = {
-  name: "Patrik Boczán",
-  accountNumber: "30200014-19613410-97673621",
-  iban: "HU51 3020 0014 1961 3410 9767 3621",
-  bic: "REVOHUHB"
-};
-
-export function transferReference(project: Project) {
-  return `PE-${project.id.slice(0, 8).toUpperCase()}`;
-}
-
-export function hasOffer(project: Project) {
-  return project.offer_status === "sent" || Boolean(project.offer_title || project.offer_price || project.offer_summary);
-}
-
-export function parseBrief(value: string | null) {
-  const pairs = splitLines(value).map((line) => {
-    const separatorIndex = line.indexOf(":");
-    if (separatorIndex === -1) {
-      return ["Megjegyzés", line] as const;
-    }
-
-    return [line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim()] as const;
-  });
-
-  return Object.fromEntries(pairs) as Record<string, string>;
-}
-
-export function paletteByName(name?: string) {
-  return paletteOptions.find(([, label]) => label === name)?.[2] ?? paletteOptions[0][2];
-}
 
 type ClientPortalProps = {
   view?: "auth" | "dashboard";
@@ -647,9 +132,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [showPaymentModalProjectId, setShowPaymentModalProjectId] = useState<string | null>(null);
   const [paymentMode, setPaymentMode] = useState<"deposit" | "final">("deposit");
   const [paymentError, setPaymentError] = useState("");
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  // Csak a dupla beküldés ellen; a modál a `transferAlreadyReported` propból
+  // tudja, mit mutasson.
+  const [, setPaymentLoading] = useState(false);
   const [stripeLoadingProjectId, setStripeLoadingProjectId] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [contractChecked, setContractChecked] = useState(false);
   const [performanceConsent, setPerformanceConsent] = useState(false);
   const [feedbackRoundNote, setFeedbackRoundNote] = useState("");
@@ -816,7 +302,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     } catch {
       /* storage unavailable (private mode) — ignore */
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectForm, draftKey, projectSubmitted]);
 
   /**
@@ -2726,181 +2211,29 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   }
 
   if (view === "auth") {
-    if (showForgotPassword) {
-      return (
-        <section className="portal-auth">
-          <div className="portal-auth-copy">
-            <p className="micro-label">Ügyfélkapu</p>
-            <h1>Jelszó visszaállítása</h1>
-            <p>
-              Add meg a regisztrált email címedet, és elküldünk egy linket, amellyel bejelentkezés nélkül beállíthatsz egy új jelszót.
-            </p>
-          </div>
-          <form className="portal-card" onSubmit={submitForgotPassword}>
-            <h2 style={{ fontSize: '18px', color: 'var(--ink)', marginBottom: '16px' }}>Elfelejtett jelszó</h2>
-            <div className="field">
-              <label htmlFor="forgot-email">Regisztrált email cím</label>
-              <input
-                id="forgot-email"
-                required
-                type="email"
-                value={forgotPasswordEmail}
-                onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                placeholder="hello@vallalkozasod.hu"
-              />
-            </div>
-            <button className="button primary" type="submit">Visszaállító link küldése</button>
-            <button
-              className="button secondary"
-              type="button"
-              style={{ marginTop: '12px' }}
-              onClick={() => { setShowForgotPassword(false); setNotice(""); }}
-            >
-              Vissza a bejelentkezéshez
-            </button>
-            <p className="form-status">{notice}</p>
-          </form>
-        </section>
-      );
-    }
-
     return (
-      <section className="portal-auth">
-        <div className="portal-auth-copy">
-          <p className="micro-label">{publicBriefPending ? "Brief kész · mentés következik" : "Ügyfélkapu"}</p>
-          <h1>{publicBriefPending ? "A válaszaid megvannak." : "Saját projektfelület, nem elvesző emailek."}</h1>
-          <p>{publicBriefPending ? "Lépj be vagy hozz létre fiókot. Utána a brief automatikusan megnyílik, és a privát anyagokkal kiegészítve te küldheted be." : "Itt tudsz projektet indítani, üzenetet küldeni, visszanézni a beszélgetéseket és látni, hol tart a közös munka."}</p>
-          {publicBriefPending ? <div className="brief-handoff-note"><span>✓</span><div><strong>Biztonságosan elmentve ezen az eszközön</strong><small>A fiók létrehozása nem küldi be automatikusan a projektet.</small></div></div> : null}
-        </div>
-        <form className="portal-card" onSubmit={submitAuth}>
-          <div className="portal-tabs">
-            <button className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setNotice(""); }} type="button">
-              Belépés
-            </button>
-            <button className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setNotice(""); }} type="button">
-              Regisztráció
-            </button>
-          </div>
-          <button className="google-auth-button" onClick={continueWithGoogle} type="button">
-            <span aria-hidden="true" className="google-auth-mark">G</span>
-            Folytatás Google-lel
-          </button>
-          <div className="auth-divider" role="separator">
-            <span>vagy emaillel</span>
-          </div>
-          {mode === "register" ? (
-            <div className="field">
-              <label htmlFor="client-name">Név</label>
-              <input
-                id="client-name"
-                required
-                value={authForm.name}
-                onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Kovács Anna"
-              />
-            </div>
-          ) : null}
-          <div className="field">
-            <label htmlFor="client-email">Email</label>
-            <input
-              id="client-email"
-              required
-              type="email"
-              value={authForm.email}
-              onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))}
-              placeholder="hello@vallalkozasod.hu"
-            />
-          </div>
-          <div className="field" style={{ position: 'relative' }}>
-            <label htmlFor="client-password">Jelszó</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
-              <input
-                id="client-password"
-                required
-                minLength={6}
-                type={showPassword ? "text" : "password"}
-                value={authForm.password}
-                onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
-                placeholder="Legalább 6 karakter"
-                style={{ width: '100%', paddingRight: '50px' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 2
-                }}
-                aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
-              >
-                {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted)' }}>
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--muted)' }}>
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                )}
-              </button>
-            </div>
-            {mode === "register" && (
-              <small style={{ display: 'block', marginTop: '6px', color: 'var(--muted)', fontSize: '11px', lineHeight: '1.3' }}>
-                Legalább 6 karakter hosszú jelszó megadása kötelező.
-              </small>
-            )}
-          </div>
-          {mode === "login" && (
-            <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '12px' }}>
-              <button
-                type="button"
-                onClick={() => { setShowForgotPassword(true); setNotice(""); }}
-                style={{ background: 'none', border: 'none', color: '#76ABAE', cursor: 'pointer', fontSize: '13px', padding: 0 }}
-              >
-                Elfelejtetted a jelszavad?
-              </button>
-            </div>
-          )}
-          {mode === "register" && (
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', lineHeight: '1.4', color: 'var(--muted)', cursor: 'pointer', marginBottom: '4px' }}>
-              <input
-                type="checkbox"
-                required
-                checked={consentChecked}
-                onChange={(event) => setConsentChecked(event.target.checked)}
-                style={{ marginTop: '2px', flexShrink: 0 }}
-              />
-              <span>
-                Elolvastam és elfogadom az{" "}
-                <a href="/adatkezeles" target="_blank" style={{ color: '#76ABAE' }}>Adatkezelési tájékoztatót</a>{" "}
-                és az{" "}
-                <a href="/aszf" target="_blank" style={{ color: '#76ABAE' }}>ÁSZF-et</a>.
-              </span>
-            </label>
-          )}
-          <button className="button primary" type="submit">
-            {mode === "login" ? "Belépés" : "Fiók létrehozása"}
-          </button>
-          {mode === "register" && canResendConfirmation ? (
-            <button className="button secondary portal-resend" onClick={resendConfirmation} type="button">
-              Megerősítő email újraküldése
-            </button>
-          ) : null}
-          <p className="form-status">{notice}</p>
-        </form>
-      </section>
+      <AuthScreen
+        authForm={authForm}
+        canResendConfirmation={canResendConfirmation}
+        consentChecked={consentChecked}
+        forgotPasswordEmail={forgotPasswordEmail}
+        mode={mode}
+        notice={notice}
+        showForgotPassword={showForgotPassword}
+        showPassword={showPassword}
+        publicBriefPending={publicBriefPending}
+        onAuthFormChange={setAuthForm}
+        onConsentChange={setConsentChecked}
+        onForgotPasswordEmailChange={setForgotPasswordEmail}
+        onModeChange={setMode}
+        onNoticeChange={setNotice}
+        onResendConfirmation={resendConfirmation}
+        onShowForgotPasswordChange={setShowForgotPassword}
+        onShowPasswordChange={setShowPassword}
+        onSubmitAuth={submitAuth}
+        onSubmitForgotPassword={submitForgotPassword}
+        onContinueWithGoogle={continueWithGoogle}
+      />
     );
   }
 
@@ -4425,119 +3758,20 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         </aside>
         </div>
       ) : null}
-      {showPaymentModalProjectId && (() => {
-        const project = projects.find(p => p.id === showPaymentModalProjectId);
+      {showPaymentModalProjectId ? (() => {
+        const project = projects.find((item) => item.id === showPaymentModalProjectId);
         if (!project) return null;
-        const payAmount = paymentMode === "final"
-          ? (project.offer_price ?? 0) - (project.deposit_amount ?? 0)
-          : (project.deposit_amount ?? 0);
-        const payLabel = paymentMode === "final"
-          ? "Hátralék"
-          : project.commercial_model === "subscription"
-            ? "Első havidíj"
-            : "Foglaló";
-        const reference = transferReference(project);
-        const transferAlreadyReported = paymentMode === "final"
-          ? project.final_transfer_reported
-          : project.deposit_transfer_reported;
-
-        async function copyValue(field: string, value: string) {
-          try {
-            await navigator.clipboard.writeText(value);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField((current) => (current === field ? null : current)), 1600);
-          } catch {
-            // vágólap API nem elérhető — a mező kézzel is kijelölhető
-          }
-        }
-
-        const copyRow = (field: string, label: string, value: string, isLast = false) => (
-          <div
-            key={field}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '13px 0',
-              borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.07)'
-            }}
-          >
-            <div style={{ display: 'grid', gap: '2px', minWidth: 0 }}>
-              <span style={{ fontSize: '10.5px', letterSpacing: '0.6px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.42)' }}>{label}</span>
-              <strong style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: '14.5px', color: '#F5F5F5', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</strong>
-            </div>
-            <button
-              type="button"
-              onClick={() => copyValue(field, value)}
-              style={{
-                flexShrink: 0,
-                background: copiedField === field ? 'rgba(118,171,174,0.18)' : 'rgba(255,255,255,0.06)',
-                border: `1px solid ${copiedField === field ? 'rgba(118,171,174,0.45)' : 'rgba(255,255,255,0.12)'}`,
-                color: copiedField === field ? '#76ABAE' : 'rgba(255,255,255,0.75)',
-                borderRadius: '10px',
-                padding: '7px 12px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              {copiedField === field ? 'Másolva ✓' : 'Másolás'}
-            </button>
-          </div>
-        );
-
         return (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)', padding: '16px' }}>
-            <div style={{ background: '#1C1E22', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', width: '100%', maxWidth: '460px', padding: '24px', color: '#F5F5F5', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'grid', gap: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Banki átutalás</span>
-                <button type="button" onClick={() => setShowPaymentModalProjectId(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '20px', padding: 0 }}>×</button>
-              </div>
-
-              <div>
-                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>Fizetés a következő projektre:</span>
-                <h3 style={{ margin: '4px 0 0 0', color: '#fff' }}>{project.title}</h3>
-                <small style={{ color: 'rgba(255,255,255,0.4)' }}>{project.company || "Cégnév nélkül"}</small>
-              </div>
-
-              <div style={{ background: 'linear-gradient(160deg, rgba(118,171,174,0.16), rgba(118,171,174,0.02))', border: '1px solid rgba(118,171,174,0.28)', borderRadius: '18px', padding: '16px 20px', display: 'grid', gap: '4px' }}>
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.5)' }}>Fizetendő összeg ({payLabel})</span>
-                <strong style={{ fontSize: '30px', color: '#76ABAE', fontVariantNumeric: 'tabular-nums' }}>{formatPrice(payAmount, project.offer_currency || "Ft")}</strong>
-              </div>
-
-              {paymentError && (
-                <div style={{ background: 'rgba(220,53,69,0.1)', border: '1px solid rgba(220,53,69,0.2)', color: '#FF7676', padding: '12px', borderRadius: '12px', fontSize: '14px' }}>
-                  {paymentError}
-                </div>
-              )}
-
-              <div style={{ background: '#15171B', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '2px 18px' }}>
-                {copyRow('name', 'Kedvezményezett', BANK_TRANSFER_DETAILS.name)}
-                {copyRow('account', 'Belföldi számlaszám', BANK_TRANSFER_DETAILS.accountNumber)}
-                {copyRow('iban', 'IBAN', BANK_TRANSFER_DETAILS.iban)}
-                {copyRow('bic', 'BIC / SWIFT', BANK_TRANSFER_DETAILS.bic)}
-                {copyRow('reference', 'Közlemény (fontos!)', reference, true)}
-              </div>
-
-              <p style={{ margin: 0, fontSize: '12.5px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-                A közlemény alapján tudom azonosítani az utalásod — mindig add meg. Belföldi utalás
-                jellemzően perceken–pár órán belül megérkezik. Ha bármi elakad, írj az{" "}
-                <a href="mailto:info@projectedge.hu" style={{ color: '#76ABAE' }}>info@projectedge.hu</a> címre.
-              </p>
-
-              <button
-                type="button"
-                disabled={paymentLoading || transferAlreadyReported}
-                onClick={() => (paymentMode === "final" ? markFinalTransferSent(project) : markDepositTransferSent(project))}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: transferAlreadyReported ? '#315f63' : '#FF5722', border: 'none', borderRadius: '12px', color: '#fff', padding: '14px', fontSize: '14px', fontWeight: 700, cursor: paymentLoading || transferAlreadyReported ? 'default' : 'pointer', opacity: paymentLoading ? 0.7 : 1 }}
-              >
-                {paymentLoading ? 'Jelzés küldése...' : transferAlreadyReported ? '✓ Utalás elküldése jelezve' : 'Elküldtem az utalást'}
-              </button>
-            </div>
-          </div>
+          <TransferModal
+            project={project}
+            paymentMode={paymentMode}
+            paymentError={paymentError}
+            transferAlreadyReported={paymentMode === "final" ? project.final_transfer_reported : project.deposit_transfer_reported}
+            onClose={() => setShowPaymentModalProjectId(null)}
+            onReportTransfer={paymentMode === "final" ? markFinalTransferSent : markDepositTransferSent}
+          />
         );
-      })()}
+      })() : null}
     </section>
   );
 }

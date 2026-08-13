@@ -60,7 +60,7 @@ the cover PNGs. Rackhost screenshots come from `tmp/pdfs/domain-guide/`.
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
-2. Run migrations `001` through `009`, then `011` through `027`, in filename order.
+2. Run migrations `001` through `009`, then `011` through `028`, in filename order.
 3. Do not run `010_lock_financial_columns.sql`; it is obsolete.
 4. Create an admin user in Supabase Auth.
 5. Add the admin user to `public.admin_users`.
@@ -91,6 +91,12 @@ anything else in this release:
 - Adds `client_projects.stripe_parked_at`, used to tell a parked subscription apart
   from an active one (parking is implemented as a Stripe price swap, so the Stripe
   status stays `active`).
+
+`028_durable_rate_limits.sql` moves the public-endpoint rate limit into the database
+(`public.rate_limits` + `consume_rate_limit()`). The previous in-memory limiter lived
+in each serverless instance, so "5 tickets / 10 minutes" was really 5 × instance count
+— it loosened exactly when load made it matter. If the database is unreachable the
+code falls back to the in-memory limiter rather than blocking the support form.
 
 To verify the 023–025 database changes without modifying anything, run the read-only
 checks in `supabase/verify_023_025.sql` from the Supabase SQL Editor.
@@ -151,6 +157,23 @@ Before accepting a real client, test registration, login, project creation, file
 upload, admin reply, notification email, support ticket reply and account deletion
 against the production Supabase project. Take a database backup before applying a
 new migration.
+
+## Code layout
+
+`ClientPortal.tsx` and `AdminDashboard.tsx` are the two large client components.
+Everything that does not need their state lives outside them:
+
+- `components/portal/types.ts` — `Project`, `Ticket`, `TicketMessage`,
+  `ClientChangeRequest`. The panels import types from here, not from the component.
+- `components/portal/brief-fields.ts` — the brief wizard's field set, labels,
+  validation and `buildBriefText`. Pure data and pure functions, no React.
+- `components/portal/format.ts` — `formatPrice`, `parseBrief`, `splitLines`,
+  bank transfer details. Shared with the admin dashboard, which used to keep its own
+  drifting copies.
+- `components/portal/AuthScreen.tsx`, `components/portal/TransferModal.tsx` —
+  the login/registration screen and the bank transfer modal.
+- `components/admin/types.ts`, `components/admin/BillingoIssuesCard.tsx`.
+- `lib/billing-math.ts` — dependency-free billing logic, unit tested directly.
 
 ## Pages
 

@@ -1,5 +1,5 @@
+import type { Project } from "@/components/portal/types";
 import { useState } from "react";
-import type { Project } from "@/components/ClientPortal";
 import {
   HANDOVER_SERVICE_LABELS,
   activeHandoverStep,

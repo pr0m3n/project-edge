@@ -55,6 +55,38 @@ export function checkRateLimit(
   return { allowed: true, retryAfterSeconds: 0 };
 }
 
+/**
+ * Telepítés-szintű korlát a NYILVÁNOS végpontokhoz.
+ *
+ * A fenti memóriás változó példányonként külön számol, tehát Vercelen a korlát
+ * a példányszámmal együtt nőtt — pont akkor lazult, amikor számított volna.
+ * Ez az adatbázisban tartja a számlálót (`consume_rate_limit`, 028-as migráció),
+ * így a limit az egész telepítésre érvényes.
+ *
+ * Ha az adatbázis nem elérhető, visszaesünk a memóriás korlátra: egy
+ * infrastruktúra-hiba ne tegye elérhetetlenné a support űrlapot, de teljesen
+ * őrizetlen se maradjon.
+ */
+export async function checkDurableRateLimit(
+  request: Request | NextRequest,
+  scope: string,
+  limit: number,
+  windowSeconds: number
+) {
+  const key = `${scope}:${getRequestIdentifier(request)}`;
+  try {
+    const { createServerSupabaseAdminClient } = await import("@/lib/supabase/server");
+    const { data, error } = await createServerSupabaseAdminClient()
+      .rpc("consume_rate_limit", { limit_key: key, max_count: limit, window_seconds: windowSeconds })
+      .single<{ allowed: boolean; retry_after: number }>();
+    if (error || !data) throw error ?? new Error("empty rate limit response");
+    return { allowed: data.allowed, retryAfterSeconds: data.retry_after };
+  } catch (error) {
+    console.error("Durable rate limit unavailable, falling back to in-memory", error);
+    return checkRateLimit(request, scope, limit, windowSeconds * 1000);
+  }
+}
+
 export function rateLimitResponse(retryAfterSeconds: number) {
   return new Response(JSON.stringify({ error: "Túl sok kérés érkezett. Próbáld újra később." }), {
     status: 429,

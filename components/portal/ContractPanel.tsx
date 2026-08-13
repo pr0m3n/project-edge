@@ -1,5 +1,5 @@
-import type { Project } from "@/components/ClientPortal";
-import { escHtml, formatPrice } from "@/components/ClientPortal";
+import type { Project } from "@/components/portal/types";
+import { escHtml, formatPrice } from "@/components/portal/format";
 import { PROVIDER, providerContractParty } from "@/lib/legal";
 import { PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 

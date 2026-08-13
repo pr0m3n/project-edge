@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
+import { checkDurableRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type Params = {
@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid ticket id." }, { status: 400 });
   }
 
-  const rate = checkRateLimit(request, "support-ticket-message", 20, 10 * 60 * 1000);
+  const rate = await checkDurableRateLimit(request, "support-ticket-message", 20, 10 * 60);
   if (!rate.allowed) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }

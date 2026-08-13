@@ -1,5 +1,5 @@
-import type { Project } from "@/components/ClientPortal";
-import { formatPrice, hasOffer, splitLines } from "@/components/ClientPortal";
+import type { Project } from "@/components/portal/types";
+import { formatPrice, hasOffer, splitLines } from "@/components/portal/format";
 
 type OfferPanelProps = {
   project: Project;

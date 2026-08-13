@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
+import { checkDurableRateLimit, checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 
 /**
  * A látogatói token egy beszélgetéshez hozzáférést adó titok. Query stringben
@@ -92,7 +92,7 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Invalid ticket id." }, { status: 400 });
   }
 
-  const rate = checkRateLimit(request, "support-ticket-rating", 10, 10 * 60 * 1000);
+  const rate = await checkDurableRateLimit(request, "support-ticket-rating", 10, 10 * 60);
   if (!rate.allowed) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }

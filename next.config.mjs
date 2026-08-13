@@ -23,7 +23,9 @@ const csp = [
   "img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com",
   "font-src 'self' data:",
   // blob: — a model-viewer a GLB textúráit blob URL-ként tölti be.
-  "connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
+  // ws://localhost CSAK fejlesztésben: a Next HMR websocketjét a 'self' nem
+  // fedi le, enélkül a helyi fejlesztés folyamatosan újracsatlakozni próbál.
+  `connect-src 'self' blob: data:${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""} https://*.supabase.co wss://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com`,
   "frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net",
   "media-src 'self'",
   "worker-src 'self' blob:",

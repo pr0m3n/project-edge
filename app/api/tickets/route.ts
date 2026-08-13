@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { checkRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
+import { checkDurableRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type TicketPayload = {
@@ -14,7 +14,9 @@ function clean(value: unknown) {
 }
 
 export async function POST(request: Request) {
-  const rate = checkRateLimit(request, "support-ticket-create", 5, 10 * 60 * 1000);
+  // Nyilvános, emailt kiváltó végpont — a korlátnak a teljes telepítésre
+  // kell érvényesnek lennie, nem példányonként.
+  const rate = await checkDurableRateLimit(request, "support-ticket-create", 5, 10 * 60);
   if (!rate.allowed) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }
