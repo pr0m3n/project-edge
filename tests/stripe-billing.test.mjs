@@ -8,7 +8,9 @@ test("subscription checkout is server-priced and webhook verified", () => {
   const checkout = read("app/api/stripe/checkout/route.ts");
   const webhook = read("app/api/stripe/webhook/route.ts");
   assert.match(checkout, /subscriptionPlan\(project\.subscription_plan\)/);
-  assert.match(checkout, /unit_amount: monthlyPrice/);
+  assert.match(checkout, /unit_amount: hufToStripeAmount\(monthlyPrice\)/);
+  assert.match(checkout, /adaptive_pricing: \{ enabled: false \}/);
+  assert.match(checkout, /projectedge-subscription-v2-/);
   assert.doesNotMatch(checkout, /body\.(amount|price)/);
   assert.match(checkout, /createServerSupabaseUserClient\(accessToken\)/);
   assert.match(checkout, /Stripe checkout admin connection failed/);
@@ -17,6 +19,7 @@ test("subscription checkout is server-priced and webhook verified", () => {
   assert.match(webhook, /stripe_webhook_events/);
   assert.match(webhook, /invoice\.paid/);
   assert.match(webhook, /invoice\.payment_failed/);
+  assert.match(webhook, /stripeAmountToHuf\(invoice\.amount_paid, invoice\.currency\)/);
 });
 
 test("public brief supports a saved custom palette", () => {

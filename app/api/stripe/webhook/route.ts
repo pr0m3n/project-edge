@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { createBillingoSubscriptionInvoice } from "@/lib/billingo";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, stripeAmountToHuf } from "@/lib/stripe";
 import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 
 export const runtime = "nodejs";
@@ -48,7 +48,8 @@ async function notifyPayment(userId: string, email: string | null, projectTitle:
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const subscriptionId = subscriptionIdFromInvoice(invoice);
-  if (!subscriptionId || invoice.amount_paid <= 0) return;
+  const amountHuf = stripeAmountToHuf(invoice.amount_paid, invoice.currency);
+  if (!subscriptionId || amountHuf <= 0) return;
   const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const projectId = subscription.metadata.project_id;
@@ -86,7 +87,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     project_id: project.id,
     billing_period_start: periodStart,
     billing_period_end: periodEnd,
-    amount: invoice.amount_paid,
+    amount: amountHuf,
     currency: invoice.currency.toUpperCase(),
     status: "paid",
     payment_reference: invoice.number ?? invoice.id,
@@ -96,7 +97,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }, { onConflict: "stripe_invoice_id" }).select("id,billingo_document_id").single();
   if (paymentError) throw paymentError;
 
-  await notifyPayment(project.user_id, project.contact_email, project.title, invoice.amount_paid, first);
+  await notifyPayment(project.user_id, project.contact_email, project.title, amountHuf, first);
 
   if (!payment.billingo_document_id) {
     try {
@@ -108,7 +109,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       const result = await createBillingoSubscriptionInvoice({
         stripeInvoiceId: invoice.id,
         customer,
-        amount: invoice.amount_paid,
+        amount: amountHuf,
         itemName: `ProjectEdge ${plan.name} menedzselt weboldal — havi díj`,
         paidAt
       });

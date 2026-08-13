@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
 import { authenticatedUser } from "@/lib/server-auth";
 import { createServerSupabaseAdminClient, createServerSupabaseUserClient } from "@/lib/supabase/server";
-import { getStripe, siteUrl } from "@/lib/stripe";
+import { getStripe, hufToStripeAmount, siteUrl } from "@/lib/stripe";
 import { subscriptionPlan } from "@/lib/subscriptions";
 
 export const runtime = "nodejs";
@@ -85,6 +85,9 @@ export async function POST(request: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      // The plans are fixed Hungarian-forint prices. Do not let Stripe's
+      // Adaptive Pricing replace them with a customer-local EUR amount.
+      adaptive_pricing: { enabled: false },
       customer: customerId,
       client_reference_id: project.id,
       billing_address_collection: "required",
@@ -96,7 +99,7 @@ export async function POST(request: Request) {
         quantity: 1,
         price_data: {
           currency: "huf",
-          unit_amount: monthlyPrice,
+          unit_amount: hufToStripeAmount(monthlyPrice),
           recurring: { interval: "month" },
           product_data: {
             name: `ProjectEdge ${plan.name} előfizetés`,
@@ -114,7 +117,8 @@ export async function POST(request: Request) {
       cancel_url: `${siteUrl()}/ugyfelkapu/dashboard?payment=cancelled`
     }, {
       // A dupla kattintás és a hálózati újraküldés nem hozhat létre két előfizetést.
-      idempotencyKey: `projectedge-subscription-${project.id}-${project.contract_accepted_at ?? "accepted"}`
+      // v2 also invalidates sessions created before the HUF minor-unit fix.
+      idempotencyKey: `projectedge-subscription-v2-${project.id}-${project.contract_accepted_at ?? "accepted"}`
     });
 
     const { error: updateError } = await admin.from("client_projects").update({
