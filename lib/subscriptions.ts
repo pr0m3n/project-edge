@@ -11,6 +11,26 @@ export const PURCHASE_OPTION_PRICES: Record<SubscriptionPlanKey, number> = {
 
 export const PRICE_TAX_NOTE = "Alanyi adómentes szolgáltatás: áfa nem kerül felszámításra. A feltüntetett összeg a fizetendő végösszeg.";
 
+/**
+ * Szüneteltetéskor a weboldal parkolóállapotba kerül: a domain, a tárhely és a
+ * technikai fiókok megmaradnak, de a csomag szolgáltatásai szünetelnek. Ezt az
+ * összeget ígérjük az ügyfélkapuban, tehát a Stripe-előfizetés tételét is erre
+ * kell átállítani — különben a teljes havidíj terhelődne tovább.
+ */
+export const PARKING_MONTHLY_PRICE = 2900;
+
+/**
+ * Determinisztikus Stripe-termékazonosítók. A Checkout `product_data`-val
+ * implicit terméket hoz létre véletlen azonosítóval; a későbbi ár-cserékhez
+ * (parkolás / visszaállítás) viszont konkrét `product` ID kell, mert a
+ * subscription item `price_data` nem fogad `product_data`-t.
+ */
+export const PARKING_PRODUCT_ID = "projectedge-parkolas";
+
+export function subscriptionProductId(key: SubscriptionPlanKey) {
+  return `projectedge-elofizetes-${key}`;
+}
+
 export function isWebsitePurchaseRequest(description?: string | null) {
   return Boolean(description?.startsWith(PURCHASE_REQUEST_PREFIX));
 }

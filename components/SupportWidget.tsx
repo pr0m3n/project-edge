@@ -113,7 +113,11 @@ export function SupportWidget() {
       setStatus("loading");
     }
 
-    const response = await fetch(`/api/tickets/${currentTicket.id}?token=${currentTicket.token}`);
+    // A token fejlécben megy, nem query stringben: így nem kerül be a szerver
+    // hozzáférési naplóiba és a Referer fejlécekbe.
+    const response = await fetch(`/api/tickets/${currentTicket.id}`, {
+      headers: { "X-Visitor-Token": currentTicket.token }
+    });
 
     if (!response.ok) {
       if (!silent) {
@@ -179,11 +183,8 @@ export function SupportWidget() {
     setStatus("loading");
     const response = await fetch(`/api/tickets/${ticket.id}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        body: reply,
-        token: ticket.token
-      })
+      headers: { "Content-Type": "application/json", "X-Visitor-Token": ticket.token },
+      body: JSON.stringify({ body: reply })
     });
 
     if (!response.ok) {
@@ -215,12 +216,8 @@ export function SupportWidget() {
     setStatus("loading");
     const response = await fetch(`/api/tickets/${ticket.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        rating,
-        ratingComment,
-        token: ticket.token
-      })
+      headers: { "Content-Type": "application/json", "X-Visitor-Token": ticket.token },
+      body: JSON.stringify({ rating, ratingComment })
     });
 
     if (!response.ok) {

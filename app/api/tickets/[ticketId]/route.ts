@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
+import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
+
+/**
+ * A látogatói token egy beszélgetéshez hozzáférést adó titok. Query stringben
+ * bekerülne a szerver hozzáférési naplóiba és a Referer fejlécekbe, ezért
+ * fejlécben várjuk.
+ *
+ * A `?token=` ág átmeneti visszafelé kompatibilitás: egy régi, még be nem
+ * töltött JS csomaggal nyitva hagyott fül így nem veszíti el a beszélgetést.
+ * Egy későbbi kiadásban eltávolítható.
+ */
+function visitorToken(request: Request) {
+  const header = request.headers.get("x-visitor-token")?.trim();
+  if (header) return header;
+  return new URL(request.url).searchParams.get("token")?.trim() ?? "";
+}
 
 type Params = {
   params: Promise<{
@@ -29,7 +44,7 @@ export async function GET(request: Request, { params }: Params) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }
 
-  const token = new URL(request.url).searchParams.get("token") ?? "";
+  const token = visitorToken(request);
   if (!token || token.length > 128) {
     return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
   }
@@ -82,20 +97,11 @@ export async function PATCH(request: Request, { params }: Params) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }
 
-  const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 5_000) {
-    return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
-  }
+  const parsed = await readJsonBody<RatingPayload>(request, 5_000);
+  if (!parsed.ok) return parsed.response;
+  const payload = parsed.data;
 
-  let payload: RatingPayload;
-
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
-
-  const token = clean(payload.token);
+  const token = visitorToken(request) || clean(payload.token);
   const rating = Number(payload.rating);
   const ratingComment = clean(payload.ratingComment);
 

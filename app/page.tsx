@@ -155,7 +155,16 @@ export default function Home() {
         </div>
         <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
           <span className="case-tag">Full-stack munka</span>
-          <img alt="Checky.hu weboldal referencia" src="/work/checky.png" />
+          {/* 1,25 MB PNG volt nyers <img>-ként — a főoldal legnagyobb LCP-tétele.
+              A next/image automatikusan WebP/AVIF változatot és a viewporthoz
+              illő méretet szolgál ki. */}
+          <Image
+            alt="Checky.hu weboldal referencia"
+            height={1662}
+            sizes="(max-width: 880px) calc(100vw - 36px), 46vw"
+            src="/work/checky.png"
+            width={2940}
+          />
           <div>
             <strong>Checky.hu</strong>
             <small>Frontend, backend, adatfolyamok, komplex webes rendszer.</small>

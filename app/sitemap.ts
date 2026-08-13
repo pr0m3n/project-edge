@@ -10,11 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/szolgaltatasok", priority: 0.8 },
     { path: "/folyamat", priority: 0.8 },
     { path: "/munkak", priority: 0.8 },
-    { path: "/demo/veyra", priority: 0.6 },
-    { path: "/demo/zamat", priority: 0.6 },
-    { path: "/demo/budai-otthonok", priority: 0.6 },
-    { path: "/demo/liget-borstudio", priority: 0.6 },
-    { path: "/demo/varga-villany", priority: 0.6 },
+    // A /demo oldalak szándékosan kimaradnak: kitalált márkákat mutatnak be,
+    // és `noindex`-esek (app/demo/layout.tsx).
     { path: "/ugyfelkapu", priority: 0.6 },
     { path: "/impresszum", priority: 0.3 },
     { path: "/adatkezeles", priority: 0.3 },

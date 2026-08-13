@@ -66,6 +66,65 @@ export function rateLimitResponse(retryAfterSeconds: number) {
   });
 }
 
+/**
+ * A kérés törzsének beolvasása valódi felső mérethatárral.
+ *
+ * A `content-length` fejlécre nem lehet hagyatkozni: `Transfer-Encoding:
+ * chunked` esetén nincs is jelen, és a kliens tetszőleges értéket írhat bele.
+ * Itt a ténylegesen beérkező bájtokat számoljuk, és a limit átlépésekor
+ * megszakítjuk az olvasást, tehát a memória sem terhelhető túl.
+ */
+export async function readLimitedBody(request: Request, maxBytes: number) {
+  const body = request.body;
+  if (!body) return { ok: true as const, text: "" };
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel();
+      return { ok: false as const, text: "" };
+    }
+    chunks.push(value);
+  }
+
+  const merged = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true as const, text: new TextDecoder().decode(merged) };
+}
+
+export type JsonBodyResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; response: Response };
+
+function jsonError(message: string, status: number) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+  });
+}
+
+/** Méretkorlátos JSON-body: 413 túl nagy törzsnél, 400 érvénytelen JSON-nál. */
+export async function readJsonBody<T>(request: Request, maxBytes: number): Promise<JsonBodyResult<T>> {
+  const body = await readLimitedBody(request, maxBytes);
+  if (!body.ok) return { ok: false, response: jsonError("A kérés túl nagy.", 413) };
+  if (!body.text.trim()) return { ok: false, response: jsonError("Hiányzó kérés törzs.", 400) };
+  try {
+    return { ok: true, data: JSON.parse(body.text) as T };
+  } catch {
+    return { ok: false, response: jsonError("Érvénytelen kérés törzs.", 400) };
+  }
+}
+
 export function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }

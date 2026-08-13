@@ -669,6 +669,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [profileName, setProfileName] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  /** Emailes jelszó-visszaállításról érkezett a felhasználó. */
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [recentlyClosedProjectId, setRecentlyClosedProjectId] = useState<string | null>(null);
   const [pendingBrandColor, setPendingBrandColor] = useState("#76ABAE");
@@ -816,9 +819,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectForm, draftKey, projectSubmitted]);
 
+  /**
+   * A `targetEmail` szándékosan NEM megy át a szerverre: a címzettet a
+   * `/api/notify` a hívó jogosultsága alapján állapítja meg. A paraméter csak
+   * a hívási helyek olvashatóságát szolgálja.
+   */
   async function triggerNotification(
     targetUserId: string | null,
-    targetEmail: string | null,
+    _targetEmail: string | null,
     title: string,
     message: string,
     link: string
@@ -831,13 +839,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           "Content-Type": "application/json",
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
         },
-        body: JSON.stringify({
-          userId: targetUserId,
-          email: targetEmail,
-          title,
-          message,
-          link
-        })
+        body: JSON.stringify({ userId: targetUserId, title, message, link })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success === false || result.emailSent === false) {
@@ -939,9 +941,31 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function updatePassword(e: FormEvent) {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 6) {
-      setNotice("A jelszónak legalább 6 karakterből kell állnia.");
+    if (!newPassword || newPassword.length < 10) {
+      setNotice("A jelszónak legalább 10 karakterből kell állnia.");
       return;
+    }
+    if (!/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setNotice("A jelszó tartalmazzon betűt és számot is.");
+      return;
+    }
+    // Újrahitelesítés: a jelszócsere elfogadott munkamenettel is csak a
+    // jelenlegi jelszó ismeretében mehet, különben egy őrizetlenül hagyott
+    // böngészőnél bárki átvehetné a fiókot.
+    //
+    // KIVÉTEL a jelszó-visszaállítás: aki emailes recovery linkről érkezik,
+    // épp azért van itt, mert NEM tudja a régi jelszavát. Ott a linkből
+    // származó munkamenet maga a bizonyíték.
+    if (!recoveryMode) {
+      if (!currentPassword) {
+        setNotice("A biztonság kedvéért add meg a jelenlegi jelszavadat is.");
+        return;
+      }
+      const { error: reauthError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+      if (reauthError) {
+        setNotice("A jelenlegi jelszó nem megfelelő.");
+        return;
+      }
     }
     setNotice("Módosítás...");
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -949,6 +973,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice(`Jelszócsere sikertelen: ${error.message}`);
     } else {
       setNewPassword("");
+      setCurrentPassword("");
       setNotice("A jelszavad sikeresen megváltozott!");
     }
   }
@@ -1124,6 +1149,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const hash = window.location.hash;
       const search = window.location.search;
       if (hash.includes("type=recovery") || search.includes("reset=true")) {
+        setRecoveryMode(true);
         setOpenPanel("account");
         setNotice("Kérjük, állíts be egy új jelszót a 'Jelszó módosítása' résznél.");
       }
@@ -2059,7 +2085,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const { error } = await supabase.from("client_projects").update({
       contract_accepted: true,
       contract_accepted_at: new Date().toISOString(),
-      ...(managed ? { subscription_status: "first_payment_pending" } : {}),
       status: "deposit_pending",
       ...(managed ? { subscription_status: "first_payment_pending" } : {}),
       next_step: managed ? "Szolgáltatási szerződés elfogadva. Fizesd be az első havidíjat a weboldal elkészítésének indításához." : "Szerződés aláírva! Kérlek, fizesd be a foglalót a kivitelezés elindításához."
@@ -4295,12 +4320,26 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <small>Biztonsági frissítés</small>
             </div>
             <form onSubmit={updatePassword} style={{ display: "grid", gap: "14px", padding: "12px 0" }}>
+              {recoveryMode ? null : (
+                <div className="field" style={{ margin: 0 }}>
+                  <label htmlFor="settings-current-password">Jelenlegi jelszó</label>
+                  <input
+                    id="settings-current-password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="A megerősítéshez"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                </div>
+              )}
               <div className="field" style={{ margin: 0 }}>
                 <label htmlFor="settings-password">Új jelszó</label>
                 <input
                   id="settings-password"
                   type="password"
-                  placeholder="Legalább 6 karakter"
+                  autoComplete="new-password"
+                  placeholder="Legalább 10 karakter, betű és szám"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />

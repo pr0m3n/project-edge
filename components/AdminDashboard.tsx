@@ -14,7 +14,7 @@ import {
 import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan, type HandoverStepState } from "@/lib/handover";
-import { formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
+import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
 
 function messageKind(text: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
@@ -149,6 +149,11 @@ type ClientProject = {
   purchase_option_price: number | null;
   site_health_status: string | null;
   last_health_check_at: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_subscription_status: string | null;
+  stripe_current_period_end: string | null;
+  stripe_parked_at: string | null;
 };
 
 type ClientTicket = {
@@ -162,6 +167,16 @@ type ClientTicket = {
   rating: number | null;
   rating_comment: string | null;
   last_message_at: string;
+};
+
+/** Beérkezett befizetés, amihez még nem készült AAM-számla. */
+type BillingoIssue = {
+  id: string;
+  project_id: string;
+  amount: number;
+  paid_at: string | null;
+  stripe_invoice_id: string | null;
+  billingo_error: string | null;
 };
 
 type ChangeRequest = {
@@ -318,6 +333,8 @@ export function AdminDashboard() {
   const [clientTicketMessages, setClientTicketMessages] = useState<Record<string, TicketMessage[]>>({});
   const [clientTicketReplies, setClientTicketReplies] = useState<Record<string, string>>({});
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
+  const [billingoIssues, setBillingoIssues] = useState<BillingoIssue[]>([]);
+  const [billingoRetryId, setBillingoRetryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -406,9 +423,13 @@ export function AdminDashboard() {
     });
   }, [clientTickets, selectedClientFilter, searchQuery]);
 
+  /**
+   * A `targetEmail` szándékosan NEM megy át a szerverre: a címzettet a
+   * `/api/notify` a hívó jogosultsága alapján, az adatbázisból állapítja meg.
+   */
   async function triggerNotification(
     targetUserId: string | null,
-    targetEmail: string | null,
+    _targetEmail: string | null,
     title: string,
     message: string,
     link: string
@@ -421,13 +442,7 @@ export function AdminDashboard() {
           "Content-Type": "application/json",
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
         },
-        body: JSON.stringify({
-          userId: targetUserId,
-          email: targetEmail,
-          title,
-          message,
-          link
-        })
+        body: JSON.stringify({ userId: targetUserId, title, message, link })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success === false || result.emailSent === false) {
@@ -653,7 +668,45 @@ export function AdminDashboard() {
     setChangeLogs(groupedLogs);
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
+
+    // Kiszámlázatlan befizetések: a pénz beérkezett, a Billingo-számla viszont
+    // nem készült el. Ezek eddig csendben ültek az adatbázisban.
+    const { data: billingoData } = await supabase
+      .from("subscription_payments")
+      .select("id,project_id,amount,paid_at,stripe_invoice_id,billingo_error")
+      .is("billingo_document_id", null)
+      .eq("status", "paid")
+      .order("paid_at", { ascending: false });
+    setBillingoIssues((billingoData ?? []) as BillingoIssue[]);
+
     setLoading(false);
+  }
+
+  async function retryBillingoInvoice(paymentId: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("A munkamenet lejárt. Jelentkezz be újra.");
+      return;
+    }
+    setBillingoRetryId(paymentId);
+    try {
+      const response = await fetch("/api/billingo/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ paymentId })
+      });
+      const result = await response.json().catch(() => ({})) as { error?: string; invoiceNumber?: string };
+      if (!response.ok) {
+        setMessage(result.error || "A számlázás újrapróbálása nem sikerült.");
+        return;
+      }
+      setBillingoIssues((current) => current.filter((issue) => issue.id !== paymentId));
+      setMessage(`Számla elkészült${result.invoiceNumber ? `: ${result.invoiceNumber}` : ""}.`);
+    } catch {
+      setMessage("A számlázó szolgáltatás nem elérhető.");
+    } finally {
+      setBillingoRetryId(null);
+    }
   }
 
   async function updateChangeRequest(id: string, patch: Partial<ChangeRequest>) {
@@ -689,6 +742,85 @@ export function AdminDashboard() {
     setMessage("Módosítási kérés frissítve, az ügyfél értesítést kapott.");
   }
 
+  /**
+   * Előfizetés-módosítás MINDIG a szerveren keresztül.
+   *
+   * Korábban ezek a gombok csak az adatbázist írták át, a Stripe pedig
+   * vidáman terhelte tovább az ügyfelet lemondás, szüneteltetés, kivásárlás és
+   * projekttörlés után is. A `/api/stripe/subscription` végzi el a Stripe
+   * oldali műveletet, és csak siker esetén írja a billing mezőket.
+   */
+  async function stripeSubscriptionAction(
+    project: ClientProject,
+    action: "cancel_now" | "pause" | "resume"
+  ) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("A munkamenet lejárt. Jelentkezz be újra.");
+      return false;
+    }
+    try {
+      const response = await fetch("/api/stripe/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ projectId: project.id, action })
+      });
+      const result = await response.json().catch(() => ({})) as { error?: string; stripeUpdated?: boolean };
+      if (!response.ok) {
+        setMessage(result.error || "Az előfizetés Stripe-oldali módosítása nem sikerült.");
+        return false;
+      }
+      if (project.stripe_subscription_id && !result.stripeUpdated) {
+        setMessage("Figyelem: a Stripe nem erősítette meg a módosítást. Ellenőrizd a Stripe felületén.");
+      }
+      return true;
+    } catch {
+      setMessage("A Stripe nem elérhető. Az előfizetés nem módosult — próbáld újra.");
+      return false;
+    }
+  }
+
+  async function approveSubscriptionPause(project: ClientProject) {
+    if (!(await stripeSubscriptionAction(project, "pause"))) return;
+    await updateClientProject(project.id, {
+      status: "paused",
+      site_health_status: "offline",
+      next_step: `A menedzselt weboldal parkolóállapotba került. A következő számlázási időszaktól ${formatHuf(PARKING_MONTHLY_PRICE)}/hó parkolási díj él. Bármikor kérheted az újraaktiválást.`
+    });
+    await loadLeads(true);
+  }
+
+  async function approveSubscriptionResume(project: ClientProject) {
+    if (!(await stripeSubscriptionAction(project, "resume"))) return;
+    await updateClientProject(project.id, {
+      status: "launched",
+      site_health_status: "healthy",
+      last_health_check_at: new Date().toISOString(),
+      next_step: "A weboldal újra aktív és felügyelet alatt áll. A következő számlázástól ismét a csomag havidíja él."
+    });
+    await loadLeads(true);
+  }
+
+  async function finishSubscriptionCancellation(project: ClientProject) {
+    const ok = await confirm({
+      title: "Lemondás lezárása",
+      message: "Az előfizetés azonnali hatállyal megszűnik a Stripe-ban is, tehát több terhelés nem történik. Ez nem projektátadás.",
+      confirmLabel: "Előfizetés megszüntetése",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
+    if (!(await stripeSubscriptionAction(project, "cancel_now"))) return;
+    await updateClientProject(project.id, {
+      status: "closed",
+      site_health_status: "offline",
+      warranty_started_at: null,
+      warranty_expires_at: null,
+      next_step: "A menedzselt szolgáltatás lezárult. A weboldal leállt; forráskód-átadás és projektgarancia nem tartozik a lemondáshoz."
+    });
+    await loadLeads(true);
+  }
+
   async function completeWebsitePurchase(request: ChangeRequest, project: ClientProject) {
     if (!request.transfer_reported_at) {
       setMessage("Az ügyfél még nem jelezte az átutalást.");
@@ -701,6 +833,14 @@ export function AdminDashboard() {
       cancelLabel: "Mégse"
     });
     if (!ok) return;
+
+    // ELŐBB a Stripe: az ügyfél kifizette a teljes vételárat, onnantól egyetlen
+    // további havidíj sem terhelhető rá. Ha ez nem megy át, a vásárlást sem
+    // zárjuk le — inkább maradjon nyitva, mint hogy tovább fizessen.
+    if (!(await stripeSubscriptionAction(project, "cancel_now"))) {
+      setMessage("A Stripe-előfizetést nem sikerült megszüntetni, ezért a vásárlást nem zártam le. Próbáld újra.");
+      return;
+    }
 
     const handover = buildHandoverPlan(["vercel", "github", "dns"]);
     const { error } = await supabase.rpc("complete_website_purchase", {
@@ -791,6 +931,12 @@ export function AdminDashboard() {
       danger: true
     });
     if (!ok) return;
+    // A projektsor törlésével elveszne a Stripe-előfizetés nyoma, a Stripe
+    // viszont tovább terhelne — és a webhook onnantól nem találná a projektet.
+    if (project.stripe_subscription_id && !(await stripeSubscriptionAction(project, "cancel_now"))) {
+      setMessage("A Stripe-előfizetést nem sikerült megszüntetni, ezért a projektet nem töröltem. Próbáld újra.");
+      return;
+    }
     const { error } = await supabase.from("client_projects").delete().eq("id", project.id);
     if (error) {
       setMessage("Nem sikerült jóváhagyni a törlést.");
@@ -1183,11 +1329,19 @@ export function AdminDashboard() {
         sendProjectOffer(project);
         break;
       case "deposit_pending":
+        // Menedzselt előfizetésnél az első havidíj a Stripe-on érkezik, és a
+        // webhook írja az előfizetési mezőket — kézzel nem szabad "aktívra"
+        // állítani, mert az valós terhelés nélkül indítaná el a szolgáltatást.
+        if (project.commercial_model === "subscription") {
+          setMessage("A menedzselt előfizetés az első Stripe-terhelés beérkezésekor indul el automatikusan.");
+          break;
+        }
         if (project.deposit_transfer_reported) {
-          const managed = project.commercial_model === "subscription";
-          const started = new Date();
-          const next = new Date(started); next.setMonth(next.getMonth() + 1);
-          updateClientProject(project.id, { payment_status: "deposit_paid", status: "in_progress", ...(managed ? { subscription_status: "active", subscription_started_at: started.toISOString(), billing_cycle_started_at: started.toISOString(), next_billing_at: next.toISOString() } : {}), next_step: managed ? "Az első havidíj beérkezett. A menedzselt weboldal elkészítése elindult." : "A foglaló beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik." });
+          updateClientProject(project.id, {
+            payment_status: "deposit_paid",
+            status: "in_progress",
+            next_step: "A foglaló beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik."
+          });
         }
         break;
       case "in_progress":
@@ -1668,6 +1822,40 @@ export function AdminDashboard() {
         <div><span>TEENDŐ</span><strong>{clientProjects.filter((project) => ["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "")).length}</strong><small>előfizetési kérelem</small></div>
       </section>
 
+      {billingoIssues.length ? (
+        <section className="billingo-issues">
+          <header>
+            <div>
+              <span>SZÁMLÁZÁSI TEENDŐ</span>
+              <h3>{billingoIssues.length} beérkezett befizetéshez nem készült számla</h3>
+              <p>A pénz megérkezett a Stripe-on, az AAM-számla viszont nem jött létre. Ezeket ki kell számlázni.</p>
+            </div>
+          </header>
+          <ul>
+            {billingoIssues.map((issue) => {
+              const project = clientProjects.find((item) => item.id === issue.project_id);
+              return (
+                <li key={issue.id}>
+                  <div>
+                    <strong>{project?.title ?? "Ismeretlen projekt"} · {formatHuf(issue.amount)}</strong>
+                    <small>{issue.paid_at ? new Date(issue.paid_at).toLocaleString("hu-HU") : "ismeretlen időpont"}{issue.stripe_invoice_id ? ` · ${issue.stripe_invoice_id}` : ""}</small>
+                    {issue.billingo_error ? <em>{issue.billingo_error}</em> : null}
+                  </div>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    disabled={billingoRetryId === issue.id}
+                    onClick={() => retryBillingoInvoice(issue.id)}
+                  >
+                    {billingoRetryId === issue.id ? "Számlázás…" : "Számla újrapróbálása"}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
 
       {!loading && activeProjects.length > 0 && (
@@ -1809,14 +1997,14 @@ export function AdminDashboard() {
 
               {project.commercial_model === "subscription" ? (
                 <section className="managed-admin-card">
-                  <header><div><span>MENEDZSELT SZOLGÁLTATÁS</span><h4>{subscriptionPlan(project.subscription_plan).name} · {formatHuf(project.monthly_price ?? subscriptionPlan(project.subscription_plan).price)}/hó</h4></div><b className={`subscription-state ${project.subscription_status === "paused" ? "paused" : ""}`}>{project.subscription_status === "active" ? "● Aktív" : project.subscription_status ?? "Előkészítés"}</b></header>
+                  <header><div><span>MENEDZSELT SZOLGÁLTATÁS</span><h4>{subscriptionPlan(project.subscription_plan).name} · {project.stripe_parked_at ? `${formatHuf(PARKING_MONTHLY_PRICE)}/hó (parkolás)` : `${formatHuf(project.monthly_price ?? subscriptionPlan(project.subscription_plan).price)}/hó`}</h4>{project.stripe_subscription_id ? <a className="stripe-deep-link" href={`https://dashboard.stripe.com/subscriptions/${project.stripe_subscription_id}`} target="_blank" rel="noreferrer">Megnyitás a Stripe-ban ↗</a> : <small>Nincs Stripe-előfizetés</small>}</div><b className={`subscription-state ${project.subscription_status === "paused" ? "paused" : ""}`}>{project.subscription_status === "active" ? "● Aktív" : project.subscription_status ?? "Előkészítés"}</b></header>
                   <div className="managed-admin-fields">
                     <label><span>Kezelt domain</span><input defaultValue={project.managed_domain_name ?? ""} onBlur={(event) => updateClientProject(project.id, { managed_domain_name: event.target.value || null, domain_status: event.target.value ? "active" : "searching" })} placeholder="pelda.hu" /></label>
                     <label><span>Következő havidíj</span><input type="date" defaultValue={project.next_billing_at?.slice(0, 10) ?? ""} onBlur={(event) => updateClientProject(project.id, { next_billing_at: event.target.value ? new Date(`${event.target.value}T12:00:00`).toISOString() : null })} /></label>
                     <label><span>Domain megújítás</span><input type="date" defaultValue={project.domain_renewal_at?.slice(0, 10) ?? ""} onBlur={(event) => updateClientProject(project.id, { domain_renewal_at: event.target.value ? new Date(`${event.target.value}T12:00:00`).toISOString() : null })} /></label>
                     <label><span>Oldal állapota</span><select value={project.site_health_status ?? "unknown"} onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}><option value="unknown">Még nincs ellenőrizve</option><option value="healthy">Rendben</option><option value="attention">Figyelmet kér</option><option value="offline">Leállítva</option></select></label>
                   </div>
-                  {["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "") ? <div className="managed-admin-request"><div><strong>Ügyfélkérelem: {project.subscription_status === "pause_requested" ? "szüneteltetés" : project.subscription_status === "resume_requested" ? "újraaktiválás" : "lemondás"}</strong><p>A kérelmet az ügyfélkapuból küldték. Az állapot módosítása után az ügyfél azonnal az új státuszt látja.</p></div><div>{project.subscription_status === "pause_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "paused", status: "paused", paused_at: new Date().toISOString(), site_health_status: "offline", next_step: "A menedzselt weboldal parkolóállapotba került. Bármikor kérheted az újraaktiválást." })}>Szüneteltetés jóváhagyása</button> : null}{project.subscription_status === "resume_requested" ? <button className="button primary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "active", status: "launched", paused_at: null, resume_requested_at: null, site_health_status: "healthy", last_health_check_at: new Date().toISOString(), next_step: "A weboldal újra aktív és felügyelet alatt áll." })}>Újraaktiválás</button> : null}{project.subscription_status === "cancel_requested" ? <button className="button secondary" type="button" onClick={() => updateClientProject(project.id, { subscription_status: "cancelled", status: "closed", cancelled_at: new Date().toISOString(), cancel_effective_at: project.next_billing_at ?? new Date().toISOString(), site_health_status: "offline", warranty_started_at: null, warranty_expires_at: null, next_step: "A menedzselt szolgáltatás lezárult. A weboldal leállt; forráskód-átadás és projektgarancia nem tartozik a lemondáshoz." })}>Lemondás lezárása</button> : null}</div></div> : null}
+                  {["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "") ? <div className="managed-admin-request"><div><strong>Ügyfélkérelem: {project.subscription_status === "pause_requested" ? "szüneteltetés" : project.subscription_status === "resume_requested" ? "újraaktiválás" : "lemondás"}</strong><p>A kérelmet az ügyfélkapuból küldték. Az állapot módosítása után az ügyfél azonnal az új státuszt látja.</p></div><div>{project.subscription_status === "pause_requested" ? <button className="button secondary" type="button" onClick={() => approveSubscriptionPause(project)}>Szüneteltetés jóváhagyása</button> : null}{project.subscription_status === "resume_requested" ? <button className="button primary" type="button" onClick={() => approveSubscriptionResume(project)}>Újraaktiválás</button> : null}{project.subscription_status === "cancel_requested" ? <button className="button secondary" type="button" onClick={() => finishSubscriptionCancellation(project)}>Lemondás lezárása</button> : null}</div></div> : null}
                   {changeRequests.some((request) => request.project_id === project.id) ? (
                     <div className="managed-request-list">
                       <div className="managed-request-list-head">

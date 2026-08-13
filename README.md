@@ -60,7 +60,7 @@ the cover PNGs. Rackhost screenshots come from `tmp/pdfs/domain-guide/`.
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
-2. Run migrations `001` through `009`, then `011` through `026`, in filename order.
+2. Run migrations `001` through `009`, then `011` through `027`, in filename order.
 3. Do not run `010_lock_financial_columns.sql`; it is obsolete.
 4. Create an admin user in Supabase Auth.
 5. Add the admin user to `public.admin_users`.
@@ -78,6 +78,20 @@ state machine, `025` enforces the current lower prices and AAM billing wording f
 projects, and `026` adds server-owned Stripe subscription identifiers, webhook idempotency
 and Billingo invoice linkage.
 
+`027_stripe_lifecycle_fixes.sql` is a **required fix** and should be applied before
+anything else in this release:
+
+- `025` accidentally made `guard_managed_website_writes()` reference `OLD` on the
+  `INSERT` path, which raised `record "old" is not assigned yet` and blocked every
+  one-off (`purchase`) project creation. `027` restores the `021` structure while
+  keeping the `025` prices.
+- `change_requests` and `subscription_payments` were never added to the
+  `supabase_realtime` publication, so the admin dashboard's change-request
+  subscription never fired.
+- Adds `client_projects.stripe_parked_at`, used to tell a parked subscription apart
+  from an active one (parking is implemented as a Stripe price swap, so the Stripe
+  status stays `active`).
+
 To verify the 023–025 database changes without modifying anything, run the read-only
 checks in `supabase/verify_023_025.sql` from the Supabase SQL Editor.
 
@@ -87,6 +101,30 @@ for `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`,
 `customer.subscription.updated` and `customer.subscription.deleted`. Automatic AAM
 invoicing additionally needs the three `BILLINGO_*` server variables documented in
 `.env.example`.
+
+### Subscription lifecycle
+
+Every state change that costs the client money goes through the server, never
+through a direct table write:
+
+- `POST /api/stripe/subscription` — `cancel` / `undo_cancel` for the client on their
+  own project; `cancel_now` / `pause` / `resume` for admins only.
+- Pausing swaps the Stripe subscription item to the parking price
+  (`PARKING_MONTHLY_PRICE`, 2 900 Ft/hó) with `proration_behavior: "none"`, so the
+  paid period is untouched and the client is charged what the portal promises.
+  Resuming swaps back to the contracted `monthly_price`.
+- Buying the website out (`complete_website_purchase`) and approving a project
+  deletion both cancel the Stripe subscription **first** and abort if that fails.
+
+### Reconciliation and invoicing safety nets
+
+- `GET /api/stripe/reconcile` runs daily via `vercel.json` cron (04:00 UTC) and needs
+  `CRON_SECRET` in Vercel. It compares every stored subscription against Stripe, fixes
+  drift, and reports orphaned live subscriptions as an admin notification. Admins can
+  also trigger it manually with a session token.
+- `POST /api/billingo/retry` re-issues a failed AAM invoice. The admin dashboard shows
+  a "Számlázási teendő" card listing paid subscription payments with no Billingo
+  document, each with a retry button.
 
 Example:
 

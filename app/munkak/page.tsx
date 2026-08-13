@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
@@ -122,7 +123,14 @@ export default function WorkPage() {
           <a className="case-live-link" href="https://checky.hu" rel="noreferrer" target="_blank">Élő oldal megnyitása ↗</a>
         </div>
         <a href="https://checky.hu" rel="noreferrer" target="_blank">
-          <img alt="Checky.hu weboldal referencia" className="case-shot" src="/work/checky.png" />
+          <Image
+            alt="Checky.hu weboldal referencia"
+            className="case-shot"
+            height={1662}
+            sizes="(max-width: 1100px) calc(100vw - 36px), 1040px"
+            src="/work/checky.png"
+            width={2940}
+          />
         </a>
         <div className="case-grid">
           <article className="case-block">

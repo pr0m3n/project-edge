@@ -46,6 +46,21 @@ async function notifyPayment(userId: string, email: string | null, projectTitle:
   });
 }
 
+/**
+ * Nem találjuk a projektet (törölték, vagy hiányzik a metadata). Ilyenkor NEM
+ * dobunk hibát: a Stripe különben három napig újrapróbálkozna, majd hibásra
+ * állítaná a végpontot. Rögzítjük adminnak, és feldolgozottnak tekintjük.
+ */
+async function reportOrphanEvent(reason: string, reference: string) {
+  console.error("Stripe webhook orphan event", { reason, reference });
+  await createServerSupabaseAdminClient().from("notifications").insert({
+    user_id: null,
+    title: "Gazdátlan Stripe-esemény",
+    message: `${reason} (${reference}). Ellenőrizd a Stripe felületén, hogy nem fut-e még előfizetés törölt projekthez.`,
+    link: "/admin"
+  });
+}
+
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const subscriptionId = subscriptionIdFromInvoice(invoice);
   const amountHuf = stripeAmountToHuf(invoice.amount_paid, invoice.currency);
@@ -53,13 +68,26 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const projectId = subscription.metadata.project_id;
-  if (!projectId) throw new Error("A Stripe-előfizetésből hiányzik a project_id metadata.");
+  if (!projectId) {
+    await reportOrphanEvent("A Stripe-előfizetésből hiányzik a project_id metadata", subscriptionId);
+    return;
+  }
 
   const admin = createServerSupabaseAdminClient();
   const { data: project, error } = await admin.from("client_projects")
     .select("id,user_id,title,contact_email,status,subscription_plan,subscription_status,subscription_started_at")
-    .eq("id", projectId).single();
-  if (error || !project) throw new Error("A Stripe-előfizetéshez tartozó projekt nem található.");
+    .eq("id", projectId).maybeSingle();
+  if (error) throw error;
+  if (!project) {
+    await reportOrphanEvent("A Stripe-előfizetéshez tartozó projekt nem található", `${subscriptionId} → ${projectId}`);
+    return;
+  }
+
+  // Egy már könyvelt számlához nem küldünk újra értesítést és emailt, még
+  // akkor sem, ha a Stripe újraküldi az eseményt.
+  const { data: existingPayment } = await admin.from("subscription_payments")
+    .select("id,status").eq("stripe_invoice_id", invoice.id).maybeSingle();
+  const alreadyNotified = existingPayment?.status === "paid";
 
   const line = invoice.lines.data.find((item) => item.subscription) ?? invoice.lines.data[0];
   const periodStart = iso(line?.period.start) ?? new Date().toISOString();
@@ -97,7 +125,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }, { onConflict: "stripe_invoice_id" }).select("id,billingo_document_id").single();
   if (paymentError) throw paymentError;
 
-  await notifyPayment(project.user_id, project.contact_email, project.title, amountHuf, first);
+  if (!alreadyNotified) {
+    await notifyPayment(project.user_id, project.contact_email, project.title, amountHuf, first);
+  }
 
   if (!payment.billingo_document_id) {
     try {
@@ -174,8 +204,22 @@ export async function POST(request: Request) {
   }
 
   const admin = createServerSupabaseAdminClient();
-  const { data: processed } = await admin.from("stripe_webhook_events").select("event_id").eq("event_id", event.id).maybeSingle();
-  if (processed) return NextResponse.json({ received: true, duplicate: true });
+
+  // Idempotencia FOGLALÁSSAL, nem utólagos rögzítéssel.
+  //
+  // Korábban a `stripe_webhook_events` sor a feldolgozás UTÁN íródott, tehát
+  // két párhuzamos kézbesítés (vagy egy sikeres feldolgozás után elveszett
+  // válasz) kétszer futtatta le a teljes ágat: dupla értesítés, dupla email,
+  // újabb Billingo-kísérlet. Az egyedi kulcsra épülő insert atomi módon dönti
+  // el, melyik példány dolgozhat. Hiba esetén a foglalást felszabadítjuk, hogy
+  // a Stripe újrapróbálkozása tényleg le tudjon futni.
+  const { error: claimError } = await admin.from("stripe_webhook_events")
+    .insert({ event_id: event.id, event_type: event.type });
+  if (claimError) {
+    if (claimError.code === "23505") return NextResponse.json({ received: true, duplicate: true });
+    console.error(`Stripe webhook ${event.id} claim failed`, claimError);
+    return NextResponse.json({ error: "A webhook feldolgozása sikertelen." }, { status: 500 });
+  }
 
   try {
     switch (event.type) {
@@ -194,11 +238,12 @@ export async function POST(request: Request) {
         break;
       }
     }
-    const { error } = await admin.from("stripe_webhook_events").insert({ event_id: event.id, event_type: event.type });
-    if (error && error.code !== "23505") throw error;
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error(`Stripe webhook ${event.id} failed`, error);
+    // A foglalás felszabadítása, különben a Stripe újraküldése duplikátumnak
+    // látszana, és az esemény véglegesen feldolgozatlan maradna.
+    await admin.from("stripe_webhook_events").delete().eq("event_id", event.id);
     return NextResponse.json({ error: "A webhook feldolgozása sikertelen." }, { status: 500 });
   }
 }

@@ -111,3 +111,87 @@ test("provider legal data is the registered individual entrepreneur", () => {
   assert.match(impressum, /Adószám/);
   assert.doesNotMatch(impressum, /Statisztikai számjel|Tevékenység kezdete|Főtevékenység|Nyilvántartott tevékenységek/);
 });
+
+test("subscription lifecycle changes always reach Stripe", () => {
+  const dashboard = read("components/AdminDashboard.tsx");
+  const route = read("app/api/stripe/subscription/route.ts");
+
+  // A lemondás, szüneteltetés és újraaktiválás nem írhatja közvetlenül az
+  // előfizetési mezőket: korábban ezek csak az adatbázist állították át, a
+  // Stripe pedig tovább terhelte az ügyfelet.
+  assert.match(dashboard, /stripeSubscriptionAction\(project, "pause"\)/);
+  assert.match(dashboard, /stripeSubscriptionAction\(project, "resume"\)/);
+  assert.match(dashboard, /stripeSubscriptionAction\(project, "cancel_now"\)/);
+  assert.doesNotMatch(dashboard, /updateClientProject\([^)]*subscription_status: "cancelled"/);
+  assert.doesNotMatch(dashboard, /updateClientProject\([^)]*subscription_status: "paused"/);
+
+  // A kivásárlás és a projekttörlés is előbb a Stripe-ot zárja le.
+  assert.match(dashboard, /await stripeSubscriptionAction\(project, "cancel_now"\)\)\) \{\s*\n\s*setMessage\("A Stripe-előfizetést nem sikerült megszüntetni, ezért a vásárlást nem zártam le/);
+  assert.match(dashboard, /project\.stripe_subscription_id && !\(await stripeSubscriptionAction\(project, "cancel_now"\)\)/);
+
+  // Az azonnali/díjat érintő műveletek admin jogosultsághoz kötöttek.
+  assert.match(route, /ADMIN_ACTIONS = \["cancel_now", "pause", "resume"\]/);
+  assert.match(route, /Ehhez a művelethez admin jogosultság kell/);
+  assert.match(route, /PARKING_MONTHLY_PRICE/);
+});
+
+test("the Stripe webhook claims an event before processing it", () => {
+  const webhook = read("app/api/stripe/webhook/route.ts");
+
+  // Foglalás-először: a duplikátumszűrés az egyedi kulcsra épülő insertből
+  // jön, nem egy előzetes select-ből, különben két párhuzamos kézbesítés
+  // kétszer küldene emailt és számlázna.
+  const claimIndex = webhook.indexOf('.insert({ event_id: event.id, event_type: event.type })');
+  const switchIndex = webhook.indexOf("switch (event.type)");
+  assert.ok(claimIndex > -1, "hiányzik a webhook-esemény foglalása");
+  assert.ok(claimIndex < switchIndex, "a foglalásnak a feldolgozás ELŐTT kell történnie");
+  assert.match(webhook, /claimError\.code === "23505"/);
+  // Hiba esetén a foglalás felszabadul, hogy a Stripe újraküldése lefusson.
+  assert.match(webhook, /stripe_webhook_events"\)\.delete\(\)\.eq\("event_id", event\.id\)/);
+  // Törölt projekt nem okozhat végtelen webhook-újrapróbálkozást.
+  assert.match(webhook, /reportOrphanEvent/);
+  assert.doesNotMatch(webhook, /throw new Error\("A Stripe-előfizetéshez tartozó projekt nem található/);
+});
+
+test("the managed-website guard never touches OLD on insert", () => {
+  const migration = read("supabase/migrations/027_stripe_lifecycle_fixes.sql");
+  // A magyarázó kommentek maguk is idézik a hibás mintát, ezért a tényleges
+  // SQL-t vizsgáljuk.
+  const sql = migration
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("--"))
+    .join("\n");
+
+  // A 025 ezt eltörte: purchase modellű INSERT belefutott az OLD-ra
+  // hivatkozó blokkba, és "record old is not assigned yet" hibát dobott.
+  const insertBranch = sql.indexOf("if tg_op = 'INSERT' then");
+  const firstOldRef = sql.indexOf("old.commercial_model");
+  assert.ok(insertBranch > -1, "hiányzik a feltétel nélküli INSERT ág");
+  assert.ok(firstOldRef > insertBranch, "az OLD-hivatkozás az INSERT ág után kell álljon");
+  const branchBody = sql.slice(insertBranch, firstOldRef);
+  assert.match(branchBody, /return new;\s*\n\s*end if;/);
+  assert.doesNotMatch(branchBody, /\bold\./);
+
+  // A 020-as táblák realtime publikációja.
+  assert.match(migration, /add table public\.change_requests/);
+  assert.match(migration, /add table public\.subscription_payments/);
+});
+
+test("public API routes limit the real body and hide internal errors", () => {
+  const guard = read("lib/api-guard.ts");
+  const notify = read("app/api/notify/route.ts");
+  const deleteProfile = read("app/api/delete-profile/route.ts");
+  const widget = read("components/SupportWidget.tsx");
+
+  // A content-length fejlécre nem lehet hagyatkozni (chunked / hamisítható).
+  assert.match(guard, /readLimitedBody/);
+  assert.match(guard, /await reader\.cancel\(\)/);
+  for (const route of [notify, deleteProfile]) {
+    assert.doesNotMatch(route, /error: message \}, \{ status: 500/);
+  }
+  assert.doesNotMatch(notify, /content-length/);
+
+  // A látogatói token nem mehet query stringben (naplók, Referer).
+  assert.doesNotMatch(widget, /\?token=/);
+  assert.match(widget, /"X-Visitor-Token": /);
+});

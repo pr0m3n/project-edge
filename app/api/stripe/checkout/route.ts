@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
+import { isAcceptableMonthlyPrice } from "@/lib/billing-math";
 import { authenticatedUser } from "@/lib/server-auth";
 import { createServerSupabaseAdminClient, createServerSupabaseUserClient } from "@/lib/supabase/server";
 import { getStripe, hufToStripeAmount, siteUrl } from "@/lib/stripe";
@@ -53,9 +54,20 @@ export async function POST(request: Request) {
 
     const stripe = getStripe();
     const plan = subscriptionPlan(project.subscription_plan);
+    // A SZERZŐDÉSBEN rögzített havidíj a mérvadó, nem a kód aktuális ára.
+    //
+    // Korábban `monthlyPrice !== plan.price` volt a feltétel: ettől a
+    // `lib/subscriptions.ts` bármely ármódosítása azonnal fizetésképtelenné
+    // tette az összes már aláírt, de még nem fizetett projektet. A tárolt
+    // `monthly_price`-t a 021/025/027 adatbázis-trigger amúgy is a hivatalos
+    // csomagárra korlátozza a projekt indításakor, tehát nem az ügyfél írja.
+    // Itt csak józansági határokat ellenőrzünk.
     const monthlyPrice = Number(project.monthly_price ?? plan.price);
-    if (!Number.isSafeInteger(monthlyPrice) || monthlyPrice <= 0 || monthlyPrice !== plan.price) {
-      return NextResponse.json({ error: "A projekt előfizetési díja nem egyezik az aktuális csomaggal." }, { status: 409 });
+    if (!isAcceptableMonthlyPrice(monthlyPrice)) {
+      return NextResponse.json({ error: "A projekt előfizetési díja érvénytelen. Kérj segítséget az ügyfélkapuban." }, { status: 409 });
+    }
+    if (monthlyPrice !== plan.price) {
+      console.warn("Stripe checkout uses the contracted price", { projectId: project.id, monthlyPrice, planPrice: plan.price });
     }
 
     let customerId = project.stripe_customer_id as string | null;
@@ -118,7 +130,9 @@ export async function POST(request: Request) {
     }, {
       // A dupla kattintás és a hálózati újraküldés nem hozhat létre két előfizetést.
       // v2 also invalidates sessions created before the HUF minor-unit fix.
-      idempotencyKey: `projectedge-subscription-v2-${project.id}-${project.contract_accepted_at ?? "accepted"}`
+      // Az ár is része a kulcsnak: egy utólagos díjkorrekció után új munkamenet
+      // kell, különben a Stripe a régi összegű sessiont adná vissza.
+      idempotencyKey: `projectedge-subscription-v2-${project.id}-${monthlyPrice}-${project.contract_accepted_at ?? "accepted"}`
     });
 
     const { error: updateError } = await admin.from("client_projects").update({

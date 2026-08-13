@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
+import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
@@ -28,8 +28,9 @@ export async function POST(request: Request, { params }: Params) {
     : { data: null };
   if (!user || !adminRow) return NextResponse.json({ error: "Nincs admin jogosultság." }, { status: 403 });
 
-  const payload = await request.json().catch(() => null);
-  const body = typeof payload?.body === "string" ? payload.body.trim() : "";
+  const parsed = await readJsonBody<{ body?: unknown }>(request, 7_000);
+  if (!parsed.ok) return parsed.response;
+  const body = typeof parsed.data?.body === "string" ? parsed.data.body.trim() : "";
   if (!body || body.length > 5_000) return NextResponse.json({ error: "Érvénytelen üzenet." }, { status: 400 });
 
   const admin = createServerSupabaseAdminClient();

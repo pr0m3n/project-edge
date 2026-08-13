@@ -84,7 +84,8 @@ export async function POST(request: Request) {
     // Csak üres fiók törölhető; így nem vesznek el szerződéses és üzleti nyilvántartások.
     const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(user.id);
     if (deleteError) {
-      return NextResponse.json({ error: `Fiók törlése sikertelen: ${deleteError.message}` }, { status: 500 });
+      console.error("Account deletion failed", deleteError);
+      return NextResponse.json({ error: "A fiók törlése most nem sikerült. Próbáld újra később." }, { status: 500 });
     }
 
     const notificationEmail = process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu";
@@ -113,7 +114,9 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ success: true, message: "A fiók sikeresen és véglegesen törölve lett." });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Ismeretlen szerverhiba.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Részletek csak a szerverlogba: a tárhely- és sémainformáció nem való
+    // a kliensnek.
+    console.error("Account deletion route failed", err);
+    return NextResponse.json({ error: "A fiók törlése most nem sikerült. Próbáld újra később." }, { status: 500 });
   }
 }

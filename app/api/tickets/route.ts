@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
-import { checkRateLimit, rateLimitResponse } from "@/lib/api-guard";
+import { checkRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 type TicketPayload = {
@@ -19,18 +19,9 @@ export async function POST(request: Request) {
     return rateLimitResponse(rate.retryAfterSeconds);
   }
 
-  const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 8_000) {
-    return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
-  }
-
-  let payload: TicketPayload;
-
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  const parsed = await readJsonBody<TicketPayload>(request, 8_000);
+  if (!parsed.ok) return parsed.response;
+  const payload = parsed.data;
 
   const name = clean(payload.name);
   const email = clean(payload.email).toLowerCase();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { checkRateLimit, rateLimitResponse } from "@/lib/api-guard";
+import { checkRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 /** A stúdió értesítési címe — ügyfél-jelzések ide futnak be. */
@@ -18,11 +18,6 @@ export async function POST(request: Request) {
     const rate = checkRateLimit(request, "notification", 30, 10 * 60 * 1000);
     if (!rate.allowed) {
       return rateLimitResponse(rate.retryAfterSeconds);
-    }
-
-    const contentLength = Number(request.headers.get("content-length") || 0);
-    if (contentLength > 6_000) {
-      return NextResponse.json({ error: "A kérés túl nagy." }, { status: 413 });
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,8 +44,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { userId, title, message, link } = body ?? {};
+    const parsed = await readJsonBody<{ userId?: unknown; title?: unknown; message?: unknown; link?: unknown }>(request, 6_000);
+    if (!parsed.ok) return parsed.response;
+    const { userId, title, message, link } = parsed.data ?? {};
     // A body `email` mezőjét szándékosan NEM használjuk: korábban a címzett
     // onnan jött, tehát bármelyik bejelentkezett ügyfél küldhetett levelet
     // bármilyen címre a projectedge.hu-ról (hitelesített email-relay). A címzettet
@@ -166,7 +162,9 @@ export async function POST(request: Request) {
     // ha a levélküldő nincs beállítva vagy a szolgáltató elutasította a levelet.
     return NextResponse.json({ success: !dbError, emailSent, emailError });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Ismeretlen szerverhiba.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // A belső hibaüzenet csak a szerverlogba megy — a kliens általános
+    // választ kap, hogy ne szivárogjon konfigurációs vagy sémarészlet.
+    console.error("Notification relay failed", err);
+    return NextResponse.json({ error: "Az értesítés küldése most nem sikerült." }, { status: 500 });
   }
 }
