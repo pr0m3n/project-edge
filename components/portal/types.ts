@@ -29,11 +29,16 @@ export type Project = {
   offer_scope: string | null;
   offer_timeline: string | null;
   offer_deliverables: string | null;
+  base_offer_price: number | null;
   offer_price: number | null;
   offer_currency: string | null;
   offer_note: string | null;
   offer_status: string | null;
   offer_sent_at: string | null;
+  coupon_code: string | null;
+  coupon_percent: number | null;
+  coupon_max_discount: number | null;
+  coupon_discount_amount: number;
   client_decision_note: string | null;
   brief_data: {
     commercialModel?: CommercialModel;

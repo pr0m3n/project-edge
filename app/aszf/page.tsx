@@ -5,7 +5,8 @@ import { PRICE_TAX_NOTE } from "@/lib/subscriptions";
 
 export const metadata: Metadata = {
   title: "ÁSZF | ProjectEdge",
-  description: "A ProjectEdge szolgáltatásaira vonatkozó Általános Szerződési Feltételek."
+  description: "A ProjectEdge szolgáltatásaira vonatkozó Általános Szerződési Feltételek.",
+  alternates: { canonical: "/aszf" }
 };
 
 export default function TermsPage() {

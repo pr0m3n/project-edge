@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ADS_ID, GA_ID, measurementEnabled, readConsent, trackPageView } from "@/lib/analytics";
 
 /**
@@ -14,13 +14,22 @@ import { ADS_ID, GA_ID, measurementEnabled, readConsent, trackPageView } from "@
  */
 export function Analytics() {
   const pathname = usePathname();
+  const [ready, setReady] = useState(false);
+  const [consentRevision, setConsentRevision] = useState(0);
 
-  // kliensoldali útvonalváltás jelzése (a config csak az első betöltést küldi)
   useEffect(() => {
-    if (!measurementEnabled || !pathname) return;
+    const changed = () => setConsentRevision((value) => value + 1);
+    window.addEventListener("projectedge:consent-changed", changed);
+    return () => window.removeEventListener("projectedge:consent-changed", changed);
+  }, []);
+
+  // A config szándékosan send_page_view:false, így az első és a későbbi
+  // kliensoldali oldalmegtekintést is pontosan ez az egy effekt küldi.
+  useEffect(() => {
+    if (!measurementEnabled || !pathname || !ready) return;
     if (readConsent() !== "granted") return;
     trackPageView(pathname);
-  }, [pathname]);
+  }, [consentRevision, pathname, ready]);
 
   if (!measurementEnabled) return null;
 
@@ -28,44 +37,16 @@ export function Analytics() {
 
   return (
     <>
-      <Script id="consent-default" strategy="beforeInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('consent', 'default', {
-            ad_storage: 'denied',
-            ad_user_data: 'denied',
-            ad_personalization: 'denied',
-            analytics_storage: 'denied',
-            functionality_storage: 'granted',
-            security_storage: 'granted',
-            wait_for_update: 500
-          });
-          try {
-            var stored = localStorage.getItem('pe-consent-v1');
-            if (stored === 'granted') {
-              gtag('consent', 'update', {
-                ad_storage: 'granted',
-                ad_user_data: 'granted',
-                ad_personalization: 'granted',
-                analytics_storage: 'granted'
-              });
-            }
-          } catch (e) {}
-        `}
-      </Script>
-
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${primaryId}`}
         strategy="afterInteractive"
       />
 
-      <Script id="gtag-config" strategy="afterInteractive">
+      <Script id="gtag-config" onReady={() => setReady(true)} strategy="afterInteractive">
         {`
           gtag('js', new Date());
-          ${GA_ID ? `gtag('config', '${GA_ID}');` : ""}
-          ${ADS_ID ? `gtag('config', '${ADS_ID}');` : ""}
+          ${GA_ID ? `gtag('config', '${GA_ID}', { send_page_view: false });` : ""}
+          ${ADS_ID ? `gtag('config', '${ADS_ID}', { send_page_view: false });` : ""}
         `}
       </Script>
     </>

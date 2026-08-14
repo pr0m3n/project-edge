@@ -3,11 +3,31 @@
 import { useState } from "react";
 import { PRICE_TAX_NOTE, PURCHASE_PRICES, SUBSCRIPTION_PLANS, formatHuf, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { TransitionLink } from "@/components/TransitionLink";
+import { trackEvent } from "@/lib/analytics";
+
+const PURCHASE_DETAILS = [
+  "Egyetlen ajánlat vagy kampány fókuszált bemutatására",
+  "Többoldalas céges jelenlét és ügyfélszerző folyamat",
+  "Saját vizuális rendszer és összetettebb működés",
+  "Belépés, adatkezelés vagy egyedi üzleti folyamat"
+];
+
+const PURCHASE_INCLUDED = [
+  { number: "01", title: "Forráskód", copy: "A projekt teljes kódja átadásra kerül." },
+  { number: "02", title: "Hozzáférések", copy: "Domain, technikai fiókok és szükséges belépések." },
+  { number: "03", title: "Éles indulás", copy: "Beállítás, ellenőrzés és működő rendszer átadása." },
+  { number: "04", title: "30 nap garancia", copy: "Az átadás után felmerülő technikai hibák javítása." }
+];
 
 export function PriceEstimator() {
   const [mode, setMode] = useState<"subscription" | "purchase">("subscription");
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
+
+  function selectMode(next: "subscription" | "purchase") {
+    setMode(next);
+    trackEvent("pricing_model_viewed", { model: next });
+  }
 
   return (
     <section className="model-pricing" id="arak">
@@ -15,13 +35,19 @@ export function PriceEstimator() {
         <span aria-hidden="true" />
         Kétféleképpen dolgozom. Kattints, és megnézed a másikat is.
       </p>
-      <div className="model-switch" role="tablist" aria-label="Weboldal konstrukció">
-        <button className={mode === "subscription" ? "active" : ""} onClick={() => setMode("subscription")} role="tab" aria-selected={mode === "subscription"} type="button">
+      <div className="model-switch" role="tablist" aria-label="Weboldal konstrukció" onKeyDown={(event) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        event.preventDefault();
+        const next = mode === "subscription" ? "purchase" : "subscription";
+        selectMode(next);
+        document.getElementById(`pricing-tab-${next}`)?.focus();
+      }}>
+        <button aria-controls="pricing-panel-subscription" className={mode === "subscription" ? "active" : ""} id="pricing-tab-subscription" onClick={() => selectMode("subscription")} role="tab" aria-selected={mode === "subscription"} tabIndex={mode === "subscription" ? 0 : -1} type="button">
           <span>01 · A leggyakoribb</span>
           <strong>Weboldal bérlése</strong>
           <small>Havidíjat fizetsz, az oldal az enyém marad — a domaint, a tárhelyet és a karbantartást is én intézem.</small>
         </button>
-        <button className={mode === "purchase" ? "active" : ""} onClick={() => setMode("purchase")} role="tab" aria-selected={mode === "purchase"} type="button">
+        <button aria-controls="pricing-panel-purchase" className={mode === "purchase" ? "active" : ""} id="pricing-tab-purchase" onClick={() => selectMode("purchase")} role="tab" aria-selected={mode === "purchase"} tabIndex={mode === "purchase" ? 0 : -1} type="button">
           <span>02</span>
           <strong>Weboldal megvásárlása</strong>
           <small>Egyszeri díjat fizetsz, és az oldal a forráskóddal együtt a tiéd lesz.</small>
@@ -30,10 +56,10 @@ export function PriceEstimator() {
       </div>
 
       {mode === "subscription" ? (
-        <div className="subscription-pricing-panel" role="tabpanel">
+        <div aria-labelledby="pricing-tab-subscription" className="subscription-pricing-panel" id="pricing-panel-subscription" role="tabpanel">
           <div className="pricing-promise">
             <span className="live-pulse" />
-            <p><strong>Nincs induló díj.</strong> Mi vesszük meg és kezeljük a domaint, biztosítjuk a tárhelyet, figyeljük és frissítjük az oldalt.</p>
+            <p><strong>Nincs induló díj.</strong> Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt.</p>
           </div>
           <div className="subscription-plan-grid">
             {SUBSCRIPTION_PLANS.map((plan) => (
@@ -61,18 +87,23 @@ export function PriceEstimator() {
           </div>
         </div>
       ) : (
-        <div className="purchase-pricing-panel" role="tabpanel">
+        <div aria-labelledby="pricing-tab-purchase" className="purchase-pricing-panel" id="pricing-panel-purchase" role="tabpanel">
           <div className="purchase-intro">
-            <div><span className="micro-label dark">Egyszeri projekt</span><h3>A rendszer a tiéd lesz.</h3></div>
-            <p>A forráskódot, a domaint és a szükséges hozzáféréseket átadom. A későbbi hosting, üzemeltetés és módosítás nem része a vételárnak, de külön gondozási csomag kérhető.</p>
+            <div><span className="micro-label dark">Egyszeri projekt · teljes tulajdon</span><h3>Egyszer fizetsz.<br /><em>Minden a tiéd.</em></h3></div>
+            <div className="purchase-intro-copy"><p>A forráskódot, a domaint és a szükséges hozzáféréseket rendezett technikai átadással kapod meg. Nem maradsz egy zárt rendszerhez vagy kötelező havidíjhoz kötve.</p><span><i /> TELJES TECHNIKAI ÁTADÁS</span></div>
           </div>
+          <div className="purchase-included" aria-label="A vásárlás részei">
+            {PURCHASE_INCLUDED.map((item) => <article key={item.number}><span>{item.number}</span><div><strong>{item.title}</strong><p>{item.copy}</p></div></article>)}
+          </div>
+          <div className="purchase-list-head"><span>PROJEKTTÍPUS</span><span>INDULÓ ÁR</span></div>
           <div className="purchase-list">
-            {PURCHASE_PRICES.map((item, index) => <div key={item.name}><span>0{index + 1}</span><strong>{item.name}</strong><b>{item.price}</b></div>)}
+            {PURCHASE_PRICES.map((item, index) => <div key={item.name}><span>0{index + 1}</span><div><strong>{item.name}</strong><small>{PURCHASE_DETAILS[index]}</small></div><b>{item.price}</b><i aria-hidden="true">→</i></div>)}
           </div>
           <div className="purchase-actions">
-            <TransitionLink className="button primary" href="/ugyfelkapu?model=purchase">Egyedi ajánlatot kérek</TransitionLink>
-            <p>Technikai átadás · forráskód · 30 nap hibagarancia<br /><small>{PRICE_TAX_NOTE}</small></p>
+            <div><span>AZ INDULÁS MENETE</span><p>Kiválasztod a típust, kitöltöd a projektbriefet, majd az ügyfélkapuban követed az egyeztetést és a megvalósítást.</p></div>
+            <TransitionLink className="button primary" href="/ugyfelkapu?model=purchase">Weboldal-vásárlás indítása</TransitionLink>
           </div>
+          <div className="purchase-fine-print"><p><strong>Fontos:</strong> a későbbi tárhely, üzemeltetés és módosítás nem része az egyszeri vételárnak, de külön gondozási csomag kérhető.</p><small>{PRICE_TAX_NOTE}</small></div>
         </div>
       )}
     </section>

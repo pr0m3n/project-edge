@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { Project } from "@/components/portal/types";
 import { formatPrice, hasOffer, splitLines } from "@/components/portal/format";
 
@@ -11,6 +14,10 @@ type OfferPanelProps = {
   onSubmitModificationRequest: () => void;
   onAccept: () => void;
   onDecline: () => void;
+  couponPending: boolean;
+  couponMessage: string;
+  onApplyCoupon: (code: string) => void | Promise<void>;
+  onRemoveCoupon: () => void | Promise<void>;
 };
 
 export function OfferPanel({
@@ -22,8 +29,13 @@ export function OfferPanel({
   onCancelModificationRequest,
   onSubmitModificationRequest,
   onAccept,
-  onDecline
+  onDecline,
+  couponPending,
+  couponMessage,
+  onApplyCoupon,
+  onRemoveCoupon
 }: OfferPanelProps) {
+  const [couponInput, setCouponInput] = useState("");
   if (!hasOffer(project)) {
     return (
       <div className="project-awaiting-offer">
@@ -40,7 +52,13 @@ export function OfferPanel({
           <span>Részletes ajánlat</span>
           <h3>{project.offer_title || `${project.title} ajánlat`}</h3>
         </div>
-        <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+        <div className="client-offer-price">
+          {project.coupon_code && project.base_offer_price ? (
+            <del>{formatPrice(project.base_offer_price, project.offer_currency || "Ft")}</del>
+          ) : null}
+          <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+          {project.coupon_code ? <span>−{formatPrice(project.coupon_discount_amount, project.offer_currency || "Ft")}</span> : null}
+        </div>
       </div>
       {project.offer_summary ? <p>{project.offer_summary}</p> : null}
 
@@ -69,7 +87,40 @@ export function OfferPanel({
       </details>
 
       {project.status === "offer_sent" && (
-        <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: "16px", marginTop: "16px", display: "grid", gap: "12px" }}>
+        <div className="client-offer-decision">
+          <div className="coupon-entry">
+            <div>
+              <span>KUPONKÓD</span>
+              <strong>{project.coupon_code ? "Kedvezmény alkalmazva" : "Van kuponkódod?"}</strong>
+            </div>
+            {project.coupon_code ? (
+              <div className="coupon-applied">
+                <span><b>✓</b> {project.coupon_code}</span>
+                <button disabled={couponPending} onClick={onRemoveCoupon} type="button">Eltávolítás</button>
+              </div>
+            ) : (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void onApplyCoupon(couponInput);
+                }}
+              >
+                <label className="sr-only" htmlFor={`coupon-${project.id}`}>Kuponkód</label>
+                <input
+                  autoCapitalize="characters"
+                  id={`coupon-${project.id}`}
+                  maxLength={32}
+                  onChange={(event) => setCouponInput(event.target.value.toUpperCase())}
+                  placeholder="Például: INDULAS15"
+                  value={couponInput}
+                />
+                <button className="button secondary" disabled={couponPending || couponInput.trim().length < 4} type="submit">
+                  {couponPending ? "Ellenőrzés…" : "Alkalmazás"}
+                </button>
+              </form>
+            )}
+            {couponMessage ? <p className="coupon-message" role="status">{couponMessage}</p> : null}
+          </div>
           {isRequestingChange ? (
             <div style={{ display: "grid", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: "bold" }}>Módosítás részletei:</label>

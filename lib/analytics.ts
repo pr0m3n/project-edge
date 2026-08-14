@@ -17,6 +17,32 @@ export const measurementEnabled = Boolean(GA_ID || ADS_ID);
 export const CONSENT_KEY = "pe-consent-v1";
 export type ConsentChoice = "granted" | "denied";
 
+export const CONSENT_DEFAULT_SCRIPT = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  window.gtag = gtag;
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    functionality_storage: 'granted',
+    security_storage: 'granted',
+    wait_for_update: 500
+  });
+  try {
+    var stored = localStorage.getItem('${CONSENT_KEY}');
+    if (stored === 'granted') {
+      gtag('consent', 'update', {
+        ad_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
+        analytics_storage: 'granted'
+      });
+    }
+  } catch (e) {}
+`;
+
 declare global {
   interface Window {
     dataLayer?: unknown[];

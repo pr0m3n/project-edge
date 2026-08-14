@@ -7,6 +7,8 @@ tsconfig.tsbuildinfo
 dist
 out
 coverage
+test-results
+playwright-report
 .vercel
 *.log
 .DS_Store
@@ -29,3 +31,7 @@ ProjectEdge hideg email kampány/
 # gyökérbe pottyant, sehol nem hivatkozott képek
 /logo.png
 /profilkép.png
+
+# helyi biztonsági mentés
+/.backup_pre_improvements
+

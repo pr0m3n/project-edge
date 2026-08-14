@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 type ChatMessage = {
   id: string;
@@ -31,6 +32,9 @@ const reviewMessage = "Szeretnék egy rövid weboldal-áttekintést kérni. A we
 export function SupportWidget() {
   const pathname = usePathname();
   const messagesRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const formStartedAt = useRef(0);
   const [open, setOpen] = useState(false);
   const [entryIntent, setEntryIntent] = useState<"contact" | "review">("contact");
   const [form, setForm] = useState(initialForm);
@@ -43,8 +47,32 @@ export function SupportWidget() {
   const [hasRated, setHasRated] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
+  const [website, setWebsite] = useState("");
+
+  const loadMessages = useCallback(async (currentTicket: StoredTicket, silent = false) => {
+    if (!silent) setStatus("loading");
+
+    const response = await fetch(`/api/tickets/${currentTicket.id}`, {
+      headers: { "X-Visitor-Token": currentTicket.token }
+    });
+
+    if (!response.ok) {
+      if (!silent) {
+        setStatus("error");
+        setNotice("Nem sikerült betölteni a beszélgetést.");
+      }
+      return;
+    }
+
+    const data = await response.json();
+    setMessages(data.messages ?? []);
+    setTicketStatus(data.ticket?.status ?? "open");
+    setHasRated(Boolean(data.ticket?.rating || data.ticket?.ratingComment));
+    if (!silent) setStatus("idle");
+  }, []);
 
   useEffect(() => {
+    formStartedAt.current = Date.now();
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) {
       return;
@@ -68,7 +96,7 @@ export function SupportWidget() {
     return () => {
       window.clearInterval(fallbackInterval);
     };
-  }, [ticket, open]);
+  }, [ticket, open, loadMessages]);
 
   useEffect(() => {
     messagesRef.current?.scrollTo({
@@ -78,11 +106,30 @@ export function SupportWidget() {
   }, [messages, open]);
 
   useEffect(() => {
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      panelRef.current?.querySelector<HTMLElement>("input:not(.honeypot), textarea, button")?.focus();
+    });
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  useEffect(() => {
     function openFromCallToAction(event: Event) {
       const detail = (event as CustomEvent<{ intent?: "contact" | "review" }>).detail;
       const nextIntent = detail?.intent === "review" ? "review" : "contact";
       setEntryIntent(nextIntent);
       setOpen(true);
+      formStartedAt.current = Date.now();
+      trackEvent("support_opened", { intent: nextIntent, source: "cta" });
       if (!ticket) {
         setForm((current) => ({
           ...current,
@@ -108,34 +155,6 @@ export function SupportWidget() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  async function loadMessages(currentTicket: StoredTicket, silent = false) {
-    if (!silent) {
-      setStatus("loading");
-    }
-
-    // A token fejlécben megy, nem query stringben: így nem kerül be a szerver
-    // hozzáférési naplóiba és a Referer fejlécekbe.
-    const response = await fetch(`/api/tickets/${currentTicket.id}`, {
-      headers: { "X-Visitor-Token": currentTicket.token }
-    });
-
-    if (!response.ok) {
-      if (!silent) {
-        setStatus("error");
-        setNotice("Nem sikerült betölteni a beszélgetést.");
-      }
-      return;
-    }
-
-    const data = await response.json();
-    setMessages(data.messages ?? []);
-    setTicketStatus(data.ticket?.status ?? "open");
-    setHasRated(Boolean(data.ticket?.rating || data.ticket?.ratingComment));
-    if (!silent) {
-      setStatus("idle");
-    }
-  }
-
   async function startConversation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("loading");
@@ -144,7 +163,7 @@ export function SupportWidget() {
     const response = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
+      body: JSON.stringify({ ...form, website, startedAt: formStartedAt.current })
     });
 
     if (!response.ok) {
@@ -168,10 +187,13 @@ export function SupportWidget() {
     setTicketStatus(data.ticket.status ?? "open");
     setHasRated(false);
     setForm(initialForm);
+    setWebsite("");
+    formStartedAt.current = Date.now();
     setStatus(emailFailed ? "error" : "success");
     setNotice(emailFailed
       ? "Az üzenetet elmentettem, de az értesítő email nem ment ki. Rövidesen ellenőrizzük."
       : "Megkaptam. Itt tudjuk folytatni a beszélgetést.");
+    trackEvent("support_message_sent", { intent: entryIntent, first_message: true });
   }
 
   async function sendReply(event: FormEvent<HTMLFormElement>) {
@@ -241,16 +263,28 @@ export function SupportWidget() {
     setHasRated(false);
     setNotice("");
     setStatus("idle");
+    formStartedAt.current = Date.now();
+  }
+
+  function closePanel() {
+    setOpen(false);
+    triggerRef.current?.focus();
   }
 
   return (
     <aside className={`support-widget ${open ? "open" : ""}`} aria-label="Ügyfélszolgálati chat">
       {open ? (
-        <div className="support-panel chat">
+        <div
+          aria-labelledby="support-dialog-title"
+          className="support-panel chat"
+          id="support-dialog"
+          ref={panelRef}
+          role="dialog"
+        >
           <div className="support-head">
             <div>
               <span>ProjectEdge kapcsolat</span>
-              <strong>
+              <strong id="support-dialog-title">
                 {ticket
                   ? "Beszélgetés"
                   : entryIntent === "review"
@@ -258,7 +292,7 @@ export function SupportWidget() {
                     : "Írj nyugodtan"}
               </strong>
             </div>
-            <button aria-label="Chat ablak bezárása" onClick={() => setOpen(false)} type="button">
+            <button aria-label="Chat ablak bezárása" onClick={closePanel} type="button">
               ×
             </button>
           </div>
@@ -328,6 +362,16 @@ export function SupportWidget() {
           ) : (
             <form onSubmit={startConversation}>
               <input
+                aria-hidden="true"
+                autoComplete="off"
+                className="honeypot"
+                name="website"
+                onChange={(event) => setWebsite(event.target.value)}
+                tabIndex={-1}
+                type="text"
+                value={website}
+              />
+              <input
                 maxLength={120}
                 required
                 value={form.name}
@@ -363,9 +407,14 @@ export function SupportWidget() {
         </div>
       ) : null}
       <button
+        aria-controls="support-dialog"
+        aria-expanded={open}
+        aria-label={open ? "Chat bezárása" : "Chat megnyitása"}
         className="support-trigger"
         onClick={() => {
           if (!open) {
+            formStartedAt.current = Date.now();
+            trackEvent("support_opened", { intent: "contact", source: "floating_button" });
             setEntryIntent("contact");
             if (!ticket) {
               setForm((current) => ({
@@ -376,6 +425,7 @@ export function SupportWidget() {
           }
           setOpen((current) => !current);
         }}
+        ref={triggerRef}
         type="button"
       >
         <span />

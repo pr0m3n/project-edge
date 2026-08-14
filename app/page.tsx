@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+
+export const metadata: Metadata = {
+  title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
+  description: "Egyedi, gyors weboldal készítés Magyarország egész területén, teljesen online folyamattal. Előfizetés 14 900 Ft/hó-tól vagy egyszeri vásárlás 179 000 Ft-tól.",
+  alternates: { canonical: "/" }
+};
 
 const paths = [
   {
@@ -44,7 +51,7 @@ const faqs = [
   ],
   [
     "Mennyi idő alatt készül el?",
-    "Egy egyszerűbb oldal 1–2 nap, egy összetettebb rendszer pár hét. A méret dönti el."
+    "A hiánytalan brief, az induló fizetés és a szükséges anyagok beérkezésétől számítva a Jelenlét oldal jellemzően 2–4 munkanap, az Üzleti 3–6 munkanap, az Egyedi 5–14 munkanap. Összetett webappnál külön ütemezést adok."
   ],
   [
     "Mi van, ha nem tetszik az irány?",
@@ -56,7 +63,7 @@ const faqs = [
   ],
   [
     "Mi van a leszállítás után?",
-    "30 napig díjmentesen javítom, ha hiba van. Új funkció nem tartozik ide, arra külön karbantartás kérhető."
+    "Egyszeri vásárlásnál az átadástól számított 30 napig díjmentesen javítom az átadáskor vállalt működés technikai hibáit. Új funkció és új tartalom nem tartozik ide. Előfizetésnél a technikai felügyelet a rendezett szolgáltatás teljes ideje alatt jár."
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
@@ -84,8 +91,8 @@ export default function Home() {
               havidíjért. Ha inkább a sajátod lenne, meg is veheted.
             </p>
             <div className="hero-command">
-              <a className="button primary" href="#projektbrief">Projektbrief indítása</a>
-              <TransitionLink className="button spectral" href="/szolgaltatasok#arak">Csomagok és árak</TransitionLink>
+              <a className="button primary" href="#arak">Csomagok és árak</a>
+              <a className="button spectral" href="#projektbrief">Projektbrief indítása</a>
               <TransitionLink className="button spectral" href="/munkak">
                 Munkáim megnézése
               </TransitionLink>
@@ -128,8 +135,6 @@ export default function Home() {
         ))}
       </section>
 
-      <PublicBriefWizard />
-
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -149,8 +154,8 @@ export default function Home() {
             frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
             egy kézben épültek.
           </p>
-          <TransitionLink className="button primary" href="/munkak">
-            Esettanulmány megnézése
+          <TransitionLink className="button primary" href="/munkak/checky">
+            Így épült a Checky
           </TransitionLink>
         </div>
         <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
@@ -228,7 +233,7 @@ export default function Home() {
           <h2>Nem kell telefonálnod.</h2>
           <p className="nc-copy">
             Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
-            neked jó. Ha szóban gyorsabb, azért beszélhetünk.
+            neked jó. A teljes folyamat végigvihető írásban, kötelező hívás nélkül.
           </p>
           <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
@@ -330,6 +335,8 @@ export default function Home() {
           </article>
         </div>
       </section>
+
+      <PublicBriefWizard />
 
       <section className="faq-section">
         <div className="section-head">

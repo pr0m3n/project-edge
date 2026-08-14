@@ -5,6 +5,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { ChromeGate } from "@/components/ChromeGate";
 import { Analytics } from "@/components/Analytics";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ExitOffer } from "@/components/ExitOffer";
+import { JsonLd } from "@/components/JsonLd";
+import { PROVIDER } from "@/lib/legal";
+import { CONSENT_DEFAULT_SCRIPT, measurementEnabled } from "@/lib/analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,14 +49,41 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="hu">
+      <head>
+        {measurementEnabled ? (
+          <script id="consent-default" dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULT_SCRIPT }} />
+        ) : null}
+      </head>
       <body>
+        <a className="skip-link" href="#main-content">Ugrás a tartalomhoz</a>
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "ProfessionalService",
+          "@id": "https://www.projectedge.hu/#business",
+          name: PROVIDER.brand,
+          legalName: PROVIDER.legalName,
+          url: "https://www.projectedge.hu",
+          email: PROVIDER.email,
+          image: "https://www.projectedge.hu/opengraph-image",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Kard köz 1. B",
+            postalCode: "8200",
+            addressLocality: "Veszprém",
+            addressCountry: "HU"
+          },
+          areaServed: { "@type": "Country", name: "Magyarország" },
+          priceRange: "14 900–599 000 Ft",
+          founder: { "@type": "Person", name: PROVIDER.contactName }
+        }} />
         <Analytics />
-        {children}
+        <div id="main-content" tabIndex={-1}>{children}</div>
         <ChromeGate>
           <SiteFooter />
           <SupportWidget />
         </ChromeGate>
         <CookieBanner />
+        <ExitOffer />
         {/* Keep DOM-mutating reveal effects after the streamed page subtree. */}
         <MotionVars />
       </body>

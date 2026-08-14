@@ -34,9 +34,10 @@ import { ManagedWebsitePanel } from "@/components/portal/ManagedWebsitePanel";
 import { DomainAvailabilityPicker } from "@/components/portal/DomainAvailabilityPicker";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
+import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
 import { SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
-import { trackLeadConversion } from "@/lib/analytics";
+import { trackEvent, trackLeadConversion } from "@/lib/analytics";
 import type { Project, Ticket, TicketMessage, ClientChangeRequest } from "@/components/portal/types";
 import {
   audienceChips,
@@ -142,6 +143,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [reviewForm, setReviewForm] = useState({ rating: 5, review: "", reference: false });
   const [modificationRequestText, setModificationRequestText] = useState("");
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
+  const [couponPendingProjectId, setCouponPendingProjectId] = useState<string | null>(null);
+  const [couponMessages, setCouponMessages] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState(false);
@@ -914,13 +917,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   async function uploadLogo(file: File) {
     if (!userId) return;
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml", "application/pdf"];
-    if (!allowedTypes.includes(file.type)) {
-      setNotice("Csak PNG, JPG, SVG vagy PDF fájlt lehet feltölteni.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setNotice("A fájl mérete legfeljebb 5 MB lehet.");
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "application/pdf"];
+    if (!allowedTypes.includes(file.type) || file.size > MAX_UPLOAD_BYTES) {
+      setNotice("A logó PNG, JPG, WEBP vagy PDF lehet, legfeljebb 20 MB méretben.");
       return;
     }
 
@@ -949,9 +948,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function uploadProjectPhotos(files: File[]) {
     if (!userId || files.length === 0) return;
-    const images = files.filter((file) => file.type.startsWith("image/") && file.size <= 10 * 1024 * 1024);
+    const imageTypes = ["image/png", "image/jpeg", "image/webp"];
+    const images = files.filter((file) => imageTypes.includes(file.type) && file.size <= MAX_UPLOAD_BYTES);
     if (images.length !== files.length) {
-      setNotice("Csak legfeljebb 10 MB-os képfájlokat tölthetsz fel.");
+      setNotice("Csak JPG, PNG vagy WEBP kép tölthető fel, fájlonként legfeljebb 20 MB méretben.");
+      return;
+    }
+    if (images.reduce((total, file) => total + file.size, 0) > MAX_PROJECT_UPLOAD_BYTES) {
+      setNotice("A kiválasztott képek összmérete legfeljebb 250 MB lehet.");
       return;
     }
     setAssetUploading(true);
@@ -986,13 +990,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function uploadContentFiles(files: File[]) {
     if (!userId || files.length === 0) return;
-    const allowed = files.filter(
-      (file) =>
-        ["text/plain", "application/pdf"].includes(file.type) &&
-        file.size <= 15 * 1024 * 1024
-    );
+    const allowed = files.filter(isAllowedUpload);
     if (allowed.length !== files.length) {
-      setNotice("Csak TXT vagy PDF tölthető fel, fájlonként legfeljebb 15 MB méretben.");
+      setNotice("Csak PDF, JPG, PNG, WEBP, DOCX, XLSX vagy ZIP tölthető fel, fájlonként legfeljebb 20 MB méretben.");
+      return;
+    }
+    if (allowed.reduce((total, file) => total + file.size, 0) > MAX_PROJECT_UPLOAD_BYTES) {
+      setNotice("A kiválasztott fájlok összmérete legfeljebb 250 MB lehet.");
       return;
     }
     setContentUploading(true);
@@ -1019,8 +1023,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function uploadDomainProof(file: File) {
     if (!userId) return;
-    if (!["image/png", "image/jpeg", "image/webp", "application/pdf"].includes(file.type) || file.size > 10 * 1024 * 1024) {
-      setNotice("A domain igazolása PNG, JPG, WEBP vagy PDF lehet, legfeljebb 10 MB méretben.");
+    if (!["image/png", "image/jpeg", "image/webp", "application/pdf"].includes(file.type) || file.size > MAX_UPLOAD_BYTES) {
+      setNotice("A domain igazolása PNG, JPG, WEBP vagy PDF lehet, legfeljebb 20 MB méretben.");
       return;
     }
     setDomainProofUploading(true);
@@ -1385,6 +1389,52 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
+    }
+  }
+
+  async function updateProjectCoupon(project: Project, code?: string) {
+    const cleanCode = code?.trim().toUpperCase() ?? "";
+    if (code !== undefined && cleanCode.length < 4) {
+      setCouponMessages((current) => ({ ...current, [project.id]: "Írd be a kuponkódot." }));
+      return;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setCouponMessages((current) => ({ ...current, [project.id]: "A munkamenet lejárt. Jelentkezz be újra." }));
+      return;
+    }
+
+    setCouponPendingProjectId(project.id);
+    setCouponMessages((current) => ({ ...current, [project.id]: "" }));
+    try {
+      const response = await fetch("/api/coupons", {
+        method: code === undefined ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ projectId: project.id, ...(code === undefined ? {} : { code: cleanCode }) })
+      });
+      const result = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        setCouponMessages((current) => ({ ...current, [project.id]: result.error || "A kupon most nem alkalmazható." }));
+        return;
+      }
+
+      setCouponMessages((current) => ({
+        ...current,
+        [project.id]: code === undefined ? "A kupont eltávolítottuk." : "A kedvezményt levontuk az ajánlatból."
+      }));
+      trackEvent(code === undefined ? "coupon_removed" : "coupon_applied", {
+        coupon: cleanCode || project.coupon_code,
+        project_id: project.id
+      });
+      await loadPortal(true);
+    } catch {
+      setCouponMessages((current) => ({ ...current, [project.id]: "A kupon ellenőrzése közben hálózati hiba történt." }));
+    } finally {
+      setCouponPendingProjectId(null);
     }
   }
 
@@ -2137,6 +2187,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           onSubmitModificationRequest={() => requestOfferChanges(project, modificationRequestText)}
           onAccept={() => acceptOffer(project)}
           onDecline={() => declineOffer(project)}
+          couponPending={couponPendingProjectId === project.id}
+          couponMessage={couponMessages[project.id] ?? ""}
+          onApplyCoupon={(code) => updateProjectCoupon(project, code)}
+          onRemoveCoupon={() => updateProjectCoupon(project)}
         />
 
         {project.status === "deposit_pending" && (
@@ -2915,7 +2969,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <input
                           id="logo-upload"
                           type="file"
-                          accept="image/png,image/jpeg,image/svg+xml,application/pdf"
+                          accept="image/png,image/jpeg,image/webp,application/pdf"
                           disabled={logoUploading}
                           onChange={(event) => {
                             const file = event.target.files?.[0];
@@ -3088,7 +3142,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <div className="conditional-brief" id="content-client-material">
                           <span className="micro-label">Küldd el egyben is</span>
                           <h4>A kész vagy nyers szöveged</h4>
-                          <p>Beilleszthetsz egy hosszú szöveget, vagy feltölthetsz több TXT/PDF fájlt. Nem kell oldalanként szétszedned.</p>
+                          <p>Beilleszthetsz egy hosszú szöveget, vagy feltölthetsz több dokumentumot és képet. Nem kell oldalanként szétszedned.</p>
                           <textarea
                             value={projectForm.contentBrief}
                             onChange={(event) => setProjectForm((current) => ({ ...current, contentBrief: event.target.value }))}
@@ -3096,13 +3150,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                           />
                           <div className="asset-uploader">
                             <label htmlFor="project-copy-upload">
-                              <strong>{contentUploading ? "Feltöltés..." : "TXT vagy PDF feltöltése"}</strong>
-                              <span>Fájlonként legfeljebb 15 MB</span>
+                              <strong>{contentUploading ? "Feltöltés..." : "Anyagok feltöltése"}</strong>
+                              <span>PDF, JPG, PNG, WEBP, DOCX, XLSX vagy ZIP · fájlonként 20 MB · projektenként 250 MB</span>
                             </label>
                             <input
                               id="project-copy-upload"
                               type="file"
-                              accept=".txt,.pdf,text/plain,application/pdf"
+                              accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx,.zip,image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip"
                               multiple
                               disabled={contentUploading}
                               onChange={(event) => {
@@ -3148,12 +3202,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <div className="asset-uploader" id="photo-upload">
                           <label htmlFor="project-photo-upload">
                             <strong>{assetUploading ? "Képek feltöltése..." : "Képek kiválasztása"}</strong>
-                            <span>JPG, PNG vagy WEBP · képenként legfeljebb 10 MB · egyszerre több is választható</span>
+                            <span>JPG, PNG vagy WEBP · képenként legfeljebb 20 MB · projektenként 250 MB</span>
                           </label>
                           <input
                             id="project-photo-upload"
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
                             multiple
                             disabled={assetUploading}
                             onChange={(event) => {

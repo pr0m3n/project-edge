@@ -7,8 +7,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Privát / autentikált felületek kizárása az indexelésből.
-      disallow: ["/admin", "/ugyfelkapu/dashboard", "/api/"]
+      // A privát oldalak saját noindex metát kapnak. Az /api nem tartalmi oldal.
+      disallow: ["/api/"]
     },
     sitemap: `${baseUrl}/sitemap.xml`
   };

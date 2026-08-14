@@ -5,7 +5,8 @@ import { IconMessageCircle, IconCompass, IconPenTool, IconGear, IconSparkles, Ic
 
 export const metadata: Metadata = {
   title: "A közös munka folyamata | ProjectEdge",
-  description: "Az igényfelméréstől a designon és fejlesztésen át az élesítésig: követhető weboldal-készítési folyamat."
+  description: "Az igényfelméréstől a designon és fejlesztésen át az élesítésig: követhető weboldal-készítési folyamat.",
+  alternates: { canonical: "/folyamat" }
 };
 
 const steps = [
@@ -20,7 +21,7 @@ const steps = [
     number: "02",
     title: "Rendet rakok",
     copy: "Összerakom, milyen oldalak kellenek és mi hova kerül. Itt dől el, mire nincs szükséged — hogy ne fizess feleslegesen.",
-    tag: "1–2 nap",
+    tag: "az első 1–2 nap",
     Icon: IconCompass
   },
   {
@@ -106,6 +107,10 @@ export default function ProcessPage() {
             <p>{copy}</p>
           </article>
         ))}
+      </section>
+      <section className="delivery-times" aria-labelledby="delivery-times-title">
+        <div><p className="micro-label">Várható elkészítés</p><h2 id="delivery-times-title">Gyors, de nem kapkodós.</h2><p>Az idő a hiánytalan brief, a szükséges anyagok és az induló fizetés beérkezésétől számít.</p></div>
+        <dl><div><dt>Jelenlét</dt><dd>2–4 munkanap</dd></div><div><dt>Üzleti</dt><dd>3–6 munkanap</dd></div><div><dt>Egyedi</dt><dd>5–14 munkanap</dd></div></dl>
       </section>
       <section className="cta-band dark">
         <h2>Töltsd ki az adatlapot. Tizenöt perc, és tudom, mire van szükséged.</h2>

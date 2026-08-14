@@ -32,6 +32,10 @@ const REVEAL_SELECTOR = [
   ".price-teaser",
   ".case-block",
   ".case-metric",
+  ".checky-story-step",
+  ".checky-feature-card",
+  ".checky-evidence-card",
+  ".checky-architecture-flow",
   ".demo-card",
   ".cta-band"
 ].join(",");

@@ -119,6 +119,7 @@ export function AdminDashboard() {
   const [billingoRetryId, setBillingoRetryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [paymentTestLoading, setPaymentTestLoading] = useState(false);
 
   // Upgraded flow states
   const [changeLogs, setChangeLogs] = useState<Record<string, any[]>>({});
@@ -136,6 +137,32 @@ export function AdminDashboard() {
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
   const online = useOnline();
+
+  async function startPaymentSmokeTest() {
+    setPaymentTestLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("A munkamenet lejárt. Jelentkezz be újra.");
+      setPaymentTestLoading(false);
+      return;
+    }
+    try {
+      const response = await fetch("/api/stripe/smoke-test", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      const result = await response.json() as { error?: string; url?: string };
+      if (!response.ok || !result.url) {
+        setMessage(result.error || "A sandbox fizetési teszt nem indítható.");
+        return;
+      }
+      window.location.assign(result.url);
+    } catch {
+      setMessage("A sandbox fizetési teszt nem indítható.");
+    } finally {
+      setPaymentTestLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!message || message.endsWith("...")) return;
@@ -1293,6 +1320,16 @@ export function AdminDashboard() {
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button
+            className="button ghost"
+            disabled={paymentTestLoading}
+            onClick={startPaymentSmokeTest}
+            style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)" }}
+            title="Csak Stripe sandbox környezetben érhető el"
+            type="button"
+          >
+            {paymentTestLoading ? "Indítás…" : "200 Ft sandbox teszt"}
+          </button>
           <div style={{ position: "relative" }}>
             <button
               onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
@@ -2191,17 +2228,22 @@ export function AdminDashboard() {
                     <label>
                       <span>Ajánlati ár</span>
                       <input
-                        defaultValue={project.offer_price ?? ""}
+                        defaultValue={project.base_offer_price ?? project.offer_price ?? ""}
                         inputMode="numeric"
                         onBlur={(event) =>
                           updateClientProject(project.id, {
-                            offer_price: event.target.value ? Number(event.target.value) : null
+                            base_offer_price: event.target.value ? Number(event.target.value) : null
                           })
                         }
                         placeholder="350000"
                       />
                     </label>
                     <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>
+                    {project.coupon_code ? (
+                      <small>
+                        {project.coupon_code} · −{formatPrice(project.coupon_discount_amount, project.offer_currency || "Ft")}
+                      </small>
+                    ) : null}
                     <button className="button primary" onClick={() => sendProjectOffer(project)} type="button">
                       Ajánlat elküldése
                     </button>

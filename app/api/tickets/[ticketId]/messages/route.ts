@@ -11,7 +11,6 @@ type Params = {
 
 type MessagePayload = {
   body?: string;
-  token?: string;
 };
 
 function clean(value: unknown) {
@@ -33,7 +32,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!parsed.ok) return parsed.response;
   const payload = parsed.data;
 
-  const token = request.headers.get("x-visitor-token")?.trim() || clean(payload.token);
+  const token = request.headers.get("x-visitor-token")?.trim() ?? "";
   const body = clean(payload.body);
 
   if (!token || !body || token.length > 128 || body.length > 5_000) {

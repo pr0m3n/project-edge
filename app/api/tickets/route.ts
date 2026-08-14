@@ -7,6 +7,8 @@ type TicketPayload = {
   email?: string;
   message?: string;
   name?: string;
+  startedAt?: number;
+  website?: string;
 };
 
 function clean(value: unknown) {
@@ -28,6 +30,17 @@ export async function POST(request: Request) {
   const name = clean(payload.name);
   const email = clean(payload.email).toLowerCase();
   const message = clean(payload.message);
+  const honeypot = clean(payload.website);
+  const startedAt = Number(payload.startedAt);
+
+  if (
+    honeypot ||
+    !Number.isFinite(startedAt) ||
+    Date.now() - startedAt < 1_500 ||
+    Date.now() - startedAt > 2 * 60 * 60 * 1_000
+  ) {
+    return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
+  }
 
   if (!name || !email || !message) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });

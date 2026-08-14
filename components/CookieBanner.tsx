@@ -29,6 +29,7 @@ export function CookieBanner() {
   function decide(choice: ConsentChoice) {
     storeConsent(choice);
     applyConsent(choice);
+    window.dispatchEvent(new Event("projectedge:consent-changed"));
     setVisible(false);
   }
 

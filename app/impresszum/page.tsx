@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { PROVIDER } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Impresszum | ProjectEdge", description: "A ProjectEdge szolgáltatójának és tárhelyszolgáltatójának adatai." };
+export const metadata: Metadata = { title: "Impresszum | ProjectEdge", description: "A ProjectEdge szolgáltatójának és tárhelyszolgáltatójának adatai.", alternates: { canonical: "/impresszum" } };
 
 export default function ImpressumPage() {
   return <main className="site-shell light-page"><SiteNav />

@@ -6,9 +6,11 @@ import {
   initialBriefForm,
   PUBLIC_BRIEF_DRAFT_KEY,
   readPublicBriefDraft,
-  type BriefFormValues
+  type BriefFormValues,
+  type PublicBriefDraft
 } from "@/lib/brief-draft";
 import { formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
+import { trackEvent } from "@/lib/analytics";
 
 const steps = ["Konstrukció", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
 const projectTypes = [
@@ -70,20 +72,18 @@ export function PublicBriefWizard() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState("");
+  const [resumeDraft, setResumeDraft] = useState<PublicBriefDraft | null>(null);
   const skipFirstAutosave = useRef(true);
+  const briefStarted = useRef(false);
 
   useEffect(() => {
     const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
-    if (saved) {
-      setForm(saved.data);
-      setSavedAt(saved.savedAt);
-      setStep(saved.step);
-    }
+    if (saved && (saved.data.company || saved.step > 0)) setResumeDraft(saved);
     setReady(true);
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || resumeDraft) return;
     if (skipFirstAutosave.current) {
       skipFirstAutosave.current = false;
       return;
@@ -91,7 +91,7 @@ export function PublicBriefWizard() {
     const now = new Date().toISOString();
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: form, savedAt: now, step, version: 1 }));
     setSavedAt(now);
-  }, [form, ready, step]);
+  }, [form, ready, resumeDraft, step]);
 
   const selectedPlan = subscriptionPlan(form.subscriptionPlan);
   const selectedVibe = vibes.find(([key]) => key === form.vibe) ?? vibes[1];
@@ -106,6 +106,10 @@ export function PublicBriefWizard() {
   }, [savedAt]);
 
   function update(values: Partial<BriefFormValues>) {
+    if (!briefStarted.current) {
+      briefStarted.current = true;
+      trackEvent("brief_started", { source: "homepage" });
+    }
     setError("");
     setForm((current) => ({ ...current, ...values }));
   }
@@ -120,6 +124,7 @@ export function PublicBriefWizard() {
     }
     setError("");
     setStep(Math.max(0, Math.min(steps.length - 1, next)));
+    trackEvent("brief_step_viewed", { step: next + 1, label: steps[next] });
   }
 
   function continueToAccount() {
@@ -136,7 +141,28 @@ export function PublicBriefWizard() {
       contentSource: form.contentSource || "studio"
     };
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: prepared, savedAt: new Date().toISOString(), step: 4, version: 1 }));
+    trackEvent("brief_completed", { model: prepared.commercialModel, source: "homepage" });
     router.push("/ugyfelkapu?brief=continue");
+  }
+
+  function continueDraft() {
+    if (!resumeDraft) return;
+    setForm(resumeDraft.data);
+    setSavedAt(resumeDraft.savedAt);
+    setStep(resumeDraft.step);
+    setResumeDraft(null);
+    briefStarted.current = true;
+    trackEvent("brief_resumed", { step: resumeDraft.step + 1 });
+  }
+
+  function restartDraft() {
+    window.localStorage.removeItem(PUBLIC_BRIEF_DRAFT_KEY);
+    setForm(initialBriefForm);
+    setStep(0);
+    setSavedAt("");
+    setResumeDraft(null);
+    skipFirstAutosave.current = true;
+    trackEvent("brief_restarted");
   }
 
   return (
@@ -152,12 +178,19 @@ export function PublicBriefWizard() {
         </div>
       </div>
 
+      {resumeDraft ? (
+        <div className="public-draft-choice" role="status">
+          <div><span>MENTETT PISZKOZAT</span><strong>Folytatod a korábbi projektbriefet?</strong><p>Utoljára mentve: {new Date(resumeDraft.savedAt).toLocaleString("hu-HU")}</p></div>
+          <div><button className="button primary" onClick={continueDraft} type="button">Folytatás</button><button className="button spectral" onClick={restartDraft} type="button">Újrakezdés</button></div>
+        </div>
+      ) : null}
+
       <div className="public-brief-shell">
         <div className="public-brief-windowbar"><span /><span /><span /><b>projectedge / brief</b><em>{progress}%</em></div>
         <div className="public-brief-progress"><i style={{ width: `${progress}%` }} /></div>
         <nav className="public-brief-steps" aria-label="Brief lépései">
           {steps.map((label, index) => (
-            <button className={index === step ? "active" : index < step ? "done" : ""} key={label} onClick={() => index <= step && go(index)} type="button">
+            <button aria-disabled={index > step} className={index === step ? "active" : index < step ? "done" : ""} disabled={index > step} key={label} onClick={() => go(index)} type="button">
               <span>{index < step ? "✓" : index + 1}</span>{label}
             </button>
           ))}

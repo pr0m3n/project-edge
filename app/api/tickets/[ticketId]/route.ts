@@ -7,14 +7,9 @@ import { checkDurableRateLimit, checkRateLimit, isUuid, rateLimitResponse, readJ
  * bekerülne a szerver hozzáférési naplóiba és a Referer fejlécekbe, ezért
  * fejlécben várjuk.
  *
- * A `?token=` ág átmeneti visszafelé kompatibilitás: egy régi, még be nem
- * töltött JS csomaggal nyitva hagyott fül így nem veszíti el a beszélgetést.
- * Egy későbbi kiadásban eltávolítható.
  */
 function visitorToken(request: Request) {
-  const header = request.headers.get("x-visitor-token")?.trim();
-  if (header) return header;
-  return new URL(request.url).searchParams.get("token")?.trim() ?? "";
+  return request.headers.get("x-visitor-token")?.trim() ?? "";
 }
 
 type Params = {
@@ -26,7 +21,6 @@ type Params = {
 type RatingPayload = {
   rating?: number;
   ratingComment?: string;
-  token?: string;
 };
 
 function clean(value: unknown) {
@@ -101,7 +95,7 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!parsed.ok) return parsed.response;
   const payload = parsed.data;
 
-  const token = visitorToken(request) || clean(payload.token);
+  const token = visitorToken(request);
   const rating = Number(payload.rating);
   const ratingComment = clean(payload.ratingComment);
 

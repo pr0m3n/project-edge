@@ -18,7 +18,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Weboldal készítés és egyedi rendszerek | ProjectEdge",
-  description: "Landing oldalak, céges weboldalak, redesign, ügyfélkapu és admin rendszer egy kézben, átlátható folyamattal."
+  description: "Landing oldalak, céges weboldalak, redesign, ügyfélkapu és admin rendszer egy kézben, átlátható folyamattal.",
+  alternates: { canonical: "/szolgaltatasok" }
 };
 
 const services = [

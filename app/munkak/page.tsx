@@ -5,8 +5,9 @@ import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
 
 export const metadata: Metadata = {
-  title: "Munkák és esettanulmány | ProjectEdge",
-  description: "Egyedi weboldalak és full-stack rendszerek bemutatása: probléma, megoldás és technikai megvalósítás."
+  title: "Munkák és projektbemutatók | ProjectEdge",
+  description: "Egyedi weboldalak és full-stack rendszerek bemutatása: probléma, megoldás és technikai megvalósítás.",
+  alternates: { canonical: "/munkak" }
 };
 
 const capabilities = [
@@ -117,7 +118,7 @@ export default function WorkPage() {
       <section className="case-study">
         <div className="case-title-row">
           <div>
-            <p className="micro-label dark">Valós ügyfélmunka / Checky.hu</p>
+            <p className="micro-label dark">Éles full-stack rendszer / Checky.hu</p>
             <h2>Nem látványterv. Naponta használt rendszer.</h2>
           </div>
           <a className="case-live-link" href="https://checky.hu" rel="noreferrer" target="_blank">Élő oldal megnyitása ↗</a>
@@ -169,6 +170,7 @@ export default function WorkPage() {
             <span>tervezéstől az éles indulásig</span>
           </div>
         </div>
+        <div className="case-project-link-row"><TransitionLink className="button primary" href="/munkak/checky">Így épült a Checky</TransitionLink></div>
       </section>
 
       <section className="demos-section">
@@ -191,11 +193,11 @@ export default function WorkPage() {
 
         <div className="demos-grid">
           <article className="demo-card">
-            <a className="demo-preview veyra" href="/demo/veyra">
+            <TransitionLink className="demo-preview veyra" href="/demo/veyra">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">SAAS + DASHBOARD</span>
-              <img alt="Veyra SaaS termékoldal előnézete" src="/work/demos/veyra.webp" />
-            </a>
+              <Image alt="Veyra SaaS termékoldal előnézete" height={900} sizes="(max-width: 760px) calc(100vw - 36px), 50vw" src="/work/demos/veyra.webp" width={1440} />
+            </TransitionLink>
             <div className="demo-body">
               <span className="demo-kind">Landing page</span>
               <h3>Veyra — SaaS termékoldal</h3>
@@ -208,18 +210,18 @@ export default function WorkPage() {
                 <li>Interaktív árazás, állapotkezelés és GYIK</li>
                 <li>Animációk és összetett, kódból rajzolt UI</li>
               </ul>
-              <a className="button ghost" href="/demo/veyra">
+              <TransitionLink className="button ghost" href="/demo/veyra">
                 Megnézem élőben
-              </a>
+              </TransitionLink>
             </div>
           </article>
 
           <article className="demo-card">
-            <a className="demo-preview zamat" href="/demo/zamat">
+            <TransitionLink className="demo-preview zamat" href="/demo/zamat">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">WEBSHOP + KOSÁR</span>
-              <img alt="Zamat kávéwebshop előnézete" src="/work/demos/zamat.webp" />
-            </a>
+              <Image alt="Zamat kávéwebshop előnézete" height={900} sizes="(max-width: 760px) calc(100vw - 36px), 50vw" src="/work/demos/zamat.webp" width={1440} />
+            </TransitionLink>
             <div className="demo-body">
               <span className="demo-kind">Webáruház</span>
               <h3>Zamat — kávépörkölő webshop</h3>
@@ -232,54 +234,54 @@ export default function WorkPage() {
                 <li>Külön termékoldalak, kapcsolódó termékekkel</li>
                 <li>Újratöltés után is megmaradó kosár és előfizetés</li>
               </ul>
-              <a className="button ghost" href="/demo/zamat">
+              <TransitionLink className="button ghost" href="/demo/zamat">
                 Megnézem élőben
-              </a>
+              </TransitionLink>
             </div>
           </article>
 
           <article className="demo-card">
-            <a className="demo-preview fixora" href="/demo/varga-villany">
+            <TransitionLink className="demo-preview fixora" href="/demo/varga-villany">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">ÉRDEKLŐDŐSZERZÉS</span>
-              <img alt="Varga Villanyszerelés oldal előnézete" src="/work/demos/varga-villany.webp" />
-            </a>
+              <Image alt="Varga Villanyszerelés oldal előnézete" height={900} sizes="(max-width: 760px) calc(100vw - 36px), 50vw" src="/work/demos/varga-villany.webp" width={1440} />
+            </TransitionLink>
             <div className="demo-body">
               <span className="demo-kind">Helyi szolgáltató + ajánlatkérés</span>
               <h3>Varga Villanyszerelés</h3>
               <p>Bizalomépítő szolgáltatói oldal, ami a látogatót egy perc alatt konkrét ajánlatkérésig vezeti.</p>
-              <ul className="demo-points"><li>Működő, szolgáltatásalapú árbecslő</li><li>Irányítószámos kiszállási körzetellenőrzés</li><li>Helyi bizalmi elemek és esettanulmány</li></ul>
-              <a className="button ghost" href="/demo/varga-villany">Megnézem élőben</a>
+              <ul className="demo-points"><li>Működő, szolgáltatásalapú árbecslő</li><li>Irányítószámos kiszállási körzetellenőrzés</li><li>Helyi bizalmi elemek és projektbemutató</li></ul>
+              <TransitionLink className="button ghost" href="/demo/varga-villany">Megnézem élőben</TransitionLink>
             </div>
           </article>
 
           <article className="demo-card">
-            <a className="demo-preview noma" href="/demo/liget-borstudio">
+            <TransitionLink className="demo-preview noma" href="/demo/liget-borstudio">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">IDŐPONTFOGLALÁS</span>
-              <img alt="Liget Bőrstúdió oldal előnézete" src="/work/demos/liget-borstudio.webp" />
-            </a>
+              <Image alt="Liget Bőrstúdió oldal előnézete" height={900} sizes="(max-width: 760px) calc(100vw - 36px), 50vw" src="/work/demos/liget-borstudio.webp" width={1440} />
+            </TransitionLink>
             <div className="demo-body">
               <span className="demo-kind">Szépségstúdió + online foglalás</span>
               <h3>Liget Bőrstúdió</h3>
               <p>Nyugodt, magazinos márkaoldal valódi, több lépéses szolgáltatás- és időpontválasztással.</p>
               <ul className="demo-points"><li>Kezelés-, nap-, időpont- és szakemberválasztás</li><li>Kapcsolati adatokkal záruló foglalási folyamat</li><li>Prémium arculat saját vizuális világgal</li></ul>
-              <a className="button ghost" href="/demo/liget-borstudio">Megnézem élőben</a>
+              <TransitionLink className="button ghost" href="/demo/liget-borstudio">Megnézem élőben</TransitionLink>
             </div>
           </article>
 
           <article className="demo-card demo-card-wide">
-            <a className="demo-preview nest" href="/demo/budai-otthonok">
+            <TransitionLink className="demo-preview nest" href="/demo/budai-otthonok">
               <span className="demo-tag">Mintaprojekt</span>
               <span className="demo-goal">KERESÉS + KATALÓGUS</span>
-              <img alt="Budai Otthonok ingatlankatalógus előnézete" src="/work/demos/budai-otthonok.webp" />
-            </a>
+              <Image alt="Budai Otthonok ingatlankatalógus előnézete" height={900} sizes="(max-width: 760px) calc(100vw - 36px), 100vw" src="/work/demos/budai-otthonok.webp" width={1440} />
+            </TransitionLink>
             <div className="demo-body">
               <span className="demo-kind">Ingatlankatalógus + mentés</span>
               <h3>Budai Otthonok</h3>
               <p>Kereshető prémium kínálat külön ingatlanfotókkal és teljes, felugró részletes adatlappal.</p>
               <ul className="demo-points"><li>Összetett szűrés, rendezés és mentett nézet</li><li>Részletmodal alaprajzzal és felszereltséggel</li><li>Hitelbecslő és megtekintési érdeklődés</li></ul>
-              <a className="button ghost" href="/demo/budai-otthonok">Megnézem élőben</a>
+              <TransitionLink className="button ghost" href="/demo/budai-otthonok">Megnézem élőben</TransitionLink>
             </div>
           </article>
         </div>
