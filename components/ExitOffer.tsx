@@ -135,7 +135,17 @@ export function ExitOffer() {
         <button className="button primary" onClick={useOffer} type="button">
           Kód másolása és projekt indítása
         </button>
-        <small>Előfizetésre nem érvényes. Nem jelenik meg újra 14 napig.</small>
+        <button
+          className="exit-offer-audit-link"
+          onClick={() => {
+            setOpen(false);
+            router.push("/ingyenes-weboldal-audit");
+          }}
+          type="button"
+        >
+          Már van oldalad? Kérj ingyenes 3 pontos gyorselemzést →
+        </button>
+        <small>Előfizetésre a kupon nem érvényes. Nem jelenik meg újra 14 napig.</small>
       </div>
     </div>
   );

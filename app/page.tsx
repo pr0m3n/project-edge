@@ -5,6 +5,7 @@ import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { AuditRequestSection } from "@/components/AuditRequestSection";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
@@ -92,11 +93,13 @@ export default function Home() {
             </p>
             <div className="hero-command">
               <a className="button primary" href="#arak">Csomagok és árak</a>
-              <a className="button spectral" href="#projektbrief">Projektbrief indítása</a>
               <TransitionLink className="button spectral" href="/munkak">
-                Munkáim megnézése
+                Munkáim és demók
               </TransitionLink>
             </div>
+            <p className="hero-subhint">
+              Vagy kezdd azonnal: <a href="#projektbrief">online projektbrief kitöltése →</a>
+            </p>
           </div>
           <div className="hero-system" aria-label="ProjectEdge projektfolyamat előnézet">
             <div className="system-glow" aria-hidden="true" />
@@ -229,20 +232,21 @@ export default function Home() {
 
       <section className="no-call">
         <div>
-          <p className="micro-label">Ügyfélkapu</p>
-          <h2>Nem kell telefonálnod.</h2>
+          <p className="micro-label">Ügyfélkapu & Egyeztetés</p>
+          <h2>Nem kötelező telefonálnod.</h2>
           <p className="nc-copy">
             Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
-            neked jó. A teljes folyamat végigvihető írásban, kötelező hívás nélkül.
+            neked kényelmes. A teljes folyamat zökkenőmentesen végigvihető írásban, kötelező értekezletek
+            nélkül, de ha telefonon vagy online megbeszélésen egyeztetnél, természetesen állok rendelkezésedre.
           </p>
           <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
           </TransitionLink>
         </div>
         <ul className="nc-list">
-          <li>Nincs kötelező telefonhívás</li>
+          <li>Teljes folyamat írásban — vagy igény szerint gyors hívással</li>
           <li>Adatlap, státusz és fizetés egy helyen</li>
-          <li>Kérdés bármikor, írásban</li>
+          <li>Közvetlen segítség és válaszok az ügyfélkapun</li>
         </ul>
       </section>
 
@@ -337,6 +341,8 @@ export default function Home() {
       </section>
 
       <PublicBriefWizard />
+
+      <AuditRequestSection />
 
       <section className="faq-section">
         <div className="section-head">

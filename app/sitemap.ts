@@ -12,6 +12,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/weboldal-keszites", priority: 0.9 },
     { path: "/havidijas-weboldal", priority: 0.9 },
     { path: "/weboldal-kisvallalkozasoknak", priority: 0.85 },
+    { path: "/weboldal-szepsegszalonoknak", priority: 0.85 },
+    { path: "/weboldal-kivitelezoknek-szakembereknek", priority: 0.85 },
+    { path: "/weboldal-ingatlankozvetitoknek", priority: 0.85 },
+    { path: "/ingyenes-weboldal-audit", priority: 0.85 },
     { path: "/wordpress-weboldal-ujratervezes", priority: 0.8 },
     // A /demo oldalak szándékosan kimaradnak: kitalált márkákat mutatnak be,
     // és `noindex`-esek (app/demo/layout.tsx).

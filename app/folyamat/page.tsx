@@ -13,8 +13,8 @@ const steps = [
   {
     number: "01",
     title: "Átbeszéljük",
-    copy: "Kitöltesz egy adatlapot: mid van most, mi nem működik, kiket szeretnél elérni. Hívás nélkül is megy.",
-    tag: "hívás nélkül is",
+    copy: "Kitöltesz egy adatlapot: mid van most, mi nem működik, kiket szeretnél elérni. Írásban vagy gyors hívással is egyeztethetünk.",
+    tag: "rugalmas egyeztetés",
     Icon: IconMessageCircle
   },
   {

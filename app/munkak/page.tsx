@@ -96,7 +96,7 @@ const voices = [
   {
     feature: false,
     quote:
-      "Hívás nélkül: az ügyfélkapun indítod a projektet, követed a haladást és fizetsz.",
+      "Kényelmes folyamat: az ügyfélkapun indítod a projektet, követed a haladást és fizetsz. Felesleges körök és kötelező értekezletek nélkül.",
     name: "Kényelmes folyamat",
     role: "minden egy helyen"
   }

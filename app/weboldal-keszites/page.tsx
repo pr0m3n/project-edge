@@ -13,7 +13,7 @@ const content: ServiceLandingContent = {
   title: "Weboldal, ami érthetően elmondja, miért téged válasszanak.",
   lead: "Stratégia, szöveg, egyedi megjelenés és fejlesztés egy kézben. Az egész projekt online, követhető ügyfélkapun keresztül zajlik.",
   promise: "Nem sablont töltesz ki: a vállalkozásod ajánlatára építem fel az oldalt.",
-  audience: ["országosan elérhető", "mobilra tervezett", "gyors és keresőbarát", "hívás nélkül is végigvihető"],
+  audience: ["országosan elérhető", "mobilra tervezett", "gyors és keresőbarát", "kényelmes, rugalmas folyamat"],
   outcomes: [
     { title: "Tiszta ajánlat", copy: "A látogató néhány másodperc alatt megérti, miben segítesz és mi legyen a következő lépése." },
     { title: "Egyedi megjelenés", copy: "A design a márkádhoz és a célközönségedhez készül, nem egy előre gyártott sablon átszínezése." },
@@ -26,7 +26,7 @@ const content: ServiceLandingContent = {
   ],
   faq: [
     ["Mennyi idő alatt készül el?", "A csomagtól függően jellemzően 2–14 munkanap, a hiánytalan brief, az anyagok és az induló fizetés beérkezésétől."],
-    ["Szükséges telefonon egyeztetni?", "Nem. A brief, az ajánlat, a szerződés, a visszajelzések és a fizetési lépések is kezelhetők írásban."],
+    ["Szükséges telefonon egyeztetni?", "Nem kötelező. A brief, az ajánlat, a szerződés, a visszajelzések és a fizetés is kényelmesen kezelhető írásban az ügyfélkapun — de ha személyesen vagy telefonon beszélnéd át, természetesen állok rendelkezésedre."],
     ["Saját tulajdonomba kerülhet?", "Igen. Egyszeri vásárlásnál a teljes fizetés után átadom a forráskódot és a szükséges hozzáféréseket."]
   ]
 };

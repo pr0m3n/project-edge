@@ -61,7 +61,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
         <div className="faq-list">{content.faq.map(([question, answer]) => <details className="faq-item" key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
       </section>
 
-      <section className="cta-band"><h2>Írd le, mire van szükséged — a folyamat hívás nélkül is végigvihető.</h2><TransitionLink className="button primary" href="/#projektbrief">Projektbrief indítása</TransitionLink></section>
+      <section className="cta-band"><h2>Írd le, mire van szükséged — kötelező értekezletek nélkül, gyorsan elindulunk.</h2><TransitionLink className="button primary" href="/#projektbrief">Projektbrief indítása</TransitionLink></section>
     </main>
   );
 }

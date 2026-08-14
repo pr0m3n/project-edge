@@ -199,7 +199,7 @@ export default function CheckyProjectPage() {
       </section>
 
       <section className="checky-final-cta">
-        <p>HASONLÓ OLDALT SZERETNÉL?</p><h2>Írd le, mire<br /><span>lenne szükséged.</span></h2><p>Az ügyfélkapuban néhány lépésben el tudod küldeni az elképzelésedet. Telefonhívás nem kötelező, mindent meg tudunk beszélni írásban is.</p><div><Link className="button primary" href="/ugyfelkapu">Projekt indítása</Link><Link className="checky-text-link" href="/munkak">További munkák <span>→</span></Link></div>
+        <p>HASONLÓ OLDALT SZERETNÉL?</p><h2>Írd le, mire<br /><span>lenne szükséged.</span></h2><p>Az ügyfélkapuban néhány lépésben el tudod küldeni az elképzelésedet. Kötelező értekezletek nélkül, gyorsan haladunk, de írásban vagy hívásban is bármikor elérhető vagyok.</p><div><Link className="button primary" href="/ugyfelkapu">Projekt indítása</Link><Link className="checky-text-link" href="/munkak">További munkák <span>→</span></Link></div>
       </section>
     </main>
   );
