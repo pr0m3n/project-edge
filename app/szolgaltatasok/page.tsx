@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import { LOGO_DESIGN_PRICE, formatHuf } from "@/lib/subscriptions";
 import {
   IconGlobe,
   IconKey,
@@ -62,13 +63,17 @@ const solutions: Array<{
 // havi visszatérő díj), ezért külön, egyszerű sorként jelennek meg.
 const specialCases: Array<[string, string, string]> = [
   ["Webshop kell", "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel — bevált alapra építek (Shopify / WooCommerce).", "Egyedi ajánlat"],
-  ["Folyamatos karbantartás és növekedés", "Kész oldalad van, de kell, aki figyel rá: frissítés, mentés, mérés, apró fejlesztések, havi riport.", "15 000 – 35 000 Ft / hó"]
+  ["Meglévő oldal gondozása (nem tőlem származó oldalra)", "Már van egy működő oldalad mástól, és kell valaki, aki figyel rá: frissítés, mentés, mérés, apró javítások, havi riport. Ez NEM a weboldal-bérlés — ott a gondozás már benne van a havidíjban.", "15 000 – 35 000 Ft / hó"]
 ];
 
 const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: string; copy: string }> = [
   { Icon: IconGlobe, title: "Vágyott domain", copy: "Írj három névötletet prioritási sorrendben. Előfizetésnél a regisztrációt és a megújítást én intézem." },
   { Icon: IconKey, title: "Technikai teendők", copy: "Előfizetésnél nincs Vercel-, Supabase- vagy tárhelyfiók: minden infrastruktúrát a ProjectEdge kezel." },
-  { Icon: IconShapes, title: "Logó", copy: "Lehetőleg vektoros (ai/svg/pdf). Ha nincs, kérhetsz logótervezést (külön díjas extra)." },
+  // A logótervezés a briefben csak egyszeri projektnél kérhető (ott van ajánlat,
+  // amiben tételként szerepelhet). Bérlésnél nincs ajánlati kör, ezért ott
+  // szöveges (wordmark) logót készítek a márkanévből — ezt itt is kimondjuk,
+  // különben az ár olyasmit ígérne, amit a brief nem tud befogadni.
+  { Icon: IconShapes, title: "Logó", copy: `Lehetőleg vektoros (ai/svg/pdf). Ha nincs: bérlésnél letisztult szöveges logót készítek a márkanévből, felár nélkül. Egyszeri projektnél kérhetsz teljes logótervezést ${formatHuf(LOGO_DESIGN_PRICE)} egyszeri felárért, ami az ajánlatban külön tételként szerepel.` },
   { Icon: IconDroplet, title: "Színek, betűtípus", copy: "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod." },
   { Icon: IconPen, title: "Szövegek", copy: "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem." },
   { Icon: IconCamera, title: "Képek", copy: "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom." },

@@ -36,7 +36,7 @@ import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
-import { SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
 import type { Project, Ticket, TicketMessage, ClientChangeRequest } from "@/components/portal/types";
 import {
@@ -2950,7 +2950,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             type="button"
                           >
                             <strong>Igen, kérek</strong>
-                            <span>Külön díjas extra, az ajánlatban jelezzük.</span>
+                            <span>{formatHuf(LOGO_DESIGN_PRICE)} egyszeri felár, az ajánlatban tételesen szerepel.</span>
                           </button>
                           <button
                             className={projectForm.wantLogoDesign === "no" ? "selected" : ""}

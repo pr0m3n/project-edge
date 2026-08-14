@@ -26,17 +26,17 @@ const steps = [
   },
   {
     number: "03",
-    title: "Megtervezem",
-    copy: "Kapsz egy látványtervet, mielőtt egy sort is kódolnék. Itt módosítunk, amíg nem tetszik.",
-    tag: "jóváhagyásra váró irány",
-    Icon: IconPenTool
+    title: "Felépítem",
+    copy: "Megépítem, mobilra is. A domaint és az élesítést is én intézem. Közben az ügyfélkapun végig látod, hol tartok.",
+    tag: "a projekt nagy része",
+    Icon: IconGear
   },
   {
     number: "04",
-    title: "Felépítem",
-    copy: "Megépítem, mobilra is. A domaint és az élesítést is én intézem. Közben végig látod, hol tartok.",
-    tag: "a projekt nagy része",
-    Icon: IconGear
+    title: "Megnézed és jóváhagyod",
+    copy: "Privát előnézeti linken megkapod a kész oldalt. Itt kérsz módosítást, és csak a te jóváhagyásod után kerül élesbe.",
+    tag: "nálad a döntés",
+    Icon: IconPenTool
   },
   {
     number: "05",
@@ -97,6 +97,42 @@ export default function ProcessPage() {
           </article>
         ))}
       </section>
+      {/* A két konstrukció NEM ugyanazon a folyamaton megy végig: bérlésnél
+          nincs ajánlati kör, vásárlásnál viszont van, és átadás is. Korábban egy
+          leírás próbálta lefedni mindkettőt, amiből az ügyfél mást várt. */}
+      <section className="flow-split" aria-labelledby="flow-split-title">
+        <div className="flow-split-head">
+          <p className="micro-label">Két útvonal</p>
+          <h2 id="flow-split-title">A lépések attól függenek, bérelsz vagy veszel.</h2>
+        </div>
+        <div className="flow-split-grid">
+          <article>
+            <span>BÉRLÉS · a leggyakoribb</span>
+            <ol>
+              <li>Kitöltöd az adatlapot és csomagot választasz</li>
+              <li>Elfogadod a szerződést az ügyfélkapun</li>
+              <li>Elindul az előfizetés — nincs induló díj</li>
+              <li>Megépítem az oldalt</li>
+              <li>Előnézet, módosítás, jóváhagyás</li>
+              <li>Élesítés, majd folyamatos üzemeltetés</li>
+            </ol>
+            <p>Nincs ajánlati kör és nincs technikai átadás — az infrastruktúrát végig én kezelem.</p>
+          </article>
+          <article>
+            <span>VÁSÁRLÁS · saját tulajdon</span>
+            <ol>
+              <li>Kitöltöd az adatlapot</li>
+              <li>Egyedi ajánlatot kapsz, amit elfogadsz</li>
+              <li>Szerződés, majd foglaló utalása</li>
+              <li>Megépítem az oldalt</li>
+              <li>Előnézet, módosítás, jóváhagyás</li>
+              <li>Végszámla, majd vezetett technikai átadás</li>
+            </ol>
+            <p>Az átadás lépésenként megy az ügyfélkapun. Néhány fiókot neked kell létrehoznod — ehhez írásos útmutatót adok.</p>
+          </article>
+        </div>
+      </section>
+
       <section className="process-extras">
         {extras.map(({ Icon, title, copy }) => (
           <article className="process-extra" key={title}>

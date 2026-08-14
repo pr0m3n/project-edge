@@ -100,6 +100,12 @@ test("new pricing is centralized and tax wording is explicit", () => {
   assert.match(subscriptions, /Alanyi adómentes szolgáltatás/);
   assert.match(estimator, /PRICE_TAX_NOTE/);
   assert.match(migration, /when 'presence' then 14900/);
+
+  // A logótervezés felára három felületen jelenik meg — csak egy helyen élhet,
+  // különben a brief mást mond, mint a szolgáltatások oldal.
+  assert.match(subscriptions, /export const LOGO_DESIGN_PRICE = \d+;/);
+  assert.match(read("app/szolgaltatasok/page.tsx"), /LOGO_DESIGN_PRICE/);
+  assert.match(read("components/ClientPortal.tsx"), /LOGO_DESIGN_PRICE/);
 });
 
 test("provider legal data is the registered individual entrepreneur", () => {

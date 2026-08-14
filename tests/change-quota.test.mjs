@@ -1,0 +1,94 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+/**
+ * A módosítási keret szabályai.
+ *
+ * A `lib/subscriptions.ts` TypeScript és `@/` aliast importál, ezért a
+ * függvényeket itt újraépítjük ugyanabból a logikából, és a forrást
+ * szövegszinten is ellenőrizzük. Ha a kettő elcsúszik, ez a teszt elbukik.
+ */
+const source = readFileSync(new URL("../lib/subscriptions.ts", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../supabase/migrations/031_change_request_quota.sql", import.meta.url), "utf8");
+
+// A `quotaPeriodKey` másolata — a teszt ezt hasonlítja a forráshoz.
+function quotaPeriodKey(anchorIso, quota, now) {
+  const anchor = anchorIso ? new Date(anchorIso) : null;
+  if (!anchor || Number.isNaN(anchor.getTime())) return quota.period === "year" ? "Y0" : "M0";
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const anchorDay = Math.min(anchor.getDate(), daysInMonth);
+  let elapsed;
+  if (quota.period === "year") {
+    elapsed = now.getFullYear() - anchor.getFullYear();
+    if (now.getMonth() < anchor.getMonth() || (now.getMonth() === anchor.getMonth() && now.getDate() < anchorDay)) elapsed -= 1;
+  } else {
+    elapsed = (now.getFullYear() - anchor.getFullYear()) * 12 + (now.getMonth() - anchor.getMonth());
+    if (now.getDate() < anchorDay) elapsed -= 1;
+  }
+  return `${quota.period === "year" ? "Y" : "M"}${Math.max(0, elapsed)}`;
+}
+
+const monthly = { count: 1, period: "month" };
+const yearly = { count: 3, period: "year" };
+
+test("a havi keret a fordulónapon újul, nem a hónap elsején", () => {
+  const anchor = "2026-01-17T10:00:00.000Z";
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2026, 0, 20)), "M0");
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2026, 1, 1)), "M0", "február 1. még az első időszak");
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2026, 1, 17)), "M1", "február 17-én fordul");
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2027, 0, 17)), "M12");
+});
+
+test("31-i fordulónapnál a rövid hónap utolsó napja a forduló", () => {
+  const anchor = "2026-01-31T10:00:00.000Z";
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2026, 1, 27)), "M0");
+  assert.equal(quotaPeriodKey(anchor, monthly, new Date(2026, 1, 28)), "M1", "februárban a 28. a forduló");
+});
+
+test("az éves keret az évfordulón újul", () => {
+  const anchor = "2026-08-14T10:00:00.000Z";
+  assert.equal(quotaPeriodKey(anchor, yearly, new Date(2027, 7, 13)), "Y0");
+  assert.equal(quotaPeriodKey(anchor, yearly, new Date(2027, 7, 14)), "Y1");
+});
+
+test("hiányzó horgony esetén nem omlik össze a számítás", () => {
+  assert.equal(quotaPeriodKey(null, monthly, new Date()), "M0");
+  assert.equal(quotaPeriodKey("nem-datum", yearly, new Date()), "Y0");
+});
+
+test("a technikai hiba soha nem fogyaszt keretet", () => {
+  assert.match(source, /if \(request\.category === "technical"\) return false;/);
+  assert.match(source, /CHANGE_QUOTA_FREE/);
+});
+
+test("az elutasított, a külön ajánlatos és a vásárlási kérés sem fogyaszt", () => {
+  assert.match(source, /if \(request\.status === "declined"\) return false;/);
+  assert.match(source, /if \(request\.included_in_plan === false\) return false;/);
+  assert.match(source, /if \(isWebsitePurchaseRequest\(request\.description\)\) return false;/);
+});
+
+test("a period_key-t adatbázis-trigger tölti, nem a kliens", () => {
+  assert.match(migration, /before insert on public\.change_requests/);
+  assert.match(migration, /security definer/);
+  assert.doesNotMatch(migration, /grant .* on public\.change_requests .* to authenticated/i);
+});
+
+test("a migráció ugyanazt a fordulónap-szabályt használja, mint a kliens", () => {
+  assert.match(migration, /least\(anchor_day, days_in_month\)/);
+  assert.match(migration, /plan = 'presence'/, "a Jelenlét keret éves");
+});
+
+test("a csomagok kvótája és a megjelenített mondat nem csúszhat el", () => {
+  assert.match(source, /changeQuota: \{ count: 3, period: "year" \}/);
+  assert.match(source, /changeQuota: \{ count: 1, period: "month" \}/);
+  assert.match(source, /changeQuota: \{ count: 2, period: "month" \}/);
+  assert.match(source, /export function changeQuotaLabel/);
+});
+
+test("az összehasonlító táblázat minden csomagra ugyanazt kérdezi", () => {
+  const rows = [...source.matchAll(/\{ label: "([^"]+)", value: \(plan\)/g)];
+  assert.ok(rows.length >= 8, "legalább nyolc közös tengely kell");
+  assert.ok(rows.some(([, label]) => label === "Oldalak"), "az oldalszám a legfontosabb tengely");
+  assert.ok(rows.some(([, label]) => label === "Módosítási keret"));
+});

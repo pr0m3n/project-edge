@@ -172,6 +172,8 @@ export type ChangeRequest = {
   included_in_plan: boolean | null;
   admin_note: string | null;
   requested_at: string;
+  /** A módosítási keret időszaka; a `031` migráció triggere tölti ki. */
+  period_key: string | null;
   quoted_amount: number | null;
   payment_reference: string | null;
   transfer_reported_at: string | null;

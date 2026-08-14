@@ -2,7 +2,20 @@
 
 import type { ClientChangeRequest, Project } from "@/components/portal/types";
 import { useState } from "react";
-import { formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, websitePurchaseRequestText } from "@/lib/subscriptions";
+import {
+  CHANGE_QUOTA_EXCLUDED,
+  CHANGE_QUOTA_FREE,
+  CHANGE_QUOTA_INCLUDED,
+  changeQuotaLabel,
+  consumesChangeQuota,
+  formatHuf,
+  isWebsitePurchaseRequest,
+  purchaseOptionPrice,
+  quotaPeriodKey,
+  quotaRenewsAt,
+  subscriptionPlan,
+  websitePurchaseRequestText
+} from "@/lib/subscriptions";
 
 type Props = {
   project: Project;
@@ -17,7 +30,10 @@ type Props = {
 
 export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onReportPurchaseTransfer, onRequestChange }: Props) {
   const plan = subscriptionPlan(project.subscription_plan);
-  const [composer, setComposer] = useState(false);
+  // A módosítás és a hibabejelentés ugyanazt az űrlapot használja, de más
+  // kategóriakészlettel — a kettő keveredése volt az egyik oka annak, hogy
+  // technikai hiba is „módosításnak" látszott.
+  const [composer, setComposer] = useState<false | "change" | "bug">(false);
   const [category, setCategory] = useState("content");
   const [description, setDescription] = useState("");
   const [purchaseSending, setPurchaseSending] = useState(false);
@@ -30,6 +46,19 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
   const purchaseRequestPending = purchaseRequest && !["completed", "declined"].includes(purchaseRequest.status);
   const purchasePrice = project.purchase_option_price ?? purchaseOptionPrice(project.subscription_plan);
 
+  // ── Módosítási keret ────────────────────────────────────────────────────
+  // A keret a számlázási fordulónaphoz igazodik. A technikai hiba sosem
+  // fogyaszt, ezért a hibabejelentés külön, keretfüggetlen útvonalon megy.
+  const quota = plan.changeQuota;
+  const billingAnchor = project.billing_cycle_started_at ?? project.created_at;
+  const currentPeriod = quotaPeriodKey(billingAnchor, quota);
+  const renewsAt = quotaRenewsAt(billingAnchor, quota);
+  const usedInPeriod = requests.filter(
+    (request) => (request.period_key ?? currentPeriod) === currentPeriod && consumesChangeQuota(request)
+  ).length;
+  const quotaLeft = Math.max(0, quota.count - usedInPeriod);
+  const quotaExhausted = quotaLeft === 0;
+
   return (
     <section className="managed-hub">
       <header className="managed-hub-head">
@@ -40,18 +69,94 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
       <div className="managed-metrics">
         <article><span>Csomag</span><strong>{plan.name}</strong><small>{formatHuf(project.monthly_price ?? plan.price)} / hó</small></article>
         <article><span>Következő időszak</span><strong>{project.next_billing_at ? new Date(project.next_billing_at).toLocaleDateString("hu-HU") : "Beállítás alatt"}</strong><small>Előre fizetett havidíj</small></article>
-        <article><span>Módosítási keret</span><strong>{plan.changes}</strong><small>{plan.response}</small></article>
+        <article className={quotaExhausted ? "quota-tile spent" : "quota-tile"}>
+          <span>Módosítási keret</span>
+          <strong>{usedInPeriod}/{quota.count} felhasználva</strong>
+          <small>{renewsAt ? `Újul: ${renewsAt.toLocaleDateString("hu-HU")}` : changeQuotaLabel(quota)}</small>
+        </article>
         <article><span>Utolsó ellenőrzés</span><strong>{project.last_health_check_at ? new Date(project.last_health_check_at).toLocaleDateString("hu-HU") : "Induláskor"}</strong><small>Domain · SSL · űrlapok</small></article>
       </div>
 
       <div className="managed-command-grid">
-        <article className="managed-command primary-command"><span>01 / MÓDOSÍTÁS</span><h4>Változott valami a vállalkozásodban?</h4><p>Kérj szöveg-, kép-, ár- vagy kisebb designmódosítást közvetlenül innen.</p><button className="button primary" type="button" onClick={() => setComposer(!composer)}>Új módosítás kérése</button></article>
-        <article className="managed-command"><span>02 / TECHNIKA</span><h4>A háttér a mi feladatunk.</h4><ul><li>Domain és SSL felügyelet</li><li>Hosting és hibajavítás</li><li>Űrlapok ellenőrzése</li><li>Rendszeres technikai frissítés</li></ul></article>
+        <article className="managed-command primary-command">
+          <span>01 / MÓDOSÍTÁS</span>
+          <h4>Változott valami a vállalkozásodban?</h4>
+          <p>
+            {quotaExhausted
+              ? `Az időszak kerete elfogyott. Kérést továbbra is küldhetsz — arra előzetes ajánlatot adok, és csak a jóváhagyásod után készül el.`
+              : `Szöveg, ár, kép vagy kisebb designmódosítás. Ebben az időszakban még ${quotaLeft} módosítás van a keretedben.`}
+          </p>
+          <button className="button primary" type="button" onClick={() => { setCategory("content"); setComposer(composer !== "change" ? "change" : false); }}>
+            {quotaExhausted ? "Módosítás kérése (ajánlattal)" : "Új módosítás kérése"}
+          </button>
+        </article>
+        <article className="managed-command">
+          <span>02 / HIBA</span>
+          <h4>Nem működik valami?</h4>
+          <p>A technikai hiba javítása a szolgáltatás része: <strong>soha nem fogyasztja a módosítási keretet</strong>, és nem kell hozzá ajánlat.</p>
+          <button className="button secondary" type="button" onClick={() => { setCategory("technical"); setComposer(composer !== "bug" ? "bug" : false); }}>
+            Hibát jelentek
+          </button>
+        </article>
       </div>
 
-      {composer ? <form className="change-composer" onSubmit={async (event) => { event.preventDefault(); if (!description.trim()) return; await onRequestChange(category, description); setDescription(""); setComposer(false); }}><div><label htmlFor={`change-category-${project.id}`}>Milyen kérés?</label><select id={`change-category-${project.id}`} value={category} onChange={(event) => setCategory(event.target.value)}><option value="content">Szöveg, kép vagy adat</option><option value="design">Kisebb designmódosítás</option><option value="technical">Technikai hiba</option><option value="new_feature">Új funkció</option></select></div><div><label htmlFor={`change-description-${project.id}`}>Írd le röviden</label><textarea id={`change-description-${project.id}`} required value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Mit módosítsunk, és mi legyen helyette?" /></div><button className="button primary" type="submit">Kérés elküldése</button></form> : null}
+      <details className="quota-explainer">
+        <summary>Mi számít bele a módosítási keretbe?</summary>
+        <div className="quota-explainer-grid">
+          <div><span>Beleszámít</span><ul>{CHANGE_QUOTA_INCLUDED.map((item) => <li key={item}>{item}</li>)}</ul></div>
+          <div><span>Külön ajánlat</span><ul>{CHANGE_QUOTA_EXCLUDED.map((item) => <li key={item}>{item}</li>)}</ul></div>
+          <div className="quota-free"><span>Mindig ingyenes</span><ul>{CHANGE_QUOTA_FREE.map((item) => <li key={item}>{item}</li>)}</ul></div>
+        </div>
+      </details>
 
-      {requests.length ? <div className="client-request-timeline"><div><strong>Kérések és vásárlási ügyek</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? request.transfer_reported_at ? "Utalás ellenőrzése" : "Folyamatban" : request.status === "waiting_client" ? "Fizetésre vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{isWebsitePurchaseRequest(request.description) ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "Weboldal megvásárlása: ") : request.description}</p><small>{isWebsitePurchaseRequest(request.description) ? `${request.quoted_amount ? formatHuf(request.quoted_amount) : "Vételár egyeztetés alatt"}${request.payment_reference ? ` · Közlemény: ${request.payment_reference}` : ""}` : request.included_in_plan === true ? "A csomag része" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}{isWebsitePurchaseRequest(request.description) && request.status === "waiting_client" && !request.transfer_reported_at ? <button className="button primary" type="button" onClick={() => onReportPurchaseTransfer(request.id)}>Elutaltam a vételárat</button> : null}</article>)}</div> : null}
+      {composer ? (
+        <form
+          className="change-composer"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!description.trim()) return;
+            await onRequestChange(composer === "bug" ? "technical" : category, description);
+            setDescription("");
+            setComposer(false);
+          }}
+        >
+          {composer === "bug" ? (
+            <div className="composer-note">
+              <strong>Hibabejelentés</strong>
+              <span>Ez nem fogyaszt a keretedből. Írd le, mit tapasztalsz, és hol.</span>
+            </div>
+          ) : (
+            <div>
+              <label htmlFor={`change-category-${project.id}`}>Milyen módosítás?</label>
+              <select id={`change-category-${project.id}`} value={category} onChange={(event) => setCategory(event.target.value)}>
+                <option value="content">Szöveg, kép vagy adat</option>
+                <option value="design">Kisebb designmódosítás</option>
+                <option value="new_feature">Új funkció — külön ajánlat</option>
+              </select>
+            </div>
+          )}
+          <div>
+            <label htmlFor={`change-description-${project.id}`}>Írd le röviden</label>
+            <textarea
+              id={`change-description-${project.id}`}
+              required
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={composer === "bug" ? "Mit tapasztalsz, melyik oldalon, mikortól?" : "Mit módosítsunk, és mi legyen helyette?"}
+            />
+          </div>
+          {composer === "change" && category !== "new_feature" ? (
+            <small className="composer-hint">
+              {quotaExhausted
+                ? "Az időszak kerete elfogyott — erre előzetes ajánlatot küldök, és csak a jóváhagyásod után készül el."
+                : `Ez a kérés a keretedbe fog számítani (${usedInPeriod + 1}/${quota.count}), ha kisebb módosításnak minősül.`}
+            </small>
+          ) : null}
+          <button className="button primary" type="submit">{composer === "bug" ? "Hiba bejelentése" : "Kérés elküldése"}</button>
+        </form>
+      ) : null}
+
+      {requests.length ? <div className="client-request-timeline"><div><strong>Kérések és vásárlási ügyek</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? request.transfer_reported_at ? "Utalás ellenőrzése" : "Folyamatban" : request.status === "waiting_client" ? "Fizetésre vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{isWebsitePurchaseRequest(request.description) ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "Weboldal megvásárlása: ") : request.description}</p><small>{isWebsitePurchaseRequest(request.description) ? `${request.quoted_amount ? formatHuf(request.quoted_amount) : "Vételár egyeztetés alatt"}${request.payment_reference ? ` · Közlemény: ${request.payment_reference}` : ""}` : request.category === "technical" ? "Technikai hiba — nem fogyaszt keretet" : request.included_in_plan === true ? "A keretbe beleszámít" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}{isWebsitePurchaseRequest(request.description) && request.status === "waiting_client" && !request.transfer_reported_at ? <button className="button primary" type="button" onClick={() => onReportPurchaseTransfer(request.id)}>Elutaltam a vételárat</button> : null}</article>)}</div> : null}
 
       <details className="subscription-manage">
         <summary>Előfizetés kezelése</summary>

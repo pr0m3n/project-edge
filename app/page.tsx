@@ -56,7 +56,7 @@ const faqs = [
   ],
   [
     "Mi van, ha nem tetszik az irány?",
-    "Előbb kapsz egy látványtervet, és azon módosítunk, amíg jó nem lesz. Nem a végén derül ki, hogy nem ezt szeretted volna."
+    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Csak a jóváhagyásod után kerül ki élesbe."
   ],
   [
     "Kell hozzá saját domain és tárhely?",

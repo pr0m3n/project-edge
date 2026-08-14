@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { PRICE_TAX_NOTE, PURCHASE_PRICES, SUBSCRIPTION_PLANS, formatHuf, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import {
+  CHANGE_QUOTA_EXCLUDED,
+  CHANGE_QUOTA_FREE,
+  CHANGE_QUOTA_INCLUDED,
+  PLAN_COMPARISON_ROWS,
+  PLAN_DECISION_RULE,
+  PRICE_TAX_NOTE,
+  PURCHASE_PRICES,
+  SUBSCRIPTION_PLANS,
+  SUBSCRIPTION_SHARED_INCLUDED,
+  formatHuf,
+  type SubscriptionPlanKey
+} from "@/lib/subscriptions";
 import { TransitionLink } from "@/components/TransitionLink";
 import { trackEvent } from "@/lib/analytics";
 
@@ -68,7 +80,8 @@ export function PriceEstimator() {
                 <div className="plan-number">{plan.key === "presence" ? "01" : plan.key === "business" ? "02" : "03"}</div>
                 <h3>{plan.name}</h3>
                 <p>{plan.short}</p>
-                <div className="plan-fit"><span>Kinek való?</span><p>{plan.idealFor}</p></div>
+                <div className="plan-scope"><strong>{plan.pages}</strong><span>{plan.buildTime.replace("Jellemzően ", "elkészül ")}</span></div>
+                <div className="plan-fit"><span>Válaszd, ha…</span><p>{PLAN_DECISION_RULE[plan.key]}</p></div>
                 <div className="plan-price"><strong>{formatHuf(plan.price)}</strong><span>/ hó</span></div>
                 <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
                 <div className="plan-meta"><span>{plan.changes}</span><span>{plan.response}</span></div>
@@ -77,6 +90,50 @@ export function PriceEstimator() {
               </article>
             ))}
           </div>
+          {/* Közös tengelyek. A három külön jellemzőlistából nem derült ki, mi a
+              különbség — itt minden sor ugyanazt a kérdést teszi fel. */}
+          <section className="plan-compare" aria-labelledby="plan-compare-title">
+            <header>
+              <h3 id="plan-compare-title">Mi a különbség a csomagok között?</h3>
+              <p>Ugyanaz a kérdés mindhárom oszlopban, hogy egyben lásd a különbséget.</p>
+            </header>
+            <div className="plan-compare-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">&nbsp;</th>
+                    {SUBSCRIPTION_PLANS.map((plan) => (
+                      <th className={plan.featured ? "featured-col" : ""} key={plan.key} scope="col">{plan.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {PLAN_COMPARISON_ROWS.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row">{row.label}</th>
+                      {SUBSCRIPTION_PLANS.map((plan) => (
+                        <td className={plan.featured ? "featured-col" : ""} key={plan.key}>{row.value(plan)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="plan-shared">
+              <span>Mindhárom csomagban benne van</span>
+              <ul>{SUBSCRIPTION_SHARED_INCLUDED.map((item) => <li key={item}>{item}</li>)}</ul>
+            </div>
+            <details className="plan-quota-explainer">
+              <summary>Mi számít „kisebb módosításnak"?</summary>
+              <div>
+                <div><span>Beleszámít a keretbe</span><ul>{CHANGE_QUOTA_INCLUDED.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                <div><span>Külön ajánlat</span><ul>{CHANGE_QUOTA_EXCLUDED.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                <div className="quota-free"><span>Mindig ingyenes</span><ul>{CHANGE_QUOTA_FREE.map((item) => <li key={item}>{item}</li>)}</ul></div>
+              </div>
+              <p>A felhasznált keretet az ügyfélkapun bármikor látod — nem kell számolgatnod.</p>
+            </details>
+          </section>
+
           <section className="plan-detail-panel" id="csomag-reszletek">
             <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>

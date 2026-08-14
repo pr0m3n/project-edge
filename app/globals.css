@@ -6959,6 +6959,175 @@ p {
   text-transform: uppercase;
 }
 
+/* ── AI építési prompt panel (admin) ── */
+.ai-prompt-panel {
+  background: linear-gradient(160deg, rgba(48, 56, 65, 0.06), rgba(118, 171, 174, 0.08));
+  border: 1px solid rgba(48, 56, 65, 0.14);
+  border-radius: 22px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.ai-prompt-head {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ai-prompt-head > div > span {
+  color: #5f9296;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.6px;
+}
+
+.ai-prompt-head h4 {
+  font-size: 20px;
+  margin: 4px 0 6px;
+}
+
+.ai-prompt-head p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.ai-prompt-metrics {
+  display: flex;
+  gap: 10px;
+}
+
+.ai-prompt-metrics div {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(48, 56, 65, 0.1);
+  border-radius: 14px;
+  display: grid;
+  gap: 2px;
+  min-width: 84px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.ai-prompt-metrics span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.ai-prompt-metrics strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.ai-prompt-controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-prompt-sections {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.ai-prompt-sections button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(48, 56, 65, 0.12);
+  border-radius: 14px;
+  column-gap: 10px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  padding: 10px 12px;
+  text-align: left;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.ai-prompt-sections button:hover {
+  border-color: rgba(118, 171, 174, 0.55);
+}
+
+.ai-prompt-sections button.selected {
+  background: rgba(118, 171, 174, 0.16);
+  border-color: rgba(118, 171, 174, 0.6);
+}
+
+.ai-prompt-sections b {
+  color: #5f9296;
+  font-size: 14px;
+  grid-row: span 2;
+}
+
+.ai-prompt-sections span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-prompt-sections small {
+  color: var(--muted);
+  font-size: 11px;
+  grid-column: 2;
+  line-height: 1.35;
+}
+
+.ai-prompt-switches {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-prompt-switches label {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-size: 13px;
+  gap: 10px;
+}
+
+.ai-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ai-prompt-actions .button {
+  min-height: auto;
+  padding: 10px 16px;
+}
+
+.ai-prompt-preview {
+  background: #20242a;
+  border-radius: 16px;
+  color: #e6ece9;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 10px 0 0;
+  max-height: 460px;
+  overflow: auto;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 760px) {
+  .ai-prompt-head,
+  .ai-prompt-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-prompt-metrics {
+    flex-wrap: wrap;
+  }
+}
+
 /* ════════════════════════════════════════════════
    2025 SHOWCASE + PROOF LAYER
    ════════════════════════════════════════════════ */
@@ -10393,3 +10562,316 @@ p {
 }
 
 
+
+/* ════════════════════════════════════════════════
+   CSOMAG-ÖSSZEHASONLÍTÁS ÉS MÓDOSÍTÁSI KERET
+   ════════════════════════════════════════════════ */
+
+/* ── Oldalszám és határidő a csomagkártyán ── */
+.plan-scope {
+  border-bottom: 1px solid rgba(48, 56, 65, 0.12);
+  border-top: 1px solid rgba(48, 56, 65, 0.12);
+  display: grid;
+  gap: 2px;
+  margin: 12px 0;
+  padding: 10px 0;
+}
+
+.plan-scope strong {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.plan-scope span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.subscription-plan.featured .plan-scope {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.subscription-plan.featured .plan-scope span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Összehasonlító táblázat ── */
+.plan-compare {
+  background: rgba(48, 56, 65, 0.04);
+  border: 1px solid rgba(48, 56, 65, 0.1);
+  border-radius: 24px;
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.plan-compare > header h3 {
+  font-size: clamp(20px, 2.4vw, 28px);
+  margin: 0 0 6px;
+}
+
+.plan-compare > header p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.plan-compare-scroll {
+  overflow-x: auto;
+}
+
+.plan-compare table {
+  border-collapse: collapse;
+  min-width: 640px;
+  width: 100%;
+}
+
+.plan-compare th,
+.plan-compare td {
+  border-bottom: 1px solid rgba(48, 56, 65, 0.1);
+  font-size: 13px;
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.plan-compare thead th {
+  border-bottom: 2px solid rgba(48, 56, 65, 0.2);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.plan-compare tbody th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.plan-compare .featured-col {
+  background: rgba(118, 171, 174, 0.12);
+}
+
+.plan-compare tr:last-child th,
+.plan-compare tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ── Ami mindhárom csomagban benne van ── */
+.plan-shared {
+  background: rgba(118, 171, 174, 0.1);
+  border: 1px solid rgba(118, 171, 174, 0.28);
+  border-radius: 18px;
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.plan-shared > span {
+  color: #35696d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.plan-shared ul {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plan-shared li {
+  font-size: 13px;
+  line-height: 1.4;
+  padding-left: 20px;
+  position: relative;
+}
+
+.plan-shared li::before {
+  color: #35696d;
+  content: "✓";
+  font-weight: 900;
+  left: 0;
+  position: absolute;
+}
+
+/* ── „Mi számít kisebb módosításnak?" ── */
+.plan-quota-explainer > summary,
+.quota-explainer > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 0;
+}
+
+.plan-quota-explainer > div,
+.quota-explainer-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin-top: 8px;
+}
+
+.plan-quota-explainer > div > div,
+.quota-explainer-grid > div {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(48, 56, 65, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.plan-quota-explainer .quota-free,
+.quota-explainer-grid .quota-free {
+  background: rgba(118, 171, 174, 0.14);
+  border-color: rgba(118, 171, 174, 0.4);
+}
+
+.plan-quota-explainer span,
+.quota-explainer-grid span {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.plan-quota-explainer ul,
+.quota-explainer-grid ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plan-quota-explainer li,
+.quota-explainer-grid li {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.plan-quota-explainer > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0 0;
+}
+
+/* ── Keretszámláló az ügyfélkapun ── */
+.managed-metrics .quota-tile.spent strong {
+  color: #c0562c;
+}
+
+.quota-explainer {
+  background: rgba(48, 56, 65, 0.04);
+  border: 1px solid rgba(48, 56, 65, 0.1);
+  border-radius: 18px;
+  padding: 6px 16px 14px;
+}
+
+.composer-note {
+  background: rgba(118, 171, 174, 0.14);
+  border-radius: 12px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+}
+
+.composer-note span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.composer-hint {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ── Keret jelzés az adminban ── */
+.quota-badge {
+  background: rgba(118, 171, 174, 0.16);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.quota-badge.over {
+  background: rgba(220, 53, 69, 0.16);
+  color: #c0392b;
+}
+
+.request-free-note {
+  color: #35696d;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ── Két útvonal a folyamat oldalon ── */
+.flow-split {
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(40px, 6vw, 80px) 18px 0;
+}
+
+.flow-split-head h2 {
+  font-size: clamp(26px, 3.6vw, 44px);
+  margin: 8px 0 0;
+}
+
+.flow-split-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.flow-split-grid article {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+
+.flow-split-grid > article > span {
+  color: #76abae;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.flow-split-grid ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.flow-split-grid li {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.flow-split-grid p {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 12px;
+}

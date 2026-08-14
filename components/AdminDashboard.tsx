@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/feedback";
 import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
+import { AiBuildPromptPanel } from "@/components/admin/AiBuildPromptPanel";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
-import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
+import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
 import { parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
@@ -1799,7 +1800,23 @@ export function AdminDashboard() {
                     <div className="managed-request-list">
                       <div className="managed-request-list-head">
                         <strong>Módosítások és vásárlási ügyek</strong>
-                        <span>{changeRequests.filter((request) => request.project_id === project.id && !["completed", "declined"].includes(request.status)).length} nyitott</span>
+                        {(() => {
+                          // A keret az ügyfélnél is ugyanígy számolódik — itt azért
+                          // látszik, hogy a „benne van a csomagban?" döntés előtt
+                          // tudd, hol tart az adott időszak.
+                          const plan = subscriptionPlan(project.subscription_plan);
+                          const period = quotaPeriodKey(project.billing_cycle_started_at ?? project.created_at, plan.changeQuota);
+                          const used = changeRequests.filter((request) =>
+                            request.project_id === project.id
+                            && (request.period_key ?? period) === period
+                            && consumesChangeQuota(request)
+                          ).length;
+                          return (
+                            <span className={used > plan.changeQuota.count ? "quota-badge over" : "quota-badge"}>
+                              Keret: {used}/{plan.changeQuota.count} · {changeRequests.filter((request) => request.project_id === project.id && !["completed", "declined"].includes(request.status)).length} nyitott
+                            </span>
+                          );
+                        })()}
                       </div>
                       {changeRequests.filter((request) => request.project_id === project.id).map((request) => {
                         const purchase = isWebsitePurchaseRequest(request.description);
@@ -1811,7 +1828,8 @@ export function AdminDashboard() {
                               {purchase ? <small>Folyamat: átadási összefoglaló → fizetési adatok → fizetés ellenőrzése → forráskód és hozzáférések átadása → előfizetés lezárása.</small> : null}
                             </div>
                             <div>
-                              {!purchase ? <select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select> : null}
+                              {!purchase && request.category !== "technical" ? <select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select> : null}
+                              {request.category === "technical" ? <small className="request-free-note">Technikai hiba — nem fogyaszt keretet, javítás a szolgáltatás része.</small> : null}
                               <select value={request.status} onChange={(event) => updateChangeRequest(request.id, { status: event.target.value as ChangeRequest["status"] })}><option value="new">Igény beérkezett</option><option value="planned">Átadás előkészítése</option><option value="in_progress">Folyamatban</option><option value="waiting_client">Ügyfél fizetésére / válaszára vár</option><option value="completed" disabled={purchase}>Lezárva{purchase ? " — csak fizetésigazolással" : ""}</option><option value="declined">Nem folytatható</option></select>
                               <textarea defaultValue={request.admin_note ?? ""} onBlur={(event) => { if (event.target.value !== (request.admin_note ?? "")) updateChangeRequest(request.id, { admin_note: event.target.value || null }); }} placeholder={purchase ? "Ügyfélnek látható átadási vagy fizetési információ…" : "Ügyfélnek látható megjegyzés…"} />
                               {purchase && request.quoted_amount ? <small>Vételár: {formatHuf(request.quoted_amount)} · Közlemény: {request.payment_reference ?? "nincs"}</small> : null}
@@ -1884,6 +1902,25 @@ export function AdminDashboard() {
                   </div>
                 </section>
               ) : null}
+
+              <AiBuildPromptPanel
+                onNotify={setMessage}
+                project={{
+                  title: project.title,
+                  company: project.company,
+                  website: project.website,
+                  commercialModel: project.commercial_model,
+                  subscriptionPlanKey: project.subscription_plan,
+                  monthlyPrice: project.monthly_price,
+                  managedDomain: project.managed_domain_name,
+                  logoUrl: project.logo_url,
+                  adminNotes: project.admin_notes,
+                  contactName: project.contact_name,
+                  contactEmail: project.contact_email,
+                  brief: project.brief_data ?? null,
+                  parsed: brief
+                }}
+              />
 
               {project.logo_url ? (
                 <section className="admin-assets-block">
