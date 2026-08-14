@@ -11030,3 +11030,72 @@ p {
   line-height: 1.45;
   padding-top: 10px;
 }
+
+/* ── Brief: az egyedi projekt halk kiútja a csomagválasztó alatt ── */
+.brief-plan-escape {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 14px 0 0;
+  padding-top: 12px;
+}
+
+.brief-plan-escape button {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  color: #76abae;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.brief-custom-mode {
+  align-items: center;
+  background: rgba(48, 56, 65, 0.06);
+  border: 1px solid rgba(48, 56, 65, 0.14);
+  border-radius: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+}
+
+.brief-custom-mode span {
+  color: #5f9296;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.brief-custom-mode strong {
+  display: block;
+  font-size: 16px;
+  margin: 4px 0 4px;
+}
+
+.brief-custom-mode p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.brief-mode-switch {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.brief-mode-switch:hover {
+  border-color: #76abae;
+}

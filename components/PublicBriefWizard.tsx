@@ -12,7 +12,7 @@ import {
 import { LOGO_DESIGN_PRICE, formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
 import { trackEvent } from "@/lib/analytics";
 
-const steps = ["Konstrukció", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
+const steps = ["Csomag", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
 const projectTypes = [
   ["premium-business-site", "Céges weboldal"],
   ["redesign", "Meglévő oldal megújítása"],
@@ -200,11 +200,15 @@ export function PublicBriefWizard() {
         <div className="public-brief-layout">
           <form className="public-brief-form" onSubmit={(event) => event.preventDefault()}>
             {step === 0 ? <div className="public-brief-slide">
-              <header><span>01 / Konstrukció</span><h3>Hogyan szeretnéd használni az oldalt?</h3><p>Választhatsz gondtalan havidíjas üzemeltetést vagy teljes tulajdonba kerülő projektet.</p></header>
-              <div className="public-choice-grid two">
-                <button className={form.commercialModel === "subscription" ? "selected" : ""} onClick={() => update({ commercialModel: "subscription", budget: "subscription", domainStatus: "need", hostingAccess: "managed" })} type="button"><small>INDULÓ DÍJ NÉLKÜL</small><strong>Weboldal-előfizetés</strong><p>Domain, tárhely és technikai felügyelet egy havidíjban.</p></button>
-                <button className={form.commercialModel === "purchase" ? "selected" : ""} onClick={() => update({ commercialModel: "purchase", budget: "not-sure" })} type="button"><small>EGYEDI PROJEKT</small><strong>Egyszeri fejlesztés</strong><p>Webapp, ügyfélkapu vagy meglévő oldal átalakítása.</p></button>
-              </div>
+              {/* Nincs konstrukcióválasztás: a weboldal bérelhető, és ha később
+                  a sajátod lenne, a bérlésből hívod le a vételi opciót. Új
+                  weboldalt teljes áron megvenni sehol nem lehet.
+                  A webapp / ügyfélkapu / meglévő oldal átalakítása külön út,
+                  a /szolgaltatasok „Egyedi projekt indítása" gombjáról indul
+                  (`/ugyfelkapu?model=purchase`) — ide szándékosan nem kerül be.
+                  A `purchase` ágak lentebb megmaradnak a régi, még be nem
+                  küldött piszkozatok miatt. */}
+              <header><span>01 / Csomag</span><h3>Mekkora weboldalra van szükséged?</h3><p>Havidíjas, menedzselt weboldal — induló díj nélkül. A domaint, a tárhelyet és a karbantartást is mi intézzük.</p></header>
               {form.commercialModel === "subscription" ? <div className="public-plan-grid">
                 {SUBSCRIPTION_PLANS.map((plan) => <button className={form.subscriptionPlan === plan.key ? "selected" : ""} key={plan.key} onClick={() => update({ subscriptionPlan: plan.key })} type="button"><span>{plan.name}</span><strong>{formatHuf(plan.price)}<small>/hó</small></strong><p>{plan.short}</p></button>)}
               </div> : <div className="public-chip-grid">
@@ -261,7 +265,7 @@ export function PublicBriefWizard() {
             {step === 4 ? <div className="public-brief-slide public-summary">
               <header><span>05 / Ellenőrzés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. Belépés után kiegészítheted a privát anyagokkal, majd külön jóváhagyással küldheted be.</p></header>
               <div className="public-summary-grid">
-                <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Saját tulajdonú projekt"}</strong></div>
+                <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Egyedi projekt · egyszeri fejlesztés"}</strong></div>
                 <div><span>Márka</span><strong>{form.company}</strong></div>
                 <div><span>Elsődleges cél</span><strong>{form.primaryAction}</strong></div>
                 <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {form.palette === "custom" ? "Egyedi paletta" : selectedPalette[1]}</strong></div>
