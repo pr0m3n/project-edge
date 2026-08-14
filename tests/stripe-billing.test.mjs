@@ -10,7 +10,7 @@ test("subscription checkout is server-priced and webhook verified", () => {
   assert.match(checkout, /subscriptionPlan\(project\.subscription_plan\)/);
   assert.match(checkout, /unit_amount: hufToStripeAmount\(monthlyPrice\)/);
   assert.match(checkout, /adaptive_pricing: \{ enabled: false \}/);
-  assert.match(checkout, /projectedge-subscription-v2-/);
+  assert.match(checkout, /projectedge-subscription-v3-/);
   assert.doesNotMatch(checkout, /body\.(amount|price)/);
   assert.match(checkout, /createServerSupabaseUserClient\(accessToken\)/);
   assert.match(checkout, /Stripe checkout admin connection failed/);

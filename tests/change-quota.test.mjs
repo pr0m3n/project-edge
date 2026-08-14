@@ -172,3 +172,21 @@ function SHARED_HAS_ACK(src) {
 test("a „prioritásos ügyintézés” homályos felirat eltűnt", () => {
   assert.doesNotMatch(source, /"Prioritásos ügyintézés"/);
 });
+
+test("az éles rendszerpróba kedvezménye kettős kapuhoz kötött", () => {
+  const checkout = readFileSync(new URL("../app/api/stripe/checkout/route.ts", import.meta.url), "utf8");
+
+  // Env változó ÉS admin jogosultság — egyik önmagában nem elég.
+  assert.match(checkout, /const applyTestCoupon = Boolean\(testCoupon\) && await isAdminUser\(request, user\.id\)/);
+
+  // A kupon csak akkor kerül a munkamenetbe, ha mindkét feltétel teljesült.
+  assert.match(checkout, /\.\.\.\(applyTestCoupon \? \{ discounts: \[\{ coupon: testCoupon \}\] \} : \{\}\)/);
+
+  // A vásárlónak megjelenő kuponmezőt NEM kapcsoljuk be (konverziós veszteség).
+  // Kódhasználatot keresünk, nem a magyarázó kommentet.
+  assert.doesNotMatch(checkout, /allow_promotion_codes\s*:/);
+
+  // A kedvezmény része az idempotencia-kulcsnak, különben a Stripe a korábbi,
+  // teljes árú munkamenetet adná vissza.
+  assert.match(checkout, /idempotencyKey: `projectedge-subscription-v3-.*applyTestCoupon \? testCoupon : "full"/);
+});
