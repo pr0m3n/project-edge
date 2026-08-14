@@ -220,13 +220,6 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   }
 ];
 
-export const PURCHASE_PRICES = [
-  { name: "Landing oldal", price: "179 000 Ft-tól" },
-  { name: "Üzleti weboldal", price: "329 000 Ft-tól" },
-  { name: "Egyedi weboldal", price: "599 000 Ft-tól" },
-  { name: "Webapp / ügyfélkapu", price: "Egyedi ajánlat" }
-];
-
 export function subscriptionPlan(key?: string | null) {
   return SUBSCRIPTION_PLANS.find((plan) => plan.key === key) ?? SUBSCRIPTION_PLANS[1];
 }

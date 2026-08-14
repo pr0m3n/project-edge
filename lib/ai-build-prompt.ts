@@ -227,6 +227,7 @@ export function buildAiBuildPrompt(project: AiPromptProject, options: AiPromptOp
     ["Egyéb", text(brief?.otherSocialLinks) || text(brief?.socialLinks)]
   ]);
 
+  const logoDesignRequested = !project.logoUrl && text(brief?.wantLogoDesign) === "yes";
   const photoUrls = options.includeAssetUrls ? list(brief?.photoUrls) : [];
   const contentUrls = options.includeAssetUrls ? list(brief?.contentFileUrls) : [];
 
@@ -390,7 +391,14 @@ export function buildAiBuildPrompt(project: AiPromptProject, options: AiPromptOp
       "8. Anyagok, elérhetőségek, linkek",
       [
         fieldLines([
-          ["Logó", project.logoUrl ? (options.includeAssetUrls ? project.logoUrl : "van feltöltve (URL kihagyva)") : "nincs — készíts letisztult szöveges (wordmark) logót a márkanévből"],
+          ["Logó", project.logoUrl
+            ? (options.includeAssetUrls ? project.logoUrl : "van feltöltve (URL kihagyva)")
+            : logoDesignRequested
+              ? "nincs — az ügyfél külön logótervezést kért, az alábbi irány szerint"
+              : "nincs — készíts letisztult szöveges (wordmark) logót a márkanévből"],
+          ["Kért logótípus", logoDesignRequested ? (text(brief?.logoStyle) ? parsed["Logó típusa"] || text(brief?.logoStyle) : "") : ""],
+          ["Logó színei", logoDesignRequested ? parsed["Logó színei"] || "" : ""],
+          ["Logó leírás", logoDesignRequested ? text(brief?.logoBrief) || parsed["Logó leírás"] || "" : ""],
           ["Nyilvános e-mail", publicEmail],
           ["Nyilvános telefon", publicPhone],
           ["Kapcsolattartó", options.includeContact ? [project.contactName, project.contactEmail].filter(Boolean).join(" · ") : ""]

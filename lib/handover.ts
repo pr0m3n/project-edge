@@ -18,7 +18,7 @@
  * halad át.
  */
 
-export type HandoverService = "vercel" | "supabase" | "resend" | "github" | "dns";
+export type HandoverService = "vercel" | "supabase" | "resend" | "github" | "dns" | "domain";
 export type HandoverOwner = "client" | "admin";
 
 export type HandoverStepState = {
@@ -54,7 +54,8 @@ export const HANDOVER_SERVICE_LABELS: Record<HandoverService, string> = {
   supabase: "Supabase (adatbázis és belépés)",
   resend: "Resend (email küldés)",
   github: "GitHub (a forráskód)",
-  dns: "Domain és DNS"
+  dns: "Domain és DNS",
+  domain: "Domain átírása a nevedre"
 };
 
 export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
@@ -272,6 +273,62 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     guide: { label: "Domainvásárlási útmutató (PDF)", href: "/guides/projectedge-domainvasarlas-rackhost.pdf" }
   },
 
+  // ── Domain átírása (CSAK bérlésből kivásárlásnál) ─────────────────────────
+  //
+  // Ez a blokk a `dns` szolgáltatás párja, nem a kiegészítője. A `dns` lépések
+  // azt feltételezik, hogy a domain MÁR az ügyfélé, és csak a rekordokat kell
+  // beállítani — ez igaz egy egyszeri projektnél. Bérlésnél viszont a domain a
+  // Szolgáltató regisztrátori fiókjában, az ő nevén van (ÁSZF 7. pont), tehát
+  // előbb át kell írni. Ezért a kivásárlási terv a `domain` szolgáltatást kapja
+  // a `dns` helyett — a kettőt soha ne tedd ugyanabba a tervbe.
+  {
+    id: "domain_account",
+    service: "domain",
+    owner: "client",
+    title: "Hozz létre saját fiókot a domain szolgáltatónál",
+    detail:
+      "Eddig a domaint mi tartottuk fenn a saját fiókunkban, és a díját a havidíj tartalmazta. Ahhoz, hogy a tiéd legyen, kell egy saját fiók a regisztrátornál. Regisztrálj, majd add meg itt a fiókhoz tartozó email címet — erre fogjuk átírni a domaint.",
+    where:
+      "A regisztráció után nem kell semmit beállítanod: a domain még nálunk van, mi indítjuk az átírást a következő lépésben.",
+    links: [{ label: "Rackhost regisztráció", url: "https://rackhost.hu" }],
+    guide: { label: "Domain útmutató (PDF)", href: "/guides/projectedge-domainvasarlas-rackhost.pdf" },
+    input: {
+      label: "A domain fiókodhoz tartozó email cím",
+      placeholder: "pl. iroda@vallalkozasod.hu",
+      sharedWith: "admin"
+    }
+  },
+  {
+    id: "domain_transfer",
+    service: "domain",
+    owner: "admin",
+    title: "A domain átírásának elindítása",
+    detail:
+      "Ezt mi indítjuk: kezdeményezzük a domain használói jogának átírását a megadott fiókodra. A .hu domaineknél ehhez a regisztrátor írásos nyilatkozatot kér mindkét féltől — a pontos teendőidet és a kitöltendő űrlapot itt írjuk le, nem emailben.",
+    input: {
+      label: "Az ügyfél teendői az átíráshoz (ő ezt fogja látni)",
+      placeholder: "pl. A regisztrátor küld egy megerősítő emailt a megadott címre — kattints benne a jóváhagyásra. A domainhasználó-váltási nyilatkozatot aláírva küldd vissza.",
+      multiline: true,
+      sharedWith: "client"
+    }
+  },
+  {
+    id: "domain_confirm",
+    service: "domain",
+    owner: "client",
+    title: "Ellenőrizd: a domain a te fiókodban van",
+    detail:
+      "Lépj be a saját domain fiókodba, és nézd meg, hogy a domain ott szerepel. Ha látod, jelöld itt készre.",
+    where: "A regisztrátor felületén a Domainek (vagy Domain kezelés) menüpontban kell látnod a nevet.",
+    warning:
+      "Innentől a domain megújítási díja téged terhel, és a megújítás elmulasztása az oldal leállásához vezet. Írd fel a lejárati dátumot, vagy kapcsold be az automatikus megújítást a fiókodban.",
+    input: {
+      label: "A domain lejárati dátuma, ahogy a fiókodban látod",
+      placeholder: "pl. 2027-03-14",
+      sharedWith: "admin"
+    }
+  },
+
   // ── GitHub ────────────────────────────────────────────────────────────────
   {
     id: "github_account",
@@ -330,7 +387,15 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
 
 const DEF_BY_ID = new Map(HANDOVER_STEP_DEFS.map((def) => [def.id, def]));
 
-export const ALL_HANDOVER_SERVICES: HandoverService[] = ["vercel", "supabase", "resend", "github", "dns"];
+/**
+ * A `dns` és a `domain` egymás alternatívái, nem kiegészítői:
+ * - `dns`: az ügyfél már birtokolja a domaint, csak rekordot kell felvennie
+ *   (egyszeri projekt).
+ * - `domain`: a domain nálunk van, a mi nevünkön, tehát át kell írni
+ *   (bérlésből kivásárlás).
+ * Ezért a kettőt együtt nem szabad bekapcsolni — lásd `reconcileHandoverPlan`.
+ */
+export const ALL_HANDOVER_SERVICES: HandoverService[] = ["vercel", "supabase", "resend", "github", "dns", "domain"];
 
 /**
  * Alapértelmezett összetevők, ha az admin nem jelölte ki őket.
@@ -343,9 +408,23 @@ export const ALL_HANDOVER_SERVICES: HandoverService[] = ["vercel", "supabase", "
  */
 export const DEFAULT_HANDOVER_SERVICES: HandoverService[] = ["vercel", "dns"];
 
+/**
+ * A domain kétféle kezelése kizárja egymást.
+ *
+ * Ha mindkettő bekerülne a tervbe, az ügyfél egyszerre kapna „vedd fel a
+ * rekordokat a domainednél" és „hozz létre fiókot, mert átírjuk rád" lépést —
+ * a kettő ellentmond. Az átírás a szűkebb, erősebb eset, ezért az nyer.
+ */
+function resolveDomainServices(services: HandoverService[]): HandoverService[] {
+  if (services.includes("domain") && services.includes("dns")) {
+    return services.filter((service) => service !== "dns");
+  }
+  return services;
+}
+
 /** Az átadási terv összeállítása: csak azok a szolgáltatások kerülnek bele, amiket a projekt valóban használ. */
 export function buildHandoverPlan(services: HandoverService[]): HandoverStepState[] {
-  const active = new Set(services);
+  const active = new Set(resolveDomainServices(services));
   return HANDOVER_STEP_DEFS.filter((def) => active.has(def.service)).map((def) => ({
     id: def.id,
     owner: def.owner,
@@ -361,7 +440,7 @@ export function reconcileHandoverPlan(
   services: HandoverService[]
 ): HandoverStepState[] {
   const previous = new Map((current ?? []).map((step) => [step.id, step]));
-  const active = new Set(services);
+  const active = new Set(resolveDomainServices(services));
   return HANDOVER_STEP_DEFS.filter((def) => active.has(def.service)).map((def) => {
     const existing = previous.get(def.id);
     return {

@@ -118,6 +118,35 @@ export const wpAccessLabels: Record<string, string> = {
   no: "nincs hozzáférés, de a tartalmat elküldi"
 };
 
+/**
+ * Logótervezési igény részletei.
+ *
+ * Eddig csak egy igen/nem volt, és az is kizárólag egyszeri projektnél — aki
+ * bérelt és nem volt logója, sehol nem tudta jelezni, hogy szeretne egyet.
+ * A típus és a színirány azért külön kérdés, mert a `brandColors` mező az
+ * OLDAL színeire vonatkozik, ami nem feltétlenül azonos a logóéval.
+ */
+export const logoStyleOptions: Array<[string, string, string]> = [
+  ["wordmark", "Csak szöveg", "A márkanév karakteres betűtípussal. Letisztult, jól működik kis méretben is."],
+  ["symbol", "Jelkép + szöveg", "Egy egyszerű ábra a név mellett. Ez a leggyakoribb választás."],
+  ["monogram", "Monogram", "A kezdőbetűkből épített jel. Hosszabb cégnévnél hasznos."],
+  ["unsure", "Nem tudom, bízom rád", "Adok két irányt, és a tetszőt visszük tovább."]
+];
+
+export const logoColorSourceOptions: Array<[string, string]> = [
+  ["brand", "A megadott márkaszínekből"],
+  ["palette", "Az oldal színpalettájából"],
+  ["custom", "Külön megadom lent"]
+];
+
+export const logoStyleLabels: Record<string, string> = Object.fromEntries(
+  logoStyleOptions.map(([value, label]) => [value, label])
+);
+
+export const logoColorSourceLabels: Record<string, string> = Object.fromEntries(
+  logoColorSourceOptions.map(([value, label]) => [value, label])
+);
+
 export const logoLabels: Record<string, string> = {
   yes: "van, feltöltve",
   no: "nincs logó",
@@ -171,6 +200,16 @@ export function buildBriefText(form: BriefFormValues) {
       }`
     : "";
 
+  // Külön sorok, hogy az admin nézetben és az AI-promptban is önállóan
+  // megjelenjenek — a `parseBrief` „Címke: érték" párokat olvas vissza.
+  const logoDesignLines = form.logoStatus === "no" && form.wantLogoDesign === "yes"
+    ? [
+        form.logoStyle ? `Logó típusa: ${logoStyleLabels[form.logoStyle] ?? form.logoStyle}` : "",
+        form.logoColorSource ? `Logó színei: ${logoColorSourceLabels[form.logoColorSource] ?? form.logoColorSource}` : "",
+        form.logoBrief ? `Logó leírás: ${form.logoBrief}` : ""
+      ].filter(Boolean)
+    : [];
+
   const socialLines = [
     form.facebookUrl ? `Facebook: ${form.facebookUrl}` : "",
     form.instagramUrl ? `Instagram: ${form.instagramUrl}` : "",
@@ -196,6 +235,7 @@ export function buildBriefText(form: BriefFormValues) {
     form.commercialModel === "subscription" && form.domainName ? `Kiválasztott domain: ${form.domainName}` : "",
     platformLine,
     logoLine,
+    ...logoDesignLines,
     form.brandColors ? `Márkaszín: ${form.brandColors}` : "",
     form.fontPreference ? `Betűtípus: ${form.fontPreference}` : "",
     `Szövegek: ${form.contentSource === "client" ? "az ügyfél adja" : "stúdió írja (benne az árban)"}`,
@@ -254,7 +294,8 @@ export function validateProjectStep(step: number, form: BriefFormValues): string
     if (form.commercialModel === "purchase" && form.websiteStatus === "yes" && form.existingPlatform === "wordpress" && !form.wpAccess) return "Válaszd ki, tudsz-e WordPress hozzáférést adni.";
     if (!form.logoStatus) return "Válaszd ki, van-e már logód.";
     if (form.logoStatus === "yes" && !form.logoUrl) return "Töltsd fel a logót, vagy válaszd a nincs logóm lehetőséget.";
-    if (form.commercialModel === "purchase" && form.logoStatus === "no" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
+    if (form.logoStatus === "no" && !form.wantLogoDesign) return "Válaszd ki, kérsz-e logótervezést.";
+    if (form.logoStatus === "no" && form.wantLogoDesign === "yes" && !form.logoStyle) return "Válaszd ki, milyen típusú logót szeretnél.";
     if (!form.brandColors.trim()) return "Adj meg legalább egy márkaszínt, vagy írd azt, hogy: rátok bízom.";
     if (!form.fontPreference.trim()) return "Válassz betűtípus-stílust, vagy válaszd a nincs preferencia lehetőséget.";
     if (!form.contentSource) return "Válaszd ki, ki írja a szövegeket.";
@@ -295,7 +336,7 @@ export function validationTargetFor(message: string) {
     [/WordPress hozzáférést/i, "wp-access"],
     [/van-e már logód/i, "logo-status"],
     [/Töltsd fel a logót/i, "logo-upload"],
-    [/logótervezést/i, "logo-design"],
+    [/logótervezést|típusú logót/i, "logo-design"],
     [/márkaszínt/i, "brand-colors"],
     [/betűtípus/i, "font-preference"],
     [/ki írja a szövegeket/i, "content-source"],

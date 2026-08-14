@@ -651,7 +651,10 @@ export function AdminDashboard() {
       return;
     }
 
-    const handover = buildHandoverPlan(["vercel", "github", "dns"]);
+    // `domain` és NEM `dns`: bérlésnél a domain a mi fiókunkban, a mi nevünkön
+    // van, tehát előbb át kell írni az ügyfélre. A `dns` lépések azt
+    // feltételeznék, hogy már az övé, és csak rekordot kell felvennie.
+    const handover = buildHandoverPlan(["vercel", "github", "domain"]);
     const { error } = await supabase.rpc("complete_website_purchase", {
       request_id: request.id,
       handover
@@ -1722,6 +1725,9 @@ export function AdminDashboard() {
               ["Vágyott domainek", brief["Vágyott domainek"]],
               ["Jelenlegi rendszer", brief["Jelenlegi rendszer"]],
               ["Logó", brief["Logó"]],
+              ["Logó típusa", brief["Logó típusa"]],
+              ["Logó színei", brief["Logó színei"]],
+              ["Logó leírás", brief["Logó leírás"]],
               ["Márkaszín", brief["Márkaszín"]],
               ["Betűtípus", brief["Betűtípus"]],
               ["Szövegek", brief["Szövegek"]],

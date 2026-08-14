@@ -9,7 +9,7 @@ import {
   type BriefFormValues,
   type PublicBriefDraft
 } from "@/lib/brief-draft";
-import { formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
+import { LOGO_DESIGN_PRICE, formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
 import { trackEvent } from "@/lib/analytics";
 
 const steps = ["Konstrukció", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
@@ -61,6 +61,7 @@ function validate(step: number, form: BriefFormValues) {
   if (step === 3) {
     if (!form.vibe || !form.palette) return "Válassz hangulatot és színirányt.";
     if (!form.logoStatus || !form.photoSource) return "Jelöld, hogy vannak-e logód és saját képeid.";
+    if (form.logoStatus === "no" && !form.wantLogoDesign) return "Jelöld, hogy szeretnél-e logót terveztetni.";
   }
   return "";
 }
@@ -247,9 +248,13 @@ export function PublicBriefWizard() {
                 </label>)}
               </div> : null}
               <div className="public-choice-grid two">
-                <div><span className="public-question">Van már logód?</span><div className="public-chip-grid"><button className={form.logoStatus === "yes" ? "selected" : ""} onClick={() => update({ logoStatus: "yes" })} type="button">Igen</button><button className={form.logoStatus === "no" ? "selected" : ""} onClick={() => update({ logoStatus: "no" })} type="button">Még nincs</button></div></div>
+                <div><span className="public-question">Van már logód?</span><div className="public-chip-grid"><button className={form.logoStatus === "yes" ? "selected" : ""} onClick={() => update({ logoStatus: "yes", wantLogoDesign: "" })} type="button">Igen</button><button className={form.logoStatus === "no" ? "selected" : ""} onClick={() => update({ logoStatus: "no" })} type="button">Még nincs</button></div></div>
                 <div><span className="public-question">Vannak saját képeid?</span><div className="public-chip-grid"><button className={form.photoSource === "own" ? "selected" : ""} onClick={() => update({ photoSource: "own" })} type="button">Igen</button><button className={form.photoSource === "help" ? "selected" : ""} onClick={() => update({ photoSource: "help" })} type="button">Segítséget kérek</button></div></div>
               </div>
+              {/* Aki azt mondja „még nincs", annak itt kell tudnia jelezni, hogy
+                  szeretne — a részleteket (típus, szín, leírás) az ügyfélkapun
+                  kérdezzük meg, hogy ez a lépés rövid maradjon. */}
+              {form.logoStatus === "no" ? <div className="public-field"><span>Szeretnél logót terveztetni?</span><div className="public-chip-grid"><button className={form.wantLogoDesign === "yes" ? "selected" : ""} onClick={() => update({ wantLogoDesign: "yes" })} type="button">Igen, kérek ({formatHuf(LOGO_DESIGN_PRICE)})</button><button className={form.wantLogoDesign === "no" ? "selected" : ""} onClick={() => update({ wantLogoDesign: "no" })} type="button">Nem, elég a szöveges márkanév</button></div><small className="public-field-hint">Ha igent választasz, a belépés után megkérdezem a típust, a színeket és azt, mit jelenítsen meg. Fizetni csak a projekt indításakor kell.</small></div> : null}
               <div className="public-secure-note"><span>↗</span><p><strong>A fájlokat még nem kérjük.</strong> A logót, képeket, hozzáféréseket és számlázási adatokat csak a védett ügyfélkapuban töltöd fel.</p></div>
             </div> : null}
 

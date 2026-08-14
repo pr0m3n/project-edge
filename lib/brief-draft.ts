@@ -30,6 +30,10 @@ export const initialBriefForm = {
   wpAccess: "",
   logoStatus: "",
   wantLogoDesign: "",
+  /** Csak akkor tölt be szerepet, ha `wantLogoDesign === "yes"`. */
+  logoStyle: "",
+  logoColorSource: "",
+  logoBrief: "",
   brandColors: "",
   fontPreference: "",
   contentSource: "",

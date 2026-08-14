@@ -45,6 +45,8 @@ import {
   buildBriefText,
   curatedFonts,
   featureChips,
+  logoColorSourceOptions,
+  logoStyleOptions,
   pageChips,
   paletteOptions,
   priorityLabels,
@@ -2940,7 +2942,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         ))}
                       </div>
                     </div>
-                    {projectForm.commercialModel === "purchase" && projectForm.logoStatus === "no" ? (
+                    {/* A logótervezés igénye mindkét konstrukciónál kérhető.
+                        Korábban csak vásárlásnál jelent meg, így egy bérlő
+                        ügyfél sehol nem tudta jelezni, hogy szeretne logót. */}
+                    {projectForm.logoStatus === "no" ? (
                       <div className="field" id="logo-design">
                         <label>Kérsz logótervezést?</label>
                         <div className="choice-grid compact">
@@ -2950,18 +2955,68 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             type="button"
                           >
                             <strong>Igen, kérek</strong>
-                            <span>{formatHuf(LOGO_DESIGN_PRICE)} egyszeri felár, az ajánlatban tételesen szerepel.</span>
+                            <span>
+                              {formatHuf(LOGO_DESIGN_PRICE)} egyszeri felár.{" "}
+                              {projectForm.commercialModel === "subscription"
+                                ? "A projekt indításakor kapsz rá fizetési adatokat — előtte semmi nem terhel."
+                                : "Az ajánlatban külön tételként szerepel."}
+                            </span>
                           </button>
                           <button
                             className={projectForm.wantLogoDesign === "no" ? "selected" : ""}
-                            onClick={() => setProjectForm((current) => ({ ...current, wantLogoDesign: "no" }))}
+                            onClick={() => setProjectForm((current) => ({ ...current, wantLogoDesign: "no", logoStyle: "", logoColorSource: "", logoBrief: "" }))}
                             type="button"
                           >
                             <strong>Egyelőre nem</strong>
-                            <span>Szöveges márkanévvel is el tudunk indulni.</span>
+                            <span>Letisztult szöveges márkanevet készítek, felár nélkül.</span>
                           </button>
                         </div>
                       </div>
+                    ) : null}
+
+                    {projectForm.logoStatus === "no" && projectForm.wantLogoDesign === "yes" ? (
+                      <>
+                        <div className="field">
+                          <label>Milyen típusú logót szeretnél?</label>
+                          <div className="choice-grid compact">
+                            {logoStyleOptions.map(([value, label, hint]) => (
+                              <button
+                                key={value}
+                                className={projectForm.logoStyle === value ? "selected" : ""}
+                                onClick={() => setProjectForm((current) => ({ ...current, logoStyle: value }))}
+                                type="button"
+                              >
+                                <strong>{label}</strong>
+                                <span>{hint}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="field">
+                          <label>Milyen színekkel dolgozzak?</label>
+                          <div className="quick-chips">
+                            {logoColorSourceOptions.map(([value, label]) => (
+                              <button
+                                key={value}
+                                className={projectForm.logoColorSource === value ? "active" : ""}
+                                onClick={() => setProjectForm((current) => ({ ...current, logoColorSource: value }))}
+                                type="button"
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="field">
+                          <label htmlFor="logo-brief">Mit jelenítsen meg, és mit kerüljek el?</label>
+                          <textarea
+                            id="logo-brief"
+                            value={projectForm.logoBrief}
+                            onChange={(event) => setProjectForm((current) => ({ ...current, logoBrief: event.target.value }))}
+                            placeholder="Pl.: valami villanyszereléshez kapcsolódó, de ne legyen villámjel. Ha a Külön megadom színt választottad, ide írd a színeket is."
+                          />
+                        </div>
+                      </>
                     ) : null}
                     {projectForm.logoStatus === "yes" ? (
                       <div className="field">

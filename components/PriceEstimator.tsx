@@ -8,67 +8,30 @@ import {
   PLAN_COMPARISON_ROWS,
   PLAN_DECISION_RULE,
   PRICE_TAX_NOTE,
-  PURCHASE_PRICES,
+  PURCHASE_OPTION_PRICES,
   SUBSCRIPTION_PLANS,
   SUBSCRIPTION_SHARED_INCLUDED,
   formatHuf,
   type SubscriptionPlanKey
 } from "@/lib/subscriptions";
 import { TransitionLink } from "@/components/TransitionLink";
-import { trackEvent } from "@/lib/analytics";
-
-const PURCHASE_DETAILS = [
-  "Egyetlen ajánlat vagy kampány fókuszált bemutatására",
-  "Többoldalas céges jelenlét és ügyfélszerző folyamat",
-  "Saját vizuális rendszer és összetettebb működés",
-  "Belépés, adatkezelés vagy egyedi üzleti folyamat"
-];
-
-const PURCHASE_INCLUDED = [
-  { number: "01", title: "Forráskód", copy: "A projekt teljes kódja átadásra kerül." },
-  { number: "02", title: "Hozzáférések", copy: "Domain, technikai fiókok és szükséges belépések." },
-  { number: "03", title: "Éles indulás", copy: "Beállítás, ellenőrzés és működő rendszer átadása." },
-  { number: "04", title: "30 nap garancia", copy: "Az átadás után felmerülő technikai hibák javítása." }
-];
 
 export function PriceEstimator() {
-  const [mode, setMode] = useState<"subscription" | "purchase">("subscription");
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
 
-  function selectMode(next: "subscription" | "purchase") {
-    setMode(next);
-    trackEvent("pricing_model_viewed", { model: next });
-  }
-
   return (
     <section className="model-pricing" id="arak">
-      <p className="model-switch-hint">
-        <span aria-hidden="true" />
-        Kétféleképpen dolgozom. Kattints, és megnézed a másikat is.
-      </p>
-      <div className="model-switch" role="tablist" aria-label="Weboldal konstrukció" onKeyDown={(event) => {
-        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-        event.preventDefault();
-        const next = mode === "subscription" ? "purchase" : "subscription";
-        selectMode(next);
-        document.getElementById(`pricing-tab-${next}`)?.focus();
-      }}>
-        <button aria-controls="pricing-panel-subscription" className={mode === "subscription" ? "active" : ""} id="pricing-tab-subscription" onClick={() => selectMode("subscription")} role="tab" aria-selected={mode === "subscription"} tabIndex={mode === "subscription" ? 0 : -1} type="button">
-          <span>01 · A leggyakoribb</span>
-          <strong>Weboldal bérlése</strong>
-          <small>Havidíjat fizetsz, az oldal az enyém marad — a domaint, a tárhelyet és a karbantartást is én intézem.</small>
-        </button>
-        <button aria-controls="pricing-panel-purchase" className={mode === "purchase" ? "active" : ""} id="pricing-tab-purchase" onClick={() => selectMode("purchase")} role="tab" aria-selected={mode === "purchase"} tabIndex={mode === "purchase" ? 0 : -1} type="button">
-          <span>02</span>
-          <strong>Weboldal megvásárlása</strong>
-          <small>Egyszeri díjat fizetsz, és az oldal a forráskóddal együtt a tiéd lesz.</small>
-        </button>
-        <i className={mode === "purchase" ? "right" : ""} aria-hidden="true" />
+      <div className="pricing-lead">
+        <p className="micro-label dark">Árak</p>
+        <h3>Havidíjas weboldal, induló díj nélkül.</h3>
+        <p>
+          A domaint, a tárhelyet és a karbantartást is én intézem. Ha később a sajátod lenne, bármikor
+          megveheted — <a href="#veteli-opcio">lentebb látod, mennyiért</a>.
+        </p>
       </div>
 
-      {mode === "subscription" ? (
-        <div aria-labelledby="pricing-tab-subscription" className="subscription-pricing-panel" id="pricing-panel-subscription" role="tabpanel">
+      <div className="subscription-pricing-panel" id="pricing-panel-subscription">
           <div className="pricing-promise">
             <span className="live-pulse" />
             <p><strong>Nincs induló díj.</strong> Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt.</p>
@@ -142,27 +105,58 @@ export function PriceEstimator() {
           <div className="subscription-footnotes">
             <span>0 Ft induló díj</span><span>Bármikor lemondható</span><span>Első hónap előre fizetendő</span><span>Szüneteltethető</span><small>{PRICE_TAX_NOTE}</small>
           </div>
+      </div>
+
+      {/* A vásárlás KIMENET, nem belépő: a bérlés az egyetlen belépési pont, és
+          a tulajdonszerzés egy később lehívható opció. Így a hideg forgalom nem
+          a nagy egyösszegű döntéssel találkozik először, az „és ha egyszer a
+          sajátom akarom?" kifogásra viszont van válasz. */}
+      <section className="buyout-band" id="veteli-opcio">
+        <div className="buyout-copy">
+          <span className="micro-label dark">Vételi opció</span>
+          <h3>Nem zárlak be. Bármikor megveheted.</h3>
+          <p>
+            Ha egy idő után a sajátod lenne, egyetlen egyszeri díjért átveszed a forráskódot, a domaint
+            és a technikai fiókokat. Az előfizetés ekkor lezárul, és nincs több havidíj.
+          </p>
+          <ol>
+            <li>Az ügyfélkapun elindítod a megvásárlást</li>
+            <li>Átadási összefoglalót és fizetési adatokat kapsz</li>
+            <li>A vételár beérkezése után átadom a forráskódot és a hozzáféréseket</li>
+            <li>A domaint átíratom a saját fiókodra</li>
+          </ol>
+          <p className="buyout-note">
+            Az átadás lépésenként megy, írásban, útmutatókkal — és végigkísérlek rajta. Jelszót,
+            bankkártyaadatot vagy API kulcsot egyik fél sem küld a másiknak.
+          </p>
         </div>
-      ) : (
-        <div aria-labelledby="pricing-tab-purchase" className="purchase-pricing-panel" id="pricing-panel-purchase" role="tabpanel">
-          <div className="purchase-intro">
-            <div><span className="micro-label dark">Egyszeri projekt · teljes tulajdon</span><h3>Egyszer fizetsz.<br /><em>Minden a tiéd.</em></h3></div>
-            <div className="purchase-intro-copy"><p>A forráskódot, a domaint és a szükséges hozzáféréseket rendezett technikai átadással kapod meg. Nem maradsz egy zárt rendszerhez vagy kötelező havidíjhoz kötve.</p><span><i /> TELJES TECHNIKAI ÁTADÁS</span></div>
-          </div>
-          <div className="purchase-included" aria-label="A vásárlás részei">
-            {PURCHASE_INCLUDED.map((item) => <article key={item.number}><span>{item.number}</span><div><strong>{item.title}</strong><p>{item.copy}</p></div></article>)}
-          </div>
-          <div className="purchase-list-head"><span>PROJEKTTÍPUS</span><span>INDULÓ ÁR</span></div>
-          <div className="purchase-list">
-            {PURCHASE_PRICES.map((item, index) => <div key={item.name}><span>0{index + 1}</span><div><strong>{item.name}</strong><small>{PURCHASE_DETAILS[index]}</small></div><b>{item.price}</b><i aria-hidden="true">→</i></div>)}
-          </div>
-          <div className="purchase-actions">
-            <div><span>AZ INDULÁS MENETE</span><p>Kiválasztod a típust, kitöltöd a projektbriefet, majd az ügyfélkapuban követed az egyeztetést és a megvalósítást.</p></div>
-            <TransitionLink className="button primary" href="/ugyfelkapu?model=purchase">Weboldal-vásárlás indítása</TransitionLink>
-          </div>
-          <div className="purchase-fine-print"><p><strong>Fontos:</strong> a későbbi tárhely, üzemeltetés és módosítás nem része az egyszeri vételárnak, de külön gondozási csomag kérhető.</p><small>{PRICE_TAX_NOTE}</small></div>
+        <div className="buyout-prices">
+          <span>Vételár csomagonként</span>
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <div key={plan.key}>
+              <strong>{plan.name}</strong>
+              <b>{formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</b>
+            </div>
+          ))}
+          <small>{PRICE_TAX_NOTE}</small>
         </div>
-      )}
+      </section>
+
+      {/* Amit tényleg nem lehet bérelni: ezek maradnak egyszeri projektként. */}
+      <section className="custom-project-band">
+        <div>
+          <span className="micro-label dark">Egyedi projekt</span>
+          <h3>Webapp, ügyfélkapu vagy meglévő oldal átalakítása?</h3>
+          <p>
+            Belépés, adatkezelés, dashboard vagy egy működő WordPress megújítása nem fér a havidíjas
+            keretbe — ezekre egyszeri projektként, egyedi ajánlattal dolgozom.
+          </p>
+        </div>
+        <TransitionLink className="button secondary" href="/ugyfelkapu?model=purchase">
+          Egyedi projekt indítása
+        </TransitionLink>
+      </section>
+
     </section>
   );
 }

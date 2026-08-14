@@ -92,3 +92,53 @@ test("az összehasonlító táblázat minden csomagra ugyanazt kérdezi", () => 
   assert.ok(rows.some(([, label]) => label === "Oldalak"), "az oldalszám a legfontosabb tengely");
   assert.ok(rows.some(([, label]) => label === "Módosítási keret"));
 });
+
+test("a logótervezés mindkét konstrukciónál kérhető, részletekkel", () => {
+  const briefFields = readFileSync(new URL("../components/portal/brief-fields.ts", import.meta.url), "utf8");
+  const portal = readFileSync(new URL("../components/ClientPortal.tsx", import.meta.url), "utf8");
+  const draft = readFileSync(new URL("../lib/brief-draft.ts", import.meta.url), "utf8");
+
+  // A mezőknek léteznie kell az űrlap alapállapotában, különben a szerkesztő
+  // ág elveszíti őket (a projectForm/editForm ebből a shape-ből származik).
+  assert.match(draft, /logoStyle: ""/);
+  assert.match(draft, /logoColorSource: ""/);
+  assert.match(draft, /logoBrief: ""/);
+
+  // A kérdés nem lehet a vásárlási ághoz kötve.
+  assert.doesNotMatch(portal, /commercialModel === "purchase" && projectForm\.logoStatus === "no"/);
+  assert.match(portal, /projectForm\.logoStatus === "no" \? \(/);
+
+  // A válaszoknak a brief SZÖVEGÉBE is bele kell kerülniük, mert az admin és
+  // az AI-prompt onnan olvas vissza.
+  assert.match(briefFields, /Logó típusa: /);
+  assert.match(briefFields, /Logó színei: /);
+  assert.match(briefFields, /Logó leírás: /);
+  assert.match(briefFields, /logoDesignLines/);
+});
+
+test("a logótervezés validációja nem enged hiányos igényt átmenni", () => {
+  const briefFields = readFileSync(new URL("../components/portal/brief-fields.ts", import.meta.url), "utf8");
+  assert.match(briefFields, /form\.logoStatus === "no" && !form\.wantLogoDesign/);
+  assert.match(briefFields, /wantLogoDesign === "yes" && !form\.logoStyle/);
+});
+
+test("a bérlésből kivásárlás átadása tartalmazza a domain átírását", () => {
+  const handover = readFileSync(new URL("../lib/handover.ts", import.meta.url), "utf8");
+  const admin = readFileSync(new URL("../components/AdminDashboard.tsx", import.meta.url), "utf8");
+
+  // A kivásárlási terv NEM a `dns` lépéseket kapja: azok azt feltételeznék,
+  // hogy a domain már az ügyfélé, holott bérlésnél a Szolgáltató nevén van.
+  assert.match(admin, /buildHandoverPlan\(\["vercel", "github", "domain"\]\)/);
+  assert.match(handover, /id: "domain_account"/);
+  assert.match(handover, /id: "domain_transfer"/);
+  assert.match(handover, /id: "domain_confirm"/);
+
+  // A két domainkezelés kizárja egymást.
+  assert.match(handover, /function resolveDomainServices/);
+  assert.match(handover, /services\.filter\(\(service\) => service !== "dns"\)/);
+});
+
+test("a domain átírása figyelmezteti az ügyfelet a megújítási felelősségre", () => {
+  const handover = readFileSync(new URL("../lib/handover.ts", import.meta.url), "utf8");
+  assert.match(handover, /megújítási díja téged terhel/);
+});
