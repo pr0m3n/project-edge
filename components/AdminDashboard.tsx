@@ -14,6 +14,7 @@ import {
 import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
 import { AiBuildPromptPanel } from "@/components/admin/AiBuildPromptPanel";
+import { AdminInbox } from "@/components/admin/AdminInbox";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
 import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
@@ -1644,11 +1645,21 @@ export function AdminDashboard() {
         <div><span>TEENDŐ</span><strong>{clientProjects.filter((project) => ["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "")).length}</strong><small>előfizetési kérelem</small></div>
       </section>
 
-      <BillingoIssuesCard
-        issues={billingoIssues}
+      {/* Egyetlen belépési pont a napi munkához. A projektnézetek ettől
+          függetlenül megmaradnak — ez csak odavezet. */}
+      <AdminInbox
         projects={clientProjects}
-        retryingId={billingoRetryId}
-        onRetry={retryBillingoInvoice}
+        changeRequests={changeRequests}
+        billingoIssues={billingoIssues}
+        tickets={clientTickets}
+        billingoRetryId={billingoRetryId}
+        onRetryBillingo={retryBillingoInvoice}
+        onOpenProject={(projectId) => {
+          setWizardProjectId(projectId);
+          setSelectedClientFilter("all");
+          setShowArchive(false);
+          window.setTimeout(() => document.querySelector(".admin-project-switcher")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+        }}
       />
 
       <h2 className="admin-section-title">Ügyfélkapus projektek</h2>
