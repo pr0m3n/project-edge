@@ -10172,3 +10172,224 @@ p {
   }
 }
 
+/* ── Prémium 404 & 500 Hibaoldal Stílusok ────────────────────────────── */
+.not-found-hero {
+  background: #f4f1e8;
+  padding: clamp(80px, 10vw, 140px) clamp(18px, 6vw, 88px);
+  position: relative;
+  overflow: hidden;
+  min-height: 80vh;
+  display: grid;
+  align-items: center;
+}
+
+.not-found-noise {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(48, 56, 65, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.not-found-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(28px, 4vw, 42px);
+  position: relative;
+}
+
+.not-found-header {
+  display: grid;
+  gap: 16px;
+}
+
+.not-found-badge {
+  display: inline-block;
+  align-self: start;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #c8431b;
+  background: rgba(255, 87, 34, 0.1);
+  border: 1px solid rgba(255, 87, 34, 0.25);
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+.not-found-badge.error {
+  color: #d32f2f;
+  background: rgba(211, 47, 47, 0.1);
+  border-color: rgba(211, 47, 47, 0.3);
+}
+
+.not-found-header h1 {
+  font-size: clamp(40px, 6vw, 76px);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  margin: 0;
+  color: #1a1e23;
+}
+
+.not-found-lead {
+  font-size: clamp(15px, 1.8vw, 19px);
+  line-height: 1.65;
+  color: #5a646c;
+  margin: 0;
+  max-width: 680px;
+}
+
+.not-found-terminal {
+  background: #1c2228;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+.not-found-terminal-bar {
+  background: #252d35;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.not-found-terminal-bar span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4a5661;
+}
+
+.not-found-terminal-bar span:first-child {
+  background: #ff5722;
+}
+
+.not-found-terminal-bar b {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #76abae;
+  margin-left: 8px;
+  font-weight: 700;
+}
+
+.not-found-terminal-body {
+  padding: 18px 22px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c7c8cc;
+  display: grid;
+  gap: 4px;
+}
+
+.not-found-terminal-body p {
+  margin: 0;
+}
+
+.not-found-terminal-body span {
+  color: #ff5722;
+  font-weight: bold;
+}
+
+.terminal-res strong {
+  color: #ff8a65;
+  font-weight: 800;
+}
+
+.terminal-suggest {
+  color: #8c959c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.terminal-suggest span {
+  color: #76abae;
+}
+
+.not-found-routes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.not-found-tile {
+  background: #fff;
+  border: 1px solid rgba(48, 56, 65, 0.12);
+  border-radius: 20px;
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  align-content: start;
+}
+
+.not-found-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(17, 23, 28, 0.09);
+  border-color: #76abae;
+}
+
+.tile-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #76abae;
+}
+
+.not-found-tile h3 {
+  font-size: 17px;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.not-found-tile p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #657078;
+  margin: 0;
+}
+
+.not-found-tile strong {
+  font-size: 12px;
+  color: var(--ember);
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .not-found-routes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .not-found-routes-grid {
+    grid-template-columns: 1fr;
+  }
+  .not-found-actions {
+    flex-direction: column;
+  }
+  .not-found-actions .button {
+    width: 100%;
+  }
+}
+
+
