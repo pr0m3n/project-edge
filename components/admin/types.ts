@@ -178,4 +178,8 @@ export type ChangeRequest = {
   payment_reference: string | null;
   transfer_reported_at: string | null;
   paid_at: string | null;
+  /** Az ügyfél elfogadta az árajánlatot (032 migráció). */
+  quote_accepted_at: string | null;
+  /** Az ajánlat rövid indoklása — az ügyfél ezt látja az ár mellett. */
+  quote_note: string | null;
 };

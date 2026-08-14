@@ -15,6 +15,7 @@ import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
 import { AiBuildPromptPanel } from "@/components/admin/AiBuildPromptPanel";
 import { AdminInbox } from "@/components/admin/AdminInbox";
+import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
 import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
@@ -266,6 +267,66 @@ export function AdminDashboard() {
       console.error("Nem sikerült elküldeni a rendszer értesítést:", err);
       setMessage("Értesítés rögzítve, de az email szolgáltató nem volt elérhető.");
     }
+  }
+
+  /**
+   * Ajánlat küldése egy kereten felüli módosításra.
+   *
+   * A `payment_reference`-t az adatbázis triggere generálja (032), ezért itt
+   * csak az összeget, az indoklást és az állapotot írjuk. Az ügyfél ettől
+   * kezdve tud dönteni és utalni.
+   */
+  async function sendChangeQuote(request: ChangeRequest, project: ClientProject, amount: number, note: string) {
+    if (!Number.isFinite(amount) || amount < 1000) {
+      setMessage("Az ajánlati ár legalább 1 000 Ft legyen.");
+      return;
+    }
+    const { error } = await supabase.from("change_requests").update({
+      quoted_amount: Math.round(amount),
+      quote_note: note.trim() || null,
+      status: "waiting_client"
+    }).eq("id", request.id);
+    if (error) {
+      setMessage(`Az ajánlatot nem sikerült elküldeni: ${error.message}`);
+      return;
+    }
+    await triggerNotification(
+      project.user_id,
+      project.contact_email,
+      "Ajánlat érkezett a módosításodra",
+      `A(z) „${project.title}" projektnél kért módosításra ${formatHuf(Math.round(amount))} összegű ajánlatot küldtünk. Az ügyfélkapun elfogadhatod vagy elutasíthatod.`,
+      "/ugyfelkapu/dashboard"
+    );
+    setMessage("Ajánlat elküldve az ügyfélnek.");
+    await loadLeads(true);
+  }
+
+  /** Az utalás beérkezésének jóváhagyása egy árazott módosításnál. */
+  async function confirmChangePayment(request: ChangeRequest, project: ClientProject) {
+    const ok = await confirm({
+      title: "Utalás jóváhagyása",
+      message: "Csak akkor hagyd jóvá, ha az összeg ténylegesen megérkezett a bankszámlára. Ezzel a módosítás munkába kerül.",
+      confirmLabel: "Beérkezett",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+    const { error } = await supabase.from("change_requests").update({
+      paid_at: new Date().toISOString(),
+      status: "in_progress"
+    }).eq("id", request.id);
+    if (error) {
+      setMessage(`A jóváhagyás nem sikerült: ${error.message}`);
+      return;
+    }
+    await triggerNotification(
+      project.user_id,
+      project.contact_email,
+      "Megérkezett a fizetés — indul a módosítás",
+      `A(z) „${project.title}" projektnél kért módosítás díja beérkezett. A munka elindul.`,
+      "/ugyfelkapu/dashboard"
+    );
+    setMessage("Fizetés jóváhagyva, a módosítás munkába került.");
+    await loadLeads(true);
   }
 
   const stats = useMemo(() => {
@@ -1851,6 +1912,66 @@ export function AdminDashboard() {
                               <textarea defaultValue={request.admin_note ?? ""} onBlur={(event) => { if (event.target.value !== (request.admin_note ?? "")) updateChangeRequest(request.id, { admin_note: event.target.value || null }); }} placeholder={purchase ? "Ügyfélnek látható átadási vagy fizetési információ…" : "Ügyfélnek látható megjegyzés…"} />
                               {purchase && request.quoted_amount ? <small>Vételár: {formatHuf(request.quoted_amount)} · Közlemény: {request.payment_reference ?? "nincs"}</small> : null}
                               {purchase && request.transfer_reported_at && request.status === "in_progress" && !request.paid_at ? <button className="button primary" type="button" onClick={() => completeWebsitePurchase(request, project)}>Beérkezett — átadás indítása</button> : null}
+
+                              {/* Ajánlat a kereten felüli módosításra. Eddig csak
+                                  „Külön ajánlat" státuszba lehetett tenni a kérést,
+                                  de árat nem lehetett adni hozzá, így az ügyfél nem
+                                  tudott se dönteni, se fizetni. */}
+                              {!purchase && request.included_in_plan === false && !request.paid_at ? (
+                                <div className="change-quote-box">
+                                  {request.quoted_amount ? (
+                                    <div className="change-quote-state">
+                                      <strong>{formatHuf(request.quoted_amount)}</strong>
+                                      <small>Közlemény: {request.payment_reference ?? "generálás alatt"}</small>
+                                      <span>
+                                        {request.transfer_reported_at
+                                          ? "Az ügyfél jelezte az utalást — ellenőrizd a bankszámlát."
+                                          : request.quote_accepted_at
+                                            ? "Az ügyfél elfogadta, utalásra vár."
+                                            : "Elküldve, az ügyfél döntésére vár."}
+                                      </span>
+                                      {request.transfer_reported_at && !request.paid_at ? (
+                                        <button className="button primary" type="button" onClick={() => confirmChangePayment(request, project)}>
+                                          Beérkezett — munka indítása
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  ) : (
+                                    <form
+                                      className="change-quote-form"
+                                      onSubmit={(event) => {
+                                        event.preventDefault();
+                                        const form = event.currentTarget;
+                                        const amount = Number((form.elements.namedItem("amount") as HTMLInputElement).value);
+                                        const note = (form.elements.namedItem("note") as HTMLTextAreaElement).value;
+                                        sendChangeQuote(request, project, amount, note);
+                                      }}
+                                    >
+                                      <label>
+                                        <span>Ajánlati ár (Ft)</span>
+                                        <input name="amount" type="number" min={1000} step={100} required placeholder="pl. 45000" />
+                                      </label>
+                                      <label>
+                                        <span>Mit tartalmaz? — az ügyfél ezt látja</span>
+                                        <textarea name="note" required placeholder="pl. Foglalási naptár beépítése, e-mail visszaigazolással. Elkészül 5 munkanap alatt." />
+                                      </label>
+                                      <button className="button primary" type="submit">Ajánlat küldése</button>
+                                    </form>
+                                  )}
+                                </div>
+                              ) : null}
+
+                              <ChangeThread
+                                requestId={request.id}
+                                role="admin"
+                                onSent={() => triggerNotification(
+                                  project.user_id,
+                                  project.contact_email,
+                                  "Új üzenet a kérésedhez",
+                                  `Válasz érkezett a(z) „${project.title}" projekt egyik kérésére. Nyisd meg az ügyfélkaput a részletekért.`,
+                                  "/ugyfelkapu/dashboard"
+                                )}
+                              />
                             </div>
                           </article>
                         );

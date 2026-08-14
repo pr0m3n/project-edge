@@ -1789,6 +1789,71 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotice(purchase ? "A megvásárlási folyamatot elindítottuk. Az átadási és fizetési részletekről itt és emailben értesítünk." : "A módosítási kérést elküldtük.");
   }
 
+  /**
+   * Döntés egy kereten felüli módosítás ajánlatáról.
+   *
+   * Mindhárom lépés `security definer` adatbázis-függvényen megy át (032), mert
+   * az ügyfél a pénzügyi mezőkhöz közvetlenül nem nyúlhat — a `guard_change_
+   * request_write` trigger az ilyen írást elutasítja.
+   */
+  async function decideChangeQuote(project: Project, requestId: string, decision: "accept" | "decline" | "transfer") {
+    if (decision === "decline") {
+      const ok = await confirm({
+        title: "Ajánlat elutasítása",
+        message: "Biztosan nem kéred ezt a módosítást? A kérés lezárul, de bármikor küldhetsz újat.",
+        confirmLabel: "Nem kérem",
+        cancelLabel: "Mégis meggondolom"
+      });
+      if (!ok) return;
+    }
+    if (decision === "transfer") {
+      const ok = await confirm({
+        title: "Utalás jelzése",
+        message: "Csak akkor jelezd, ha az utalást ténylegesen elindítottad. A közleményt pontosan add meg, hogy be tudjuk azonosítani.",
+        confirmLabel: "Elutaltam",
+        cancelLabel: "Mégse"
+      });
+      if (!ok) return;
+    }
+
+    const rpc = decision === "accept" ? "accept_change_quote" : decision === "decline" ? "decline_change_quote" : "report_change_transfer";
+    const { error } = await supabase.rpc(rpc, { request_id: requestId });
+    if (error) {
+      setNotice(error.message || "A művelet most nem hajtható végre.");
+      return;
+    }
+
+    const titles = {
+      accept: "Ajánlat elfogadva",
+      decline: "Ajánlat elutasítva",
+      transfer: "Utalás jelezve"
+    } as const;
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      titles[decision],
+      `A(z) „${project.title}" projekt egyik módosítási ajánlatánál az ügyfél lépett: ${titles[decision].toLowerCase()}.`,
+      "/admin"
+    );
+    setNotice(decision === "accept"
+      ? "Elfogadtad az ajánlatot. A fizetési adatok most megjelentek a kérésnél."
+      : decision === "decline"
+        ? "Az ajánlatot elutasítottuk, a kérés lezárult."
+        : "Jeleztük az utalást. Az összeg beérkezése után indul a munka.");
+    await loadPortal(true);
+  }
+
+  /** Új üzenet a kérés beszélgetésében — a stúdió kap róla értesítést. */
+  async function notifyThreadMessage(project: Project) {
+    await triggerNotification(
+      null,
+      "admin@projectedge.hu",
+      "Új üzenet egy módosítási kérésnél",
+      `Az ügyfél üzenetet írt a(z) „${project.title}" projekt egyik kérésénél.`,
+      "/admin"
+    );
+  }
+
   async function reportPurchaseTransfer(requestId: string) {
     const ok = await confirm({
       title: "Átutalás jelzése",
@@ -2247,7 +2312,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         )}
 
         {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && (project.commercial_model === "subscription" ? (
-          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} />
+          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onThreadMessage={() => notifyThreadMessage(project)} />
         ) : (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ))}

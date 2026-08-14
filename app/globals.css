@@ -11232,3 +11232,203 @@ p {
     flex-direction: column;
   }
 }
+
+/* ── Ajánlat egy módosításra (admin + ügyfélkapu) ── */
+.change-quote-box {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.change-quote-form {
+  display: grid;
+  gap: 8px;
+}
+
+.change-quote-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.change-quote-form span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.change-quote-state {
+  display: grid;
+  gap: 4px;
+}
+
+.change-quote-state strong {
+  font-size: 18px;
+}
+
+.change-quote-state small,
+.change-quote-state span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.client-quote-box {
+  background: rgba(255, 87, 34, 0.08);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 14px 16px;
+}
+
+.client-quote-head {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.client-quote-head span {
+  color: #c0562c;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.client-quote-head strong {
+  font-size: 20px;
+}
+
+.client-quote-box p {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.client-quote-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.client-quote-actions .button {
+  min-height: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.client-quote-pay {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.client-quote-pay span {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.client-quote-pay b {
+  display: block;
+  font-size: 15px;
+  margin: 3px 0;
+}
+
+.client-quote-pay small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.client-quote-done {
+  color: #35696d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ── Beszélgetés a kérésen belül ── */
+.change-thread {
+  margin-top: 10px;
+}
+
+.change-thread-toggle {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  color: #5f9296;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 0;
+}
+
+.change-thread-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.change-thread-empty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.change-message {
+  background: rgba(48, 56, 65, 0.06);
+  border-radius: 12px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px;
+}
+
+.change-message.mine {
+  background: rgba(118, 171, 174, 0.16);
+}
+
+.change-message span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.change-message p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.change-thread-composer {
+  align-items: flex-end;
+  display: flex;
+  gap: 8px;
+}
+
+.change-thread-composer textarea {
+  flex: 1;
+  min-height: 44px;
+}
+
+.change-thread-composer .button {
+  min-height: auto;
+  padding: 9px 14px;
+  font-size: 12px;
+}
+
+.change-thread-error {
+  color: #c0392b;
+  font-size: 12px;
+  margin: 0;
+}

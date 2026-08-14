@@ -2,6 +2,8 @@
 
 import type { ClientChangeRequest, Project } from "@/components/portal/types";
 import { useState } from "react";
+import { ChangeThread } from "@/components/portal/ChangeThread";
+import { BANK_TRANSFER_DETAILS } from "@/components/portal/format";
 import {
   CHANGE_QUOTA_EXCLUDED,
   CHANGE_QUOTA_FREE,
@@ -26,9 +28,12 @@ type Props = {
   onManageBilling: () => void;
   onReportPurchaseTransfer: (requestId: string) => Promise<void>;
   onRequestChange: (category: string, description: string) => Promise<void>;
+  /** Kereten felüli módosítás ajánlatának elfogadása / elutasítása / utalás jelzése. */
+  onQuoteDecision: (requestId: string, decision: "accept" | "decline" | "transfer") => Promise<void>;
+  onThreadMessage: (requestId: string) => Promise<void>;
 };
 
-export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onReportPurchaseTransfer, onRequestChange }: Props) {
+export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onReportPurchaseTransfer, onRequestChange, onQuoteDecision, onThreadMessage }: Props) {
   const plan = subscriptionPlan(project.subscription_plan);
   // A módosítás és a hibabejelentés ugyanazt az űrlapot használja, de más
   // kategóriakészlettel — a kettő keveredése volt az egyik oka annak, hogy
@@ -156,7 +161,40 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
         </form>
       ) : null}
 
-      {requests.length ? <div className="client-request-timeline"><div><strong>Kérések és vásárlási ügyek</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? request.transfer_reported_at ? "Utalás ellenőrzése" : "Folyamatban" : request.status === "waiting_client" ? "Fizetésre vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{isWebsitePurchaseRequest(request.description) ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "Weboldal megvásárlása: ") : request.description}</p><small>{isWebsitePurchaseRequest(request.description) ? `${request.quoted_amount ? formatHuf(request.quoted_amount) : "Vételár egyeztetés alatt"}${request.payment_reference ? ` · Közlemény: ${request.payment_reference}` : ""}` : request.category === "technical" ? "Technikai hiba — nem fogyaszt keretet" : request.included_in_plan === true ? "A keretbe beleszámít" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}{isWebsitePurchaseRequest(request.description) && request.status === "waiting_client" && !request.transfer_reported_at ? <button className="button primary" type="button" onClick={() => onReportPurchaseTransfer(request.id)}>Elutaltam a vételárat</button> : null}</article>)}</div> : null}
+      {requests.length ? <div className="client-request-timeline"><div><strong>Kérések és vásárlási ügyek</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? request.transfer_reported_at ? "Utalás ellenőrzése" : "Folyamatban" : request.status === "waiting_client" ? "Fizetésre vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{isWebsitePurchaseRequest(request.description) ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "Weboldal megvásárlása: ") : request.description}</p><small>{isWebsitePurchaseRequest(request.description) ? `${request.quoted_amount ? formatHuf(request.quoted_amount) : "Vételár egyeztetés alatt"}${request.payment_reference ? ` · Közlemény: ${request.payment_reference}` : ""}` : request.category === "technical" ? "Technikai hiba — nem fogyaszt keretet" : request.included_in_plan === true ? "A keretbe beleszámít" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}{isWebsitePurchaseRequest(request.description) && request.status === "waiting_client" && !request.transfer_reported_at ? <button className="button primary" type="button" onClick={() => onReportPurchaseTransfer(request.id)}>Elutaltam a vételárat</button> : null}
+
+        {/* Kereten felüli módosítás ajánlata. Eddig legfeljebb egy szöveges
+            megjegyzést kaptál róla; most árat, tartalmat és döntést is látsz. */}
+        {!isWebsitePurchaseRequest(request.description) && request.quoted_amount ? (
+          <div className="client-quote-box">
+            <div className="client-quote-head">
+              <span>AJÁNLAT ERRE A MÓDOSÍTÁSRA</span>
+              <strong>{formatHuf(request.quoted_amount)}</strong>
+            </div>
+            {request.quote_note ? <p>{request.quote_note}</p> : null}
+            {request.paid_at ? (
+              <small className="client-quote-done">Kifizetve — a módosítás munkában van.</small>
+            ) : request.transfer_reported_at ? (
+              <small className="client-quote-done">Az utalást jeleztük. Amint megérkezik, indul a munka.</small>
+            ) : request.quote_accepted_at ? (
+              <div className="client-quote-pay">
+                <div>
+                  <span>Utald el az összeget</span>
+                  <b>{BANK_TRANSFER_DETAILS.accountNumber}</b>
+                  <small>{BANK_TRANSFER_DETAILS.name} · Közlemény: {request.payment_reference ?? "—"}</small>
+                </div>
+                <button className="button primary" type="button" onClick={() => onQuoteDecision(request.id, "transfer")}>Elutaltam</button>
+              </div>
+            ) : (
+              <div className="client-quote-actions">
+                <button className="button primary" type="button" onClick={() => onQuoteDecision(request.id, "accept")}>Elfogadom</button>
+                <button className="button secondary" type="button" onClick={() => onQuoteDecision(request.id, "decline")}>Nem kérem</button>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <ChangeThread requestId={request.id} role="client" onSent={() => onThreadMessage(request.id)} /></article>)}</div> : null}
 
       <details className="subscription-manage">
         <summary>Előfizetés kezelése</summary>

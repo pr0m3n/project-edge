@@ -190,3 +190,34 @@ test("az éles rendszerpróba kedvezménye kettős kapuhoz kötött", () => {
   // teljes árú munkamenetet adná vissza.
   assert.match(checkout, /idempotencyKey: `projectedge-subscription-v3-.*applyTestCoupon \? testCoupon : "full"/);
 });
+
+test("az ügyfél nem írhat pénzügyi mezőt a kérésén", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/032_change_request_quotes_and_messages.sql", import.meta.url), "utf8");
+
+  // A beszúrásnál a kliens értékeit eldobjuk, nem elfogadjuk.
+  assert.match(migration, /new\.quoted_amount := null;/);
+  assert.match(migration, /new\.paid_at := null;/);
+  assert.match(migration, /new\.status := 'new';/);
+
+  // Frissítésnél bármelyik pénzügyi mező mozgatása kivételt dob.
+  assert.match(migration, /Ezt a mezőt csak a szolgáltató módosíthatja/);
+  assert.match(migration, /before insert or update on public\.change_requests/);
+
+  // A döntési műveletek security definer függvények, nem közvetlen írás.
+  for (const fn of ["accept_change_quote", "decline_change_quote", "report_change_transfer"]) {
+    assert.match(migration, new RegExp(`create or replace function public\\.${fn}`));
+    assert.match(migration, new RegExp(`grant execute on function public\\.${fn}\\(uuid\\) to authenticated`));
+  }
+});
+
+test("a kérés-üzenetnél a feladó nem hamisítható", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/032_change_request_quotes_and_messages.sql", import.meta.url), "utf8");
+  assert.match(migration, /public\.is_admin\(\) and sender = 'admin'/);
+  assert.match(migration, /sender = 'client'/);
+  assert.match(migration, /alter table public\.change_request_messages enable row level security/);
+});
+
+test("az általános utalásjelzés nem keveredik a kivásárlással", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/032_change_request_quotes_and_messages.sql", import.meta.url), "utf8");
+  assert.match(migration, /left\(request\.description, length\('\[WEBOLDAL_MEGVASARLAS\]'\)\) <> '\[WEBOLDAL_MEGVASARLAS\]'/);
+});
