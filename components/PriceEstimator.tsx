@@ -5,6 +5,8 @@ import {
   CHANGE_QUOTA_EXCLUDED,
   CHANGE_QUOTA_FREE,
   CHANGE_QUOTA_INCLUDED,
+  CHANGE_LEAD_REALITY,
+  changeLeadLabel,
   PLAN_COMPARISON_ROWS,
   PLAN_DECISION_RULE,
   PRICE_TAX_NOTE,
@@ -47,7 +49,7 @@ export function PriceEstimator() {
                 <div className="plan-fit"><span>Válaszd, ha…</span><p>{PLAN_DECISION_RULE[plan.key]}</p></div>
                 <div className="plan-price"><strong>{formatHuf(plan.price)}</strong><span>/ hó</span></div>
                 <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
-                <div className="plan-meta"><span>{plan.changes}</span><span>{plan.response}</span></div>
+                <div className="plan-meta"><span>{plan.changes}</span><span>{changeLeadLabel(plan.changeLeadDays)}</span></div>
                 <button className="plan-detail-trigger" type="button" onClick={() => { setDetailPlan(plan.key); window.setTimeout(() => document.getElementById("csomag-reszletek")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}>Részletes tartalom</button>
                 <TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${plan.key}`}>Ezt választom</TransitionLink>
               </article>
@@ -85,6 +87,7 @@ export function PriceEstimator() {
             <div className="plan-shared">
               <span>Mindhárom csomagban benne van</span>
               <ul>{SUBSCRIPTION_SHARED_INCLUDED.map((item) => <li key={item}>{item}</li>)}</ul>
+              <small>{CHANGE_LEAD_REALITY}</small>
             </div>
             <details className="plan-quota-explainer">
               <summary>Mi számít „kisebb módosításnak"?</summary>

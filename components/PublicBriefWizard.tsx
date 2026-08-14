@@ -203,7 +203,7 @@ export function PublicBriefWizard() {
               <header><span>01 / Konstrukció</span><h3>Hogyan szeretnéd használni az oldalt?</h3><p>Választhatsz gondtalan havidíjas üzemeltetést vagy teljes tulajdonba kerülő projektet.</p></header>
               <div className="public-choice-grid two">
                 <button className={form.commercialModel === "subscription" ? "selected" : ""} onClick={() => update({ commercialModel: "subscription", budget: "subscription", domainStatus: "need", hostingAccess: "managed" })} type="button"><small>INDULÓ DÍJ NÉLKÜL</small><strong>Weboldal-előfizetés</strong><p>Domain, tárhely és technikai felügyelet egy havidíjban.</p></button>
-                <button className={form.commercialModel === "purchase" ? "selected" : ""} onClick={() => update({ commercialModel: "purchase", budget: "not-sure" })} type="button"><small>SAJÁT TULAJDON</small><strong>Weboldal-vásárlás</strong><p>Egyedi ajánlat, forráskód és teljes átadás.</p></button>
+                <button className={form.commercialModel === "purchase" ? "selected" : ""} onClick={() => update({ commercialModel: "purchase", budget: "not-sure" })} type="button"><small>EGYEDI PROJEKT</small><strong>Egyszeri fejlesztés</strong><p>Webapp, ügyfélkapu vagy meglévő oldal átalakítása.</p></button>
               </div>
               {form.commercialModel === "subscription" ? <div className="public-plan-grid">
                 {SUBSCRIPTION_PLANS.map((plan) => <button className={form.subscriptionPlan === plan.key ? "selected" : ""} key={plan.key} onClick={() => update({ subscriptionPlan: plan.key })} type="button"><span>{plan.name}</span><strong>{formatHuf(plan.price)}<small>/hó</small></strong><p>{plan.short}</p></button>)}

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 const services = [
   ["Új, menedzselt weboldal", "Bérlésnél mindig új oldal épül, a választott csomag keretei szerint. Domain, tárhely és felügyelet egyben."],
-  ["Weboldal egyszeri megvásárlása", "Egyszeri díjért a forráskódot is átadom. Erre egyedi ajánlat készül."],
+  ["Kivásárlás bármikor", "A bérelt oldalt egyszeri díjért megveheted: a forráskód, a domain és a hozzáférések a tieddé válnak, az előfizetés pedig lezárul."],
   ["Folyamatos gondozás", "A bérelt oldalt figyelem, frissítem, és a csomag szerinti módosításokat elvégzem. Neked nincs technikai feladatod."],
   ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu csak megvásárolható projektként kérhető."]
 ];
@@ -91,10 +91,10 @@ export default function ServicesPage() {
         <p className="micro-label dark">Szolgáltatások</p>
         <h1>Annyit építek, amennyi kell.</h1>
         <p>
-          A legtöbben bérlik: havidíjat fizetsz, én pedig megépítem és üzemeltetem az oldalt — a
-          domaintől a karbantartásig mindent én intézek, induló díj nélkül. Ha inkább a sajátod
-          legyen, meg is veheted, akkor a forráskódot is átadom. Meglévő oldal átalakítása és webapp
-          csak megvásárolható projektként kérhető.
+          A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem — a domaintől a
+          karbantartásig mindent én intézek, induló díj nélkül. Ha egy idő után a sajátod lenne,
+          bármikor kivásárolhatod, és akkor a forráskódot is átadom. Meglévő oldal átalakítása és
+          webapp nem bérelhető: azok egyszeri, egyedi projektek.
         </p>
       </section>
 

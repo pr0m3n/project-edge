@@ -142,3 +142,33 @@ test("a domain átírása figyelmezteti az ügyfelet a megújítási felelőssé
   const handover = readFileSync(new URL("../lib/handover.ts", import.meta.url), "utf8");
   assert.match(handover, /megújítási díja téged terhel/);
 });
+
+test("az átfutás nem válaszidőnek látszik, és külön van a visszaigazolástól", () => {
+  // A régi, félreérthető mező nem élhet tovább sehol.
+  // Sor eleji mezőhozzárendelés, hogy a magyarázó komment ne adjon fals találatot.
+  assert.doesNotMatch(source, /^\s+response: "/m);
+  assert.doesNotMatch(source, /"Válasz \d+ munkanapon belül"/);
+
+  // Az átfutás számként él, és a megfogalmazás az ELKÉSZÜLÉSRŐL szól.
+  assert.match(source, /changeLeadDays: 5/);
+  assert.match(source, /changeLeadDays: 3/);
+  assert.match(source, /changeLeadDays: 2/);
+  assert.match(source, /A kért módosítás \$\{days\} munkanapon belül elkészül/);
+
+  // A visszaigazolás és a hibára reagálás minden csomagra azonos vállalás.
+  assert.match(source, /ACK_PROMISE = "Írásos kérésre 1 munkanapon belül visszaigazolok"/);
+  assert.match(source, /FAULT_RESPONSE_PROMISE = "Technikai hibára 1 munkanapon belül reagálok"/);
+  assert.ok(
+    SHARED_HAS_ACK(source),
+    "a visszaigazolás a minden csomagban benne van listában is szerepeljen"
+  );
+});
+
+function SHARED_HAS_ACK(src) {
+  const block = src.slice(src.indexOf("SUBSCRIPTION_SHARED_INCLUDED"), src.indexOf("CHANGE_QUOTA_INCLUDED"));
+  return /visszaigazolok/.test(block) && /reagálok/.test(block);
+}
+
+test("a „prioritásos ügyintézés” homályos felirat eltűnt", () => {
+  assert.doesNotMatch(source, /"Prioritásos ügyintézés"/);
+});

@@ -63,7 +63,15 @@ export type SubscriptionPlan = {
   pages: string;
   changes: string;
   changeQuota: PlanChangeQuota;
-  response: string;
+  /**
+   * Hány munkanap alatt KÉSZÜL EL egy kért módosítás.
+   *
+   * Korábban ez egy `response: "5 munkanapos ügyintézés"` szöveg volt, amit a
+   * látogató válaszidőnek olvasott („egy hétig nem hallok felőle"). A
+   * visszaigazolás és a hibára reagálás ettől külön, minden csomagra azonos
+   * vállalás — lásd `SUBSCRIPTION_SHARED_INCLUDED`.
+   */
+  changeLeadDays: number;
   featured?: boolean;
   features: string[];
   idealFor: string;
@@ -78,6 +86,19 @@ export type SubscriptionPlan = {
   featureQuestion: string;
   detailGroups: Array<{ title: string; items: string[] }>;
 };
+
+export function changeLeadLabel(days: number) {
+  return `A kért módosítás ${days} munkanapon belül elkészül`;
+}
+
+/**
+ * Minden csomagra azonos, ezért nem az összehasonlító táblázatban van a helye.
+ * A visszaigazolás azért külön vállalás, mert a vásárló félelme nem az, hogy
+ * lassan készül el valami, hanem hogy nem tudja, megkaptad-e egyáltalán.
+ */
+export const ACK_PROMISE = "Írásos kérésre 1 munkanapon belül visszaigazolok";
+export const FAULT_RESPONSE_PROMISE = "Technikai hibára 1 munkanapon belül reagálok";
+export const CHANGE_LEAD_REALITY = "Ez a garantált határidő — a gyakorlatban jellemzően 1–2 nap.";
 
 export function changeQuotaLabel(quota: PlanChangeQuota) {
   const unit = quota.period === "month" ? "Havi" : "Évente";
@@ -96,7 +117,8 @@ export const SUBSCRIPTION_SHARED_INCLUDED = [
   "Domain regisztráció, megújítás és díj",
   "Tárhely, SSL és technikai frissítések",
   "Folyamatos működésfelügyelet",
-  "Technikai hiba javítása — nem fogyasztja a módosítási keretet",
+  "Írásos kérésre 1 munkanapon belül visszaigazolok",
+  "Technikai hibára 1 munkanapon belül reagálok — és nem fogyasztja a keretet",
   "Nincs induló díj és nincs hűségidő"
 ];
 
@@ -130,14 +152,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     pages: "1 oldal, legfeljebb 7 blokk",
     changes: "Évente 3 kisebb módosítás",
     changeQuota: { count: 3, period: "year" },
-    response: "5 munkanapos ügyintézés",
+    changeLeadDays: 5,
     features: [
       "1 oldal, legfeljebb 7 tartalmi blokk",
       "Egyedi, letisztult egyoldalas design",
       "Kapcsolati űrlap és hívásgomb",
       "Alap keresőoptimalizálás",
       "Évente 3 kisebb módosítás",
-      "Válasz 5 munkanapon belül"
+      "A kért módosítás 5 munkanapon belül elkészül"
     ],
     idealFor: "Induló vállalkozásnak vagy egyetlen szolgáltatás világos bemutatásához.",
     buildTime: "Jellemzően 2–4 munkanap",
@@ -161,7 +183,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     pages: "Legfeljebb 5 aloldal",
     changes: "Havi 1 kisebb módosítás",
     changeQuota: { count: 1, period: "month" },
-    response: "3 munkanapos ügyintézés",
+    changeLeadDays: 3,
     featured: true,
     features: [
       "Legfeljebb 5 aloldal",
@@ -169,7 +191,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "Részletes ajánlatkérő folyamat",
       "Analitika és konverziómérés",
       "Havi 1 kisebb módosítás",
-      "Válasz 3 munkanapon belül"
+      "A kért módosítás 3 munkanapon belül elkészül"
     ],
     idealFor: "Szolgáltató vállalkozásnak, amely rendszeresen szeretne érdeklődőket szerezni.",
     buildTime: "Jellemzően 3–6 munkanap",
@@ -183,7 +205,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     detailGroups: [
       { title: "Elkészítés", items: ["Legfeljebb 5 egyedi tartalmi oldal", "Konverzióra tervezett főoldal", "Részletes ajánlatkérő folyamat", "Szövegek szerkesztése és finomítása"] },
       { title: "Növekedés", items: ["Analitika és konverziómérés", "Alap keresőoptimalizálás", "Éves vizuális frissítés", "Havi 1 kisebb tartalmi vagy designmódosítás"] },
-      { title: "Üzemeltetés", items: ["Domain, hosting és SSL", "Űrlapok és mérés felügyelete", "Technikai frissítések és hibajavítás", "3 munkanapos ügyintézés"] }
+      { title: "Üzemeltetés", items: ["Domain, hosting és SSL", "Űrlapok és mérés felügyelete", "Technikai frissítések és hibajavítás", "A kért módosítás 3 munkanapon belül elkészül"] }
     ]
   },
   {
@@ -194,14 +216,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     pages: "Legfeljebb 8–10 aloldal",
     changes: "Havi 2 kisebb módosítás",
     changeQuota: { count: 2, period: "month" },
-    response: "Prioritásos ügyintézés",
+    changeLeadDays: 2,
     features: [
       "Legfeljebb 8–10 aloldal",
       "Teljesen egyedi vizuális rendszer",
       "Többlépcsős ajánlatkérés vagy foglalás",
       "Részletes mérés és optimalizálás",
       "Havi 2 kisebb módosítás",
-      "Prioritásos ügyintézés"
+      "A kért módosítás 2 munkanapon belül elkészül"
     ],
     idealFor: "Összetettebb szolgáltatáshoz, több célcsoporthoz vagy speciális ügyfélszerző folyamathoz.",
     buildTime: "Jellemzően 5–14 munkanap",
@@ -215,7 +237,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     detailGroups: [
       { title: "Elkészítés", items: ["Legfeljebb 8–10 egyedi oldal", "Teljesen egyedi vizuális rendszer", "Összetett ajánlatkérő vagy foglalási folyamat", "Részletes szöveg- és tartalmi struktúra"] },
       { title: "Integráció", items: ["Foglalás, hírlevél vagy külső rendszer", "Részletes esemény- és konverziómérés", "Egyedi automatizmusok egyeztetett keretben", "Technikai SEO alapok"] },
-      { title: "Üzemeltetés", items: ["Domain, hosting, SSL és felügyelet", "Folyamatos optimalizálás", "Havi 2 kisebb módosítás", "Prioritásos ügyintézés"] }
+      { title: "Üzemeltetés", items: ["Domain, hosting, SSL és felügyelet", "Folyamatos optimalizálás", "Havi 2 kisebb módosítás", "A kért módosítás 2 munkanapon belül elkészül"] }
     ]
   }
 ];
@@ -247,7 +269,7 @@ export const PLAN_COMPARISON_ROWS: Array<{ label: string; value: (plan: Subscrip
   { label: "Kapcsolatfelvétel", value: (plan) => plan.leadFlow },
   { label: "Mérés és SEO", value: (plan) => plan.measurement },
   { label: "Módosítási keret", value: (plan) => changeQuotaLabel(plan.changeQuota) },
-  { label: "Ügyintézés", value: (plan) => plan.response }
+  { label: "Módosítás átfutása", value: (plan) => `${plan.changeLeadDays} munkanap` }
 ];
 
 /** Egymondatos döntési szabály — a „melyiket válasszam?" kérdésre. */

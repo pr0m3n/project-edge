@@ -2459,12 +2459,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <>
                     <div className="brief-model-choice">
                       <p className="micro-label dark">Hogyan szeretnéd használni?</p>
+                      {/* A weboldal MEGVÁSÁRLÁSA már nem itt kezdődik: az a
+                          bérlésből lehívható vételi opció (ManagedWebsitePanel).
+                          Ez a második választás az, amit tényleg nem lehet
+                          bérelni — webapp, ügyfélkapu, meglévő oldal átalakítása. */}
                       <div className="choice-compare">
                         <button className={`choice-card primary ${projectForm.commercialModel === "subscription" ? "selected" : ""}`} type="button" onClick={() => setProjectForm((current) => ({ ...current, commercialModel: "subscription", domainStatus: "need", hostingAccess: "managed", budget: "subscription", projectType: "", websiteStatus: "", website: "", existingPlatform: "", wpAccess: "", analyticsAccess: "", priority: "" }))}>
                           <span>MENEDZSELT</span><strong>Előfizetéssel</strong><small>0 Ft induló díj. Domain, hosting, felügyelet és módosítások egyben.</small>
                         </button>
                         <button className={`choice-card ${projectForm.commercialModel === "purchase" ? "selected" : ""}`} type="button" onClick={() => setProjectForm((current) => ({ ...current, commercialModel: "purchase", budget: current.budget === "subscription" ? "not-sure" : current.budget, pages: "", features: "", primaryAction: "" }))}>
-                          <span>SAJÁT TULAJDON</span><strong>Egyszeri vásárlással</strong><small>Magasabb egyszeri díj, forráskóddal és technikai átadással.</small>
+                          <span>EGYEDI PROJEKT</span><strong>Egyszeri fejlesztés</strong><small>Webapp, ügyfélkapu vagy meglévő oldal átalakítása. Egyedi ajánlat, a végén teljes átadással.</small>
                         </button>
                       </div>
                     </div>

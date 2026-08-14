@@ -221,7 +221,7 @@ export function buildBriefText(form: BriefFormValues) {
   ].filter(Boolean);
 
   return [
-    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Weboldal megvásárlása"}`,
+    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Egyedi projekt — egyszeri fejlesztés"}`,
     `Cél: ${form.goals}`,
     form.audience ? `Célközönség / vásárlók: ${form.audience}` : "",
     form.primaryAction ? `Elsődleges látogatói művelet: ${form.primaryAction}` : "",

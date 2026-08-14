@@ -11021,3 +11021,12 @@ p {
   line-height: 1.45;
   margin-top: 8px;
 }
+
+.plan-shared > small {
+  border-top: 1px solid rgba(118, 171, 174, 0.3);
+  color: #35696d;
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  padding-top: 10px;
+}
