@@ -5,6 +5,7 @@ import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { getStripe, stripeAmountToHuf } from "@/lib/stripe";
 import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
+import { buildHandoverPlan } from "@/lib/handover";
 
 export const runtime = "nodejs";
 
@@ -75,13 +76,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   const admin = createServerSupabaseAdminClient();
   const { data: project, error } = await admin.from("client_projects")
-    .select("id,user_id,title,contact_email,status,subscription_plan,subscription_status,subscription_started_at")
+    .select("id,user_id,title,contact_email,status,commercial_model,subscription_plan,subscription_status,subscription_started_at")
     .eq("id", projectId).maybeSingle();
   if (error) throw error;
   if (!project) {
     await reportOrphanEvent("A Stripe-előfizetéshez tartozó projekt nem található", `${subscriptionId} → ${projectId}`);
     return;
   }
+  if (project.commercial_model === "purchase") return;
 
   // Egy már könyvelt számlához nem küldünk újra értesítést és emailt, még
   // akkor sem, ha a Stripe újraküldi az eseményt.
@@ -166,7 +168,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
     subscription_status: "past_due",
     stripe_subscription_status: subscription.status,
     next_step: "A havidíj terhelése sikertelen. Frissítsd a fizetési módot a számlázási felületen."
-  }).eq("id", projectId).select("user_id,title,contact_email").maybeSingle();
+  }).eq("id", projectId).neq("commercial_model", "purchase").select("user_id,title,contact_email").maybeSingle();
   if (invoice.id) await admin.from("subscription_payments").update({ status: "failed", updated_at: new Date().toISOString() }).eq("stripe_invoice_id", invoice.id);
   if (project) await admin.from("notifications").insert({ user_id: project.user_id, title: "Sikertelen előfizetési terhelés", message: `A(z) „${project.title}” havidíját nem sikerült levonni. Nyisd meg a számlázási felületet és ellenőrizd a kártyát.`, link: "/ugyfelkapu/dashboard" });
 }
@@ -187,7 +189,108 @@ async function handleSubscription(subscription: Stripe.Subscription, deleted = f
     cancelled_at: cancelled ? new Date().toISOString() : null,
     site_health_status: cancelled ? "offline" : undefined,
     next_step: cancelled ? "Az előfizetés megszűnt. Ez nem projektátadás és nem indít technikai garanciát." : undefined
-  }).eq("id", projectId);
+  }).eq("id", projectId).neq("commercial_model", "purchase");
+}
+
+async function handleWebsitePurchasePaid(session: Stripe.Checkout.Session) {
+  const purchaseId = session.metadata?.website_purchase_id;
+  if (!purchaseId || session.payment_status !== "paid") return;
+
+  const admin = createServerSupabaseAdminClient();
+  const { data: purchase, error: purchaseError } = await admin
+    .from("website_purchases")
+    .select("id,project_id,user_id,status,amount,payment_reference")
+    .eq("id", purchaseId)
+    .maybeSingle();
+  if (purchaseError) throw purchaseError;
+  if (!purchase || ["handover", "completed", "cancelled"].includes(purchase.status)) return;
+
+  const { data: project, error: projectError } = await admin
+    .from("client_projects")
+    .select("id,title,contact_email,stripe_subscription_id")
+    .eq("id", purchase.project_id)
+    .maybeSingle();
+  if (projectError) throw projectError;
+  if (!project) throw new Error("A kártyás tulajdonba vétel projektje nem található.");
+
+  // A kártyás vételár már biztosan beérkezett. A havi Stripe-előfizetést még
+  // az átadási állapot megnyitása előtt szüntetjük meg, ugyanúgy, mint az
+  // admin által jóváhagyott banki átutalásnál.
+  if (project.stripe_subscription_id) {
+    const subscription = await getStripe().subscriptions.retrieve(project.stripe_subscription_id);
+    if (subscription.status !== "canceled") await getStripe().subscriptions.cancel(subscription.id);
+  }
+
+  const { data: activated, error: activationError } = await admin.rpc("activate_website_purchase", {
+    p_purchase_id: purchase.id,
+    p_handover: buildHandoverPlan(["vercel", "github", "domain"])
+  });
+  if (activationError) throw activationError;
+
+  await admin.from("notifications").insert({
+    user_id: purchase.user_id,
+    title: "A weboldal vételára beérkezett",
+    message: `A(z) „${project.title}” tulajdonba vételének kártyás fizetése sikeres. A technikai átadás megnyílt az ügyfélkapuban.`,
+    link: "/ugyfelkapu/dashboard"
+  });
+  if (project.contact_email) {
+    await sendProjectEdgeEmail({
+      to: project.contact_email,
+      subject: "A weboldal vételára beérkezett",
+      message: `A(z) „${project.title}” weboldal tulajdonba vételének fizetése sikeres. Az előfizetés lezárult, a technikai átadási lista megnyílt az ügyfélkapuban.`,
+      link: "/ugyfelkapu/dashboard",
+      details: [{ label: "Vételár", value: formatHuf(purchase.amount) }, { label: "Fizetési mód", value: "Bankkártya" }]
+    });
+  }
+  return activated;
+}
+
+async function handleChangeRequestPaid(session: Stripe.Checkout.Session) {
+  const requestId = session.metadata?.change_request_id;
+  if (!requestId || session.payment_status !== "paid") return;
+
+  const admin = createServerSupabaseAdminClient();
+  const { data: changeRequest, error: requestError } = await admin
+    .from("change_requests")
+    .select("id,project_id,user_id,quoted_amount,status,paid_at,payment_method")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (requestError) throw requestError;
+  if (!changeRequest || changeRequest.paid_at || changeRequest.status === "in_progress" || changeRequest.status === "completed") return;
+
+  const { data: project, error: projectError } = await admin
+    .from("client_projects")
+    .select("id,title,contact_email")
+    .eq("id", changeRequest.project_id)
+    .maybeSingle();
+  if (projectError) throw projectError;
+  if (!project) throw new Error("A kártyás módosítás projektje nem található.");
+
+  const { data: updated, error: updateError } = await admin.from("change_requests").update({
+    paid_at: new Date().toISOString(),
+    status: "in_progress",
+    payment_method: "card",
+    stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null
+  }).eq("id", requestId).eq("payment_method", "card").is("paid_at", null).eq("status", "waiting_client").select("id").maybeSingle();
+  if (updateError) throw updateError;
+  if (!updated) return;
+
+  const amount = formatHuf(changeRequest.quoted_amount ?? 0);
+  await admin.from("notifications").insert({
+    user_id: changeRequest.user_id,
+    title: "Megérkezett a módosítás fizetése",
+    message: `A(z) „${project.title}” projektnél kért módosítás ${amount} összegű kártyás fizetése sikeres. A munka elindult.`,
+    link: "/ugyfelkapu/dashboard"
+  });
+  if (project.contact_email) {
+    await sendProjectEdgeEmail({
+      to: project.contact_email,
+      subject: "Megérkezett a módosítás fizetése",
+      message: `A(z) „${project.title}” projektnél kért módosítás kártyás fizetése sikeres. A munka elindult.`,
+      link: "/ugyfelkapu/dashboard",
+      details: [{ label: "Összeg", value: amount }, { label: "Fizetési mód", value: "Bankkártya" }]
+    });
+  }
 }
 
 export async function POST(request: Request) {
@@ -229,6 +332,14 @@ export async function POST(request: Request) {
       case "customer.subscription.deleted": await handleSubscription(event.data.object, true); break;
       case "checkout.session.completed": {
         const session = event.data.object;
+        if (session.mode === "payment" && session.metadata?.website_purchase_id) {
+          await handleWebsitePurchasePaid(session);
+          break;
+        }
+        if (session.mode === "payment" && session.metadata?.change_request_id) {
+          await handleChangeRequestPaid(session);
+          break;
+        }
         const projectId = session.metadata?.project_id;
         if (projectId) await admin.from("client_projects").update({
           stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,

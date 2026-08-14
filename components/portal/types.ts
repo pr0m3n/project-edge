@@ -8,8 +8,8 @@
 
 import type { CommercialModel, SubscriptionPlanKey } from "@/lib/subscriptions";
 import type { HandoverStepState } from "@/lib/handover";
-
 export type { BriefFormValues } from "@/lib/brief-draft";
+export type { WebsitePurchase } from "@/lib/website-purchase";
 
 export type Project = {
   id: string;
@@ -158,6 +158,8 @@ export type TicketMessage = {
   sender: "customer" | "admin";
   body: string;
   created_at: string;
+  user_id?: string | null;
+  status?: "sending" | "sent" | "error";
 };
 
 export type ClientChangeRequest = {
@@ -175,6 +177,9 @@ export type ClientChangeRequest = {
   payment_reference: string | null;
   transfer_reported_at: string | null;
   paid_at: string | null;
+  payment_method: "card" | "bank_transfer" | null;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
   /** Az ügyfél elfogadta az árajánlatot (032 migráció). */
   quote_accepted_at: string | null;
   /** Az ajánlat rövid indoklása — az ügyfél ezt látja az ár mellett. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
   initialBriefForm,
@@ -31,6 +31,8 @@ import { LaunchedPanel } from "@/components/portal/LaunchedPanel";
 import { ClosedProjectCard } from "@/components/portal/ClosedProjectCard";
 import { HandoverPanel } from "@/components/portal/HandoverPanel";
 import { ManagedWebsitePanel } from "@/components/portal/ManagedWebsitePanel";
+import { PurchaseFlowPanel, type PurchaseBillingState } from "@/components/portal/PurchaseFlowPanel";
+import { PurchaseHandoverPanel } from "@/components/portal/PurchaseHandoverPanel";
 import { DomainAvailabilityPicker } from "@/components/portal/DomainAvailabilityPicker";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
@@ -38,7 +40,8 @@ import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/l
 import { completeHandoverStep } from "@/lib/handover";
 import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
-import type { Project, Ticket, TicketMessage, ClientChangeRequest } from "@/components/portal/types";
+import type { Project, Ticket, TicketMessage, ClientChangeRequest, WebsitePurchase } from "@/components/portal/types";
+import type { WebsitePurchasePaymentMethod } from "@/lib/website-purchase";
 import {
   audienceChips,
   briefSteps,
@@ -113,6 +116,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, TicketMessage[]>>({});
   const [changeRequests, setChangeRequests] = useState<ClientChangeRequest[]>([]);
+  const [websitePurchases, setWebsitePurchases] = useState<WebsitePurchase[]>([]);
   const [projectForm, setProjectForm] = useState(initialProject);
   const [projectStep, setProjectStep] = useState(0);
   const [projectSubmitted, setProjectSubmitted] = useState(false);
@@ -123,6 +127,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [ticketForm, setTicketForm] = useState(initialTicket);
   const [activeTicketId, setActiveTicketId] = useState("");
   const [reply, setReply] = useState("");
+  const portalChatMessagesRef = useRef<HTMLDivElement>(null);
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketRatingComment, setTicketRatingComment] = useState("");
   const [notice, setNotice] = useState("");
@@ -171,6 +176,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [domainProofUrl, setDomainProofUrl] = useState("");
   const [domainProofUploading, setDomainProofUploading] = useState(false);
   const [handoverSaving, setHandoverSaving] = useState(false);
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [publicBriefPending, setPublicBriefPending] = useState(false);
   const [publicBriefImported, setPublicBriefImported] = useState(false);
 
@@ -224,11 +230,23 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentResult = params.get("payment");
-    if (!paymentResult) return;
-    setNotice(paymentResult === "success"
-      ? "A Stripe-fizetés sikeres. Az előfizetés állapota rövidesen automatikusan frissül."
-      : "A fizetést megszakítottad; az előfizetés még nem indult el.");
+    const purchaseResult = params.get("purchase");
+    const changePaymentResult = params.get("change_payment");
+    if (!paymentResult && !purchaseResult && !changePaymentResult) return;
+    setNotice(changePaymentResult
+      ? changePaymentResult === "success"
+        ? "A módosítás kártyás fizetése sikeres volt. A munka rövidesen elindul."
+        : "A módosítás kártyás fizetését megszakítottad. Később újra folytathatod."
+      : purchaseResult
+      ? purchaseResult === "success"
+        ? "A kártyás fizetés sikeres volt. A technikai átadási lista rövidesen megjelenik."
+        : "A kártyás fizetést megszakítottad. A tulajdonba-vétel továbbra is folytatható."
+      : paymentResult === "success"
+        ? "A Stripe-fizetés sikeres. Az előfizetés állapota rövidesen automatikusan frissül."
+        : "A fizetést megszakítottad; az előfizetés még nem indult el.");
     params.delete("payment");
+    params.delete("purchase");
+    params.delete("change_payment");
     window.history.replaceState({}, "", `${window.location.pathname}${params.size ? `?${params}` : ""}${window.location.hash}`);
   }, []);
 
@@ -549,6 +567,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const selectedProject =
     activeProjects.find((p) => p.id === selectedProjectId) ?? activeProjects.find((p) => p.id === defaultProjectId) ?? activeProjects[0];
 
+  const selectedWebsitePurchase = selectedProject
+    ? websitePurchases.find((purchase) => purchase.project_id === selectedProject.id && !["completed", "declined", "cancelled"].includes(purchase.status)) ?? null
+    : null;
+
   const selectedProjectTypeLabels = splitListValue(projectForm.projectType)
     .map((value) => projectTypeOptions.find(([option]) => option === value)?.[1])
     .filter(Boolean);
@@ -682,6 +704,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         loadPortal(false, sessionUser.id);
       } else {
         setProjects([]);
+        setWebsitePurchases([]);
         setTickets([]);
         setMessages({});
         if (view === "dashboard") {
@@ -761,6 +784,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (supportThreadOpen && portalChatMessagesRef.current) {
+      portalChatMessagesRef.current.scrollTo({
+        top: portalChatMessagesRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [messages, supportThreadOpen, activeTicketId]);
+
   async function loadPortal(silent = false, uid?: string) {
     if (!silent) {
       setLoading(true);
@@ -772,7 +804,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       { data: ticketData, error: ticketError },
       { data: profileData },
       { data: notificationData },
-      { data: changeRequestData }
+      { data: changeRequestData },
+      { data: websitePurchaseData }
     ] = await Promise.all([
       supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
       supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }),
@@ -780,7 +813,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         ? supabase.from("client_profiles").select("full_name").eq("id", resolvedUid).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20),
-      supabase.from("change_requests").select("*").order("requested_at", { ascending: false })
+      supabase.from("change_requests").select("*").order("requested_at", { ascending: false }),
+      supabase.from("website_purchases").select("*").order("created_at", { ascending: false })
     ]);
 
     if (projectError || ticketError) {
@@ -815,6 +849,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setProfileName(profileData?.full_name ?? "");
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
+    setWebsitePurchases((websitePurchaseData ?? []) as WebsitePurchase[]);
     setActiveTicketId((current) => current || ticketData?.[0]?.id || "");
     setLoading(false);
   }
@@ -1772,21 +1807,105 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     loadPortal(true);
   }
 
-  async function createChangeRequest(project: Project, category: string, description: string) {
-    if (isWebsitePurchaseRequest(description)) {
-      const existing = changeRequests.find(
-        (request) => request.project_id === project.id && isWebsitePurchaseRequest(request.description) && !["completed", "declined"].includes(request.status)
-      );
-      if (existing) {
-        setNotice("A weboldal megvásárlási igényét már elküldted. Az aktuális állapotot a kérések között látod.");
+  async function startWebsitePurchase(project: Project) {
+    setPurchaseBusy(true);
+    setNotice("A tulajdonba-vételi folyamat indítása...");
+    try {
+      const { data, error } = await supabase.rpc("create_website_purchase", { p_project_id: project.id });
+      if (error || !data) {
+        setNotice(error?.message || "A tulajdonba-vételi folyamatot nem sikerült elindítani.");
         return;
       }
+      setWebsitePurchases((current) => [data as WebsitePurchase, ...current.filter((item) => item.id !== (data as WebsitePurchase).id)]);
+      await triggerNotification(null, "admin@projectedge.hu", "Új tulajdonba-vételi igény", `Az ügyfél (${email}) elindította a(z) „${project.title}” weboldal tulajdonba-vételi folyamatát. Készítsd elő az átadási és fizetési összefoglalót.`, "/admin");
+      setNotice("A folyamat elindult. Amint elkészülnek a fizetési adatok, itt folytathatod.");
+      await loadPortal(true);
+    } finally {
+      setPurchaseBusy(false);
     }
+  }
+
+  async function createChangeRequest(project: Project, category: string, description: string) {
     const { error } = await supabase.from("change_requests").insert({ project_id: project.id, user_id: userId, category, description });
     if (error) { setNotice("A módosítási kérést nem sikerült elküldeni."); return; }
-    const purchase = isWebsitePurchaseRequest(description);
-    await triggerNotification(null, "admin@projectedge.hu", purchase ? "Weboldal-megvásárlási igény" : "Új weboldal-módosítás", purchase ? `Az ügyfél (${email}) elindította a(z) "${project.title}" weboldal megvásárlási folyamatát. Készítsd elő az átadás és a fizetés részleteit.` : `Új kérés érkezett a(z) "${project.title}" menedzselt weboldalhoz.`, "/admin");
-    setNotice(purchase ? "A megvásárlási folyamatot elindítottuk. Az átadási és fizetési részletekről itt és emailben értesítünk." : "A módosítási kérést elküldtük.");
+    await triggerNotification(null, "admin@projectedge.hu", "Új weboldal-módosítás", `Új kérés érkezett a(z) „${project.title}” menedzselt weboldalhoz.`, "/admin");
+    setNotice("A módosítási kérést elküldtük.");
+  }
+
+  async function selectWebsitePurchasePayment(purchaseId: string, method: WebsitePurchasePaymentMethod): Promise<boolean> {
+    setPurchaseBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("set_website_purchase_payment_method", { p_purchase_id: purchaseId, p_payment_method: method });
+      if (error) { setNotice(error.message || "A fizetési mód mentése nem sikerült."); return false; }
+      if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchaseId ? data as WebsitePurchase : item));
+      return Boolean(data);
+    } finally {
+      setPurchaseBusy(false);
+    }
+  }
+
+  async function saveWebsitePurchaseBilling(purchaseId: string, billing: PurchaseBillingState): Promise<boolean> {
+    setPurchaseBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("update_website_purchase_billing", {
+        p_purchase_id: purchaseId,
+        p_name: billing.name,
+        p_email: billing.email,
+        p_country: billing.country,
+        p_postal_code: billing.postalCode,
+        p_city: billing.city,
+        p_address: billing.address,
+        p_tax_number: billing.taxNumber
+      });
+      if (error) { setNotice(error.message || "A számlázási adatok mentése nem sikerült."); return false; }
+      if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchaseId ? data as WebsitePurchase : item));
+      setNotice("A számlázási adatokat elmentettük.");
+      return Boolean(data);
+    } finally {
+      setPurchaseBusy(false);
+    }
+  }
+
+  async function startWebsitePurchaseCardPayment(purchaseId: string) {
+    setPurchaseBusy(true);
+    setNotice("A biztonságos fizetési oldal megnyitása...");
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      if (!session) { setNotice("A munkameneted lejárt. Jelentkezz be újra."); return; }
+      const response = await fetch("/api/stripe/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ purchaseId })
+      });
+      const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!response.ok || !result.url) { setNotice(result.error || "A kártyás fizetési oldal nem nyitható meg."); return; }
+      window.location.assign(result.url);
+    } catch {
+      setNotice("A kártyás fizetési oldal most nem érhető el.");
+    } finally {
+      setPurchaseBusy(false);
+    }
+  }
+
+  async function reportWebsitePurchaseTransferV2(purchaseId: string) {
+    const ok = await confirm({
+      title: "Átutalás jelzése",
+      message: "Csak akkor jelöld késznek, ha a vételárat ténylegesen elutaltad a megadott közleménnyel.",
+      confirmLabel: "Elutaltam",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+    setPurchaseBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("report_website_purchase_transfer_v2", { p_purchase_id: purchaseId });
+      if (error) { setNotice(error.message || "Az átutalás jelzését nem sikerült menteni."); return; }
+      if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchaseId ? data as WebsitePurchase : item));
+      setNotice("Az utalást jeleztük. Az adminisztrátor ellenőrzi a beérkezést.");
+      await triggerNotification(null, "admin@projectedge.hu", "Tulajdonba-vételi utalás ellenőrzése", `Az ügyfél (${email}) jelezte a weboldal vételárának átutalását. Ellenőrizd a bankszámlát.`, "/admin");
+      await loadPortal(true);
+    } finally {
+      setPurchaseBusy(false);
+    }
   }
 
   /**
@@ -1816,8 +1935,22 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       if (!ok) return;
     }
 
-    const rpc = decision === "accept" ? "accept_change_quote" : decision === "decline" ? "decline_change_quote" : "report_change_transfer";
-    const { error } = await supabase.rpc(rpc, { request_id: requestId });
+    let error: { message?: string } | null = null;
+    if (decision === "transfer") {
+      const methodResult = await supabase.rpc("set_change_request_payment_method", {
+        request_id: requestId,
+        p_payment_method: "bank_transfer"
+      });
+      if (!methodResult.error) {
+        const transferResult = await supabase.rpc("report_change_transfer", { request_id: requestId });
+        error = transferResult.error;
+      } else {
+        error = methodResult.error;
+      }
+    } else {
+      const rpc = decision === "accept" ? "accept_change_quote" : "decline_change_quote";
+      error = (await supabase.rpc(rpc, { request_id: requestId })).error;
+    }
     if (error) {
       setNotice(error.message || "A művelet most nem hajtható végre.");
       return;
@@ -1843,6 +1976,39 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     await loadPortal(true);
   }
 
+  async function startChangeRequestCardPayment(requestId: string) {
+    setNotice("A módosítás biztonságos fizetési oldalának megnyitása...");
+    const methodResult = await supabase.rpc("set_change_request_payment_method", {
+      request_id: requestId,
+      p_payment_method: "card"
+    });
+    if (methodResult.error) {
+      setNotice(methodResult.error.message || "A kártyás fizetési mód mentése nem sikerült.");
+      return;
+    }
+
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) {
+      setNotice("A munkameneted lejárt. Jelentkezz be újra.");
+      return;
+    }
+    try {
+      const response = await fetch("/api/stripe/change-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ requestId })
+      });
+      const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!response.ok || !result.url) {
+        setNotice(result.error || "A kártyás fizetési oldal nem nyitható meg.");
+        return;
+      }
+      window.location.assign(result.url);
+    } catch {
+      setNotice("A módosítás kártyás fizetése most nem érhető el.");
+    }
+  }
+
   /** Új üzenet a kérés beszélgetésében — a stúdió kap róla értesítést. */
   async function notifyThreadMessage(project: Project) {
     await triggerNotification(
@@ -1852,21 +2018,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       `Az ügyfél üzenetet írt a(z) „${project.title}" projekt egyik kérésénél.`,
       "/admin"
     );
-  }
-
-  async function reportPurchaseTransfer(requestId: string) {
-    const ok = await confirm({
-      title: "Átutalás jelzése",
-      message: "Csak akkor folytasd, ha az összeget már elutaltad a kapott közleménnyel. Az adminisztrátor külön ellenőrzi a bankszámlán.",
-      confirmLabel: "Elutaltam",
-      cancelLabel: "Mégse"
-    });
-    if (!ok) return;
-    const { error } = await supabase.rpc("report_website_purchase_transfer", { request_id: requestId });
-    if (error) { setNotice(`Az utalás jelzését nem sikerült menteni: ${error.message}`); return; }
-    setNotice("Az utalás jelzését elküldtük. A beérkezést az adminisztrátor ellenőrzi.");
-    await triggerNotification(null, "admin@projectedge.hu", "Kivásárlási utalás ellenőrzése", "Az ügyfél jelezte, hogy elutalta a weboldal vételárát. Ellenőrizd a bankszámlán, majd indítsd el az átadást.", "/admin");
-    loadPortal(true);
   }
 
   async function approveReview(project: Project) {
@@ -2014,22 +2165,53 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     loadPortal(true);
   }
 
-  async function sendReply(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!activeTicket || !reply.trim() || !userId || activeTicket.status === "closed") {
+  async function sendReply(event?: FormEvent<HTMLFormElement>) {
+    if (event) event.preventDefault();
+    const text = reply.trim();
+    if (!activeTicket || !text || !userId || activeTicket.status === "closed") {
       return;
     }
 
-    const { error } = await supabase.from("client_ticket_messages").insert({
-      body: reply.trim(),
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMessage: TicketMessage = {
+      id: optimisticId,
+      body: text,
+      created_at: new Date().toISOString(),
       sender: "customer",
       ticket_id: activeTicket.id,
       user_id: userId
-    });
+    };
+
+    // Instant UI update (0ms lag)
+    setMessages((current) => ({
+      ...current,
+      [activeTicket.id]: [...(current[activeTicket.id] ?? []), optimisticMessage]
+    }));
+    setReply("");
+
+    const { data: inserted, error } = await supabase
+      .from("client_ticket_messages")
+      .insert({
+        body: text,
+        sender: "customer",
+        ticket_id: activeTicket.id,
+        user_id: userId
+      })
+      .select()
+      .single();
 
     if (error) {
       setNotice("Nem sikerült elküldeni az üzenetet.");
       return;
+    }
+
+    if (inserted) {
+      setMessages((current) => ({
+        ...current,
+        [activeTicket.id]: (current[activeTicket.id] ?? []).map((m) =>
+          m.id === optimisticId ? inserted : m
+        )
+      }));
     }
 
     await triggerNotification(
@@ -2039,8 +2221,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       `Új üzenet érkezett az ügyféltől (${email}) a(z) "${activeTicket.subject}" tickethez.`,
       "/admin"
     );
-
-    setReply("");
   }
 
   async function submitTicketRating(event: FormEvent<HTMLFormElement>) {
@@ -2302,7 +2482,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             meghívás nélkül nem lehet élesíteni, tehát ezeknek az élesítés ELŐTT
             kell megtörténniük. Az ajánlat előtt viszont nem jelenik meg, mert
             akkor még nincs se szerződés, se eldöntött technikai összetétel. */}
-        {project.commercial_model !== "subscription" && ["in_progress", "review", "launched"].includes(project.status) &&
+        {project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && ["in_progress", "review", "launched"].includes(project.status) &&
         (project.handover_steps?.length ?? 0) > 0 && (
           <HandoverPanel
             project={project}
@@ -2311,11 +2491,34 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           />
         )}
 
-        {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && (project.commercial_model === "subscription" ? (
-          <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onReportPurchaseTransfer={reportPurchaseTransfer} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onThreadMessage={() => notifyThreadMessage(project)} />
-        ) : (
+        {project.commercial_model === "purchase" && selectedWebsitePurchase ? (
+          <PurchaseHandoverPanel
+            project={project}
+            purchase={selectedWebsitePurchase}
+            busy={handoverSaving || purchaseBusy}
+            onCompleteStep={(stepId, value) => void completeClientHandoverStep(project, stepId, value)}
+            onClose={() => void closeCompletedProject(project)}
+          />
+        ) : null}
+
+        {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && project.commercial_model === "subscription" ? (
+          <>
+            <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description))} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onQuoteCardPayment={startChangeRequestCardPayment} onThreadMessage={() => notifyThreadMessage(project)} />
+            <PurchaseFlowPanel
+              key={`${project.id}-${selectedWebsitePurchase?.id ?? "new"}`}
+              project={project}
+              purchase={selectedWebsitePurchase}
+              busy={handoverSaving || purchaseBusy}
+              onStart={() => startWebsitePurchase(project)}
+              onSelectPayment={(method) => selectedWebsitePurchase ? selectWebsitePurchasePayment(selectedWebsitePurchase.id, method) : Promise.resolve(false)}
+              onSaveBilling={(billing) => selectedWebsitePurchase ? saveWebsitePurchaseBilling(selectedWebsitePurchase.id, billing) : Promise.resolve(false)}
+              onStartCardPayment={() => selectedWebsitePurchase ? startWebsitePurchaseCardPayment(selectedWebsitePurchase.id) : Promise.resolve()}
+              onReportTransfer={() => selectedWebsitePurchase ? reportWebsitePurchaseTransferV2(selectedWebsitePurchase.id) : Promise.resolve()}
+            />
+          </>
+        ) : project.commercial_model !== "purchase" ? (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
-        ))}
+        ) : null}
 
         {project.commercial_model !== "subscription" && !project.delete_requested && project.status !== "closed" && (
           <button
@@ -3632,10 +3835,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <strong>{activeTicket.subject}</strong>
                   <span className="status-pill">{statusLabels[activeTicket.status] ?? activeTicket.status}</span>
                 </div>
-                <div className="portal-chat-messages">
+                <div className="portal-chat-messages" ref={portalChatMessagesRef}>
                   {(messages[activeTicket.id] ?? []).map((item) => (
                     <div className={`portal-bubble ${item.sender}`} key={item.id}>
-                      <span>{item.sender === "admin" ? "ProjectEdge" : "Te"}</span>
+                      <span>
+                        {item.sender === "admin" ? "ProjectEdge" : "Te"} ·{" "}
+                        {item.created_at
+                          ? new Date(item.created_at).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" })
+                          : "most"}
+                      </span>
                       <p>{item.body}</p>
                     </div>
                   ))}
@@ -3643,11 +3851,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 {activeTicket.status !== "closed" && (
                   <form className="portal-reply" onSubmit={sendReply}>
                     <textarea
-                      value={reply}
                       onChange={(event) => setReply(event.target.value)}
-                      placeholder="Válasz írása..."
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void sendReply();
+                        }
+                      }}
+                      placeholder="Írj választ… (Enter a küldéshez)"
+                      rows={1}
+                      value={reply}
                     />
-                    <button className="button primary" type="submit">
+                    <button className="button primary" disabled={!reply.trim()} type="submit">
                       Küldés
                     </button>
                   </form>

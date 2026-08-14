@@ -11,12 +11,9 @@ import {
   changeQuotaLabel,
   consumesChangeQuota,
   formatHuf,
-  isWebsitePurchaseRequest,
-  purchaseOptionPrice,
   quotaPeriodKey,
   quotaRenewsAt,
-  subscriptionPlan,
-  websitePurchaseRequestText
+  subscriptionPlan
 } from "@/lib/subscriptions";
 
 type Props = {
@@ -26,14 +23,14 @@ type Props = {
   onResume: () => void;
   onCancel: () => void;
   onManageBilling: () => void;
-  onReportPurchaseTransfer: (requestId: string) => Promise<void>;
   onRequestChange: (category: string, description: string) => Promise<void>;
   /** Kereten felüli módosítás ajánlatának elfogadása / elutasítása / utalás jelzése. */
   onQuoteDecision: (requestId: string, decision: "accept" | "decline" | "transfer") => Promise<void>;
+  onQuoteCardPayment: (requestId: string) => Promise<void>;
   onThreadMessage: (requestId: string) => Promise<void>;
 };
 
-export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onReportPurchaseTransfer, onRequestChange, onQuoteDecision, onThreadMessage }: Props) {
+export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCancel, onManageBilling, onRequestChange, onQuoteDecision, onQuoteCardPayment, onThreadMessage }: Props) {
   const plan = subscriptionPlan(project.subscription_plan);
   // A módosítás és a hibabejelentés ugyanazt az űrlapot használja, de más
   // kategóriakészlettel — a kettő keveredése volt az egyik oka annak, hogy
@@ -41,16 +38,11 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
   const [composer, setComposer] = useState<false | "change" | "bug">(false);
   const [category, setCategory] = useState("content");
   const [description, setDescription] = useState("");
-  const [purchaseSending, setPurchaseSending] = useState(false);
   const paused = project.subscription_status === "paused" || project.status === "paused";
   const paymentProblem = project.subscription_status === "past_due";
   const cancelPending = project.subscription_status === "cancel_requested";
   const pausePending = project.subscription_status === "pause_requested";
   const resumePending = project.subscription_status === "resume_requested";
-  const purchaseRequest = requests.find((request) => isWebsitePurchaseRequest(request.description));
-  const purchaseRequestPending = purchaseRequest && !["completed", "declined"].includes(purchaseRequest.status);
-  const purchasePrice = project.purchase_option_price ?? purchaseOptionPrice(project.subscription_plan);
-
   // ── Módosítási keret ────────────────────────────────────────────────────
   // A keret a számlázási fordulónaphoz igazodik. A technikai hiba sosem
   // fogyaszt, ezért a hibabejelentés külön, keretfüggetlen útvonalon megy.
@@ -161,11 +153,10 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
         </form>
       ) : null}
 
-      {requests.length ? <div className="client-request-timeline"><div><strong>Kérések és vásárlási ügyek</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? request.transfer_reported_at ? "Utalás ellenőrzése" : "Folyamatban" : request.status === "waiting_client" ? "Fizetésre vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{isWebsitePurchaseRequest(request.description) ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "Weboldal megvásárlása: ") : request.description}</p><small>{isWebsitePurchaseRequest(request.description) ? `${request.quoted_amount ? formatHuf(request.quoted_amount) : "Vételár egyeztetés alatt"}${request.payment_reference ? ` · Közlemény: ${request.payment_reference}` : ""}` : request.category === "technical" ? "Technikai hiba — nem fogyaszt keretet" : request.included_in_plan === true ? "A keretbe beleszámít" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}{isWebsitePurchaseRequest(request.description) && request.status === "waiting_client" && !request.transfer_reported_at ? <button className="button primary" type="button" onClick={() => onReportPurchaseTransfer(request.id)}>Elutaltam a vételárat</button> : null}
+      {requests.length ? <div className="client-request-timeline"><div><strong>Módosítási és hibabejelentések</strong><span>{requests.filter((request) => !["completed", "declined"].includes(request.status)).length} folyamatban</span></div>{requests.map((request) => <article key={request.id}><span className={`request-status status-${request.status}`}>{request.status === "new" ? "Beérkezett" : request.status === "planned" ? "Tervezve" : request.status === "in_progress" ? "Folyamatban" : request.status === "waiting_client" ? "Válaszra vár" : request.status === "completed" ? "Lezárva" : "Külön egyeztetés"}</span><p>{request.description}</p><small>{request.category === "technical" ? "Technikai hiba — nem fogyaszt keretet" : request.included_in_plan === true ? "A keretbe beleszámít" : request.included_in_plan === false ? "Külön ajánlat szükséges" : "A keretet még ellenőrizzük"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</small>{request.admin_note ? <em>{request.admin_note}</em> : null}
 
-        {/* Kereten felüli módosítás ajánlata. Eddig legfeljebb egy szöveges
-            megjegyzést kaptál róla; most árat, tartalmat és döntést is látsz. */}
-        {!isWebsitePurchaseRequest(request.description) && request.quoted_amount ? (
+        {/* Kereten felüli módosítás ajánlata. */}
+        {request.quoted_amount ? (
           <div className="client-quote-box">
             <div className="client-quote-head">
               <span>AJÁNLAT ERRE A MÓDOSÍTÁSRA</span>
@@ -178,12 +169,19 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
               <small className="client-quote-done">Az utalást jeleztük. Amint megérkezik, indul a munka.</small>
             ) : request.quote_accepted_at ? (
               <div className="client-quote-pay">
-                <div>
-                  <span>Utald el az összeget</span>
-                  <b>{BANK_TRANSFER_DETAILS.accountNumber}</b>
-                  <small>{BANK_TRANSFER_DETAILS.name} · Közlemény: {request.payment_reference ?? "—"}</small>
+                <div className="client-quote-payment-choice">
+                  <div>
+                    <strong>Bankkártya</strong>
+                    <small>Azonnali fizetés a Stripe biztonságos oldalán.</small>
+                    <button className="button primary" type="button" onClick={() => onQuoteCardPayment(request.id)}>Fizetek bankkártyával</button>
+                  </div>
+                  <div>
+                    <strong>Banki átutalás</strong>
+                    <b>{BANK_TRANSFER_DETAILS.accountNumber}</b>
+                    <small>{BANK_TRANSFER_DETAILS.name} · Közlemény: {request.payment_reference ?? "—"}</small>
+                    <button className="button secondary" type="button" onClick={() => onQuoteDecision(request.id, "transfer")}>Elutaltam</button>
+                  </div>
                 </div>
-                <button className="button primary" type="button" onClick={() => onQuoteDecision(request.id, "transfer")}>Elutaltam</button>
               </div>
             ) : (
               <div className="client-quote-actions">
@@ -199,7 +197,7 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
       <details className="subscription-manage">
         <summary>Előfizetés kezelése</summary>
         <article className="purchase-option-card"><strong>Bankkártya és Stripe-számlázás</strong><p>A Stripe biztonságos felületén frissítheted a kártyát és ellenőrizheted a fizetési adatokat.</p><button className="button secondary" onClick={onManageBilling} type="button">Stripe számlázás megnyitása</button></article>
-        <div><div><strong>Szüneteltetés</strong><p>Az oldal parkolóállapotba kerül, a domain és a rendszer megmarad. Parkolási díj: 2 900 Ft/hó.</p>{pausePending || resumePending ? <div className="purchase-request-state"><strong>Kérelem elküldve</strong><span>Az adminisztrátor feldolgozza, az eredményről itt és emailben is értesítést kapsz.</span></div> : paused ? <button className="button secondary" onClick={onResume} type="button">Újraaktiválás kérése</button> : <button className="button secondary" onClick={onPause} type="button">Szüneteltetés kérése</button>}</div><div className="purchase-option-card"><strong>Weboldal megvásárlása</strong><p>Egyszeri {formatHuf(purchasePrice)} összegért a forráskód és a technikai rendszer a tiéd lesz. A kérés után elkészítjük az átadási összefoglalót és a fizetési adatokat; fizetés után átadjuk a forráskódot és a hozzáféréseket, a havi előfizetés pedig lezárul.</p><ol><li>Vásárlási igény elküldése</li><li>Átadási összefoglaló és fizetési adatok</li><li>Fizetés ellenőrzése</li><li>Forráskód és hozzáférések átadása</li></ol>{purchaseRequestPending || purchaseSending ? <div className="purchase-request-state"><strong>{purchaseSending ? "Igény küldése…" : "Igény elküldve"}</strong><span>{purchaseRequest?.status === "waiting_client" ? "A következő lépés nálad van — nézd meg a fenti kérések között az admin üzenetét." : "Dolgozunk az átadási összefoglalón. Itt és emailben is értesítünk."}</span></div> : <button className="button secondary" type="button" disabled={cancelPending} onClick={async () => { setPurchaseSending(true); await onRequestChange("new_feature", websitePurchaseRequestText(purchasePrice)); setPurchaseSending(false); }}>{purchaseRequest?.status === "declined" ? "Új vásárlási igény küldése" : "Megvásárlási folyamat indítása"}</button>}</div><div className="danger-zone"><strong>Lemondás</strong><p>A weboldal a kifizetett időszak végén leáll. Ez nem projektátadás és nem jár forráskóddal vagy 30 napos garanciával. Ha szeretnéd megtartani az oldalt, előbb a megvásárlási folyamatot indítsd el.</p>{cancelPending ? <div className="purchase-request-state"><strong>Lemondási kérelem elküldve</strong><span>A szolgáltatás a kifizetett időszak végén zárul le. Az időpontról értesítést kapsz.</span></div> : <button className="button secondary" onClick={onCancel} type="button">Előfizetés lemondása</button>}</div></div>
+        <div><div><strong>Szüneteltetés</strong><p>Az oldal parkolóállapotba kerül, a domain és a rendszer megmarad. Parkolási díj: 2 900 Ft/hó.</p>{pausePending || resumePending ? <div className="purchase-request-state"><strong>Kérelem elküldve</strong><span>Az adminisztrátor feldolgozza, az eredményről itt és emailben is értesítést kapsz.</span></div> : paused ? <button className="button secondary" onClick={onResume} type="button">Újraaktiválás kérése</button> : <button className="button secondary" onClick={onPause} type="button">Szüneteltetés kérése</button>}</div><div className="danger-zone"><strong>Lemondás</strong><p>A weboldal a kifizetett időszak végén leáll. Ez nem projektátadás és nem jár forráskóddal vagy 30 napos garanciával. Ha szeretnéd megtartani az oldalt, előbb a tulajdonba-vételi folyamatot indítsd el.</p>{cancelPending ? <div className="purchase-request-state"><strong>Lemondási kérelem elküldve</strong><span>A szolgáltatás a kifizetett időszak végén zárul le. Az időpontról értesítést kapsz.</span></div> : <button className="button secondary" onClick={onCancel} type="button">Előfizetés lemondása</button>}</div></div>
       </details>
     </section>
   );

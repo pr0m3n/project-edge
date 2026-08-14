@@ -6,6 +6,9 @@
  */
 
 import type { HandoverStepState } from "@/lib/handover";
+import type { WebsitePurchase } from "@/lib/website-purchase";
+
+export type { WebsitePurchase } from "@/lib/website-purchase";
 
 export type Lead = {
   id: string;
@@ -40,6 +43,8 @@ export type TicketMessage = {
   created_at: string;
   sender: "customer" | "admin";
   body: string;
+  user_id?: string | null;
+  status?: "sending" | "sent" | "error";
 };
 
 export type ClientProject = {
@@ -178,8 +183,13 @@ export type ChangeRequest = {
   payment_reference: string | null;
   transfer_reported_at: string | null;
   paid_at: string | null;
+  payment_method: "card" | "bank_transfer" | null;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
   /** Az ügyfél elfogadta az árajánlatot (032 migráció). */
   quote_accepted_at: string | null;
   /** Az ajánlat rövid indoklása — az ügyfél ezt látja az ár mellett. */
   quote_note: string | null;
 };
+
+export type AdminWebsitePurchase = WebsitePurchase;

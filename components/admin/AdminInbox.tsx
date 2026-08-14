@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { formatHuf, isWebsitePurchaseRequest } from "@/lib/subscriptions";
-import type { BillingoIssue, ChangeRequest, ClientProject, ClientTicket } from "@/components/admin/types";
+import type { BillingoIssue, ChangeRequest, ClientProject, ClientTicket, WebsitePurchase } from "@/components/admin/types";
 
 /**
  * Admin teendőlista — „mi vár rám most?".
@@ -88,6 +88,7 @@ function waitingLabel(value: string | null | undefined) {
 type AdminInboxProps = {
   projects: ClientProject[];
   changeRequests: ChangeRequest[];
+  websitePurchases: WebsitePurchase[];
   billingoIssues: BillingoIssue[];
   tickets: ClientTicket[];
   billingoRetryId: string | null;
@@ -98,6 +99,7 @@ type AdminInboxProps = {
 export function AdminInbox({
   projects,
   changeRequests,
+  websitePurchases,
   billingoIssues,
   tickets,
   billingoRetryId,
@@ -134,21 +136,32 @@ export function AdminInbox({
       });
     }
 
+    for (const purchase of websitePurchases) {
+      if (["completed", "declined", "cancelled"].includes(purchase.status)) continue;
+      const reported = purchase.status === "transfer_reported";
+      list.push({
+        id: `purchase-${purchase.id}`,
+        kind: reported ? "transfer" : "purchase",
+        priority: reported ? KIND_PRIORITY.transfer : KIND_PRIORITY.purchase,
+        label: reported ? KIND_LABELS.transfer : KIND_LABELS.purchase,
+        client: nameOf(purchase.project_id),
+        detail: `Weboldal tulajdonba vétele · ${formatHuf(purchase.amount)}${reported ? " · utalás ellenőrzésre vár" : ""}`,
+        since: reported ? purchase.transfer_reported_at : purchase.created_at,
+        projectId: purchase.project_id
+      });
+    }
+
     for (const request of changeRequests) {
       if (["completed", "declined"].includes(request.status)) continue;
-      const purchase = isWebsitePurchaseRequest(request.description);
-      const kind: InboxKind = purchase ? "purchase" : request.category === "technical" ? "bug" : "change";
-      // Az utalást jelző kérés a pénzről szól, ezért előrébb kerül.
-      const reported = purchase && request.transfer_reported_at && !request.paid_at;
+      if (isWebsitePurchaseRequest(request.description)) continue;
+      const kind: InboxKind = request.category === "technical" ? "bug" : "change";
       list.push({
         id: `change-${request.id}`,
-        kind: reported ? "transfer" : kind,
-        priority: reported ? KIND_PRIORITY.transfer : KIND_PRIORITY[kind],
-        label: reported ? KIND_LABELS.transfer : KIND_LABELS[kind],
+        kind,
+        priority: KIND_PRIORITY[kind],
+        label: KIND_LABELS[kind],
         client: nameOf(request.project_id),
-        detail: purchase
-          ? `Kivásárlási igény${request.quoted_amount ? ` · ${formatHuf(request.quoted_amount)}` : ""}${reported ? " · az ügyfél jelezte az utalást" : ""}`
-          : request.description.slice(0, 140),
+        detail: request.description.slice(0, 140),
         since: request.requested_at,
         projectId: request.project_id
       });
@@ -257,7 +270,7 @@ export function AdminInbox({
       if (a.priority !== b.priority) return a.priority - b.priority;
       return (daysSince(b.since) ?? 0) - (daysSince(a.since) ?? 0);
     });
-  }, [projects, changeRequests, billingoIssues, tickets, billingoRetryId, onRetryBillingo]);
+  }, [projects, changeRequests, websitePurchases, billingoIssues, tickets, billingoRetryId, onRetryBillingo]);
 
   if (!items.length) {
     return (

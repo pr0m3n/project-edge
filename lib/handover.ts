@@ -97,13 +97,13 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     owner: "admin",
     title: "Projekt átadása a te csapatodba",
     detail:
-      "Ezt mi végezzük. Átadjuk a projektet a csapatodba, majd ellenőrizzük, hogy az éles domain, a környezeti változók és a build ugyanúgy működnek. Az átadás alatt az oldal nem áll le.",
+      "Ezt mi végezzük. A projektet a csapatodba helyezzük, majd ellenőrizzük a domaint, a deploymentet, a környezeti változókat és a buildet. Az átadás jellemzően kiesés nélkül történik, de a célcsapatnak érvényes fizetési mód kellhet.",
     links: [
       { label: "Mit visz át a Vercel átadás?", url: "https://vercel.com/docs/projects/transferring-projects" }
     ],
     input: {
       label: "Átadási megjegyzés az ügyfélnek",
-      placeholder: "pl. Átadva; az integrációkat újra kell kötni, ezt megtettem.",
+      placeholder: "pl. A projekt átadva. A Vercel-integrációkat és a vercel.json env/build.env változókat ellenőriztem vagy újrakötöttem; új deployment kész.",
       multiline: true,
       sharedWith: "client"
     }
@@ -158,8 +158,8 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     owner: "admin",
     title: "Adatbázis átadása és kulcsok cserélése",
     detail:
-      "Ezt mi végezzük: átadjuk a projektet a szervezetedbe, majd ellenőrizzük a belépést, a jogosultsági szabályokat (RLS) és a feltöltéseket. Ezután lecseréljük a titkos kulcsokat, hogy a fejlesztés közben használt kulcsok többé ne legyenek érvényesek.",
-    links: [{ label: "Supabase dokumentáció", url: "https://supabase.com/docs" }],
+      "Ezt mi végezzük: átadjuk a projektet a szervezetedbe, majd ellenőrizzük a belépést, az RLS-jogosultságokat és a feltöltéseket. A Supabase átadás feltétele, hogy te legyél a forrás szervezet tulajdonosa, tagja legyél a cél szervezetnek, és ne legyen aktív GitHub-integráció, projekt-szintű szerepkör vagy log drain. A cél szervezet csomagja és számlázása ezután a te felelősséged.",
+    links: [{ label: "Supabase projektátadás", url: "https://supabase.com/docs/guides/platform/project-transfer" }],
     input: {
       label: "Átadási megjegyzés az ügyfélnek",
       placeholder: "pl. Átadva, kulcsok rotálva, RLS és Storage tesztelve.",
@@ -203,7 +203,7 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     owner: "client",
     title: "Állítsd be a levelezés DNS rekordjait",
     detail:
-      "A Resend megmutat néhány DNS rekordot (SPF és DKIM). Ezeket a domain szolgáltatódnál — Rackhost esetén a DNS zónák alatt — kell felvenni. Ha kész, a Resend „Verify” gombjával ellenőrizd: zöld, ellenőrzött állapot kell.",
+      "A Resend megmutatja a szükséges DNS rekordokat (SPF és DKIM). Ezeket a domain szolgáltatódnál — Rackhost esetén a DNS zónák alatt — kell felvenni. Ha kész, a Resend „Verify” gombjával ellenőrizd: zöld, ellenőrzött állapot kell. Tranzakciós levelekhez külön email-alias vagy subdomain ajánlott, hogy a küldési hírnév elkülönüljön.",
     where: "Rackhost → Domain → DNS zónák → új rekord. A Resend oldalán minden rekord mellett van egy másoló ikon.",
     links: [{ label: "Resend dokumentáció", url: "https://resend.com/docs" }],
     warning:
@@ -350,7 +350,7 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
     owner: "admin",
     title: "Forráskód átadása",
     detail:
-      "Ezt mi végezzük: átadjuk a repository-t a megadott fióknak, és ellenőrizzük, hogy a Vercel telepítés utána is működik.",
+      "Ezt mi végezzük: admin jogosultsággal átadjuk a repository-t a megadott fióknak vagy szervezetnek, majd ellenőrizzük, hogy a Vercel telepítés utána is működik. A GitHub átadási megerősítő emailje rövid ideig élhet, ezért azt azonnal fogadd el.",
     input: {
       label: "Átadási megjegyzés az ügyfélnek",
       placeholder: "pl. Repository átadva, Vercel újrakötve.",

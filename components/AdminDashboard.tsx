@@ -15,13 +15,14 @@ import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
 import { AiBuildPromptPanel } from "@/components/admin/AiBuildPromptPanel";
 import { AdminInbox } from "@/components/admin/AdminInbox";
+import { WebsitePurchaseAdminPanel } from "@/components/admin/WebsitePurchaseAdminPanel";
 import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
 import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
-import { parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
+import { BANK_TRANSFER_DETAILS, parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
 import { paletteByName } from "@/components/portal/brief-fields";
 import type {
   BillingoIssue,
@@ -30,7 +31,8 @@ import type {
   ClientTicket,
   Lead,
   Ticket,
-  TicketMessage
+  TicketMessage,
+  WebsitePurchase
 } from "@/components/admin/types";
 
 function formatPrice(value: number | null, currency = "Ft") {
@@ -108,6 +110,28 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function websitePurchasePreparationNote(project: ClientProject, purchase: WebsitePurchase) {
+  return [
+    "A weboldal tulajdonba vétele elindult.",
+    "",
+    `Vételár: ${formatHuf(purchase.amount)}`,
+    `Közlemény: ${purchase.payment_reference}`,
+    "",
+    "Fizetési lehetőségek:",
+    "• bankkártyás fizetés Stripe-on keresztül az ügyfélkapuban;",
+    `• banki átutalás: ${BANK_TRANSFER_DETAILS.name}, ${BANK_TRANSFER_DETAILS.accountNumber}.`,
+    "",
+    "A fizetés után együtt adjuk át:",
+    "• a GitHub forráskódot és a Vercel projektet;",
+    "• a domaint és a szükséges DNS-beállításokat;",
+    "• a használt Supabase / Resend fiókokat, ha az oldal használja őket;",
+    "• az éles működéshez szükséges dokumentációt és ellenőrzést.",
+    "",
+    `Projekt: ${project.title}`,
+    "A fizetés tényleges beérkezése után az előfizetés megszűnik, és megnyílik a vezetett technikai átadás."
+  ].join("\n");
+}
+
 export function AdminDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -118,6 +142,8 @@ export function AdminDashboard() {
   const [clientTicketMessages, setClientTicketMessages] = useState<Record<string, TicketMessage[]>>({});
   const [clientTicketReplies, setClientTicketReplies] = useState<Record<string, string>>({});
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([]);
+  const [websitePurchases, setWebsitePurchases] = useState<WebsitePurchase[]>([]);
+  const [websitePurchaseBusyId, setWebsitePurchaseBusyId] = useState<string | null>(null);
   const [billingoIssues, setBillingoIssues] = useState<BillingoIssue[]>([]);
   const [billingoRetryId, setBillingoRetryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -284,6 +310,11 @@ export function AdminDashboard() {
     const { error } = await supabase.from("change_requests").update({
       quoted_amount: Math.round(amount),
       quote_note: note.trim() || null,
+      quote_accepted_at: null,
+      payment_method: null,
+      transfer_reported_at: null,
+      stripe_checkout_session_id: null,
+      stripe_payment_intent_id: null,
       status: "waiting_client"
     }).eq("id", request.id);
     if (error) {
@@ -310,10 +341,7 @@ export function AdminDashboard() {
       cancelLabel: "Mégse"
     });
     if (!ok) return;
-    const { error } = await supabase.from("change_requests").update({
-      paid_at: new Date().toISOString(),
-      status: "in_progress"
-    }).eq("id", request.id);
+    const { error } = await supabase.rpc("confirm_change_payment", { request_id: request.id });
     if (error) {
       setMessage(`A jóváhagyás nem sikerült: ${error.message}`);
       return;
@@ -470,6 +498,11 @@ export function AdminDashboard() {
       .select("*")
       .order("requested_at", { ascending: false });
 
+    const { data: websitePurchaseData } = await supabase
+      .from("website_purchases")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     if (error || ticketError) {
       setMessage("Nem sikerült betölteni a leadeket. Ellenőrizd az admin jogosultságot és az RLS szabályokat.");
       setLoading(false);
@@ -539,6 +572,7 @@ export function AdminDashboard() {
     setChangeLogs(groupedLogs);
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
+    setWebsitePurchases((websitePurchaseData ?? []) as WebsitePurchase[]);
 
     // Kiszámlázatlan befizetések: a pénz beérkezett, a Billingo-számla viszont
     // nem készült el. Ezek eddig csendben ültek az adatbázisban.
@@ -692,47 +726,65 @@ export function AdminDashboard() {
     await loadLeads(true);
   }
 
-  async function completeWebsitePurchase(request: ChangeRequest, project: ClientProject) {
-    if (!request.transfer_reported_at) {
-      setMessage("Az ügyfél még nem jelezte az átutalást.");
+  async function prepareWebsitePurchase(purchase: WebsitePurchase, project: ClientProject) {
+    setWebsitePurchaseBusyId(purchase.id);
+    const { data, error } = await supabase.rpc("prepare_website_purchase", {
+      p_purchase_id: purchase.id,
+      p_admin_note: websitePurchasePreparationNote(project, purchase)
+    });
+    setWebsitePurchaseBusyId(null);
+    if (error) { setMessage(`A fizetési összefoglalót nem sikerült előkészíteni: ${error.message}`); return; }
+    if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchase.id ? data as WebsitePurchase : item));
+    await triggerNotification(project.user_id, project.contact_email, "Fizetési adatok érkeztek a weboldaladhoz", `Elkészítettük a(z) „${project.title}” tulajdonba-vételének fizetési összefoglalóját. Nyisd meg az ügyfélkaput a fizetési mód kiválasztásához.`, "/ugyfelkapu/dashboard");
+    setMessage("A fizetési összefoglaló elkészült, az ügyfél értesítést kapott.");
+    await loadLeads(true);
+  }
+
+  async function activateWebsitePurchase(purchase: WebsitePurchase, project: ClientProject) {
+    if (purchase.status !== "transfer_reported") {
+      setMessage("A bankkártyás fizetés automatikusan aktiválódik; ezt a gombot banki átutalásnál használd.");
       return;
     }
     const ok = await confirm({
       title: "Vételár jóváhagyása",
-      message: "Csak akkor hagyd jóvá, ha a vételár ténylegesen megérkezett a bankszámlára. Ezzel megszűnik az előfizetés és elindul a technikai átadás.",
+      message: `Csak akkor hagyd jóvá, ha a ${formatHuf(purchase.amount)} vételár ténylegesen megérkezett a bankszámlára. Ezzel megszűnik az előfizetés és megnyílik a technikai átadás.`,
       confirmLabel: "Beérkezett, átadás indítása",
       cancelLabel: "Mégse"
     });
     if (!ok) return;
-
-    // ELŐBB a Stripe: az ügyfél kifizette a teljes vételárat, onnantól egyetlen
-    // további havidíj sem terhelhető rá. Ha ez nem megy át, a vásárlást sem
-    // zárjuk le — inkább maradjon nyitva, mint hogy tovább fizessen.
+    setWebsitePurchaseBusyId(purchase.id);
     if (!(await stripeSubscriptionAction(project, "cancel_now"))) {
       setMessage("A Stripe-előfizetést nem sikerült megszüntetni, ezért a vásárlást nem zártam le. Próbáld újra.");
+      setWebsitePurchaseBusyId(null);
       return;
     }
-
-    // `domain` és NEM `dns`: bérlésnél a domain a mi fiókunkban, a mi nevünkön
-    // van, tehát előbb át kell írni az ügyfélre. A `dns` lépések azt
-    // feltételeznék, hogy már az övé, és csak rekordot kell felvennie.
-    const handover = buildHandoverPlan(["vercel", "github", "domain"]);
-    const { error } = await supabase.rpc("complete_website_purchase", {
-      request_id: request.id,
-      handover
+    const { data, error } = await supabase.rpc("activate_website_purchase", {
+      p_purchase_id: purchase.id,
+      p_handover: buildHandoverPlan(["vercel", "github", "domain"])
     });
-    if (error) {
-      setMessage(`A vásárlás lezárása nem sikerült: ${error.message}`);
-      return;
-    }
-    await triggerNotification(
-      project.user_id,
-      project.contact_email,
-      "A weboldal vételára beérkezett",
-      `A(z) "${project.title}" weboldal vételárát jóváhagytuk. Az előfizetés lezárult, a technikai átadási lista megnyílt az ügyfélkapuban.`,
-      "/ugyfelkapu/dashboard#statuses"
-    );
-    setMessage("Vételár jóváhagyva, a technikai átadás elindult.");
+    setWebsitePurchaseBusyId(null);
+    if (error) { setMessage(`A technikai átadás indítása nem sikerült: ${error.message}`); return; }
+    if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchase.id ? data as WebsitePurchase : item));
+    await triggerNotification(project.user_id, project.contact_email, "A vételár beérkezett — indul az átadás", `A(z) „${project.title}” tulajdonba vétele fizetve. Az előfizetés megszűnt, a vezetett technikai átadás megnyílt az ügyfélkapuban.`, "/ugyfelkapu/dashboard");
+    setMessage("Vételár jóváhagyva, a vezetett technikai átadás elindult.");
+    await loadLeads(true);
+  }
+
+  async function cancelWebsitePurchase(purchase: WebsitePurchase) {
+    const ok = await confirm({
+      title: "Tulajdonba-vétel megszakítása",
+      message: "A folyamat megszakad, az ügyfél új tulajdonba-vételi folyamatot indíthat később. Az előfizetés ettől nem változik.",
+      confirmLabel: "Megszakítás",
+      cancelLabel: "Mégse",
+      danger: true
+    });
+    if (!ok) return;
+    setWebsitePurchaseBusyId(purchase.id);
+    const { data, error } = await supabase.rpc("cancel_website_purchase", { p_purchase_id: purchase.id, p_note: "Az adminisztrátor megszakította a folyamatot." });
+    setWebsitePurchaseBusyId(null);
+    if (error) { setMessage(`A folyamatot nem sikerült megszakítani: ${error.message}`); return; }
+    if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchase.id ? data as WebsitePurchase : item));
+    setMessage("A tulajdonba-vételi folyamat megszakadt.");
     await loadLeads(true);
   }
 
@@ -904,6 +956,22 @@ export function AdminDashboard() {
       return;
     }
 
+    const tempId = `optimistic-${Date.now()}`;
+    const optimisticMessage: TicketMessage = {
+      id: tempId,
+      ticket_id: ticketId,
+      body,
+      created_at: new Date().toISOString(),
+      sender: "admin"
+    };
+
+    // Instant optimistic UI update
+    addTicketMessage(optimisticMessage);
+    setTicketReplies((current) => ({ ...current, [ticketId]: "" }));
+    setTickets((current) =>
+      current.map((t) => (t.id === ticketId ? { ...t, status: "answered" } : t))
+    );
+
     const { data: { session } } = await supabase.auth.getSession();
     const response = await fetch(`/api/tickets/${ticketId}/admin-reply`, {
       method: "POST",
@@ -919,11 +987,15 @@ export function AdminDashboard() {
       return;
     }
 
-    addTicketMessage(result.message);
-    setTicketReplies((current) => ({ ...current, [ticketId]: "" }));
-    setTickets((current) =>
-      current.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "answered" } : ticket))
-    );
+    // Replace optimistic message with server message
+    setTicketMessages((current) => {
+      const msgs = current[ticketId] ?? [];
+      return {
+        ...current,
+        [ticketId]: msgs.map((m) => (m.id === tempId ? result.message : m))
+      };
+    });
+
     setMessage(result.emailSent ? "Válasz elküldve és emailben is kézbesítve." : `Válasz mentve, de az email nem ment ki: ${result.emailError ?? "ismeretlen hiba"}`);
   }
 
@@ -941,6 +1013,23 @@ export function AdminDashboard() {
 
     const { data: sessionData } = await supabase.auth.getSession();
     const adminUserId = sessionData?.session?.user?.id;
+    const tempId = `optimistic-${Date.now()}`;
+
+    const optimisticMessage: TicketMessage = {
+      id: tempId,
+      ticket_id: ticketId,
+      body,
+      created_at: new Date().toISOString(),
+      sender: "admin",
+      user_id: adminUserId
+    };
+
+    // Instant optimistic update
+    addClientTicketMessage(optimisticMessage);
+    setClientTicketReplies((current) => ({ ...current, [ticketId]: "" }));
+    setClientTickets((current) =>
+      current.map((t) => (t.id === ticketId ? { ...t, status: "answered" } : t))
+    );
 
     const { data, error } = await supabase
       .from("client_ticket_messages")
@@ -959,6 +1048,15 @@ export function AdminDashboard() {
       return;
     }
 
+    // Replace optimistic with real row
+    setClientTicketMessages((current) => {
+      const msgs = current[ticketId] ?? [];
+      return {
+        ...current,
+        [ticketId]: msgs.map((m) => (m.id === tempId ? data : m))
+      };
+    });
+
     if (ticket) {
       await triggerNotification(
         ticket.user_id,
@@ -968,12 +1066,6 @@ export function AdminDashboard() {
         `/ugyfelkapu/dashboard#support:${ticketId}`
       );
     }
-
-    addClientTicketMessage(data);
-    setClientTicketReplies((current) => ({ ...current, [ticketId]: "" }));
-    setClientTickets((current) =>
-      current.map((ticket) => (ticket.id === ticketId ? { ...ticket, status: "answered" } : ticket))
-    );
     setMessage("Ügyfélkapus válasz elküldve.");
   }
 
@@ -1615,9 +1707,15 @@ export function AdminDashboard() {
                   onChange={(event) =>
                     setTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void sendTicketReply(ticket.id);
+                    }
+                  }}
                   disabled={ticket.status === "closed"}
-                  placeholder={ticket.status === "closed" ? "Ez a ticket lezárva." : "Írd ide a válaszod, majd küldd el..."}
-                  style={{ minHeight: 110 }}
+                  placeholder={ticket.status === "closed" ? "Ez a ticket lezárva." : "Írd ide a válaszod… (Enter = küldés)"}
+                  style={{ minHeight: 90 }}
                 />
                 <button
                   className="button primary admin-reply-button"
@@ -1711,6 +1809,7 @@ export function AdminDashboard() {
       <AdminInbox
         projects={clientProjects}
         changeRequests={changeRequests}
+        websitePurchases={websitePurchases}
         billingoIssues={billingoIssues}
         tickets={clientTickets}
         billingoRetryId={billingoRetryId}
@@ -1824,7 +1923,7 @@ export function AdminDashboard() {
             // Az összetevők kijelölése már a brief átolvasása után elérhető: ez
             // dönti el, milyen útmutatókat és átadási lépéseket kap az ügyfél.
             // Lezárt / törlésre váró projektnél már nincs értelme.
-            const showHandover = project.commercial_model !== "subscription" && s !== "closed" && s !== "deletion_pending";
+            const showHandover = project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && s !== "closed" && s !== "deletion_pending";
 
             return (
             <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
@@ -1874,10 +1973,28 @@ export function AdminDashboard() {
                     <label><span>Oldal állapota</span><select value={project.site_health_status ?? "unknown"} onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}><option value="unknown">Még nincs ellenőrizve</option><option value="healthy">Rendben</option><option value="attention">Figyelmet kér</option><option value="offline">Leállítva</option></select></label>
                   </div>
                   {["pause_requested", "resume_requested", "cancel_requested"].includes(project.subscription_status ?? "") ? <div className="managed-admin-request"><div><strong>Ügyfélkérelem: {project.subscription_status === "pause_requested" ? "szüneteltetés" : project.subscription_status === "resume_requested" ? "újraaktiválás" : "lemondás"}</strong><p>A kérelmet az ügyfélkapuból küldték. Az állapot módosítása után az ügyfél azonnal az új státuszt látja.</p></div><div>{project.subscription_status === "pause_requested" ? <button className="button secondary" type="button" onClick={() => approveSubscriptionPause(project)}>Szüneteltetés jóváhagyása</button> : null}{project.subscription_status === "resume_requested" ? <button className="button primary" type="button" onClick={() => approveSubscriptionResume(project)}>Újraaktiválás</button> : null}{project.subscription_status === "cancel_requested" ? <button className="button secondary" type="button" onClick={() => finishSubscriptionCancellation(project)}>Lemondás lezárása</button> : null}</div></div> : null}
-                  {changeRequests.some((request) => request.project_id === project.id) ? (
+                  {websitePurchases.find((purchase) => purchase.project_id === project.id && !["completed", "declined", "cancelled"].includes(purchase.status)) ? (() => {
+                    const purchase = websitePurchases.find((item) => item.project_id === project.id && !["completed", "declined", "cancelled"].includes(item.status));
+                    if (!purchase) return null;
+                    return (
+                      <WebsitePurchaseAdminPanel
+                        project={project}
+                        purchase={purchase}
+                        busy={websitePurchaseBusyId === purchase.id}
+                        onPrepare={() => prepareWebsitePurchase(purchase, project)}
+                        onActivate={() => activateWebsitePurchase(purchase, project)}
+                        onCancel={() => cancelWebsitePurchase(purchase)}
+                        onHandoverChange={(steps) => { void updateClientProject(project.id, { handover_steps: steps }); }}
+                        onHandoverStepCompleted={(_stepId, title) => {
+                          void triggerNotification(project.user_id, project.contact_email, "Átadási lépés kész", `A(z) „${project.title}” weboldal átadásában elkészült: ${title}.`, "/ugyfelkapu/dashboard");
+                        }}
+                      />
+                    );
+                  })() : null}
+                  {changeRequests.some((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description)) ? (
                     <div className="managed-request-list">
                       <div className="managed-request-list-head">
-                        <strong>Módosítások és vásárlási ügyek</strong>
+                        <strong>Módosítási kérések</strong>
                         {(() => {
                           // A keret az ügyfélnél is ugyanígy számolódik — itt azért
                           // látszik, hogy a „benne van a csomagban?" döntés előtt
@@ -1896,28 +2013,24 @@ export function AdminDashboard() {
                           );
                         })()}
                       </div>
-                      {changeRequests.filter((request) => request.project_id === project.id).map((request) => {
-                        const purchase = isWebsitePurchaseRequest(request.description);
+                      {changeRequests.filter((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description)).map((request) => {
                         return (
-                          <article className={purchase ? "purchase-admin-request" : ""} key={request.id}>
+                          <article key={request.id}>
                             <div>
-                              <span>{purchase ? "WEBOLDAL MEGVÁSÁRLÁSA" : request.category === "content" ? "Tartalom" : request.category === "design" ? "Design" : request.category === "technical" ? "Technikai" : "Új funkció"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</span>
-                              <p>{purchase ? request.description.replace(/^\[WEBOLDAL_MEGVASARLAS\]\s*/, "") : request.description}</p>
-                              {purchase ? <small>Folyamat: átadási összefoglaló → fizetési adatok → fizetés ellenőrzése → forráskód és hozzáférések átadása → előfizetés lezárása.</small> : null}
+                              <span>{request.category === "content" ? "Tartalom" : request.category === "design" ? "Design" : request.category === "technical" ? "Technikai" : "Új funkció"} · {new Date(request.requested_at).toLocaleDateString("hu-HU")}</span>
+                              <p>{request.description}</p>
                             </div>
                             <div>
-                              {!purchase && request.category !== "technical" ? <select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select> : null}
+                              {request.category !== "technical" ? <select value={request.included_in_plan === null ? "unknown" : request.included_in_plan ? "included" : "extra"} onChange={(event) => updateChangeRequest(request.id, { included_in_plan: event.target.value === "unknown" ? null : event.target.value === "included" })}><option value="unknown">Keret eldöntése</option><option value="included">Csomagban benne van</option><option value="extra">Külön ajánlat</option></select> : null}
                               {request.category === "technical" ? <small className="request-free-note">Technikai hiba — nem fogyaszt keretet, javítás a szolgáltatás része.</small> : null}
-                              <select value={request.status} onChange={(event) => updateChangeRequest(request.id, { status: event.target.value as ChangeRequest["status"] })}><option value="new">Igény beérkezett</option><option value="planned">Átadás előkészítése</option><option value="in_progress">Folyamatban</option><option value="waiting_client">Ügyfél fizetésére / válaszára vár</option><option value="completed" disabled={purchase}>Lezárva{purchase ? " — csak fizetésigazolással" : ""}</option><option value="declined">Nem folytatható</option></select>
-                              <textarea defaultValue={request.admin_note ?? ""} onBlur={(event) => { if (event.target.value !== (request.admin_note ?? "")) updateChangeRequest(request.id, { admin_note: event.target.value || null }); }} placeholder={purchase ? "Ügyfélnek látható átadási vagy fizetési információ…" : "Ügyfélnek látható megjegyzés…"} />
-                              {purchase && request.quoted_amount ? <small>Vételár: {formatHuf(request.quoted_amount)} · Közlemény: {request.payment_reference ?? "nincs"}</small> : null}
-                              {purchase && request.transfer_reported_at && request.status === "in_progress" && !request.paid_at ? <button className="button primary" type="button" onClick={() => completeWebsitePurchase(request, project)}>Beérkezett — átadás indítása</button> : null}
+                              <select value={request.status} onChange={(event) => updateChangeRequest(request.id, { status: event.target.value as ChangeRequest["status"] })}><option value="new">Igény beérkezett</option><option value="planned">Átadás előkészítése</option><option value="in_progress">Folyamatban</option><option value="waiting_client">Ügyfél válaszára vár</option><option value="completed">Lezárva</option><option value="declined">Nem folytatható</option></select>
+                              <textarea defaultValue={request.admin_note ?? ""} onBlur={(event) => { if (event.target.value !== (request.admin_note ?? "")) updateChangeRequest(request.id, { admin_note: event.target.value || null }); }} placeholder="Ügyfélnek látható megjegyzés…" />
 
                               {/* Ajánlat a kereten felüli módosításra. Eddig csak
                                   „Külön ajánlat" státuszba lehetett tenni a kérést,
                                   de árat nem lehetett adni hozzá, így az ügyfél nem
                                   tudott se dönteni, se fizetni. */}
-                              {!purchase && request.included_in_plan === false && !request.paid_at ? (
+                              {request.included_in_plan === false && !request.paid_at ? (
                                 <div className="change-quote-box">
                                   {request.quoted_amount ? (
                                     <div className="change-quote-state">
@@ -1979,7 +2092,24 @@ export function AdminDashboard() {
                     </div>
                   ) : null}
                 </section>
-              ) : null}
+              ) : project.commercial_model === "purchase" ? (() => {
+                const purchase = websitePurchases.find((item) => item.project_id === project.id && item.status === "handover");
+                if (!purchase) return null;
+                return (
+                  <WebsitePurchaseAdminPanel
+                    project={project}
+                    purchase={purchase}
+                    busy={websitePurchaseBusyId === purchase.id}
+                    onPrepare={() => prepareWebsitePurchase(purchase, project)}
+                    onActivate={() => activateWebsitePurchase(purchase, project)}
+                    onCancel={() => cancelWebsitePurchase(purchase)}
+                    onHandoverChange={(steps) => { void updateClientProject(project.id, { handover_steps: steps }); }}
+                    onHandoverStepCompleted={(_stepId, title) => {
+                      void triggerNotification(project.user_id, project.contact_email, "Átadási lépés kész", `A(z) „${project.title}” weboldal átadásában elkészült: ${title}.`, "/ugyfelkapu/dashboard");
+                    }}
+                  />
+                );
+              })() : null}
 
               <details className="admin-collapse">
                 <summary>Adatlap és részletek megtekintése</summary>
@@ -2583,8 +2713,14 @@ export function AdminDashboard() {
                       onChange={(event) =>
                         setClientTicketReplies((current) => ({ ...current, [ticket.id]: event.target.value }))
                       }
-                      placeholder="Válasz az ügyfélkapuba..."
-                      style={{ minHeight: 110 }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void sendClientTicketReply(ticket.id);
+                        }
+                      }}
+                      placeholder="Válasz az ügyfélkapuba… (Enter = küldés)"
+                      style={{ minHeight: 90 }}
                     />
                     <button
                       className="button primary admin-reply-button"
