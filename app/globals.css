@@ -12914,3 +12914,319 @@ details.admin-collapse summary:hover {
   .purchase-transfer-box > div { align-items: flex-start; flex-direction: column; gap: 2px; }
   .purchase-transfer-box strong { text-align: left; }
 }
+
+/* ── iOS Style Project Messenger ── */
+.project-ios-messenger {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.project-messenger-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 14px;
+}
+
+.project-messenger-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.project-messenger-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #181E2B 0%, #0E1218 100%);
+  color: #76ABAE;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.online-beacon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #10B981;
+  border: 2px solid #FFFFFF;
+}
+
+.project-messenger-brand strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.project-messenger-brand small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.project-messenger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.project-messenger-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.project-messenger-tags button {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 11px;
+  transition: all 0.14s ease;
+}
+
+.project-messenger-tags button:hover {
+  background: rgba(118, 171, 174, 0.12);
+  border-color: #76ABAE;
+  color: #2F6163;
+  transform: translateY(-1px);
+}
+
+.project-messenger-viewport {
+  background: #F8FAFC;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  min-height: 200px;
+  overflow-y: auto;
+  padding: 16px;
+  scroll-behavior: smooth;
+}
+
+.project-messenger-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 160px;
+  text-align: center;
+}
+
+.welcome-bubble {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  max-width: 440px;
+  padding: 18px 20px;
+}
+
+.welcome-bubble strong {
+  color: var(--ink);
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.welcome-bubble p {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.ios-chat-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  animation: iosBubbleSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ios-chat-row.outgoing {
+  justify-content: flex-end;
+}
+
+.ios-chat-row.incoming {
+  justify-content: flex-start;
+}
+
+.ios-msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #181E2B;
+  color: #76ABAE;
+  font-size: 10.5px;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.ios-chat-bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.bubble-client {
+  background: linear-gradient(135deg, #76ABAE 0%, #4E8689 100%);
+  border-radius: 18px 18px 4px 18px;
+  color: #FFFFFF;
+}
+
+.bubble-dev {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 18px 18px 18px 4px;
+  color: var(--ink);
+}
+
+.bubble-author {
+  color: #76ABAE;
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.bubble-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubble-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.bubble-time {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.bubble-status {
+  font-size: 10px;
+  opacity: 0.9;
+  font-weight: 800;
+}
+
+@keyframes iosBubbleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.project-messenger-composer {
+  align-items: flex-end;
+  background: #F8FAFC;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px 6px 14px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.project-messenger-composer:focus-within {
+  background: #FFFFFF;
+  border-color: #76ABAE;
+  box-shadow: 0 0 0 3px rgba(118, 171, 174, 0.15);
+}
+
+.ios-chat-input {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  flex: 1;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.45;
+  max-height: 120px;
+  min-height: 24px;
+  outline: none;
+  padding: 6px 0;
+  resize: none;
+}
+
+.ios-send-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  border: 0;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+  transition: all 0.16s ease;
+}
+
+.ios-send-button.active {
+  background: linear-gradient(135deg, #76ABAE 0%, #FF5722 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+  transform: scale(1.05);
+}
+
+.ios-send-button.active:hover {
+  transform: scale(1.12);
+}

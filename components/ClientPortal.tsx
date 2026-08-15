@@ -28,6 +28,7 @@ import { DepositPaymentPanel } from "@/components/portal/DepositPaymentPanel";
 import { BuildProgressPanel } from "@/components/portal/BuildProgressPanel";
 import { ReviewFeedbackPanel } from "@/components/portal/ReviewFeedbackPanel";
 import { LaunchedPanel } from "@/components/portal/LaunchedPanel";
+import { ProjectInlineMessenger } from "@/components/portal/ProjectInlineMessenger";
 import { ClosedProjectCard } from "@/components/portal/ClosedProjectCard";
 import { HandoverPanel } from "@/components/portal/HandoverPanel";
 import { ManagedWebsitePanel } from "@/components/portal/ManagedWebsitePanel";
@@ -2519,6 +2520,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         ) : project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && project.status === "launched" ? (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ) : null}
+
+        {project.status !== "closed" && (
+          <ProjectInlineMessenger
+            project={project}
+            tickets={tickets}
+            messages={messages}
+            userId={userId || null}
+            userEmail={email || project.contact_email || ""}
+            userName={profileName || project.contact_name || email || ""}
+            onRefresh={() => void loadPortal(true)}
+          />
+        )}
 
         {project.commercial_model !== "subscription" && !project.delete_requested && project.status !== "closed" && (
           <button
