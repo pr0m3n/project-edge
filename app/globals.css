@@ -2158,7 +2158,7 @@ p {
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.32);
   color: #FFFFFF;
   display: grid;
-  gap: 20px;
+  gap: 16px;
   padding: 24px;
 }
 
@@ -2180,7 +2180,7 @@ p {
 }
 
 .admin-project-top p {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 13.5px;
   margin: 0;
   line-height: 1.45;
@@ -2210,7 +2210,7 @@ p {
 }
 
 .admin-project-contact span {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
 }
 
@@ -2232,35 +2232,125 @@ p {
   border-color: rgba(239, 68, 68, 0.5);
 }
 
-.admin-project-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 10px;
-}
-
-.admin-project-meta > div {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  padding: 10px 14px;
+/* ── Compact Facts Strip ── */
+.admin-project-facts-strip {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.admin-project-meta span {
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 10px;
+.admin-fact-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-fact-label {
+  color: #76ABAE;
+  font-size: 10.5px;
   font-weight: 850;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.admin-project-meta strong {
+.admin-fact-value {
   color: #FFFFFF;
   font-size: 13px;
   font-weight: 750;
-  word-break: break-word;
+}
+
+/* ── Studio Sub-Navigation Tabs ── */
+.admin-studio-subnav {
+  background: #0E1218;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+}
+
+.admin-studio-tab {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  transition: all 0.16s ease;
+}
+
+.admin-studio-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.admin-studio-tab.active {
+  background: #76ABAE;
+  color: #0E1218;
+  box-shadow: 0 4px 14px rgba(118, 171, 174, 0.3);
+}
+
+.admin-studio-tab.active span {
+  color: #0E1218;
+}
+
+/* ── Global Admin Secondary & Primary Buttons ── */
+.admin-btn-secondary {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 12px !important;
+  color: #FFFFFF !important;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  transition: all 0.16s ease;
+}
+
+.admin-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+.admin-btn-primary {
+  align-items: center;
+  background: linear-gradient(135deg, #FF5722 0%, #E64A19 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px rgba(255, 87, 34, 0.35) !important;
+  color: #FFFFFF !important;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  transition: all 0.16s ease;
+}
+
+.admin-btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .admin-project-switcher {
@@ -2307,42 +2397,29 @@ p {
   padding: 2px 6px;
 }
 
-/* ── Project Workspace 2-Column Section Layout ── */
-.admin-project-columns {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr 1fr;
-}
-
-@media (max-width: 990px) {
-  .admin-project-columns {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ── Brief & Assets Section ── */
 .admin-brief-visual,
 .admin-assets-block {
   background: #181E2B !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 20px !important;
-  padding: 18px 20px !important;
+  padding: 20px !important;
   display: grid !important;
-  gap: 12px !important;
+  gap: 14px !important;
   color: #FFFFFF !important;
 }
 
 .admin-brief-visual > strong,
 .admin-assets-block > strong {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 850;
   color: #FFFFFF;
 }
 
 .admin-brief-visual p {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 13px;
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13.5px;
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -2353,42 +2430,44 @@ p {
 }
 
 .admin-palette-strip span {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   display: inline-block;
 }
 
 .admin-brief-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .admin-brief-grid > div {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .admin-brief-grid span {
-  color: #76ABAE;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  color: #76ABAE !important;
+  font-size: 10.5px !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .admin-brief-grid p,
 .admin-brief-grid strong {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12.5px;
-  margin: 0;
-  line-height: 1.4;
+  color: #FFFFFF !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  line-height: 1.45 !important;
 }
 
 /* ── Controls & Management Panel ── */
@@ -2396,22 +2475,22 @@ p {
   background: #181E2B !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 20px !important;
-  padding: 18px 20px !important;
+  padding: 20px !important;
   display: grid !important;
   gap: 16px !important;
   color: #FFFFFF !important;
 }
 
 .admin-control-panel > strong {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 850;
   color: #FFFFFF;
 }
 
 .admin-control-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
 }
 
 .admin-control-grid > div {
@@ -2425,7 +2504,7 @@ p {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
 /* ── AI Build Prompt Panel ── */
@@ -2433,9 +2512,9 @@ p {
   background: linear-gradient(135deg, rgba(118, 171, 174, 0.1) 0%, #141822 100%) !important;
   border: 1px solid rgba(118, 171, 174, 0.35) !important;
   border-radius: 22px !important;
-  padding: 22px !important;
+  padding: 24px !important;
   display: grid !important;
-  gap: 18px !important;
+  gap: 20px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28) !important;
   color: #FFFFFF !important;
 }
@@ -2466,9 +2545,9 @@ p {
 }
 
 .ai-prompt-head p {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12.5px;
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -2489,7 +2568,7 @@ p {
 }
 
 .ai-prompt-metrics span {
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
   font-size: 10px !important;
   font-weight: 800 !important;
   text-transform: uppercase !important;
@@ -2503,7 +2582,7 @@ p {
 
 .ai-prompt-controls {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -2514,10 +2593,10 @@ p {
 }
 
 .ai-prompt-sections button {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #0E1218 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 12px !important;
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: #E2E8F0 !important;
   padding: 10px 12px !important;
   display: grid !important;
   grid-template-columns: 20px minmax(0, 1fr) !important;
@@ -2529,39 +2608,40 @@ p {
 }
 
 .ai-prompt-sections button:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(118, 171, 174, 0.4) !important;
-  color: #FFF !important;
+  color: #FFFFFF !important;
 }
 
 .ai-prompt-sections button.selected {
-  background: rgba(118, 171, 174, 0.15) !important;
+  background: rgba(118, 171, 174, 0.18) !important;
   border-color: #76ABAE !important;
   color: #FFFFFF !important;
 }
 
 .ai-prompt-sections button b {
-  color: #76ABAE;
-  font-size: 13px;
+  color: #76ABAE !important;
+  font-size: 13px !important;
 }
 
 .ai-prompt-sections button span {
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 12.5px !important;
+  font-weight: 750 !important;
+  color: #FFFFFF !important;
 }
 
 .ai-prompt-sections button small {
-  grid-column: 2;
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.4);
+  grid-column: 2 !important;
+  font-size: 11px !important;
+  color: #94A3B8 !important;
 }
 
 .ai-prompt-switches {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  color: #E2E8F0;
 }
 
 .ai-prompt-switches label {
@@ -2582,14 +2662,36 @@ p {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 14px !important;
   padding: 16px !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   font-family: var(--mono) !important;
   font-size: 12px !important;
-  line-height: 1.5 !important;
+  line-height: 1.55 !important;
   max-height: 400px !important;
   overflow-y: auto !important;
   white-space: pre-wrap !important;
   word-break: break-word !important;
+}
+
+details.admin-collapse {
+  background: #141822;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+details.admin-collapse summary {
+  background: rgba(255, 255, 255, 0.03);
+  color: #76ABAE;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 12px 18px;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+details.admin-collapse summary:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ── Managed Admin Card & Controls ── */

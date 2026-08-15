@@ -196,14 +196,14 @@ export function AiBuildPromptPanel({ project, onNotify }: AiBuildPromptPanelProp
       </label>
 
       <div className="ai-prompt-actions">
-        <button className="button primary" type="button" onClick={copyPrompt}>
+        <button className="admin-btn-primary" type="button" onClick={copyPrompt}>
           {copied ? "Kimásolva ✓" : "Prompt másolása"}
         </button>
-        <button className="button secondary" type="button" onClick={downloadPrompt}>
+        <button className="admin-btn-secondary" type="button" onClick={downloadPrompt}>
           Letöltés .md fájlként
         </button>
         <button
-          className="button secondary"
+          className="admin-btn-secondary"
           type="button"
           onClick={() => setOptions({ ...defaultAiPromptOptions, extraInstructions: options.extraInstructions })}
         >

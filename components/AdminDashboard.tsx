@@ -154,6 +154,7 @@ export function AdminDashboard() {
   // Upgraded flow states
   const [changeLogs, setChangeLogs] = useState<Record<string, any[]>>({});
   const [newMilestoneTitle, setNewMilestoneTitle] = useState<Record<string, string>>({});
+  const [projectSubTab, setProjectSubTab] = useState<Record<string, "prompt" | "brief" | "build" | "changes" | "subscription">>({});
 
   // Phase 2 state variables
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -1556,42 +1557,46 @@ export function AdminDashboard() {
         className="admin-guide chapter-in"
         style={{
           borderRadius: "18px",
-          padding: "18px 20px",
-          margin: "0 0 4px",
-          background: isAdmin ? "rgba(118,171,174,0.16)" : "rgba(48,56,65,0.05)",
-          border: isAdmin ? "1px solid rgba(118,171,174,0.5)" : "1px solid var(--line)"
+          padding: "18px 22px",
+          margin: "0 0 8px",
+          background: isAdmin ? "linear-gradient(135deg, rgba(118, 171, 174, 0.16) 0%, rgba(20, 24, 34, 0.95) 100%)" : "rgba(255,255,255,0.03)",
+          border: isAdmin ? "1px solid rgba(118, 171, 174, 0.45)" : "1px solid rgba(255,255,255,0.08)"
         }}
       >
-        <span style={{
-          display: "inline-block",
-          fontSize: "11px",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-          padding: "3px 10px",
-          borderRadius: "999px",
-          marginBottom: "8px",
-          background: isAdmin ? "#76ABAE" : "rgba(48,56,65,0.1)",
-          color: isAdmin ? "#0E1116" : "var(--muted)"
-        }}>
-          {isAdmin ? (guide.step ? `${guide.step} · Rajtad a sor` : "Rajtad a sor") : "⏳ Ügyfélre vár"}
-        </span>
-        <strong style={{ display: "block", fontSize: "17px", color: "var(--ink)", marginBottom: "4px" }}>{guide.headline}</strong>
-        <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)", lineHeight: 1.5 }}>{guide.detail}</p>
-        {isAdmin && guide.actions?.length ? (
-          <div className="admin-guide-actions">
-            {guide.actions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className={`button ${action.variant === "secondary" ? "secondary" : "primary"}`}
-                onClick={action.onClick}
-              >
-                {action.label}
-              </button>
-            ))}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <span style={{
+              display: "inline-block",
+              fontSize: "11px",
+              fontWeight: 850,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              padding: "4px 10px",
+              borderRadius: "999px",
+              marginBottom: "8px",
+              background: isAdmin ? "#76ABAE" : "rgba(255,255,255,0.12)",
+              color: isAdmin ? "#0E1218" : "#94A3B8"
+            }}>
+              {isAdmin ? (guide.step ? `${guide.step} · Rajtad a sor` : "Rajtad a sor") : "⏳ Ügyfélre vár"}
+            </span>
+            <strong style={{ display: "block", fontSize: "18px", fontWeight: "900", color: "#FFFFFF", marginBottom: "4px" }}>{guide.headline}</strong>
+            <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255, 255, 255, 0.8)", lineHeight: 1.5 }}>{guide.detail}</p>
           </div>
-        ) : null}
+          {isAdmin && guide.actions?.length ? (
+            <div className="admin-guide-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+              {guide.actions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className={action.variant === "secondary" ? "admin-btn-secondary" : "admin-btn-primary"}
+                  onClick={action.onClick}
+                >
+                  {action.label} →
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -2031,466 +2036,517 @@ export function AdminDashboard() {
                     </div>
                   </header>
 
-                  <div className="admin-project-meta">
-                    <div>
-                      <span>Típus</span>
-                      <strong>{project.project_type}</strong>
+                  {/* ── 1. Aktuális Lépés & Teendő Vezérlő ── */}
+                  {renderProjectGuide(project)}
+
+                  {/* ── 2. Kompakt Telemetria & Információs Sáv ── */}
+                  <div className="admin-project-facts-strip">
+                    <div className="admin-fact-pill">
+                      <span className="admin-fact-label">Csomag / Modell</span>
+                      <strong className="admin-fact-value">
+                        {project.commercial_model === "subscription"
+                          ? `${subscriptionPlan(project.subscription_plan).name} (${formatHuf(project.monthly_price ?? subscriptionPlan(project.subscription_plan).price)}/hó) · Havidíjas`
+                          : `${project.budget || "Egyedi büdzsé"} · Egyszeri megvásárlás`}
+                      </strong>
                     </div>
-                    <div>
-                      <span>Létrehozva</span>
-                      <strong>{formatDate(project.created_at)}</strong>
+                    <div className="admin-fact-pill">
+                      <span className="admin-fact-label">Weboldal / Staging</span>
+                      <strong className="admin-fact-value">{project.website || project.staging_url || "Még nincs beállítva"}</strong>
                     </div>
-                    <div>
-                      <span>Büdzsé</span>
-                      <strong>{project.budget || "Nincs megadva"}</strong>
-                    </div>
-                    <div>
-                      <span>Weboldal</span>
-                      <strong>{project.website || "Még nincs"}</strong>
-                    </div>
-                    <div>
-                      <span>Modell</span>
-                      <strong>{project.commercial_model === "subscription" ? "Havidíjas menedzselt oldal" : "Egyszeri megvásárlás"}</strong>
+                    <div className="admin-fact-pill">
+                      <span className="admin-fact-label">Létrehozva</span>
+                      <strong className="admin-fact-value">{formatDate(project.created_at)}</strong>
                     </div>
                     {project.commercial_model === "subscription" ? (
                       <>
-                        <div>
-                          <span>Csomag</span>
-                          <strong>{subscriptionPlan(project.subscription_plan).name} ({formatHuf(project.monthly_price ?? subscriptionPlan(project.subscription_plan).price)}/hó)</strong>
+                        <div className="admin-fact-pill">
+                          <span className="admin-fact-label">Előfizetés</span>
+                          <strong className="admin-fact-value" style={{ color: project.subscription_status === "active" ? "#76ABAE" : "#FFA726" }}>
+                            {project.subscription_status ?? "inactive"}
+                            {project.next_billing_at ? ` (Köv: ${new Date(project.next_billing_at).toLocaleDateString("hu-HU")})` : ""}
+                          </strong>
                         </div>
-                        <div>
-                          <span>Előfizetés állapota</span>
-                          <strong>{project.subscription_status ?? "inactive"}</strong>
-                        </div>
-                        <div>
-                          <span>Következő számlázás</span>
-                          <strong>{project.next_billing_at ? new Date(project.next_billing_at).toLocaleDateString("hu-HU") : "Nincs rögzítve"}</strong>
-                        </div>
-                        <div>
-                          <span>Oldal állapota</span>
-                          <strong>{project.site_health_status ?? "healthy"}</strong>
+                        <div className="admin-fact-pill">
+                          <span className="admin-fact-label">Oldal állapota</span>
+                          <strong className="admin-fact-value" style={{ color: project.site_health_status === "healthy" ? "#76ABAE" : "#EF4444" }}>
+                            {project.site_health_status === "healthy" ? "🟢 Rendszer rendben" : "🔴 Figyelmet igényel"}
+                          </strong>
                         </div>
                       </>
                     ) : (
-                      <div>
-                        <span>Fizetési státusz</span>
-                        <strong>{project.payment_status}</strong>
+                      <div className="admin-fact-pill">
+                        <span className="admin-fact-label">Fizetés</span>
+                        <strong className="admin-fact-value">{project.payment_status}</strong>
                       </div>
                     )}
                   </div>
 
-                  {project.commercial_model === "subscription" && (
-                    <section className="managed-admin-card">
-                      <div className="managed-admin-head">
-                        <div>
-                          <span className="micro-label">Menedzselt előfizetés vezérlés</span>
-                          <strong>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
-                          <small>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
-                        </div>
-                        <div className="managed-admin-actions">
-                          <select
-                            value={project.subscription_status ?? "inactive"}
-                            onChange={(event) => updateClientProject(project.id, { subscription_status: event.target.value })}
-                          >
-                            <option value="inactive">Inaktív</option>
-                            <option value="active">Aktív</option>
-                            <option value="pause_requested">Szüneteltetés kérelem</option>
-                            <option value="paused">Szüneteltetve</option>
-                            <option value="resume_requested">Újraindítás kérelem</option>
-                            <option value="cancel_requested">Lemondás kérelem</option>
-                            <option value="cancelled">Lemondva</option>
-                          </select>
-                          <select
-                            value={project.site_health_status ?? "healthy"}
-                            onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}
-                          >
-                            <option value="healthy">Rendszer rendben</option>
-                            <option value="issue_detected">Figyelmet igényel</option>
-                            <option value="offline">Oldal leállt</option>
-                          </select>
-                        </div>
-                      </div>
-                    </section>
-                  )}
-
-                  {renderProjectGuide(project)}
-
-                  {/* ── MÓDOSÍTÁSI KÉRÉSEK ── */}
+                  {/* ── 3. Munkafolyamat Stúdió Fülek (Tab Navigation) ── */}
                   {(() => {
+                    const activeSub = projectSubTab[project.id] ?? "prompt";
                     const reqs = changeRequests.filter((r) => r.project_id === project.id);
-                    if (!reqs.length) return null;
-                    const plan = subscriptionPlan(project.subscription_plan);
-                    const period = quotaPeriodKey(project.created_at, plan.changeQuota);
-                    const quotaCount = reqs.filter((r) => (r.period_key ?? period) === period && consumesChangeQuota(r)).length;
                     const isManaged = project.commercial_model === "subscription";
-                    const quotaMax = isManaged ? plan.changeQuota.count : null;
+
                     return (
-                      <div className="change-requests-admin" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "18px", padding: "16px", display: "grid", gap: "12px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                          <div>
-                            <strong style={{ color: "#fff", fontSize: "15px" }}>Ügyfél módosítási kérések ({reqs.length})</strong>
-                            {isManaged && quotaMax !== null && (
-                              <small style={{ display: "block", color: "rgba(255,255,255,0.5)", marginTop: "2px" }}>
-                                Havi keret: {quotaCount} / {quotaMax === Infinity ? "korlátlan" : `${quotaMax} kérés`} ({period})
-                              </small>
-                            )}
-                          </div>
+                      <div style={{ display: "grid", gap: "14px", marginTop: "6px" }}>
+                        <div className="admin-studio-subnav">
+                          <button
+                            type="button"
+                            className={`admin-studio-tab ${activeSub === "prompt" ? "active" : ""}`}
+                            onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "prompt" }))}
+                          >
+                            <span>⚡</span> AI Prompt Stúdió
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-studio-tab ${activeSub === "brief" ? "active" : ""}`}
+                            onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "brief" }))}
+                          >
+                            <span>📋</span> Brief & Anyagok {briefFields.length > 0 && `(${briefFields.length})`}
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-studio-tab ${activeSub === "build" ? "active" : ""}`}
+                            onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "build" }))}
+                          >
+                            <span>🛠️</span> Kivitelezés & Fázis
+                          </button>
+                          <button
+                            type="button"
+                            className={`admin-studio-tab ${activeSub === "changes" ? "active" : ""}`}
+                            onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "changes" }))}
+                          >
+                            <span>💬</span> Módosítások & Ajánlat {reqs.length > 0 ? `(${reqs.length})` : ""}
+                          </button>
+                          {isManaged && (
+                            <button
+                              type="button"
+                              className={`admin-studio-tab ${activeSub === "subscription" ? "active" : ""}`}
+                              onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "subscription" }))}
+                            >
+                              <span>⚙️</span> Előfizetés Vezérlés
+                            </button>
+                          )}
                         </div>
-                        <div style={{ display: "grid", gap: "10px" }}>
-                          {reqs.map((req) => (
-                            <div key={req.id} style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px", display: "grid", gap: "8px" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", flexWrap: "wrap" }}>
-                                <div>
-                                  <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>{req.category}</span>
-                                  <small style={{ color: "rgba(255,255,255,0.4)", marginLeft: "8px" }}>{new Date(req.requested_at).toLocaleString("hu-HU")}</small>
-                                </div>
-                                <select
-                                  value={req.status}
-                                  onChange={async (e) => {
-                                    const nextStatus = e.target.value as ChangeRequest["status"];
-                                    await supabase.from("change_requests").update({ status: nextStatus }).eq("id", req.id);
-                                    setChangeRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: nextStatus } : r)));
-                                    await triggerNotification(
-                                      project.user_id,
-                                      project.contact_email,
-                                      "Módosítási kérés állapota frissült",
-                                      `A(z) "${project.title}" projektednél benyújtott módosítás állapota: ${nextStatus}.`,
-                                      "/ugyfelkapu/dashboard"
-                                    );
-                                  }}
-                                  style={{ background: "#1C1E22", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "8px", padding: "4px 8px", fontSize: "12px" }}
-                                >
-                                  <option value="new">Új</option>
-                                  <option value="in_progress">Folyamatban</option>
-                                  <option value="waiting_client">Ügyfélre vár</option>
-                                  <option value="planned">Tervezve</option>
-                                  <option value="completed">Elkészült</option>
-                                  <option value="declined">Elutasítva</option>
-                                </select>
-                              </div>
-                              <p style={{ margin: 0, color: "rgba(255,255,255,0.85)", fontSize: "13px", lineHeight: 1.45 }}>{req.description}</p>
 
-                              {req.transfer_reported_at && req.status !== "completed" && (
-                                <div style={{ background: "rgba(118, 171, 174, 0.1)", border: "1px solid rgba(118, 171, 174, 0.3)", borderRadius: "10px", padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                                  <div>
-                                    <strong style={{ color: "#76ABAE", fontSize: "13px" }}>Az ügyfél jelezte az utalást!</strong>
-                                    <small style={{ display: "block", color: "rgba(255,255,255,0.6)" }}>Összeg: {formatHuf(req.quoted_amount ?? 0)} · Közlemény: {req.payment_reference}</small>
-                                  </div>
-                                  <button
-                                    className="button primary"
-                                    onClick={() => confirmChangePayment(req, project)}
-                                    style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}
-                                    type="button"
-                                  >
-                                    Utalás beérkezett
-                                  </button>
-                                </div>
-                              )}
+                        {/* ── FÜL 1: AI PROMPT STÚDIÓ ── */}
+                        {activeSub === "prompt" && (
+                          <div className="tab-pane-fade">
+                            <AiBuildPromptPanel project={toAiPromptProject(project)} onNotify={setMessage} />
+                          </div>
+                        )}
 
-                              {!isWebsitePurchaseRequest(req.description) && req.included_in_plan === false && !req.paid_at ? (
-                                <div className="change-quote-box">
-                                  {req.quoted_amount ? (
-                                    <div className="change-quote-state">
-                                      <div style={{ display: "grid", gap: "2px" }}>
-                                        <strong style={{ fontSize: "15px", color: "#76ABAE" }}>{formatHuf(req.quoted_amount)}</strong>
-                                        <small style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>Közlemény: {req.payment_reference ?? "generálás alatt"}</small>
-                                      </div>
-                                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
-                                        {req.transfer_reported_at
-                                          ? "Az ügyfél jelezte az utalást — ellenőrizd a számlát."
-                                          : req.quote_accepted_at
-                                            ? "Az ügyfél elfogadta, utalásra vár."
-                                            : "Elküldve, az ügyfél döntésére vár."}
-                                      </span>
-                                      {req.transfer_reported_at && !req.paid_at ? (
-                                        <button className="button primary" type="button" onClick={() => confirmChangePayment(req, project)} style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}>
-                                          Beérkezett — munka indítása
-                                        </button>
-                                      ) : null}
-                                    </div>
-                                  ) : (
-                                    <form
-                                      className="change-quote-form"
-                                      onSubmit={(event) => {
-                                        event.preventDefault();
-                                        const form = event.currentTarget;
-                                        const amount = Number((form.elements.namedItem("amount") as HTMLInputElement).value);
-                                        const note = (form.elements.namedItem("note") as HTMLInputElement).value;
-                                        sendChangeQuote(req, project, amount, note);
-                                      }}
-                                    >
-                                      <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "140px 1fr auto", alignItems: "flex-end" }}>
-                                        <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                          <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Ajánlati ár (Ft)</span>
-                                          <input name="amount" type="number" min={1000} step={100} required placeholder="pl. 45000" style={{ width: "100%" }} />
-                                        </label>
-                                        <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                          <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Mit tartalmaz?</span>
-                                          <input name="note" required placeholder="pl. Egyedi naptár modul, 3 munkanap." style={{ width: "100%" }} />
-                                        </label>
-                                        <button className="button primary" type="submit" style={{ minHeight: "auto", height: "38px", fontSize: "12px", padding: "0 14px" }}>
-                                          Ajánlat küldése
-                                        </button>
-                                      </div>
-                                    </form>
-                                  )}
+                        {/* ── FÜL 2: BRIEF ÉS ÜGYFÉL ANYAGOK ── */}
+                        {activeSub === "brief" && (
+                          <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
+                            <section className="admin-brief-visual">
+                              <strong>Kiválasztott stílusirány & Színvilág</strong>
+                              <p>{brief["Stílus / hangulat"] || "Nincs külön stílus megjegyzés megadva."}</p>
+                              {palette.length ? (
+                                <div className="admin-palette-strip" style={{ marginTop: "4px" }}>
+                                  {palette.map((color) => (
+                                    <span key={color} style={{ background: color }} title={color} />
+                                  ))}
                                 </div>
                               ) : null}
+                            </section>
 
-                              <ChangeThread
-                                requestId={req.id}
-                                role="admin"
-                                onSent={() => triggerNotification(
-                                  project.user_id,
-                                  project.contact_email,
-                                  "Új üzenet a kérésedhez",
-                                  `Válasz érkezett a(z) „${project.title}" projekt egyik kérésére. Nyisd meg az ügyfélkaput a részletekért.`,
-                                  "/ugyfelkapu/dashboard"
-                                )}
+                            {briefFields.length ? (
+                              <section className="admin-assets-block">
+                                <strong>Kérdőív / Célok ({briefFields.length})</strong>
+                                <div className="admin-brief-grid">
+                                  {briefFields.map(([label, value]) => (
+                                    <div key={label}>
+                                      <span>{label}</span>
+                                      <p>{value}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
+                            ) : null}
+
+                            {assetFields.length ? (
+                              <section className="admin-assets-block">
+                                <strong>Anyagok és hozzáférések ({assetFields.length})</strong>
+                                <div className="admin-brief-grid">
+                                  {assetFields.map(([label, value]) => (
+                                    <div key={label}>
+                                      <span>{label}</span>
+                                      <p>{value}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
+                            ) : null}
+
+                            {project.brief_data?.photoUrls?.length ? (
+                              <section className="admin-assets-block">
+                                <strong>Feltöltött képek ({project.brief_data.photoUrls.length})</strong>
+                                <div style={{ display: "grid", gap: "10px", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
+                                  {project.brief_data.photoUrls.map((url: string, idx: number) => (
+                                    <AssetImage key={url} value={url} alt={`Kép ${idx + 1}`} />
+                                  ))}
+                                </div>
+                              </section>
+                            ) : null}
+
+                            {project.brief_data?.contentFileUrls?.length ? (
+                              <section className="admin-assets-block">
+                                <strong>Dokumentumok és szövegek ({project.brief_data.contentFileUrls.length})</strong>
+                                <div style={{ display: "grid", gap: "6px" }}>
+                                  {project.brief_data.contentFileUrls.map((url: string, idx: number) => (
+                                    <AssetLink key={url} value={url} label={`Fájl ${idx + 1}`} />
+                                  ))}
+                                </div>
+                              </section>
+                            ) : null}
+
+                            {project.logo_url ? (
+                              <section className="admin-assets-block">
+                                <strong>Feltöltött logó</strong>
+                                <div className="asset-preview-grid logo-asset-preview" style={{ maxWidth: 220 }}>
+                                  <AssetImage value={project.logo_url} alt={`${project.company || project.title} logó`} />
+                                </div>
+                              </section>
+                            ) : null}
+                          </div>
+                        )}
+
+                        {/* ── FÜL 3: KIVITELEZÉS & FÁZISVEZÉRLŐ ── */}
+                        {activeSub === "build" && (
+                          <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
+                            <section className="admin-control-panel">
+                              <strong>Fázis és felügyelet</strong>
+                              <div className="admin-control-grid">
+                                <div>
+                                  <span>Fázis</span>
+                                  <select
+                                    value={project.status}
+                                    onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
+                                  >
+                                    {projectStatuses.map(([value, label]) => (
+                                      <option key={value} value={value}>{label}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <span>Staging / Előnézeti link</span>
+                                  <input
+                                    defaultValue={project.staging_url ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { staging_url: event.target.value.trim() || null })}
+                                    placeholder="https://preview.projectedge.hu"
+                                  />
+                                </div>
+                                <div>
+                                  <span>Becsült átadási határidő</span>
+                                  <input
+                                    defaultValue={project.estimated_deadline ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { estimated_deadline: event.target.value.trim() || null })}
+                                    placeholder="pl. 2026. március 15."
+                                  />
+                                </div>
+                                <div>
+                                  <span>Következő lépés (ügyfél látja)</span>
+                                  <input
+                                    defaultValue={project.next_step ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value.trim() || null })}
+                                    placeholder="Mit lát az ügyfél a dashboardban..."
+                                  />
+                                </div>
+                              </div>
+
+                              {/* ── Mérföldkövek ── */}
+                              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "14px", marginTop: "10px" }}>
+                                <strong style={{ fontSize: "14px", color: "#fff" }}>Mérföldkövek</strong>
+                                <div style={{ display: "grid", gap: "6px", marginTop: "8px" }}>
+                                  {(project.milestones ?? []).map((m, idx) => (
+                                    <label key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: m.done ? "rgba(255,255,255,0.5)" : "#fff" }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={m.done}
+                                        onChange={async (e) => {
+                                          const next = (project.milestones ?? []).map((item, i) => (i === idx ? { ...item, done: e.target.checked } : item));
+                                          await updateClientProject(project.id, { milestones: next });
+                                        }}
+                                        style={{ accentColor: "#76ABAE" }}
+                                      />
+                                      <span style={{ textDecoration: m.done ? "line-through" : "none" }}>{m.title}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                                  <input
+                                    value={newMilestoneTitle[project.id] ?? ""}
+                                    onChange={(e) => setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: e.target.value }))}
+                                    placeholder="Új mérföldkő címe…"
+                                    style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "6px 10px", color: "#fff", fontSize: "12px", flex: 1 }}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="admin-btn-secondary"
+                                    style={{ minHeight: "auto", padding: "6px 14px", fontSize: "12px", height: "36px" }}
+                                    onClick={async () => {
+                                      const title = newMilestoneTitle[project.id]?.trim();
+                                      if (!title) return;
+                                      const next = [...(project.milestones ?? []), { title, done: false }];
+                                      await updateClientProject(project.id, { milestones: next });
+                                      setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: "" }));
+                                    }}
+                                  >
+                                    + Hozzáadás
+                                  </button>
+                                </div>
+                              </div>
+                            </section>
+
+                            {showHandover && (
+                              <AdminHandoverPanel
+                                steps={project.handover_steps}
+                                onChange={(steps) => {
+                                  void updateClientProject(project.id, { handover_steps: steps });
+                                }}
+                                onStepCompleted={(stepId, title) => {
+                                  void notifyHandoverStep(project, title);
+                                }}
                               />
-                            </div>
-                          ))}
-                        </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── FÜL 4: MÓDOSÍTÁSI KÉRÉSEK ÉS ÁRAJÁNLATOK ── */}
+                        {activeSub === "changes" && (
+                          <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
+                            {reqs.length > 0 ? (
+                              <div className="change-requests-admin" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "14px" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                                  <div>
+                                    <strong style={{ color: "#fff", fontSize: "16px" }}>Ügyfél módosítási kérések ({reqs.length})</strong>
+                                    {isManaged && (
+                                      <small style={{ display: "block", color: "#76ABAE", marginTop: "2px" }}>
+                                        Havi keretfogyasztás ellenőrizve a csomag szerint.
+                                      </small>
+                                    )}
+                                  </div>
+                                </div>
+                                <div style={{ display: "grid", gap: "12px" }}>
+                                  {reqs.map((req) => (
+                                    <div key={req.id} style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", display: "grid", gap: "10px" }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", flexWrap: "wrap" }}>
+                                        <div>
+                                          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>{req.category}</span>
+                                          <small style={{ color: "rgba(255,255,255,0.5)", marginLeft: "8px" }}>{new Date(req.requested_at).toLocaleString("hu-HU")}</small>
+                                        </div>
+                                        <select
+                                          value={req.status}
+                                          onChange={async (e) => {
+                                            const nextStatus = e.target.value as ChangeRequest["status"];
+                                            await supabase.from("change_requests").update({ status: nextStatus }).eq("id", req.id);
+                                            setChangeRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: nextStatus } : r)));
+                                            await triggerNotification(
+                                              project.user_id,
+                                              project.contact_email,
+                                              "Módosítási kérés állapota frissült",
+                                              `A(z) "${project.title}" projektednél benyújtott módosítás állapota: ${nextStatus}.`,
+                                              "/ugyfelkapu/dashboard"
+                                            );
+                                          }}
+                                          style={{ background: "#1C1E22", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", padding: "4px 8px", fontSize: "12px" }}
+                                        >
+                                          <option value="new">Új</option>
+                                          <option value="in_progress">Folyamatban</option>
+                                          <option value="waiting_client">Ügyfélre vár</option>
+                                          <option value="planned">Tervezve</option>
+                                          <option value="completed">Elkészült</option>
+                                          <option value="declined">Elutasítva</option>
+                                        </select>
+                                      </div>
+                                      <p style={{ margin: 0, color: "rgba(255,255,255,0.9)", fontSize: "13.5px", lineHeight: 1.45 }}>{req.description}</p>
+
+                                      {req.transfer_reported_at && req.status !== "completed" && (
+                                        <div style={{ background: "rgba(118, 171, 174, 0.12)", border: "1px solid rgba(118, 171, 174, 0.4)", borderRadius: "10px", padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                                          <div>
+                                            <strong style={{ color: "#76ABAE", fontSize: "13px" }}>Az ügyfél jelezte az utalást!</strong>
+                                            <small style={{ display: "block", color: "rgba(255,255,255,0.7)" }}>Összeg: {formatHuf(req.quoted_amount ?? 0)} · Közlemény: {req.payment_reference}</small>
+                                          </div>
+                                          <button
+                                            className="admin-btn-primary"
+                                            onClick={() => confirmChangePayment(req, project)}
+                                            style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}
+                                            type="button"
+                                          >
+                                            Utalás beérkezett
+                                          </button>
+                                        </div>
+                                      )}
+
+                                      {!isWebsitePurchaseRequest(req.description) && req.included_in_plan === false && !req.paid_at ? (
+                                        <div className="change-quote-box">
+                                          {req.quoted_amount ? (
+                                            <div className="change-quote-state">
+                                              <div style={{ display: "grid", gap: "2px" }}>
+                                                <strong style={{ fontSize: "15px", color: "#76ABAE" }}>{formatHuf(req.quoted_amount)}</strong>
+                                                <small style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>Közlemény: {req.payment_reference ?? "generálás alatt"}</small>
+                                              </div>
+                                              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
+                                                {req.transfer_reported_at
+                                                  ? "Az ügyfél jelezte az utalást — ellenőrizd a számlát."
+                                                  : req.quote_accepted_at
+                                                    ? "Az ügyfél elfogadta, utalásra vár."
+                                                    : "Elküldve, az ügyfél döntésére vár."}
+                                              </span>
+                                              {req.transfer_reported_at && !req.paid_at ? (
+                                                <button className="admin-btn-primary" type="button" onClick={() => confirmChangePayment(req, project)} style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}>
+                                                  Beérkezett — munka indítása
+                                                </button>
+                                              ) : null}
+                                            </div>
+                                          ) : (
+                                            <form
+                                              className="change-quote-form"
+                                              onSubmit={(event) => {
+                                                event.preventDefault();
+                                                const form = event.currentTarget;
+                                                const amount = Number((form.elements.namedItem("amount") as HTMLInputElement).value);
+                                                const note = (form.elements.namedItem("note") as HTMLInputElement).value;
+                                                sendChangeQuote(req, project, amount, note);
+                                              }}
+                                            >
+                                              <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "140px 1fr auto", alignItems: "flex-end" }}>
+                                                <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                  <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Ajánlati ár (Ft)</span>
+                                                  <input name="amount" type="number" min={1000} step={100} required placeholder="pl. 45000" style={{ width: "100%" }} />
+                                                </label>
+                                                <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                  <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Mit tartalmaz?</span>
+                                                  <input name="note" required placeholder="pl. Egyedi naptár modul, 3 munkanap." style={{ width: "100%" }} />
+                                                </label>
+                                                <button className="admin-btn-primary" type="submit" style={{ minHeight: "auto", height: "38px", fontSize: "12px", padding: "0 14px" }}>
+                                                  Ajánlat küldése
+                                                </button>
+                                              </div>
+                                            </form>
+                                          )}
+                                        </div>
+                                      ) : null}
+
+                                      <ChangeThread
+                                        requestId={req.id}
+                                        role="admin"
+                                        onSent={() => triggerNotification(
+                                          project.user_id,
+                                          project.contact_email,
+                                          "Új üzenet a kérésedhez",
+                                          `Válasz érkezett a(z) „${project.title}" projekt egyik kérésére. Nyisd meg az ügyfélkaput a részletekért.`,
+                                          "/ugyfelkapu/dashboard"
+                                        )}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13.5px", margin: 0, padding: "16px 0" }}>Jelenleg nincs aktív módosítási kérés ehhez a projekthez.</p>
+                            )}
+
+                            {/* ── Egyedi Árajánlat Készítő ── */}
+                            <section className="admin-offer-builder">
+                              <div className="admin-offer-head">
+                                <span className="micro-label">Egyedi weboldal árajánlat készítő</span>
+                                <strong>{project.offer_title || "Egyedi weboldal árajánlat"}</strong>
+                                <small>Állapot: {project.offer_status ?? "draft"}</small>
+                              </div>
+                              <div className="admin-offer-grid">
+                                <div>
+                                  <span>Ajánlat címe</span>
+                                  <input
+                                    defaultValue={project.offer_title ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { offer_title: event.target.value })}
+                                    placeholder="pl. Budai Otthonok - Exkluzív Weboldal"
+                                  />
+                                </div>
+                                <div>
+                                  <span>Ár (Ft)</span>
+                                  <input
+                                    defaultValue={project.offer_price ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { offer_price: event.target.value ? Number(event.target.value) : null })}
+                                    placeholder="pl. 240000"
+                                    type="number"
+                                  />
+                                </div>
+                                <div>
+                                  <span>Ütemezés</span>
+                                  <input
+                                    defaultValue={project.offer_timeline ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { offer_timeline: event.target.value })}
+                                    placeholder="pl. 2 hét tervezés + 3 hét fejlesztés"
+                                  />
+                                </div>
+                                <div>
+                                  <span>Összefoglaló</span>
+                                  <textarea
+                                    defaultValue={project.offer_summary ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { offer_summary: event.target.value })}
+                                    placeholder="Rövid, meggyőző indoklás..."
+                                  />
+                                </div>
+                                <div>
+                                  <span>Szállítandó tételek (soronként)</span>
+                                  <textarea
+                                    defaultValue={project.offer_deliverables ?? ""}
+                                    onBlur={(event) => updateClientProject(project.id, { offer_deliverables: event.target.value })}
+                                    placeholder="Egyedi design&#10;Reszponzív felépítés&#10;SEO optimalizálás..."
+                                    style={{ minHeight: "100px" }}
+                                  />
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
+                                <button className="admin-btn-primary" onClick={() => sendProjectOffer(project)} type="button">
+                                  Ajánlat elküldése az ügyfélnek
+                                </button>
+                              </div>
+                            </section>
+                          </div>
+                        )}
+
+                        {/* ── FÜL 5: MENEDZSELT ELŐFIZETÉS FELÜGYELET ── */}
+                        {activeSub === "subscription" && isManaged && (
+                          <div className="tab-pane-fade">
+                            <section className="managed-admin-card">
+                              <div className="managed-admin-head">
+                                <div>
+                                  <span className="micro-label">Menedzselt előfizetés vezérlés</span>
+                                  <strong style={{ fontSize: "16px", color: "#fff" }}>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
+                                  <small style={{ color: "rgba(255,255,255,0.6)" }}>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
+                                </div>
+                                <div className="managed-admin-actions">
+                                  <select
+                                    value={project.subscription_status ?? "inactive"}
+                                    onChange={(event) => updateClientProject(project.id, { subscription_status: event.target.value })}
+                                  >
+                                    <option value="inactive">Inaktív</option>
+                                    <option value="active">Aktív</option>
+                                    <option value="pause_requested">Szüneteltetés kérelem</option>
+                                    <option value="paused">Szüneteltetve</option>
+                                    <option value="resume_requested">Újraindítás kérelem</option>
+                                    <option value="cancel_requested">Lemondás kérelem</option>
+                                    <option value="cancelled">Lemondva</option>
+                                  </select>
+                                  <select
+                                    value={project.site_health_status ?? "healthy"}
+                                    onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}
+                                  >
+                                    <option value="healthy">🟢 Rendszer rendben</option>
+                                    <option value="issue_detected">🟡 Figyelmet igényel</option>
+                                    <option value="offline">🔴 Oldal leállt</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </section>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
-
-                  <div className="admin-project-columns">
-                    {/* ── Bal oszlop: Brief, Anyagok, Színek ── */}
-                    <div style={{ display: "grid", gap: "16px" }}>
-                      <section className="admin-brief-visual">
-                        <strong>Kiválasztott stílusirány</strong>
-                        <p>{brief["Stílus / hangulat"] || "Nincs külön stílus megjegyzés megadva."}</p>
-                        {palette.length ? (
-                          <div className="admin-palette-strip">
-                            {palette.map((color) => (
-                              <span key={color} style={{ background: color }} title={color} />
-                            ))}
-                          </div>
-                        ) : null}
-                      </section>
-
-                      {briefFields.length ? (
-                        <section className="admin-assets-block">
-                          <strong>Kérdőív / Célok</strong>
-                          <div className="admin-brief-grid">
-                            {briefFields.map(([label, value]) => (
-                              <div key={label}>
-                                <span>{label}</span>
-                                <p>{value}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {assetFields.length ? (
-                        <section className="admin-assets-block">
-                          <strong>Anyagok és hozzáférések</strong>
-                          <div className="admin-brief-grid">
-                            {assetFields.map(([label, value]) => (
-                              <div key={label}>
-                                <span>{label}</span>
-                                <p>{value}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {project.brief_data?.photoUrls?.length ? (
-                        <section className="admin-assets-block">
-                          <strong>Képek ({project.brief_data.photoUrls.length})</strong>
-                          <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
-                            {project.brief_data.photoUrls.map((url: string, idx: number) => (
-                              <AssetImage key={url} value={url} alt={`Kép ${idx + 1}`} />
-                            ))}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {project.brief_data?.contentFileUrls?.length ? (
-                        <section className="admin-assets-block">
-                          <strong>Dokumentumok ({project.brief_data.contentFileUrls.length})</strong>
-                          <div style={{ display: "grid", gap: "6px" }}>
-                            {project.brief_data.contentFileUrls.map((url: string, idx: number) => (
-                              <AssetLink key={url} value={url} label={`Fájl ${idx + 1}`} />
-                            ))}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {project.logo_url ? (
-                        <section className="admin-assets-block">
-                          <strong>Feltöltött logó</strong>
-                          <div className="asset-preview-grid logo-asset-preview" style={{ maxWidth: 220 }}>
-                            <AssetImage value={project.logo_url} alt={`${project.company || project.title} logó`} />
-                          </div>
-                        </section>
-                      ) : null}
-                    </div>
-
-                    {/* ── Jobb oszlop: Vezérlők, AI Prompt, Átadás, Ajánlatépítő ── */}
-                    <div style={{ display: "grid", gap: "16px" }}>
-                      <section className="admin-control-panel">
-                        <strong>Fázis és felügyelet</strong>
-                        <div className="admin-control-grid">
-                          <div>
-                            <span>Fázis</span>
-                            <select
-                              value={project.status}
-                              onChange={(event) => updateClientProject(project.id, { status: event.target.value })}
-                            >
-                              {projectStatuses.map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <span>Staging / Előnézeti link</span>
-                            <input
-                              defaultValue={project.staging_url ?? ""}
-                              onBlur={(event) => updateClientProject(project.id, { staging_url: event.target.value.trim() || null })}
-                              placeholder="https://preview.projectedge.hu"
-                            />
-                          </div>
-                          <div>
-                            <span>Becsült átadási határidő</span>
-                            <input
-                              defaultValue={project.estimated_deadline ?? ""}
-                              onBlur={(event) => updateClientProject(project.id, { estimated_deadline: event.target.value.trim() || null })}
-                              placeholder="pl. 2026. március 15."
-                            />
-                          </div>
-                          <div>
-                            <span>Következő lépés (ügyfél látja)</span>
-                            <input
-                              defaultValue={project.next_step ?? ""}
-                              onBlur={(event) => updateClientProject(project.id, { next_step: event.target.value.trim() || null })}
-                              placeholder="Mit lát az ügyfél a dashboardban..."
-                            />
-                          </div>
-                        </div>
-
-                        {/* ── Mérföldkövek ── */}
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "14px", marginTop: "10px" }}>
-                          <strong style={{ fontSize: "14px", color: "#fff" }}>Mérföldkövek</strong>
-                          <div style={{ display: "grid", gap: "6px", marginTop: "8px" }}>
-                            {(project.milestones ?? []).map((m, idx) => (
-                              <label key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: m.done ? "rgba(255,255,255,0.5)" : "#fff" }}>
-                                <input
-                                  type="checkbox"
-                                  checked={m.done}
-                                  onChange={async (e) => {
-                                    const next = (project.milestones ?? []).map((item, i) => (i === idx ? { ...item, done: e.target.checked } : item));
-                                    await updateClientProject(project.id, { milestones: next });
-                                  }}
-                                  style={{ accentColor: "#76ABAE" }}
-                                />
-                                <span style={{ textDecoration: m.done ? "line-through" : "none" }}>{m.title}</span>
-                              </label>
-                            ))}
-                          </div>
-                          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                            <input
-                              value={newMilestoneTitle[project.id] ?? ""}
-                              onChange={(e) => setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: e.target.value }))}
-                              placeholder="Új mérföldkő címe…"
-                              style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "6px 10px", color: "#fff", fontSize: "12px", flex: 1 }}
-                            />
-                            <button
-                              type="button"
-                              className="button secondary"
-                              style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}
-                              onClick={async () => {
-                                const title = newMilestoneTitle[project.id]?.trim();
-                                if (!title) return;
-                                const next = [...(project.milestones ?? []), { title, done: false }];
-                                await updateClientProject(project.id, { milestones: next });
-                                setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: "" }));
-                              }}
-                            >
-                              + Hozzáadás
-                            </button>
-                          </div>
-                        </div>
-                      </section>
-
-                      {/* ── AI Build Prompt Panel — Mindig elérhető minden státusznál ── */}
-                      <AiBuildPromptPanel project={toAiPromptProject(project)} onNotify={setMessage} />
-
-                      {showHandover && (
-                        <AdminHandoverPanel
-                          steps={project.handover_steps}
-                          onChange={(steps) => {
-                            void updateClientProject(project.id, { handover_steps: steps });
-                          }}
-                          onStepCompleted={(stepId, title) => {
-                            void notifyHandoverStep(project, title);
-                          }}
-                        />
-                      )}
-
-                      {showOffer && (
-                        <section className="admin-offer-builder">
-                          <div className="admin-offer-head">
-                            <span className="micro-label">Árajánlat készítő</span>
-                            <strong>{project.offer_title || "Egyedi weboldal árajánlat"}</strong>
-                            <small>Állapot: {project.offer_status ?? "draft"}</small>
-                          </div>
-                          <div className="admin-offer-grid">
-                            <div>
-                              <span>Ajánlat címe</span>
-                              <input
-                                defaultValue={project.offer_title ?? ""}
-                                onBlur={(event) => updateClientProject(project.id, { offer_title: event.target.value })}
-                                placeholder="pl. Budai Otthonok - Exkluzív Weboldal"
-                              />
-                            </div>
-                            <div>
-                              <span>Ár (Ft)</span>
-                              <input
-                                defaultValue={project.offer_price ?? ""}
-                                onBlur={(event) => updateClientProject(project.id, { offer_price: event.target.value ? Number(event.target.value) : null })}
-                                placeholder="pl. 240000"
-                                type="number"
-                              />
-                            </div>
-                            <div>
-                              <span>Ütemezés</span>
-                              <input
-                                defaultValue={project.offer_timeline ?? ""}
-                                onBlur={(event) => updateClientProject(project.id, { offer_timeline: event.target.value })}
-                                placeholder="pl. 2 hét tervezés + 3 hét fejlesztés"
-                              />
-                            </div>
-                            <div>
-                              <span>Összefoglaló</span>
-                              <textarea
-                                defaultValue={project.offer_summary ?? ""}
-                                onBlur={(event) => updateClientProject(project.id, { offer_summary: event.target.value })}
-                                placeholder="Rövid, meggyőző indoklás..."
-                              />
-                            </div>
-                            <div>
-                              <span>Szállítandó tételek (soronként)</span>
-                              <textarea
-                                defaultValue={project.offer_deliverables ?? ""}
-                                onBlur={(event) => updateClientProject(project.id, { offer_deliverables: event.target.value })}
-                                placeholder="Egyedi design&#10;Reszponzív felépítés&#10;SEO optimalizálás..."
-                                style={{ minHeight: "100px" }}
-                              />
-                            </div>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-                            <button className="button primary" onClick={() => sendProjectOffer(project)} type="button">
-                              Ajánlat elküldése az ügyfélnek
-                            </button>
-                          </div>
-                        </section>
-                      )}
-                    </div>
-                  </div>
 
                   {(() => {
                     const idx = projectFlow.findIndex(([v]) => v === project.status);
