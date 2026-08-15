@@ -248,7 +248,7 @@ export const HANDOVER_STEP_DEFS: HandoverStepDef[] = [
       "Ezt mi végezzük: kiírjuk pontosan, milyen rekordokat kell felvenned a domainednél, hogy az éles cím a weboldalra mutasson. A rekordokat itt fogod látni, nem emailben.",
     input: {
       label: "A beállítandó rekordok (az ügyfél ezt fogja látni)",
-      placeholder: "A  @  216.150.1.1\nCNAME  www  cname.vercel-dns.com",
+      placeholder: "A  @  76.76.21.21\nCNAME  www  cname.vercel-dns.com",
       multiline: true,
       sharedWith: "client"
     }

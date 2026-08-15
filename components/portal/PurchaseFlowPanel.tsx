@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BANK_TRANSFER_DETAILS } from "@/components/portal/format";
 import type { Project, WebsitePurchase } from "@/components/portal/types";
 import { formatHuf } from "@/lib/subscriptions";
@@ -55,29 +55,53 @@ export function PurchaseFlowPanel({
 }: PurchaseFlowPanelProps) {
   const [methodChoice, setMethodChoice] = useState<WebsitePurchasePaymentMethod | null>(purchase?.payment_method ?? null);
   const [billing, setBilling] = useState<PurchaseBillingState>(() => billingFromPurchase(purchase, project));
-  const [billingOpen, setBillingOpen] = useState(false);
+  const [billingError, setBillingError] = useState("");
+  const billingFormRef = useRef<HTMLDivElement>(null);
+
+  const billingComplete = Boolean(
+    billing.name.trim() &&
+    billing.email.trim() &&
+    billing.postalCode.trim() &&
+    billing.city.trim() &&
+    billing.address.trim()
+  );
+
+  const [billingOpen, setBillingOpen] = useState(!billingComplete);
+
+  useEffect(() => {
+    if (!billingComplete) {
+      setBillingOpen(true);
+    }
+  }, [billingComplete]);
 
   const progress = websitePurchaseProgress(purchase);
   const activeMethod = purchase?.payment_method ?? methodChoice;
-  const billingComplete = Boolean(
-    billing.name.trim() && billing.email.trim() && billing.postalCode.trim() && billing.city.trim() && billing.address.trim()
-  );
 
   async function selectMethod(method: WebsitePurchasePaymentMethod) {
     if (await onSelectPayment(method)) setMethodChoice(method);
   }
 
   async function saveBilling() {
-    if (!billingComplete) return;
-    if (!(await onSaveBilling(billing))) return;
+    if (!billingComplete) {
+      setBillingError("Kérjük, töltsd ki az összes kötelező mezőt (Név, Email, Irányítószám, Város, Cím)!");
+      return;
+    }
+    setBillingError("");
+    if (!(await onSaveBilling(billing))) {
+      setBillingError("Nem sikerült elmenteni a számlázási adatokat. Kérjük, próbáld újra.");
+      return;
+    }
     setBillingOpen(false);
   }
 
   async function startCard() {
     if (!billingComplete) {
       setBillingOpen(true);
+      setBillingError("⚠️ Először töltsd ki a számlázási adatokat (Név, Email, Irányítószám, Város, Cím) a fizetéshez!");
+      billingFormRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
+    setBillingError("");
     if (!(await onSaveBilling(billing))) return;
     if (activeMethod !== "card" && !(await onSelectPayment("card"))) return;
     await onStartCardPayment();
@@ -86,8 +110,11 @@ export function PurchaseFlowPanel({
   async function reportTransfer() {
     if (!billingComplete) {
       setBillingOpen(true);
+      setBillingError("⚠️ Először töltsd ki a számlázási adatokat (Név, Email, Irányítószám, Város, Cím) az utalás rögzítéséhez!");
+      billingFormRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
+    setBillingError("");
     if (!(await onSaveBilling(billing))) return;
     if (activeMethod !== "bank_transfer" && !(await onSelectPayment("bank_transfer"))) return;
     await onReportTransfer();
@@ -150,34 +177,156 @@ export function PurchaseFlowPanel({
             <div><span>Azonosító közlemény</span><b>{purchase.payment_reference}</b></div>
           </div>
 
-          <div className="purchase-billing-block">
-            <div className="purchase-section-title"><div><span className="micro-label">Számlázási adatok</span><strong>Hová készüljön a bizonylat?</strong></div><button type="button" onClick={() => setBillingOpen((value) => !value)}>{billingOpen ? "Bezárás" : "Megadás / módosítás"}</button></div>
-            {!billingOpen ? <p>{billing.name || "Még nincs megadva"} · {billing.email || "email hiányzik"}{billing.city ? ` · ${billing.city}` : ""}</p> : (
-              <div className="purchase-billing-form">
-                <label><span>Név / cégnév</span><input value={billing.name} onChange={(event) => setBilling((current) => ({ ...current, name: event.target.value }))} /></label>
-                <label><span>Email</span><input type="email" value={billing.email} onChange={(event) => setBilling((current) => ({ ...current, email: event.target.value }))} /></label>
-                <label><span>Adószám (ha van)</span><input value={billing.taxNumber} onChange={(event) => setBilling((current) => ({ ...current, taxNumber: event.target.value }))} placeholder="pl. 12345678-1-42" /></label>
-                <label><span>Ország</span><input value={billing.country} onChange={(event) => setBilling((current) => ({ ...current, country: event.target.value.toUpperCase() }))} /></label>
-                <label><span>Irányítószám</span><input value={billing.postalCode} onChange={(event) => setBilling((current) => ({ ...current, postalCode: event.target.value }))} /></label>
-                <label><span>Város</span><input value={billing.city} onChange={(event) => setBilling((current) => ({ ...current, city: event.target.value }))} /></label>
-                <label className="is-wide"><span>Cím</span><input value={billing.address} onChange={(event) => setBilling((current) => ({ ...current, address: event.target.value }))} placeholder="Közterület, házszám" /></label>
-                <button className="button secondary" type="button" disabled={busy || !billingComplete} onClick={saveBilling}>Számlázási adatok mentése</button>
+          <div className="purchase-billing-block" ref={billingFormRef}>
+            <div className="purchase-section-title">
+              <div>
+                <span className="micro-label">1. Lépés: Számlázási adatok</span>
+                <strong>Hová készüljön a bizonylat / számla?</strong>
+              </div>
+              <button type="button" onClick={() => setBillingOpen((value) => !value)}>
+                {billingOpen ? "Összecsukás" : "Megadás / módosítás"}
+              </button>
+            </div>
+
+            {billingError && (
+              <div style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.4)", borderRadius: "10px", padding: "10px 14px", color: "#DC2626", fontSize: "13px", fontWeight: 600, margin: "10px 0" }}>
+                {billingError}
+              </div>
+            )}
+
+            {!billingComplete && !billingError && (
+              <div style={{ background: "rgba(255, 167, 38, 0.12)", border: "1px solid rgba(255, 167, 38, 0.4)", borderRadius: "10px", padding: "10px 14px", color: "#D97706", fontSize: "13px", fontWeight: 600, margin: "10px 0" }}>
+                ⚠️ A fizetés indítása előtt kérjük, add meg a számlázási adataidat!
+              </div>
+            )}
+
+            {!billingOpen && billingComplete ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#059669", fontSize: "13px", marginTop: "6px" }}>
+                <span>✓</span>
+                <span>Rögzítve: <strong>{billing.name}</strong> ({billing.postalCode} {billing.city}, {billing.address}) · {billing.email}</span>
+              </div>
+            ) : (
+              <div className="purchase-billing-form" style={{ marginTop: "12px" }}>
+                <label>
+                  <span>Név / Cégnév *</span>
+                  <input
+                    required
+                    value={billing.name}
+                    onChange={(event) => setBilling((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="pl. Kisbirtok Kft. vagy Kovács Péter"
+                  />
+                </label>
+                <label>
+                  <span>Email a számlához *</span>
+                  <input
+                    required
+                    type="email"
+                    value={billing.email}
+                    onChange={(event) => setBilling((current) => ({ ...current, email: event.target.value }))}
+                    placeholder="szamla@vallalkozasod.hu"
+                  />
+                </label>
+                <label>
+                  <span>Adószám (cégek esetén)</span>
+                  <input
+                    value={billing.taxNumber}
+                    onChange={(event) => setBilling((current) => ({ ...current, taxNumber: event.target.value }))}
+                    placeholder="pl. 12345678-1-42"
+                  />
+                </label>
+                <label>
+                  <span>Ország</span>
+                  <input
+                    value={billing.country}
+                    onChange={(event) => setBilling((current) => ({ ...current, country: event.target.value.toUpperCase() }))}
+                  />
+                </label>
+                <label>
+                  <span>Irányítószám *</span>
+                  <input
+                    required
+                    value={billing.postalCode}
+                    onChange={(event) => setBilling((current) => ({ ...current, postalCode: event.target.value }))}
+                    placeholder="pl. 1011"
+                  />
+                </label>
+                <label>
+                  <span>Város *</span>
+                  <input
+                    required
+                    value={billing.city}
+                    onChange={(event) => setBilling((current) => ({ ...current, city: event.target.value }))}
+                    placeholder="pl. Budapest"
+                  />
+                </label>
+                <label className="is-wide">
+                  <span>Cím (utca, házszám) *</span>
+                  <input
+                    required
+                    value={billing.address}
+                    onChange={(event) => setBilling((current) => ({ ...current, address: event.target.value }))}
+                    placeholder="pl. Fő utca 12. 3/4."
+                  />
+                </label>
+                <button
+                  className="button secondary"
+                  type="button"
+                  disabled={busy || !billingComplete}
+                  onClick={saveBilling}
+                  style={{ gridColumn: "1 / -1", width: "fit-content" }}
+                >
+                  {billingComplete ? "✓ Számlázási adatok mentése" : "Kérjük töltsd ki az adatokat"}
+                </button>
               </div>
             )}
           </div>
 
-          <div className="purchase-section-title"><div><span className="micro-label">Fizetési mód</span><strong>Válassz, hogyan rendezed a vételárat</strong></div></div>
+          <div className="purchase-section-title" style={{ marginTop: "16px" }}>
+            <div>
+              <span className="micro-label">2. Lépés: Fizetési mód</span>
+              <strong>Válassz, hogyan rendezed a vételárat</strong>
+            </div>
+          </div>
           <div className="purchase-method-grid">
-            <button type="button" className={`purchase-method-card ${activeMethod === "card" ? "is-selected" : ""}`} onClick={() => void selectMethod("card")} disabled={busy}>
-              <strong>Bankkártya</strong><span>Azonnali, biztonságos fizetés Stripe-on keresztül.</span><b>{activeMethod === "card" ? "Kiválasztva" : "Kiválasztom"}</b>
+            <button
+              type="button"
+              className={`purchase-method-card ${activeMethod === "card" ? "is-selected" : ""}`}
+              onClick={() => void selectMethod("card")}
+              disabled={busy}
+            >
+              <strong>Bankkártya</strong>
+              <span>Azonnali, biztonságos fizetés Stripe-on keresztül.</span>
+              <b>{activeMethod === "card" ? "Kiválasztva" : "Kiválasztom"}</b>
             </button>
-            <button type="button" className={`purchase-method-card ${activeMethod === "bank_transfer" ? "is-selected" : ""}`} onClick={() => void selectMethod("bank_transfer")} disabled={busy}>
-              <strong>Banki átutalás</strong><span>A számlázási adatok alatt megjelenő közleménnyel.</span><b>{activeMethod === "bank_transfer" ? "Kiválasztva" : "Kiválasztom"}</b>
+            <button
+              type="button"
+              className={`purchase-method-card ${activeMethod === "bank_transfer" ? "is-selected" : ""}`}
+              onClick={() => void selectMethod("bank_transfer")}
+              disabled={busy}
+            >
+              <strong>Banki átutalás</strong>
+              <span>A számlázási adatok alatt megjelenő közleménnyel.</span>
+              <b>{activeMethod === "bank_transfer" ? "Kiválasztva" : "Kiválasztom"}</b>
             </button>
           </div>
 
           {activeMethod === "card" ? (
-            <div className="purchase-selected-payment"><p>A Stripe biztonságos fizetési oldalán adod meg a bankkártyádat. A sikeres fizetés után automatikusan megnyílik az átadási lista.</p><button className="button primary" type="button" disabled={busy} onClick={() => void startCard()}>Fizetés bankkártyával</button></div>
+            <div className="purchase-selected-payment">
+              <p>A Stripe biztonságos fizetési oldalán adod meg a bankkártyádat. A sikeres fizetés után automatikusan megnyílik az átadási lista.</p>
+              {!billingComplete && (
+                <small style={{ color: "#D97706", display: "block", marginBottom: "8px", fontWeight: 700 }}>
+                  ⚠️ A bankkártyás fizetés előtt add meg a fenti számlázási adatokat!
+                </small>
+              )}
+              <button
+                className="button primary"
+                type="button"
+                disabled={busy}
+                onClick={() => void startCard()}
+              >
+                Fizetés bankkártyával →
+              </button>
+            </div>
           ) : activeMethod === "bank_transfer" ? (
             <div className="purchase-transfer-box">
               <div><span>Kedvezményezett</span><strong>{BANK_TRANSFER_DETAILS.name}</strong></div>
@@ -185,9 +334,23 @@ export function PurchaseFlowPanel({
               <div><span>IBAN</span><strong>{BANK_TRANSFER_DETAILS.iban}</strong></div>
               <div><span>Közlemény — pontosan ezt írd be</span><strong>{purchase.payment_reference}</strong></div>
               <small>Alanyi adómentes szolgáltatás. A feltüntetett összeg a fizetendő végösszeg.</small>
-              <button className="button primary" type="button" disabled={busy} onClick={() => void reportTransfer()}>Elutaltam a vételárat</button>
+              {!billingComplete && (
+                <small style={{ color: "#D97706", display: "block", marginTop: "8px", fontWeight: 700 }}>
+                  ⚠️ Az utalás bejelentése előtt kérjük, töltsd ki a fenti számlázási adatokat!
+                </small>
+              )}
+              <button
+                className="button primary"
+                type="button"
+                disabled={busy}
+                onClick={() => void reportTransfer()}
+              >
+                Elutaltam a vételárat
+              </button>
             </div>
-          ) : <p className="purchase-empty-action">A folytatáshoz válassz egy fizetési módot.</p>}
+          ) : (
+            <p className="purchase-empty-action">A folytatáshoz válassz egy fizetési módot a fenti opciók közül.</p>
+          )}
         </div>
       ) : null}
     </section>
