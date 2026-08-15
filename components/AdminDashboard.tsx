@@ -2187,7 +2187,67 @@ export function AdminDashboard() {
                                 </div>
                               )}
 
-                              <ChangeThread requestId={req.id} role="admin" />
+                              {!isWebsitePurchaseRequest(req.description) && req.included_in_plan === false && !req.paid_at ? (
+                                <div className="change-quote-box">
+                                  {req.quoted_amount ? (
+                                    <div className="change-quote-state">
+                                      <div style={{ display: "grid", gap: "2px" }}>
+                                        <strong style={{ fontSize: "15px", color: "#76ABAE" }}>{formatHuf(req.quoted_amount)}</strong>
+                                        <small style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>Közlemény: {req.payment_reference ?? "generálás alatt"}</small>
+                                      </div>
+                                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
+                                        {req.transfer_reported_at
+                                          ? "Az ügyfél jelezte az utalást — ellenőrizd a számlát."
+                                          : req.quote_accepted_at
+                                            ? "Az ügyfél elfogadta, utalásra vár."
+                                            : "Elküldve, az ügyfél döntésére vár."}
+                                      </span>
+                                      {req.transfer_reported_at && !req.paid_at ? (
+                                        <button className="button primary" type="button" onClick={() => confirmChangePayment(req, project)} style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}>
+                                          Beérkezett — munka indítása
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  ) : (
+                                    <form
+                                      className="change-quote-form"
+                                      onSubmit={(event) => {
+                                        event.preventDefault();
+                                        const form = event.currentTarget;
+                                        const amount = Number((form.elements.namedItem("amount") as HTMLInputElement).value);
+                                        const note = (form.elements.namedItem("note") as HTMLInputElement).value;
+                                        sendChangeQuote(req, project, amount, note);
+                                      }}
+                                    >
+                                      <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "140px 1fr auto", alignItems: "flex-end" }}>
+                                        <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                          <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Ajánlati ár (Ft)</span>
+                                          <input name="amount" type="number" min={1000} step={100} required placeholder="pl. 45000" style={{ width: "100%" }} />
+                                        </label>
+                                        <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                          <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Mit tartalmaz?</span>
+                                          <input name="note" required placeholder="pl. Egyedi naptár modul, 3 munkanap." style={{ width: "100%" }} />
+                                        </label>
+                                        <button className="button primary" type="submit" style={{ minHeight: "auto", height: "38px", fontSize: "12px", padding: "0 14px" }}>
+                                          Ajánlat küldése
+                                        </button>
+                                      </div>
+                                    </form>
+                                  )}
+                                </div>
+                              ) : null}
+
+                              <ChangeThread
+                                requestId={req.id}
+                                role="admin"
+                                onSent={() => triggerNotification(
+                                  project.user_id,
+                                  project.contact_email,
+                                  "Új üzenet a kérésedhez",
+                                  `Válasz érkezett a(z) „${project.title}" projekt egyik kérésére. Nyisd meg az ügyfélkaput a részletekért.`,
+                                  "/ugyfelkapu/dashboard"
+                                )}
+                              />
                             </div>
                           ))}
                         </div>
@@ -2200,7 +2260,7 @@ export function AdminDashboard() {
                     <div style={{ display: "grid", gap: "16px" }}>
                       <section className="admin-brief-visual">
                         <strong>Kiválasztott stílusirány</strong>
-                        <p>{brief["Stílus / hangulat"] || "Nincs megadva stílus"}</p>
+                        <p>{brief["Stílus / hangulat"] || "Nincs külön stílus megjegyzés megadva."}</p>
                         {palette.length ? (
                           <div className="admin-palette-strip">
                             {palette.map((color) => (
@@ -2259,9 +2319,18 @@ export function AdminDashboard() {
                           </div>
                         </section>
                       ) : null}
+
+                      {project.logo_url ? (
+                        <section className="admin-assets-block">
+                          <strong>Feltöltött logó</strong>
+                          <div className="asset-preview-grid logo-asset-preview" style={{ maxWidth: 220 }}>
+                            <AssetImage value={project.logo_url} alt={`${project.company || project.title} logó`} />
+                          </div>
+                        </section>
+                      ) : null}
                     </div>
 
-                    {/* ── Jobb oszlop: Vezérlők, Építés, Ajánlatépítő ── */}
+                    {/* ── Jobb oszlop: Vezérlők, AI Prompt, Átadás, Ajánlatépítő ── */}
                     <div style={{ display: "grid", gap: "16px" }}>
                       <section className="admin-control-panel">
                         <strong>Fázis és felügyelet</strong>
@@ -2327,7 +2396,7 @@ export function AdminDashboard() {
                               value={newMilestoneTitle[project.id] ?? ""}
                               onChange={(e) => setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: e.target.value }))}
                               placeholder="Új mérföldkő címe…"
-                              style={{ background: "#181D24", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 10px", color: "#fff", fontSize: "12px", flex: 1 }}
+                              style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "6px 10px", color: "#fff", fontSize: "12px", flex: 1 }}
                             />
                             <button
                               type="button"
@@ -2347,7 +2416,8 @@ export function AdminDashboard() {
                         </div>
                       </section>
 
-                      {showBuild && <AiBuildPromptPanel project={toAiPromptProject(project)} />}
+                      {/* ── AI Build Prompt Panel — Mindig elérhető minden státusznál ── */}
+                      <AiBuildPromptPanel project={toAiPromptProject(project)} onNotify={setMessage} />
 
                       {showHandover && (
                         <AdminHandoverPanel
