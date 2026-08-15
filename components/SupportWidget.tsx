@@ -66,12 +66,23 @@ export function SupportWidget() {
   // Draggable Chat Head State
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ startX: number; startY: number; posX: number; posY: number; moved: boolean }>({
+  // Az `active` szándékosan ref és nem state: a pointerdown → pointerup páros
+  // egy gyors koppintásnál ugyanabba a React batch-be esik, így a state még a
+  // régi értékén állna, és a megnyitás elmaradna.
+  const dragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    posX: number;
+    posY: number;
+    moved: boolean;
+    active: boolean;
+  }>({
     startX: 0,
     startY: 0,
     posX: 0,
     posY: 0,
-    moved: false
+    moved: false,
+    active: false
   });
 
   // Mobile Bottom-Sheet Pull-Down to Close
@@ -269,13 +280,14 @@ export function SupportWidget() {
       startY: e.clientY,
       posX: rect.left,
       posY: rect.top,
-      moved: false
+      moved: false,
+      active: true
     };
     setIsDragging(true);
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
+    if (!dragStartRef.current.active) return;
     const dx = e.clientX - dragStartRef.current.startX;
     const dy = e.clientY - dragStartRef.current.startY;
 
@@ -289,7 +301,8 @@ export function SupportWidget() {
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
+    if (!dragStartRef.current.active) return;
+    dragStartRef.current.active = false;
     setIsDragging(false);
 
     try {
@@ -504,6 +517,9 @@ export function SupportWidget() {
     }
   }
 
+  // Alaphelyzetben nincs inline pozíció: így a `.support-widget` CSS-e (és vele
+  // a mobil `env(safe-area-inset-bottom)` szabály) tud érvényesülni. Inline
+  // stílust csak akkor adunk, ha a felhasználó elhúzta a buborékot.
   const triggerStyle: React.CSSProperties = pos
     ? {
         left: `${pos.x}px`,
@@ -511,16 +527,13 @@ export function SupportWidget() {
         bottom: "auto",
         right: "auto"
       }
-    : {
-        bottom: "24px",
-        right: "24px"
-      };
+    : {};
 
   return (
     <>
       {/* Draggable Chat Trigger Head */}
       <div
-        className={`support-trigger-container ${isDragging ? "dragging" : ""}`}
+        className={`support-widget support-trigger-container ${open ? "open" : ""} ${isDragging ? "dragging" : ""}`}
         onPointerCancel={handlePointerUp}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -532,6 +545,15 @@ export function SupportWidget() {
           aria-expanded={open}
           aria-label={open ? "Chat bezárása" : "Chat megnyitása"}
           className="support-trigger"
+          onKeyDown={(event) => {
+            // A megnyitást a konténer pointer-eseményei intézik (a húzás miatt),
+            // azok viszont billentyűzetről nem keletkeznek. Enter/Space nélkül
+            // a chat billentyűzettel elérhetetlen lenne.
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              toggleOpen();
+            }
+          }}
           ref={triggerRef}
           type="button"
         >

@@ -113,7 +113,10 @@ p {
 
 .site-shell {
   display: flow-root;
+  /* A `dvh` a mobil böngészők ki-be csúszó címsorát is követi; a `vh` sor
+     tartalék a régebbi böngészőknek. Ugyanez a minta lentebb is. */
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: clip;
 }
 
@@ -371,6 +374,7 @@ p {
     radial-gradient(circle at 58% 71%, rgba(118, 171, 174, 0.28), transparent 30%);
   color: var(--paper);
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 132px clamp(18px, 5vw, 76px) 58px;
   position: relative;
 }
@@ -403,6 +407,7 @@ p {
   margin: 0 auto;
   max-width: 1360px;
   min-height: calc(100vh - 190px);
+  min-height: calc(100dvh - 190px);
   position: relative;
   z-index: 1;
 }
@@ -1764,6 +1769,7 @@ p {
   background: var(--night);
   color: var(--paper);
   min-height: 100vh;
+  min-height: 100dvh;
   padding: clamp(28px, 5vw, 64px);
 }
 
@@ -4111,6 +4117,7 @@ details.admin-collapse summary:hover {
     var(--ink);
   color: var(--paper);
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 132px clamp(16px, 5vw, 76px) 76px;
 }
 
@@ -4130,6 +4137,7 @@ details.admin-collapse summary:hover {
   gap: clamp(30px, 6vw, 90px);
   grid-template-columns: 0.9fr 0.72fr;
   min-height: calc(100vh - 210px);
+  min-height: calc(100dvh - 210px);
 }
 
 .portal-auth-copy h1,
@@ -6990,6 +6998,19 @@ details.admin-collapse summary:hover {
   .orbit-section,
   .featured-work {
     grid-template-columns: 1fr;
+  }
+
+  /* Egyoszlopos elrendezésben a rácselem alapértelmezett `min-width: auto`-ja
+     miatt a hosszú, nem törhető dísz-szavak (pl. „KONVERZIÓ") kifeszítették az
+     oszlopot, és a mellettük lévő címet és CTA gombot is levágták a képernyő
+     jobb szélén. A `minmax(0, 1fr)` + kisebb betűméret ezt oldja fel. */
+  .manifesto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manifesto > div {
+    font-size: clamp(34px, 11vw, 96px);
+    overflow-wrap: anywhere;
   }
 
   .service-board,
@@ -10547,14 +10568,18 @@ details.admin-collapse summary:hover {
   }
 
   .cookie-actions {
+    /* A két gomb `nowrap` szövege 375px-en nem fér ki egymás mellé, ezért a
+       sor tördelhető: 375px-en még egymás mellé kerülnek, 320px-en egymás alá. */
     flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
   }
 
   .cookie-accept,
   .cookie-ghost {
-    flex: 1;
+    flex: 1 1 140px;
     text-align: center;
+    white-space: normal;
   }
 }
 
@@ -13402,4 +13427,161 @@ details.admin-collapse summary:hover {
 
 .ios-send-button.active:hover {
   transform: scale(1.12);
+}
+
+/* ════════════════════════════════════════════════
+   MOBIL FINOMHANGOLÁS (2026-08 telefonos átvizsgálás)
+
+   Egy blokkban, a fájl végén, hogy a kaszkádban biztosan felülírja a fentebbi
+   — helyenként minifikált — szabályokat. Minden itteni módosítás oka a
+   telefonos használhatóság: olvashatóság, koppintható méret, átfedés.
+   ════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  /* ── Manifesto: a „magyarázkodik." egyetlen, nem törhető szó 56px-en 405px
+        széles volt, ami kifeszítette a rács oszlopát — a cím és alatta a CTA
+        gomb is levágódott. Kisebb betűméret + `minmax(0, 1fr)` oldja meg. ── */
+  .manifesto article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manifesto h2 {
+    font-size: clamp(30px, 11vw, 64px);
+  }
+
+  /* ── Beviteli mezők: az iOS Safari 16px alatt automatikusan ráközelít a
+        mezőre fókuszkor, és utána nem zoomol vissza. ── */
+  .audit-form input,
+  .audit-form select,
+  .audit-form textarea,
+  .support-panel input,
+  .support-panel textarea,
+  .initial-form input,
+  .initial-form textarea,
+  .chat-composer textarea {
+    font-size: 16px;
+  }
+
+  /* ── Főoldali hero: a két lebegő kártya egymásra és a CTA-ra csúszott,
+        a státuszkártya ráadásul kilógott a képernyő jobb szélén. ── */
+  .progress-card {
+    bottom: 0;
+    left: 0;
+    width: 140px;
+  }
+
+  .progress-card > strong {
+    font-size: 30px;
+    margin: 6px 0 10px;
+  }
+
+  /* Külön függőleges sávban és külön vízszintes sávban, hogy se egymást, se a
+     panel szövegét és CTA-ját ne takarják. */
+  .status-card {
+    bottom: 18%;
+    padding: 13px;
+    right: 8px;
+  }
+
+  .status-card strong {
+    font-size: 12px;
+  }
+
+  /* ── Csomagkártyák: 8–9px-es szövegek olvashatatlanok telefonon. ── */
+  .plan-number {
+    font-size: 12px;
+  }
+
+  .plan-ribbon {
+    font-size: 10px;
+  }
+
+  .plan-scope span {
+    font-size: 12px;
+  }
+
+  .plan-price span {
+    font-size: 12px;
+  }
+
+  .plan-fit > span {
+    font-size: 11px;
+  }
+
+  .plan-fit p {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+
+  .subscription-plan li {
+    font-size: 13px;
+  }
+
+  .subscription-plan > p {
+    font-size: 13px;
+  }
+
+  .plan-meta span {
+    font-size: 11px;
+    padding: 7px 10px;
+  }
+
+  .subscription-footnotes span {
+    font-size: 11px;
+  }
+
+  /* Koppintható méret: 18px magas szövegkapcsoló helyett rendes gomb. */
+  .plan-detail-trigger {
+    font-size: 12px;
+    min-height: 36px;
+    padding: 9px 0;
+  }
+
+  /* ── Csomagrészletek panel ── */
+  .plan-detail-panel header span,
+  .plan-detail-panel article > span {
+    font-size: 10px;
+  }
+
+  .plan-detail-panel li,
+  .plan-detail-panel header p,
+  .plan-detail-panel > footer p,
+  .plan-detail-panel > header small {
+    font-size: 12px;
+  }
+
+  /* ── Munkák / referencia kártyák ── */
+  .demo-goal {
+    font-size: 11px;
+  }
+
+  .demo-tag {
+    font-size: 11px;
+  }
+
+  .case-live-link {
+    min-height: 36px;
+    padding: 10px 0;
+  }
+
+  .demo-role-map article > span,
+  .landing-hero aside > span {
+    font-size: 11px;
+  }
+
+  /* ── Lábléc: a linkek 18–19px magasak voltak, és a chat-buborék takarta
+        az utolsó sort. ── */
+  .footer-col a,
+  .footer-cookie-button {
+    min-height: 34px;
+    padding-block: 7px;
+  }
+
+  .footer-col {
+    gap: 2px;
+  }
+
+  .site-footer {
+    padding-bottom: 104px;
+  }
 }

@@ -48,7 +48,14 @@ export function PriceEstimator() {
                 <div className="plan-scope"><strong>{plan.pages}</strong><span>{plan.buildTime.replace("Jellemzően ", "elkészül ")}</span></div>
                 <div className="plan-fit"><span>Válaszd, ha…</span><p>{PLAN_DECISION_RULE[plan.key]}</p></div>
                 <div className="plan-price"><strong>{formatHuf(plan.price)}</strong><span>/ hó</span></div>
-                <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                {/* A módosítási keret és a határidő a kártya alján külön kiemelést
+                    kap (.plan-meta), ezért a jellemzőlistából kihagyjuk őket —
+                    korábban szó szerint kétszer szerepeltek egymás alatt. */}
+                <ul>
+                  {plan.features
+                    .filter((feature) => feature !== plan.changes && feature !== changeLeadLabel(plan.changeLeadDays))
+                    .map((feature) => <li key={feature}>{feature}</li>)}
+                </ul>
                 <div className="plan-meta"><span>{plan.changes}</span><span>{changeLeadLabel(plan.changeLeadDays)}</span></div>
                 <button className="plan-detail-trigger" type="button" onClick={() => { setDetailPlan(plan.key); window.setTimeout(() => document.getElementById("csomag-reszletek")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}>Részletes tartalom</button>
                 <TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${plan.key}`}>Ezt választom</TransitionLink>

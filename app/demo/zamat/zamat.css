@@ -1691,13 +1691,16 @@
     margin-right: auto;
   }
 
+  /* `minmax(0, 1fr)` és nem `1fr`: az utóbbinál a rácselem min-content mérete
+     (a hírlevél-űrlap inputja + a nem törhető gombja) kifeszítette az oszlopot,
+     és a GYIK + hírlevél blokk kilógott a képernyőről telefonon. */
   .zm-hero,
   .zm-subscribe-inner,
   .zm-story,
   .zm-bottom,
   .zm-detail-top,
   .zm-footer-top {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .zm-grid,
@@ -1760,5 +1763,20 @@
   .zm-related-card {
     flex-direction: column;
     text-align: center;
+  }
+
+  .zm-newsletter {
+    padding: 24px 20px;
+  }
+
+  /* Az e-mail mező és a gomb egymás mellett 375px-en 115px-re szorítaná az
+     inputot — telefonon egymás alá kerülnek. */
+  .zm-newsletter-form {
+    flex-wrap: wrap;
+  }
+
+  .zm-newsletter-form input,
+  .zm-newsletter-form .zm-btn {
+    flex: 1 1 100%;
   }
 }
