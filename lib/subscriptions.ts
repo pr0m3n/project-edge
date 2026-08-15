@@ -38,7 +38,13 @@ export function subscriptionProductId(key: SubscriptionPlanKey) {
 }
 
 export function isWebsitePurchaseRequest(description?: string | null) {
-  return Boolean(description?.startsWith(PURCHASE_REQUEST_PREFIX));
+  if (!description) return false;
+  return (
+    description.startsWith(PURCHASE_REQUEST_PREFIX) ||
+    description.toLowerCase().includes("megvásárolni a weboldalt") ||
+    description.toLowerCase().includes("vételi opció") ||
+    description.toLowerCase().includes("tulajdonba vétel")
+  );
 }
 
 export function websitePurchaseRequestText(price: number) {

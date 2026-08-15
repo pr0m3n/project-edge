@@ -192,7 +192,13 @@ export function ManagedWebsitePanel({ project, requests, onPause, onResume, onCa
           </div>
         ) : null}
 
-        <ChangeThread requestId={request.id} role="client" onSent={() => onThreadMessage(request.id)} /></article>)}</div> : null}
+        <ChangeThread
+          requestId={request.id}
+          role="client"
+          initialOpen={!["completed", "declined"].includes(request.status)}
+          onSent={() => onThreadMessage(request.id)}
+        />
+      </article>)}</div> : null}
 
       <details className="subscription-manage">
         <summary>Előfizetés kezelése</summary>

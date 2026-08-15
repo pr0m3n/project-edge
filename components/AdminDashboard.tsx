@@ -20,7 +20,7 @@ import { WebsitePurchaseAdminPanel } from "@/components/admin/WebsitePurchaseAdm
 import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
-import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
+import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
 import { BANK_TRANSFER_DETAILS, parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
@@ -915,6 +915,29 @@ export function AdminDashboard() {
     if (error) { setMessage(`A folyamatot nem sikerült megszakítani: ${error.message}`); return; }
     if (data) setWebsitePurchases((current) => current.map((item) => item.id === purchase.id ? data as WebsitePurchase : item));
     setMessage("A tulajdonba-vételi folyamat megszakadt.");
+    await loadLeads(true);
+  }
+
+  async function startProjectWebsitePurchase(project: ClientProject) {
+    const price = purchaseOptionPrice(project.subscription_plan);
+    const { data, error } = await supabase
+      .from("website_purchases")
+      .insert({
+        project_id: project.id,
+        user_id: project.user_id,
+        amount: price,
+        status: "requested"
+      })
+      .select("*")
+      .single();
+
+    if (error || !data) {
+      setMessage("Nem sikerült elindítani a kivásárlási folyamatot: " + (error?.message || ""));
+      return;
+    }
+
+    setWebsitePurchases((prev) => [data as WebsitePurchase, ...prev]);
+    setMessage("A weboldal kivásárlási folyamat elindult! Készítsd elő a fizetési adatokat.");
     await loadLeads(true);
   }
 
@@ -1839,8 +1862,11 @@ export function AdminDashboard() {
             tickets={clientTickets}
             billingoRetryId={billingoRetryId}
             onRetryBillingo={retryBillingoInvoice}
-            onOpenProject={(projectId) => {
+            onOpenProject={(projectId, subTab) => {
               setWizardProjectId(projectId);
+              if (subTab) {
+                setProjectSubTab((prev) => ({ ...prev, [projectId]: subTab }));
+              }
               setSelectedClientFilter("all");
               setShowArchive(false);
               setActiveTab("projects");
@@ -2080,6 +2106,46 @@ export function AdminDashboard() {
                       </div>
                     )}
                   </div>
+
+                  {/* ── 2.5 Kivásárlási Figyelmeztetés Banner (ha van aktív folyamat) ── */}
+                  {(() => {
+                    const activePurchase = websitePurchases.find(
+                      (w) => w.project_id === project.id && !["completed", "declined", "cancelled"].includes(w.status)
+                    );
+                    if (!activePurchase) return null;
+                    return (
+                      <div style={{
+                        background: "rgba(118, 171, 174, 0.15)",
+                        border: "1px solid #76ABAE",
+                        borderRadius: "14px",
+                        padding: "14px 18px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "12px",
+                        marginTop: "10px"
+                      }}>
+                        <div>
+                          <span style={{ fontSize: "11px", fontWeight: "900", textTransform: "uppercase", color: "#76ABAE", letterSpacing: "0.05em" }}>💎 FONTOS TEENDŐ</span>
+                          <strong style={{ display: "block", color: "#FFFFFF", fontSize: "15px", marginTop: "2px" }}>
+                            Az ügyfél kérte a weboldal tulajdonba vételét / végleges megvásárlását!
+                          </strong>
+                          <small style={{ color: "rgba(255,255,255,0.75)", fontSize: "12.5px" }}>
+                            Vételár: <strong>{formatHuf(activePurchase.amount)}</strong> · Állapot: <strong>{activePurchase.status}</strong>
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          className="admin-btn-primary"
+                          style={{ minHeight: "auto", padding: "8px 16px", fontSize: "12.5px" }}
+                          onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "subscription" }))}
+                        >
+                          💎 Kivásárlás kezelése itt →
+                        </button>
+                      </div>
+                    );
+                  })()}
 
                   {/* ── 3. Munkafolyamat Stúdió Fülek (Tab Navigation) ── */}
                   {(() => {
@@ -2508,9 +2574,9 @@ export function AdminDashboard() {
                           </div>
                         )}
 
-                        {/* ── FÜL 5: MENEDZSELT ELŐFIZETÉS FELÜGYELET ── */}
+                        {/* ── FÜL 5: MENEDZSELT ELŐFIZETÉS FELÜGYELET & KIVÁSÁRLÁS ── */}
                         {activeSub === "subscription" && isManaged && (
-                          <div className="tab-pane-fade">
+                          <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
                             <section className="managed-admin-card">
                               <div className="managed-admin-head">
                                 <div>
@@ -2542,6 +2608,58 @@ export function AdminDashboard() {
                                 </div>
                               </div>
                             </section>
+
+                            {/* ── Weboldal Tulajdonba vétel (Kivásárlás) Kezelő ── */}
+                            {(() => {
+                              const purchases = websitePurchases.filter((w) => w.project_id === project.id);
+                              if (purchases.length > 0) {
+                                return purchases.map((purchase) => (
+                                  <WebsitePurchaseAdminPanel
+                                    key={purchase.id}
+                                    project={project}
+                                    purchase={purchase}
+                                    busy={websitePurchaseBusyId === purchase.id}
+                                    onPrepare={async () => { await prepareWebsitePurchase(purchase, project); }}
+                                    onActivate={async () => { await activateWebsitePurchase(purchase, project); }}
+                                    onCancel={async () => { await cancelWebsitePurchase(purchase); }}
+                                    onHandoverChange={(steps) => { void updateClientProject(project.id, { handover_steps: steps }); }}
+                                    onHandoverStepCompleted={(stepId, title) => { void notifyHandoverStep(project, title); }}
+                                  />
+                                ));
+                              }
+
+                              return (
+                                <section style={{
+                                  background: "#0E1218",
+                                  border: "1px solid rgba(118, 171, 174, 0.3)",
+                                  borderRadius: "16px",
+                                  padding: "16px 20px",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                  gap: "14px"
+                                }}>
+                                  <div>
+                                    <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "#76ABAE" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
+                                    <strong style={{ display: "block", color: "#fff", fontSize: "15px", marginTop: "2px" }}>
+                                      Weboldal tulajdonba vételi opció
+                                    </strong>
+                                    <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.7)", fontSize: "12.5px" }}>
+                                      Vételár erre a csomagra: <strong>{formatHuf(purchaseOptionPrice(project.subscription_plan))}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="admin-btn-primary"
+                                    style={{ minHeight: "auto", padding: "8px 16px", fontSize: "12px", whiteSpace: "nowrap" }}
+                                    onClick={() => void startProjectWebsitePurchase(project)}
+                                  >
+                                    + Kivásárlási folyamat indítása
+                                  </button>
+                                </section>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>

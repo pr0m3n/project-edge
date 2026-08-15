@@ -1,21 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatHuf, isWebsitePurchaseRequest } from "@/lib/subscriptions";
 import type { BillingoIssue, ChangeRequest, ClientProject, ClientTicket, WebsitePurchase } from "@/components/admin/types";
 
 /**
  * Admin teendőlista — „mi vár rám most?".
  *
- * Miért kellett: az admin eddig projektenként egy hosszú lapot mutatott, és a
- * teendők ebbe voltak beágyazva (nyitott módosítási kérés a projekt közepén,
- * ügyfélkérelem a menedzselt kártyán, hibás számlázás külön dobozban). Egy-két
- * ügyfélnél ez még átlátható, húsznál nem: nem derül ki, mi sürgős és mi vár
- * napok óta.
- *
  * Ez a lista MINDEN ügyfél MINDEN nyitott ügyét egy helyen mutatja, sürgősség
- * és várakozási idő szerint rendezve. Nem helyettesíti a projektnézetet, hanem
- * odavezet: minden sorból egy kattintással a megfelelő projektnél vagy.
+ * és várakozási idő szerint rendezve. Lehetőséget biztosít az elintézett tételek
+ * elrejtésére/ürítésére, és azonnali közvetlen navigációt ad a kivásárlásokhoz és projektekhez.
  */
 
 type InboxKind =
@@ -40,6 +34,7 @@ type InboxItem = {
   detail: string;
   since: string | null;
   projectId: string | null;
+  subTab?: "prompt" | "brief" | "build" | "changes" | "subscription";
   action?: { label: string; run: () => void | Promise<void>; busy?: boolean };
 };
 
@@ -48,7 +43,7 @@ const KIND_LABELS: Record<InboxKind, string> = {
   bug: "Technikai hiba",
   transfer: "Utalás ellenőrzése",
   subscription: "Előfizetési kérelem",
-  purchase: "Kivásárlás",
+  purchase: "💎 Weboldal Kivásárlás",
   review: "Élesítésre vár",
   delete: "Törlési kérelem",
   change: "Módosítási kérés",
@@ -59,11 +54,11 @@ const KIND_LABELS: Record<InboxKind, string> = {
 /** Sürgősség: pénz és jogi kötelezettség előre, kényelmi ügyek hátra. */
 const KIND_PRIORITY: Record<InboxKind, number> = {
   billingo: 1,
+  purchase: 2,
   bug: 2,
   transfer: 3,
   delete: 3,
   subscription: 4,
-  purchase: 4,
   review: 5,
   change: 6,
   ticket: 6,
@@ -85,6 +80,8 @@ function waitingLabel(value: string | null | undefined) {
   return `${days} napja`;
 }
 
+const DISMISSED_STORAGE_KEY = "projectedge_admin_dismissed_inbox_v1";
+
 type AdminInboxProps = {
   projects: ClientProject[];
   changeRequests: ChangeRequest[];
@@ -93,7 +90,7 @@ type AdminInboxProps = {
   tickets: ClientTicket[];
   billingoRetryId: string | null;
   onRetryBillingo: (paymentId: string) => void | Promise<void>;
-  onOpenProject: (projectId: string) => void;
+  onOpenProject: (projectId: string, subTab?: "prompt" | "brief" | "build" | "changes" | "subscription") => void;
 };
 
 export function AdminInbox({
@@ -107,8 +104,40 @@ export function AdminInbox({
   onOpenProject
 }: AdminInboxProps) {
   const [showAll, setShowAll] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
-  const items = useMemo(() => {
+  // Load dismissed IDs from local storage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DISMISSED_STORAGE_KEY);
+      if (stored) {
+        setDismissedIds(JSON.parse(stored));
+      }
+    } catch {}
+  }, []);
+
+  const saveDismissed = (ids: string[]) => {
+    setDismissedIds(ids);
+    try {
+      localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(ids));
+    } catch {}
+  };
+
+  const handleDismiss = (id: string) => {
+    const next = [...dismissedIds, id];
+    saveDismissed(next);
+  };
+
+  const handleDismissAll = (allIds: string[]) => {
+    const next = Array.from(new Set([...dismissedIds, ...allIds]));
+    saveDismissed(next);
+  };
+
+  const handleResetDismissed = () => {
+    saveDismissed([]);
+  };
+
+  const rawItems = useMemo(() => {
     const byId = new Map(projects.map((project) => [project.id, project]));
     const nameOf = (projectId: string | null) => {
       if (!projectId) return "Ismeretlen ügyfél";
@@ -147,13 +176,27 @@ export function AdminInbox({
         client: nameOf(purchase.project_id),
         detail: `Weboldal tulajdonba vétele · ${formatHuf(purchase.amount)}${reported ? " · utalás ellenőrzésre vár" : ""}`,
         since: reported ? purchase.transfer_reported_at : purchase.created_at,
-        projectId: purchase.project_id
+        projectId: purchase.project_id,
+        subTab: "subscription"
       });
     }
 
     for (const request of changeRequests) {
       if (["completed", "declined"].includes(request.status)) continue;
-      if (isWebsitePurchaseRequest(request.description)) continue;
+      if (isWebsitePurchaseRequest(request.description)) {
+        list.push({
+          id: `change-buyout-${request.id}`,
+          kind: "purchase",
+          priority: KIND_PRIORITY.purchase,
+          label: KIND_LABELS.purchase,
+          client: nameOf(request.project_id),
+          detail: request.description,
+          since: request.requested_at,
+          projectId: request.project_id,
+          subTab: "subscription"
+        });
+        continue;
+      }
       const kind: InboxKind = request.category === "technical" ? "bug" : "change";
       list.push({
         id: `change-${request.id}`,
@@ -163,7 +206,8 @@ export function AdminInbox({
         client: nameOf(request.project_id),
         detail: request.description.slice(0, 140),
         since: request.requested_at,
-        projectId: request.project_id
+        projectId: request.project_id,
+        subTab: "changes"
       });
     }
 
@@ -181,7 +225,8 @@ export function AdminInbox({
               ? "Újraaktiválást kért"
               : "Lemondást kért",
           since: project.pause_requested_at ?? project.resume_requested_at ?? project.cancel_effective_at,
-          projectId: project.id
+          projectId: project.id,
+          subTab: "subscription"
         });
       }
 
@@ -207,7 +252,8 @@ export function AdminInbox({
           client: nameOf(project.id),
           detail: "Az ügyfél jóváhagyta az előnézetet — élesíthető",
           since: project.last_modified_at,
-          projectId: project.id
+          projectId: project.id,
+          subTab: "build"
         });
       }
 
@@ -272,62 +318,164 @@ export function AdminInbox({
     });
   }, [projects, changeRequests, websitePurchases, billingoIssues, tickets, billingoRetryId, onRetryBillingo]);
 
+  const items = useMemo(() => {
+    return rawItems.filter((item) => !dismissedIds.includes(item.id));
+  }, [rawItems, dismissedIds]);
+
   if (!items.length) {
     return (
-      <section className="admin-inbox empty">
-        <div>
-          <span>TEENDŐK</span>
-          <strong>Nincs nyitott ügy.</strong>
-          <p>Minden ügyfélkérés, befizetés és számlázás rendezve van.</p>
+      <section className="admin-inbox empty" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "24px" }}>
+        <div style={{ display: "grid", gap: "8px" }}>
+          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>TEENDŐK</span>
+          <strong style={{ fontSize: "18px", color: "#fff" }}>Nincs aktív nyitott teendő.</strong>
+          <p style={{ margin: 0, color: "rgba(255,255,255,0.6)", fontSize: "13.5px" }}>Minden ügyfélkérés, befizetés és számlázás elintézve.</p>
+          {dismissedIds.length > 0 && (
+            <button
+              type="button"
+              className="admin-btn-secondary"
+              style={{ marginTop: "12px", width: "fit-content" }}
+              onClick={handleResetDismissed}
+            >
+              ↩️ Elrejtett teendők visszaállítása ({dismissedIds.length})
+            </button>
+          )}
         </div>
       </section>
     );
   }
 
   const urgent = items.filter((item) => item.priority <= 3).length;
-  const visible = showAll ? items : items.slice(0, 6);
+  const visible = showAll ? items : items.slice(0, 8);
 
   return (
-    <section className="admin-inbox">
-      <header>
+    <section className="admin-inbox" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "16px" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "14px" }}>
         <div>
-          <span>TEENDŐK</span>
-          <strong>{items.length} nyitott ügy</strong>
-          <p>{urgent > 0 ? `Ebből ${urgent} sürgős — pénz vagy hibajavítás.` : "Nincs sürgős tétel."}</p>
+          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>TEENDŐK</span>
+          <strong style={{ fontSize: "18px", color: "#fff", display: "block", marginTop: "2px" }}>{items.length} nyitott ügy</strong>
+          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>
+            {urgent > 0 ? `Ebből ${urgent} sürgős — pénz vagy beavatkozást igényel.` : "Nincs sürgős tétel."}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {dismissedIds.length > 0 && (
+            <button
+              type="button"
+              className="admin-btn-secondary"
+              style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}
+              onClick={handleResetDismissed}
+              title="Korábban elrejtett tételek megjelenítése"
+            >
+              ↩️ Visszaállítás ({dismissedIds.length})
+            </button>
+          )}
+          <button
+            type="button"
+            className="admin-btn-secondary"
+            style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px", borderColor: "rgba(255,255,255,0.15)" }}
+            onClick={() => handleDismissAll(items.map((i) => i.id))}
+            title="Összes jelenlegi teendő elrejtése"
+          >
+            🗑️ Inbox ürítése
+          </button>
         </div>
       </header>
 
-      <div className="admin-inbox-list">
+      <div className="admin-inbox-list" style={{ display: "grid", gap: "10px" }}>
         {visible.map((item) => {
           const waited = waitingLabel(item.since);
+          const isPurchase = item.kind === "purchase";
           return (
-            <article className={`admin-inbox-row prio-${Math.min(item.priority, 6)}`} key={item.id}>
-              <div className="admin-inbox-main">
-                <span className="admin-inbox-kind">{item.label}</span>
-                <strong>{item.client}</strong>
-                <p>{item.detail}</p>
+            <article
+              key={item.id}
+              className={`admin-inbox-row prio-${Math.min(item.priority, 6)}`}
+              style={{
+                background: isPurchase ? "rgba(118, 171, 174, 0.08)" : "#0E1218",
+                border: isPurchase ? "1px solid rgba(118, 171, 174, 0.35)" : "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "14px",
+                padding: "14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "12px"
+              }}
+            >
+              <div className="admin-inbox-main" style={{ display: "grid", gap: "4px", flex: 1, minWidth: "240px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "800",
+                      textTransform: "uppercase",
+                      padding: "2px 7px",
+                      borderRadius: "6px",
+                      background: isPurchase ? "rgba(118, 171, 174, 0.2)" : "rgba(255,255,255,0.06)",
+                      color: isPurchase ? "#76ABAE" : "#94A3B8"
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                  {waited ? <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "11.5px" }}>{waited}</small> : null}
+                </div>
+                <strong style={{ color: "#FFFFFF", fontSize: "14.5px" }}>{item.client}</strong>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.8)", fontSize: "13px", lineHeight: 1.4 }}>{item.detail}</p>
               </div>
-              <div className="admin-inbox-side">
-                {waited ? <small>{waited}</small> : null}
+
+              <div className="admin-inbox-side" style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                 {item.action ? (
-                  <button className="button primary" disabled={item.action.busy} onClick={() => item.action?.run()} type="button">
+                  <button
+                    className="admin-btn-primary"
+                    disabled={item.action.busy}
+                    onClick={() => item.action?.run()}
+                    style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px" }}
+                    type="button"
+                  >
                     {item.action.label}
                   </button>
                 ) : null}
+
                 {item.projectId ? (
-                  <button className="button secondary" onClick={() => onOpenProject(item.projectId as string)} type="button">
-                    Megnyitás
+                  <button
+                    className={isPurchase ? "admin-btn-primary" : "admin-btn-secondary"}
+                    onClick={() => onOpenProject(item.projectId as string, item.subTab)}
+                    style={{ minHeight: "auto", padding: "6px 14px", fontSize: "12px" }}
+                    type="button"
+                  >
+                    {isPurchase ? "💎 Kivásárlás kezelése" : "Megnyitás"}
                   </button>
                 ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => handleDismiss(item.id)}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.5)",
+                    borderRadius: "8px",
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                    fontSize: "12px"
+                  }}
+                  title="Tétel elrejtése / elintézve"
+                >
+                  ✓ Elrejtés
+                </button>
               </div>
             </article>
           );
         })}
       </div>
 
-      {items.length > 6 ? (
-        <button className="admin-inbox-more" onClick={() => setShowAll(!showAll)} type="button">
-          {showAll ? "Kevesebb" : `További ${items.length - 6} ügy megjelenítése`}
+      {items.length > 8 ? (
+        <button
+          className="admin-btn-secondary"
+          onClick={() => setShowAll(!showAll)}
+          style={{ width: "100%", justifyContent: "center" }}
+          type="button"
+        >
+          {showAll ? "Kevesebb megjelenítése" : `További ${items.length - 8} ügy megjelenítése`}
         </button>
       ) : null}
     </section>

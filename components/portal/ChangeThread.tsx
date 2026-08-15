@@ -22,6 +22,7 @@ type ChangeMessage = {
 type ChangeThreadProps = {
   requestId: string;
   role: "client" | "admin";
+  initialOpen?: boolean;
   /** Új üzenet után a hívó értesítheti a másik felet. */
   onSent?: (body: string) => void | Promise<void>;
 };
@@ -45,8 +46,8 @@ function formatThreadDate(isoString: string) {
   }
 }
 
-export function ChangeThread({ requestId, role, onSent }: ChangeThreadProps) {
-  const [open, setOpen] = useState(false);
+export function ChangeThread({ requestId, role, initialOpen = true, onSent }: ChangeThreadProps) {
+  const [open, setOpen] = useState(initialOpen);
   const [messages, setMessages] = useState<ChangeMessage[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
