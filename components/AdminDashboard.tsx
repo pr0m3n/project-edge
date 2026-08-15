@@ -2152,6 +2152,8 @@ export function AdminDashboard() {
                     const activeSub = projectSubTab[project.id] ?? "prompt";
                     const reqs = changeRequests.filter((r) => r.project_id === project.id);
                     const isManaged = project.commercial_model === "subscription";
+                    const projectPurchases = websitePurchases.filter((w) => w.project_id === project.id);
+                    const hasPurchases = projectPurchases.length > 0;
 
                     return (
                       <div style={{ display: "grid", gap: "14px", marginTop: "6px" }}>
@@ -2184,13 +2186,13 @@ export function AdminDashboard() {
                           >
                             <span>💬</span> Módosítások & Ajánlat {reqs.length > 0 ? `(${reqs.length})` : ""}
                           </button>
-                          {isManaged && (
+                          {(isManaged || hasPurchases) && (
                             <button
                               type="button"
                               className={`admin-studio-tab ${activeSub === "subscription" ? "active" : ""}`}
                               onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "subscription" }))}
                             >
-                              <span>⚙️</span> Előfizetés Vezérlés
+                              <span>{hasPurchases ? "💎" : "⚙️"}</span> {hasPurchases ? "Kivásárlás & Átadás" : "Előfizetés Vezérlés"}
                             </button>
                           )}
                         </div>
@@ -2575,91 +2577,88 @@ export function AdminDashboard() {
                         )}
 
                         {/* ── FÜL 5: MENEDZSELT ELŐFIZETÉS FELÜGYELET & KIVÁSÁRLÁS ── */}
-                        {activeSub === "subscription" && isManaged && (
+                        {activeSub === "subscription" && (isManaged || hasPurchases) && (
                           <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
-                            <section className="managed-admin-card">
-                              <div className="managed-admin-head">
-                                <div>
-                                  <span className="micro-label">Menedzselt előfizetés vezérlés</span>
-                                  <strong style={{ fontSize: "16px", color: "#fff" }}>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
-                                  <small style={{ color: "rgba(255,255,255,0.6)" }}>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
+                            {isManaged && (
+                              <section className="managed-admin-card">
+                                <div className="managed-admin-head">
+                                  <div>
+                                    <span className="micro-label">Menedzselt előfizetés vezérlés</span>
+                                    <strong style={{ fontSize: "16px", color: "#fff" }}>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
+                                    <small style={{ color: "rgba(255,255,255,0.6)" }}>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
+                                  </div>
+                                  <div className="managed-admin-actions">
+                                    <select
+                                      value={project.subscription_status ?? "inactive"}
+                                      onChange={(event) => updateClientProject(project.id, { subscription_status: event.target.value })}
+                                    >
+                                      <option value="inactive">Inaktív</option>
+                                      <option value="active">Aktív</option>
+                                      <option value="pause_requested">Szüneteltetés kérelem</option>
+                                      <option value="paused">Szüneteltetve</option>
+                                      <option value="resume_requested">Újraindítás kérelem</option>
+                                      <option value="cancel_requested">Lemondás kérelem</option>
+                                      <option value="cancelled">Lemondva</option>
+                                    </select>
+                                    <select
+                                      value={project.site_health_status ?? "healthy"}
+                                      onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}
+                                    >
+                                      <option value="healthy">🟢 Rendszer rendben</option>
+                                      <option value="issue_detected">🟡 Figyelmet igényel</option>
+                                      <option value="offline">🔴 Oldal leállt</option>
+                                    </select>
+                                  </div>
                                 </div>
-                                <div className="managed-admin-actions">
-                                  <select
-                                    value={project.subscription_status ?? "inactive"}
-                                    onChange={(event) => updateClientProject(project.id, { subscription_status: event.target.value })}
-                                  >
-                                    <option value="inactive">Inaktív</option>
-                                    <option value="active">Aktív</option>
-                                    <option value="pause_requested">Szüneteltetés kérelem</option>
-                                    <option value="paused">Szüneteltetve</option>
-                                    <option value="resume_requested">Újraindítás kérelem</option>
-                                    <option value="cancel_requested">Lemondás kérelem</option>
-                                    <option value="cancelled">Lemondva</option>
-                                  </select>
-                                  <select
-                                    value={project.site_health_status ?? "healthy"}
-                                    onChange={(event) => updateClientProject(project.id, { site_health_status: event.target.value, last_health_check_at: new Date().toISOString() })}
-                                  >
-                                    <option value="healthy">🟢 Rendszer rendben</option>
-                                    <option value="issue_detected">🟡 Figyelmet igényel</option>
-                                    <option value="offline">🔴 Oldal leállt</option>
-                                  </select>
-                                </div>
-                              </div>
-                            </section>
+                              </section>
+                            )}
 
                             {/* ── Weboldal Tulajdonba vétel (Kivásárlás) Kezelő ── */}
-                            {(() => {
-                              const purchases = websitePurchases.filter((w) => w.project_id === project.id);
-                              if (purchases.length > 0) {
-                                return purchases.map((purchase) => (
-                                  <WebsitePurchaseAdminPanel
-                                    key={purchase.id}
-                                    project={project}
-                                    purchase={purchase}
-                                    busy={websitePurchaseBusyId === purchase.id}
-                                    onPrepare={async () => { await prepareWebsitePurchase(purchase, project); }}
-                                    onActivate={async () => { await activateWebsitePurchase(purchase, project); }}
-                                    onCancel={async () => { await cancelWebsitePurchase(purchase); }}
-                                    onHandoverChange={(steps) => { void updateClientProject(project.id, { handover_steps: steps }); }}
-                                    onHandoverStepCompleted={(stepId, title) => { void notifyHandoverStep(project, title); }}
-                                  />
-                                ));
-                              }
-
-                              return (
-                                <section style={{
-                                  background: "#0E1218",
-                                  border: "1px solid rgba(118, 171, 174, 0.3)",
-                                  borderRadius: "16px",
-                                  padding: "16px 20px",
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  flexWrap: "wrap",
-                                  gap: "14px"
-                                }}>
-                                  <div>
-                                    <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "#76ABAE" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
-                                    <strong style={{ display: "block", color: "#fff", fontSize: "15px", marginTop: "2px" }}>
-                                      Weboldal tulajdonba vételi opció
-                                    </strong>
-                                    <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.7)", fontSize: "12.5px" }}>
-                                      Vételár erre a csomagra: <strong>{formatHuf(purchaseOptionPrice(project.subscription_plan))}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
-                                    </p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="admin-btn-primary"
-                                    style={{ minHeight: "auto", padding: "8px 16px", fontSize: "12px", whiteSpace: "nowrap" }}
-                                    onClick={() => void startProjectWebsitePurchase(project)}
-                                  >
-                                    + Kivásárlási folyamat indítása
-                                  </button>
-                                </section>
-                              );
-                            })()}
+                            {projectPurchases.length > 0 ? (
+                              projectPurchases.map((purchase) => (
+                                <WebsitePurchaseAdminPanel
+                                  key={purchase.id}
+                                  project={project}
+                                  purchase={purchase}
+                                  busy={websitePurchaseBusyId === purchase.id}
+                                  onPrepare={async () => { await prepareWebsitePurchase(purchase, project); }}
+                                  onActivate={async () => { await activateWebsitePurchase(purchase, project); }}
+                                  onCancel={async () => { await cancelWebsitePurchase(purchase); }}
+                                  onHandoverChange={(steps) => { void updateClientProject(project.id, { handover_steps: steps }); }}
+                                  onHandoverStepCompleted={(stepId, title) => { void notifyHandoverStep(project, title); }}
+                                />
+                              ))
+                            ) : isManaged ? (
+                              <section style={{
+                                background: "#0E1218",
+                                border: "1px solid rgba(118, 171, 174, 0.3)",
+                                borderRadius: "16px",
+                                padding: "16px 20px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: "14px"
+                              }}>
+                                <div>
+                                  <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "#76ABAE" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
+                                  <strong style={{ display: "block", color: "#fff", fontSize: "15px", marginTop: "2px" }}>
+                                    Weboldal tulajdonba vételi opció
+                                  </strong>
+                                  <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.7)", fontSize: "12.5px" }}>
+                                    Vételár erre a csomagra: <strong>{formatHuf(purchaseOptionPrice(project.subscription_plan))}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="admin-btn-primary"
+                                  style={{ minHeight: "auto", padding: "8px 16px", fontSize: "12px", whiteSpace: "nowrap" }}
+                                  onClick={() => void startProjectWebsitePurchase(project)}
+                                >
+                                  + Kivásárlási folyamat indítása
+                                </button>
+                              </section>
+                            ) : null}
                           </div>
                         )}
                       </div>
