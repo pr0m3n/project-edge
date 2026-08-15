@@ -10,7 +10,7 @@ import {
   type PublicBriefDraft
 } from "@/lib/brief-draft";
 import { LOGO_DESIGN_PRICE, formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackLeadConversion } from "@/lib/analytics";
 
 const steps = ["Csomag", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
 const projectTypes = [
@@ -143,6 +143,7 @@ export function PublicBriefWizard() {
     };
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: prepared, savedAt: new Date().toISOString(), step: 4, version: 1 }));
     trackEvent("brief_completed", { model: prepared.commercialModel, source: "homepage" });
+    trackLeadConversion();
     router.push("/ugyfelkapu?brief=continue");
   }
 
