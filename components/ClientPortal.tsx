@@ -2501,7 +2501,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           />
         ) : null}
 
-        {(project.status === "launched" || (project.commercial_model === "subscription" && project.status === "paused")) && project.commercial_model === "subscription" ? (
+        {project.commercial_model === "subscription" && (project.status === "launched" || project.status === "paused") ? (
           <>
             <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description))} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onQuoteCardPayment={startChangeRequestCardPayment} onThreadMessage={() => notifyThreadMessage(project)} />
             <PurchaseFlowPanel
@@ -2516,7 +2516,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               onReportTransfer={() => selectedWebsitePurchase ? reportWebsitePurchaseTransferV2(selectedWebsitePurchase.id) : Promise.resolve()}
             />
           </>
-        ) : project.commercial_model !== "purchase" ? (
+        ) : project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && project.status === "launched" ? (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ) : null}
 
