@@ -27,14 +27,20 @@ const isDev = process.env.NODE_ENV === "development";
  */
 const CLARITY_HOSTS = [
   // A `*` szándékos: a betöltő a www-n, a könyvtár a scripts-en, a felvételek
-  // pedig régiónként külön aldomainen (pl. `e.clarity.ms`) érkeznek.
-  "https://*.clarity.ms"
+  // pedig régiónként külön aldomainen (pl. `z.clarity.ms`) érkeznek.
+  "https://*.clarity.ms",
+  // A Clarity Microsoft-termék: azonosító-szinkronra egy Bing-pixelt is hív.
+  // Nem kritikus a méréshez, de nélküle minden oldalletöltés CSP-hibát ír a
+  // konzolba, ami elrejti a valódi hibákat.
+  "https://c.bing.com"
 ];
 
 const GOOGLE_TAG_HOSTS = [
   "https://www.googletagmanager.com",
   "https://www.googleadservices.com",
-  "https://googleads.g.doubleclick.net",
+  // `*`, mert a gtag legalább háromféle doubleclick-aldomaint használ:
+  // googleads.g (konverzió), ad (ccm/s/collect), td (iframe).
+  "https://*.doubleclick.net",
   "https://pagead2.googlesyndication.com"
 ];
 
