@@ -257,10 +257,10 @@ export default function Home() {
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Béreled vagy megveszed.</h2>
+          <h2>Menedzselt weboldal, 0 Ft induló díjjal.</h2>
           <p>
-            Bérlésnél nincs induló díj, és semmilyen technikai teendőd. Vásárlásnál a forráskód és
-            minden hozzáférés a tiéd lesz.
+            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem egyetlen fix havidíjért.
+            Ha később a saját tulajdonodba vennéd, a forráskóddal együtt bármikor megvásárolhatod.
           </p>
         </div>
         <PriceEstimator />

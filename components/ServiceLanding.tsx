@@ -54,7 +54,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
         <ol>{content.process.map((item, index) => <li key={item.title}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{item.title}</h3><p>{item.copy}</p></div></li>)}</ol>
       </section>
 
-      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Béreled vagy megveszed.</h2><p>Az előfizetésnél nincs induló díj. Egyszeri projektnél a részletes brief alapján kapsz végleges ajánlatot.</p></div><PriceEstimator /></section>
+      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Menedzselt weboldal, 0 Ft induló díjjal.</h2><p>A domain, a tárhely és a folyamatos karbantartás mind benne van a fix havidíjban — rugalmas vételi opcióval.</p></div><PriceEstimator /></section>
 
       <section className="faq-section">
         <div className="section-head"><p className="micro-label dark">GYIK</p><h2>A döntés előtt.</h2></div>
