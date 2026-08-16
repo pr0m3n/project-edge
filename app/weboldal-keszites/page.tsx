@@ -27,7 +27,7 @@ const content: ServiceLandingContent = {
   faq: [
     ["Mennyi idő alatt készül el?", "A csomagtól függően jellemzően 2–14 munkanap, a hiánytalan brief, az anyagok és az induló fizetés beérkezésétől."],
     ["Szükséges telefonon egyeztetni?", "Nem kötelező. A brief, az ajánlat, a szerződés, a visszajelzések és a fizetés is kényelmesen kezelhető írásban az ügyfélkapun — de ha személyesen vagy telefonon beszélnéd át, természetesen állok rendelkezésedre."],
-    ["Saját tulajdonomba kerülhet?", "Igen. Egyszeri vásárlásnál a teljes fizetés után átadom a forráskódot és a szükséges hozzáféréseket."]
+    ["Saját tulajdonomba kerülhet a weboldal?", "Igen. A havidíjas bérlés mellett bármikor kérheted a rögzített vételi opció lehívását — ilyenkor a teljes forráskódot, a domaint és a hozzáféréseket átadom a saját fiókjaidba."]
   ]
 };
 

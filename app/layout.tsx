@@ -5,7 +5,6 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { ChromeGate } from "@/components/ChromeGate";
 import { Analytics } from "@/components/Analytics";
 import { CookieBanner } from "@/components/CookieBanner";
-import { ExitOffer } from "@/components/ExitOffer";
 import { JsonLd } from "@/components/JsonLd";
 import { PROVIDER } from "@/lib/legal";
 import { CONSENT_DEFAULT_SCRIPT, measurementEnabled } from "@/lib/analytics";
@@ -83,7 +82,6 @@ export default function RootLayout({
           <SupportWidget />
         </ChromeGate>
         <CookieBanner />
-        <ExitOffer />
         {/* Keep DOM-mutating reveal effects after the streamed page subtree. */}
         <MotionVars />
       </body>

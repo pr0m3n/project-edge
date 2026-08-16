@@ -22,6 +22,7 @@ type InboxKind =
   | "delete"
   | "change"
   | "ticket"
+  | "followup"
   | "domain";
 
 type InboxItem = {
@@ -48,6 +49,7 @@ const KIND_LABELS: Record<InboxKind, string> = {
   delete: "Törlési kérelem",
   change: "Módosítási kérés",
   ticket: "Megválaszolatlan üzenet",
+  followup: "📬 Elakadt onboarding",
   domain: "Domain lejár"
 };
 
@@ -62,7 +64,8 @@ const KIND_PRIORITY: Record<InboxKind, number> = {
   review: 5,
   change: 6,
   ticket: 6,
-  domain: 7
+  followup: 7,
+  domain: 8
 };
 
 function daysSince(value: string | null | undefined) {
@@ -281,6 +284,31 @@ export function AdminInbox({
           since: project.last_modified_at,
           projectId: project.id
         });
+      }
+
+      // Elakadt onboarding (24+ órája nincs továbblépés a szerződésben / fizetésben)
+      if (
+        ["request_received", "contract_pending", "deposit_pending"].includes(project.status) &&
+        !project.delete_requested
+      ) {
+        const ageDays = daysSince(project.created_at);
+        if (ageDays !== null && ageDays >= 1) {
+          list.push({
+            id: `followup-${project.id}`,
+            kind: "followup",
+            priority: KIND_PRIORITY.followup,
+            label: KIND_LABELS.followup,
+            client: nameOf(project.id),
+            detail: project.status === "contract_pending"
+              ? "Szerződéskötésnél megállt"
+              : project.status === "deposit_pending"
+                ? "Első fizetésnél megállt"
+                : "Projektindításra vár",
+            since: project.created_at,
+            projectId: project.id,
+            subTab: "brief"
+          });
+        }
       }
 
       const renewalDays = daysSince(project.domain_renewal_at);

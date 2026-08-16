@@ -11,8 +11,10 @@ export const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? "";
 export const ADS_ID = process.env.NEXT_PUBLIC_ADS_ID || "AW-18391344774";
 /** A Google Ads konverziós művelet címkéje (AW-123456789/AbCdEf...). */
 export const ADS_LEAD_LABEL = process.env.NEXT_PUBLIC_ADS_LEAD_LABEL ?? "";
+/** Microsoft Clarity azonosító (hőtérképek, session replay, hibadetektálás). */
+export const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID ?? "";
 
-export const measurementEnabled = Boolean(GA_ID || ADS_ID);
+export const measurementEnabled = Boolean(GA_ID || ADS_ID || CLARITY_ID);
 
 export const CONSENT_KEY = "pe-consent-v1";
 export type ConsentChoice = "granted" | "denied";

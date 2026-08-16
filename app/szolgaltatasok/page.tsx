@@ -24,9 +24,10 @@ export const metadata: Metadata = {
 };
 
 const services = [
-  ["Új, menedzselt weboldal", "Bérlésnél mindig új oldal épül, a választott csomag keretei szerint. Domain, tárhely és felügyelet egyben."],
+  ["Új, menedzselt weboldal", "Bérlésnél mindig új oldal épül, a választott csomag keretei szerint. Domain, tárhely, email továbbítás és felügyelet egyben."],
   ["Kivásárlás bármikor", "A bérelt oldalt egyszeri díjért megveheted: a forráskód, a domain és a hozzáférések a tieddé válnak, az előfizetés pedig lezárul."],
   ["Folyamatos gondozás", "A bérelt oldalt figyelem, frissítem, és a csomag szerinti módosításokat elvégzem. Neked nincs technikai feladatod."],
+  ["Díjmentes email továbbítás", "A domainhez tartozó email címekről (pl. info@cegnev.hu) automatikusan továbbítom a leveleket a saját postafiókodba."],
   ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu csak megvásárolható projektként kérhető."]
 ];
 

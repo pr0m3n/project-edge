@@ -13,10 +13,10 @@ const content: ServiceLandingContent = {
   title: "A weboldalad működik. Neked nem kell üzemeltetned.",
   lead: "Egyetlen havidíjban kapod az egyedi weboldalt, a domaint, a tárhelyet, az SSL-t és a folyamatos technikai felügyeletet — külön induló díj nélkül.",
   promise: "Jó választás, ha nem szeretnél több számlát, szolgáltatót és technikai fiókot kezelni.",
-  audience: ["0 Ft induló díj", "nincs hűségidő", "domain és tárhely egyben", "csomag szerinti módosítások"],
+  audience: ["0 Ft induló díj", "nincs hűségidő", "domain és tárhely egyben", "díjmentes email továbbítás", "csomag szerinti módosítások"],
   outcomes: [
     { title: "Új, saját arculatú oldal", copy: "A havidíj nem egy bérelt sablont jelent: új weboldal készül a választott csomag keretei között." },
-    { title: "Folyamatos felügyelet", copy: "Figyelem a működést, kezelem a technikai frissítéseket, a tárhelyet és az SSL-t." },
+    { title: "Folyamatos felügyelet", copy: "Figyelem a működést, kezelem a technikai frissítéseket, a tárhelyet, az email továbbítást és az SSL-t." },
     { title: "Kiszámítható költség", copy: "Előre látható havidíjat fizetsz; a csomagon túli igényre külön, előzetes ajánlatot kapsz." }
   ],
   process: [
@@ -25,8 +25,9 @@ const content: ServiceLandingContent = {
     { title: "Elkészítés és gondozás", copy: "Megépítem és élesítem az oldalt, utána pedig folyamatosan gondoskodom a technikai működéséről." }
   ],
   faq: [
-    ["Van hűségidő?", "Nincs. Az előfizetés lemondható, a már kifizetett időszak végéig használható az oldal."],
-    ["Kié lesz a forráskód?", "Előfizetésnél a technikai rendszer a ProjectEdge kezelésében marad. Ha saját tulajdont szeretnél, választhatod az egyszeri projektet vagy később kérheted a kivásárlást."],
+    ["Van hűségidő?", "Nincs. Az előfizetés bármikor lemondható, a már kifizetett időszak végéig használható az oldal."],
+    ["Jár céges email cím a weboldalhoz?", "Igen, a domainhez tartozó email címről (pl. info@cegnev.hu) díjmentesen biztosítunk automata email továbbítást a meglévő fiókodba (pl. Gmail). Ha külön Google Workspace fiókot szeretnél, a beállításában is segítünk."],
+    ["Kié lesz a forráskód?", "Előfizetésnél a technikai rendszer a ProjectEdge kezelésében marad. Ha a saját tulajdonodba szeretnéd venni, a rögzített vételi opcióval bármikor kivásárolhatod a forráskóddal együtt."],
     ["Milyen gyorsan készül el?", "A Jelenlét csomag jellemzően 2–4, az Üzleti 3–6, az Egyedi 5–14 munkanap alatt készül el a szükséges anyagok beérkezésétől."]
   ]
 };

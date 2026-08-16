@@ -151,8 +151,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [reviewForm, setReviewForm] = useState({ rating: 5, review: "", reference: false });
   const [modificationRequestText, setModificationRequestText] = useState("");
   const [showModificationRequestProjectId, setShowModificationRequestProjectId] = useState<string | null>(null);
-  const [couponPendingProjectId, setCouponPendingProjectId] = useState<string | null>(null);
-  const [couponMessages, setCouponMessages] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [assetUploading, setAssetUploading] = useState(false);
@@ -654,6 +652,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       },
       { onConflict: "id", ignoreDuplicates: true }
     );
+
+    // Értesítés küldése az adminnak az új regisztrációról (a végpont deduplikál)
+    if (sessionUser.id && userEmail) {
+      void fetch("/api/auth/register-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: sessionUser.id,
+          email: userEmail,
+          name: metadataName || userEmail
+        })
+      }).catch(() => {});
+    }
   }
 
   useEffect(() => {
@@ -900,6 +911,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         full_name: authForm.name || authForm.email,
         id: data.user.id
       });
+      void fetch("/api/auth/register-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email: authForm.email,
+          name: authForm.name || authForm.email
+        })
+      }).catch(() => {});
     }
 
     if (data.session) {
@@ -1430,51 +1450,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
   }
 
-  async function updateProjectCoupon(project: Project, code?: string) {
-    const cleanCode = code?.trim().toUpperCase() ?? "";
-    if (code !== undefined && cleanCode.length < 4) {
-      setCouponMessages((current) => ({ ...current, [project.id]: "Írd be a kuponkódot." }));
-      return;
-    }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setCouponMessages((current) => ({ ...current, [project.id]: "A munkamenet lejárt. Jelentkezz be újra." }));
-      return;
-    }
-
-    setCouponPendingProjectId(project.id);
-    setCouponMessages((current) => ({ ...current, [project.id]: "" }));
-    try {
-      const response = await fetch("/api/coupons", {
-        method: code === undefined ? "DELETE" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ projectId: project.id, ...(code === undefined ? {} : { code: cleanCode }) })
-      });
-      const result = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) {
-        setCouponMessages((current) => ({ ...current, [project.id]: result.error || "A kupon most nem alkalmazható." }));
-        return;
-      }
-
-      setCouponMessages((current) => ({
-        ...current,
-        [project.id]: code === undefined ? "A kupont eltávolítottuk." : "A kedvezményt levontuk az ajánlatból."
-      }));
-      trackEvent(code === undefined ? "coupon_removed" : "coupon_applied", {
-        coupon: cleanCode || project.coupon_code,
-        project_id: project.id
-      });
-      await loadPortal(true);
-    } catch {
-      setCouponMessages((current) => ({ ...current, [project.id]: "A kupon ellenőrzése közben hálózati hiba történt." }));
-    } finally {
-      setCouponPendingProjectId(null);
-    }
-  }
 
   async function requestOfferChanges(project: Project, note: string) {
     if (!note.trim()) return;
@@ -2435,10 +2411,6 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           onSubmitModificationRequest={() => requestOfferChanges(project, modificationRequestText)}
           onAccept={() => acceptOffer(project)}
           onDecline={() => declineOffer(project)}
-          couponPending={couponPendingProjectId === project.id}
-          couponMessage={couponMessages[project.id] ?? ""}
-          onApplyCoupon={(code) => updateProjectCoupon(project, code)}
-          onRemoveCoupon={() => updateProjectCoupon(project)}
         />
 
         {project.status === "deposit_pending" && (

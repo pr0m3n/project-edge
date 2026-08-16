@@ -9,7 +9,7 @@ import { AuditRequestSection } from "@/components/AuditRequestSection";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
-  description: "Egyedi, gyors weboldal készítés Magyarország egész területén, teljesen online folyamattal. Előfizetés 14 900 Ft/hó-tól vagy egyszeri vásárlás 179 000 Ft-tól.",
+  description: "Egyedi, gyors weboldal készítés 0 Ft induló díjjal, 14 900 Ft/hó-tól. Domain, tárhely, email továbbítás és folyamatos karbantartás egyben, rugalmas vételi opcióval.",
   alternates: { canonical: "/" }
 };
 
@@ -47,28 +47,32 @@ const proof = [
 
 const faqs = [
   [
-    "Mennyibe kerül egy weboldal?",
-    "Kétféleképpen lehet. Bérlésnél 14 900 Ft/hó-tól indulsz, induló díj nincs — az oldal az enyém marad, én üzemeltetem. Ha inkább a sajátod legyen, meg is veheted 179 000 Ft-tól, akkor a forráskóddal együtt átadom."
+    "Mennyibe kerül a weboldal?",
+    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz, 0 Ft induló díj mellett — a domain, a tárhely és a havi karbantartás mind benne van a díjban. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
   ],
   [
     "Mennyi idő alatt készül el?",
-    "A hiánytalan brief, az induló fizetés és a szükséges anyagok beérkezésétől számítva a Jelenlét oldal jellemzően 2–4 munkanap, az Üzleti 3–6 munkanap, az Egyedi 5–14 munkanap. Összetett webappnál külön ütemezést adok."
+    "A hiánytalan brief, az első havidíj és a szükséges anyagok beérkezésétől számítva a Jelenlét oldal jellemzően 2–4 munkanap, az Üzleti 3–6 munkanap, az Egyedi 5–14 munkanap. Összetett webappnál külön ütemezést adok."
   ],
   [
     "Mi van, ha nem tetszik az irány?",
     "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Csak a jóváhagyásod után kerül ki élesbe."
   ],
   [
-    "Kell hozzá saját domain és tárhely?",
-    "Bérlésnél nem kell: a domaint és a tárhelyet is én intézem. Vásárlásnál mindent átadok neked."
+    "Jár céges email cím a weboldalhoz?",
+    "Igen, a domainhez tartozó email címről (pl. info@cegnev.hu) díjmentesen biztosítunk automata email továbbítást a meglévő privát vagy céges fiókodba (pl. Gmail). Ha külön önálló Google Workspace vagy Microsoft 365 postafiókokat szeretnél, annak a beállításában és DNS konfigurációjában is segítünk."
   ],
   [
-    "Mi van a leszállítás után?",
-    "Egyszeri vásárlásnál az átadástól számított 30 napig díjmentesen javítom az átadáskor vállalt működés technikai hibáit. Új funkció és új tartalom nem tartozik ide. Előfizetésnél a technikai felügyelet a rendezett szolgáltatás teljes ideje alatt jár."
+    "Kell hozzá saját domain és tárhely?",
+    "Nem kell semmit külön venned: a .hu vagy .com domaint, az SSL-tanúsítványt és a gyors felhőtárhelyet is intézem a havidíj részeként."
+  ],
+  [
+    "Mi van az élesítés után?",
+    "A havidíj tartalmazza a folyamatos technikai felügyeletet, a 99.9%-os rendelkezésre állást, az automata biztonsági mentéseket és a csomagodhoz tartozó havi kisebb tartalmi/design módosításokat."
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
-    "Bérlésnél nálam: a domaint, a tárhelyet és a számlákat is én kezelem, neked ezzel nincs dolgod. Vásárlásnál a tiéd lesz minden — a forráskódot, a domaint és a hozzáféréseket lépésről lépésre átadom."
+    "A domaint, a tárhelyet és a technikai infrastruktúrát én kezelem, neked ezzel nincs adminisztrációs teendőd. Ha egyszer úgy döntesz, hogy kivásárolod az oldalt, a forráskódot és a teljes infrastruktúrát átadom a saját fiókjaidba."
   ]
 ];
 

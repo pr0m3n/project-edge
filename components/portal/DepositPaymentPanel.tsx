@@ -47,13 +47,6 @@ export function DepositPaymentPanel({ project, onStartPayment, paymentStarting =
         történik — a következő lépésben megkapod az adatokat.
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px" }}>
-        {project.coupon_code && project.base_offer_price ? (
-          <div>
-            <span style={{ fontSize: "11px", color: "var(--muted)", display: "block" }}>Eredeti ajánlati ár</span>
-            <strong style={{ textDecoration: "line-through", color: "var(--muted)" }}>{formatPrice(project.base_offer_price, project.offer_currency || "Ft")}</strong>
-            <small style={{ display: "block" }}>{project.coupon_code} · −{formatPrice(project.coupon_discount_amount, project.offer_currency || "Ft")}</small>
-          </div>
-        ) : null}
         <div>
           <span style={{ fontSize: "11px", color: "var(--muted)", display: "block" }}>Teljes ajánlati ár</span>
           <strong>{formatPrice(project.offer_price, project.offer_currency || "Ft")}</strong>

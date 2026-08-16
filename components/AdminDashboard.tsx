@@ -856,6 +856,37 @@ export function AdminDashboard() {
     await loadLeads(true);
   }
 
+  async function sendFollowupReminder(project: ClientProject) {
+    const ok = await confirm({
+      title: "Onboarding emlékeztető küldése",
+      message: `Szeretnél egy közvetlen, segítőkész follow-up emailt küldeni az ügyfélnek a(z) „${project.title}” projekt elindításával kapcsolatban?`,
+      confirmLabel: "Email elküldése",
+      cancelLabel: "Mégse"
+    });
+    if (!ok) return;
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) return;
+      const response = await fetch("/api/admin/followup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify({ projectId: project.id })
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        setMessage(result.error || "Nem sikerült elküldeni az emlékeztetőt.");
+        return;
+      }
+      setMessage("Follow-up emlékeztető email sikeresen elküldve!");
+    } catch {
+      setMessage("Hálózati hiba az emlékeztető küldésekor.");
+    }
+  }
+
   async function prepareWebsitePurchase(purchase: WebsitePurchase, project: ClientProject) {
     setWebsitePurchaseBusyId(purchase.id);
     const { data, error } = await supabase.rpc("prepare_website_purchase", {
@@ -1517,7 +1548,8 @@ export function AdminDashboard() {
       contract_pending: {
         who: "client",
         headline: "Szerződés aláírására vár",
-        detail: managed ? "A választott havi csomag rögzítve van. A szolgáltatási szerződés elfogadása után az első havidíj következik." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik."
+        detail: managed ? "A választott havi csomag rögzítve van. A szolgáltatási szerződés elfogadása után az első havidíj következik." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik.",
+        actions: [{ label: "📧 Onboarding emlékeztető email küldése", onClick: () => sendFollowupReminder(project), variant: "secondary" }]
       },
       deposit_pending: {
         who: project.deposit_transfer_reported ? "admin" : "client",
@@ -1525,7 +1557,9 @@ export function AdminDashboard() {
         detail: project.deposit_transfer_reported
           ? "Az ügyfél jelezte az utalást. Ellenőrizd a bankszámlát, és csak akkor indítsd a fejlesztést, ha az összeg megérkezett."
           : `Az ügyfélnek kell elutalnia és jeleznie ${managed ? "az első havidíjat" : "a foglalót"}. Addig nincs teendőd.`,
-        actions: project.deposit_transfer_reported ? [{ label: `${managed ? "Első havidíj" : "Foglaló"} megérkezett — fejlesztés indítása`, onClick: () => wizardNext(project) }] : undefined
+        actions: project.deposit_transfer_reported
+          ? [{ label: `${managed ? "Első havidíj" : "Foglaló"} megérkezett — fejlesztés indítása`, onClick: () => wizardNext(project) }]
+          : [{ label: "📧 Onboarding emlékeztető email küldése", onClick: () => sendFollowupReminder(project), variant: "secondary" }]
       },
       in_progress: {
         who: "admin",

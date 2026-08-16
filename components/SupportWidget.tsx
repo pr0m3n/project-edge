@@ -164,40 +164,7 @@ export function SupportWidget() {
     return () => window.clearInterval(interval);
   }, [ticket, open, loadMessages]);
 
-  // Realtime Supabase Channel if authenticated / accessible
-  useEffect(() => {
-    if (!ticket || !open) return;
 
-    const channel = supabase
-      .channel(`ticket-live-${ticket.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "support_ticket_messages",
-          filter: `ticket_id=eq.${ticket.id}`
-        },
-        (payload) => {
-          const newMsg = payload.new as ChatMessage;
-          setMessages((current) => {
-            if (current.some((m) => m.id === newMsg.id || (m.status === "sending" && m.body === newMsg.body))) {
-              return current.map((m) =>
-                m.id === newMsg.id || (m.status === "sending" && m.body === newMsg.body)
-                  ? { ...newMsg, status: "sent" }
-                  : m
-              );
-            }
-            return [...current, { ...newMsg, status: "sent" }];
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [ticket, open]);
 
   // Smooth Auto-scroll to bottom on message list change
   useEffect(() => {
