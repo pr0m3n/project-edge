@@ -156,22 +156,6 @@ export function PriceEstimator() {
           <small>{PRICE_TAX_NOTE}</small>
         </div>
       </section>
-
-      {/* Amit tényleg nem lehet bérelni: ezek maradnak egyszeri projektként. */}
-      <section className="custom-project-band">
-        <div>
-          <span className="micro-label dark">Egyedi projekt</span>
-          <h3>Webapp, ügyfélkapu vagy meglévő oldal átalakítása?</h3>
-          <p>
-            Belépés, adatkezelés, dashboard vagy egy működő WordPress megújítása nem fér a havidíjas
-            keretbe — ezekre egyszeri projektként, egyedi ajánlattal dolgozom.
-          </p>
-        </div>
-        <TransitionLink className="button secondary" href="/ugyfelkapu?model=purchase">
-          Egyedi projekt indítása
-        </TransitionLink>
-      </section>
-
     </section>
   );
 }

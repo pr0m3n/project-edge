@@ -2773,12 +2773,62 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     </div>
                     {projectForm.commercialModel === "subscription" ? (
                       <div className="managed-brand-start">
-                        <span>01 / A WEBOLDAL NEVE</span>
+                        <span>01 / A PROJEKT ALAPJAI</span>
                         <div className="field">
                           <label htmlFor="project-company">Mi a vállalkozásod vagy márkád neve?</label>
                           <input id="project-company" required value={projectForm.company} onChange={(event) => setProjectForm((current) => ({ ...current, company: event.target.value }))} placeholder="Például: Kovács Épületgépészet" />
                         </div>
-                        <p>Új weboldalt készítünk ehhez a márkához. Meglévő oldal átalakításával vagy technikai rendszer átvételével nem kell foglalkoznod.</p>
+                        <div className="field" style={{ marginTop: "12px" }}>
+                          <label>Milyen projektről van szó?</label>
+                          <div className="choice-grid compact">
+                            <button
+                              className={projectForm.websiteStatus !== "yes" ? "selected" : ""}
+                              onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "no", website: "", domainStatus: "need" }))}
+                              type="button"
+                            >
+                              <strong>Új weboldalt indítok</strong>
+                            </button>
+                            <button
+                              className={projectForm.websiteStatus === "yes" ? "selected" : ""}
+                              onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "yes", domainStatus: "keep" }))}
+                              type="button"
+                            >
+                              <strong>Meglévő weboldal felújítása</strong>
+                            </button>
+                          </div>
+                        </div>
+                        {projectForm.websiteStatus === "yes" ? (
+                          <div className="field" style={{ marginTop: "12px" }}>
+                            <label htmlFor="project-website">Jelenlegi weboldalad címe (URL)</label>
+                            <input
+                              id="project-website"
+                              value={projectForm.website}
+                              onChange={(event) => setProjectForm((current) => ({ ...current, website: event.target.value }))}
+                              placeholder="https://kovacsklima.hu"
+                            />
+                            <div style={{ marginTop: "8px" }}>
+                              <span style={{ fontSize: "13px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
+                                Mi történjen a meglévő domainnel?
+                              </span>
+                              <div className="choice-grid compact">
+                                <button
+                                  className={projectForm.domainStatus === "keep" ? "selected" : ""}
+                                  onClick={() => setProjectForm((current) => ({ ...current, domainStatus: "keep" }))}
+                                  type="button"
+                                >
+                                  <strong>Megtartom a jelenlegi domaint</strong>
+                                </button>
+                                <button
+                                  className={projectForm.domainStatus === "need" ? "selected" : ""}
+                                  onClick={() => setProjectForm((current) => ({ ...current, domainStatus: "need" }))}
+                                  type="button"
+                                >
+                                  <strong>Új domaint szeretnék</strong>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     ) : <>
                       <div className="field">

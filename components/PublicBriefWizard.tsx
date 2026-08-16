@@ -216,7 +216,56 @@ export function PublicBriefWizard() {
                 {projectTypes.map(([value, label]) => <button className={form.projectType === value ? "selected" : ""} key={value} onClick={() => update({ projectType: value })} type="button">{label}</button>)}
               </div>}
               <label className="public-field"><span>Vállalkozás vagy márka neve</span><input value={form.company} onChange={(event) => update({ company: event.target.value })} placeholder="Például: Kovács Épületgépészet" /></label>
-              {form.commercialModel === "purchase" ? <div className="public-field"><span>Van már weboldalad?</span><div className="public-chip-grid"><button className={form.websiteStatus === "yes" ? "selected" : ""} onClick={() => update({ websiteStatus: "yes" })} type="button">Igen, megújítanám</button><button className={form.websiteStatus === "no" ? "selected" : ""} onClick={() => update({ websiteStatus: "no", website: "" })} type="button">Nincs, újat kérek</button></div>{form.websiteStatus === "yes" ? <input value={form.website} onChange={(event) => update({ website: event.target.value })} placeholder="https://regioldal.hu" /> : null}</div> : null}
+              <div className="public-field">
+                <span>Milyen projektről van szó?</span>
+                <div className="public-chip-grid">
+                  <button
+                    className={form.websiteStatus !== "yes" ? "selected" : ""}
+                    onClick={() => update({ websiteStatus: "no", website: "", domainStatus: "new" })}
+                    type="button"
+                  >
+                    Új weboldalt indítok
+                  </button>
+                  <button
+                    className={form.websiteStatus === "yes" ? "selected" : ""}
+                    onClick={() => update({ websiteStatus: "yes", domainStatus: "keep" })}
+                    type="button"
+                  >
+                    Meglévő weboldal felújítása
+                  </button>
+                </div>
+              </div>
+              {form.websiteStatus === "yes" ? (
+                <div className="public-field">
+                  <span>Jelenlegi weboldalad címe</span>
+                  <input
+                    value={form.website}
+                    onChange={(event) => update({ website: event.target.value })}
+                    placeholder="https://kovacsklima.hu"
+                  />
+                  <div style={{ marginTop: "10px" }}>
+                    <span style={{ fontSize: "13px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
+                      Mi történjen a meglévő domainnel?
+                    </span>
+                    <div className="public-chip-grid">
+                      <button
+                        className={form.domainStatus === "keep" ? "selected" : ""}
+                        onClick={() => update({ domainStatus: "keep" })}
+                        type="button"
+                      >
+                        Megtartom a jelenlegi domaint
+                      </button>
+                      <button
+                        className={form.domainStatus === "need-new" ? "selected" : ""}
+                        onClick={() => update({ domainStatus: "need-new" })}
+                        type="button"
+                      >
+                        Új domaint szeretnék az új oldalhoz
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div> : null}
 
             {step === 1 ? <div className="public-brief-slide">
