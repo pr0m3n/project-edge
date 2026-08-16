@@ -2807,7 +2807,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                               placeholder="https://kovacsklima.hu"
                             />
                             <div style={{ marginTop: "8px" }}>
-                              <span style={{ fontSize: "13px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
+                              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.85)", display: "block", marginBottom: "6px", fontWeight: 600 }}>
                                 Mi történjen a meglévő domainnel?
                               </span>
                               <div className="choice-grid compact">
