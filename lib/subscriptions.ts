@@ -122,6 +122,8 @@ export const SUBSCRIPTION_SHARED_INCLUDED = [
   "Egyedi, mobilra tervezett megjelenés — nem sablon",
   "Domain regisztráció, megújítás és díj",
   "Tárhely, SSL és technikai frissítések",
+  "Díjmentes email továbbítás a saját postafiókodba",
+  "Kötelező jogi oldalak (ÁSZF, Adatkezelés) díjmentesen, oldalkeret-levonás nélkül",
   "Folyamatos működésfelügyelet",
   "Írásos kérésre 1 munkanapon belül visszaigazolok",
   "Technikai hibára 1 munkanapon belül reagálok — és nem fogyasztja a keretet",

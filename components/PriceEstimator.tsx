@@ -113,7 +113,12 @@ export function PriceEstimator() {
             <footer><p><strong>A brief is ehhez igazodik.</strong> Csak a {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{activePlan.name} csomagot választom</TransitionLink></footer>
           </section>
           <div className="subscription-footnotes">
-            <span>0 Ft induló díj</span><span>Bármikor lemondható</span><span>Első hónap előre fizetendő</span><span>Szüneteltethető</span><small>{PRICE_TAX_NOTE}</small>
+            <span>0 Ft induló díj</span>
+            <span>Bármikor lemondható</span>
+            <span>Kötelező jogi oldalak díjmentesek</span>
+            <span>Díjmentes email továbbítás</span>
+            <span>Szüneteltethető</span>
+            <small>{PRICE_TAX_NOTE}</small>
           </div>
       </div>
 
@@ -126,8 +131,8 @@ export function PriceEstimator() {
           <span className="micro-label dark">Vételi opció</span>
           <h3>Nem zárlak be. Bármikor megveheted.</h3>
           <p>
-            Ha egy idő után a sajátod lenne, egyetlen egyszeri díjért átveszed a forráskódot, a domaint
-            és a technikai fiókokat. Az előfizetés ekkor lezárul, és nincs több havidíj.
+            Ha bármikor (akár néhány hónap, akár évek múltán) a saját tulajdonodba vennéd a weboldalt, egyetlen egyszeri díjért
+            átveszed a teljes Next.js forráskódot, a domaint és a technikai fiókokat. Az előfizetés ekkor lezárul, és nincs több havidíj.
           </p>
           <ol>
             <li>Az ügyfélkapun elindítod a megvásárlást</li>
