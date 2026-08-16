@@ -6,7 +6,7 @@ const quickRoutes = [
     href: "/#arak",
     eyebrow: "01 / Árak",
     title: "Csomagok & Konstrukciók",
-    copy: "Menedzselt weboldal 0 Ft induló díjjal."
+    copy: "Menedzselt weboldal egyetlen fix havidíjért."
   },
   {
     href: "/munkak",

@@ -3,7 +3,6 @@
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
-import { supabase } from "@/lib/supabase/client";
 
 type ChatMessage = {
   id: string;
@@ -230,6 +229,22 @@ export function SupportWidget() {
     window.addEventListener("projectedge:open-support", openFromCallToAction);
     return () => window.removeEventListener("projectedge:open-support", openFromCallToAction);
   }, [ticket]);
+
+  /**
+   * Érkezés a beszélgetés-folytató magic linkről (`/beszelgetes/…` → `/?chat=open`).
+   * A ticket ekkorra már a localStorage-ban van, csak ki kell nyitni a panelt.
+   * A paramétert egyből eltávolítjuk, hogy egy frissítés ne nyissa meg újra.
+   */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("chat") !== "open") return;
+    setOpen(true);
+    formStartedAt.current = Date.now();
+    trackEvent("support_opened", { intent: "contact", source: "magic_link" });
+    params.delete("chat");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, []);
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/ugyfelkapu")) {
     return null;

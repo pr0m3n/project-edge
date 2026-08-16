@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { PROVIDER } from "@/lib/legal";
+import { huArticle } from "@/lib/hu";
 import { PRICE_TAX_NOTE } from "@/lib/subscriptions";
 
 export const metadata: Metadata = {
@@ -82,7 +83,7 @@ export default function TermsPage() {
           megkezdését, tudomásul veszi, hogy az addig ténylegesen teljesített szolgáltatás arányos
           díja fizetendő. Ha a szolgáltatás a fogyasztó előzetes, kifejezett kérésére és tudomásulvételével
           teljes egészében befejeződik, a felmondási jog megszűnik. A 14 napos határidő után a megkezdett havi
-          időszak díja nem visszatérítendő. A nyilatkozat az Ügyfélkapuban vagy a {PROVIDER.email} címen tehető meg.
+          időszak díja nem visszatérítendő. A nyilatkozat az Ügyfélkapuban vagy {huArticle(PROVIDER.email)} {PROVIDER.email} címen tehető meg.
           Ez nem érinti a fogyasztó kötelező szavatossági és egyéb jogait.
         </p>
 
@@ -137,17 +138,31 @@ export default function TermsPage() {
           Lemondáskor a weboldal, a forráskód és a kezelt technikai fiókok nem kerülnek automatikusan
           átadásra. A Megrendelő külön, az Ügyfélkapuban jelzett egyszeri vételi ajánlat alapján
           megvásárolhatja az átadható rendszert; a már kifizetett havidíjak nem számítanak bele a vételárba.
+          A vételi opció lehívása esetén az előfizetés a technikai átadással lezárul, a Megrendelőt pedig
+          a 9. pont szerinti 30 napos díjmentes hibajavítás illeti meg.
         </p>
 
         <h2>9. Díjmentes technikai garancia és folyamatos felügyelet</h2>
         <p>
-          Egyszeri vásárlásnál az utolsó, Ügyfélkapuban igazolt technikai átadási lépéstől számított 30 napig a Vállalkozó díjmentesen
-          kivizsgálja és javítja az átadáskor vállalt működés igazolt hibáit. A garancia nem
-          tartalmaz új funkciót, új tartalmat, utólagos módosítást, harmadik felek szolgáltatásainak
-          kieséséből eredő hibát, sem a Megrendelő vagy harmadik fél által végzett módosítások
-          következményeit. A garancia nem karbantartási előfizetés; a hibát a Megrendelő az
-          Ügyfélkapun jelzi. Menedzselt előfizetésnél a technikai felügyelet és a vállalt működés
-          hibáinak javítása a rendezett szolgáltatás teljes időtartama alatt része a havidíjnak.
+          <strong>Menedzselt előfizetés alatt</strong> nincs és nem is kell külön garanciaidő: a technikai
+          felügyelet és a vállalt működés hibáinak javítása a rendezett szolgáltatás teljes időtartama
+          alatt része a havidíjnak, időkorlát nélkül.
+        </p>
+        <p>
+          <strong>A 30 napos díjmentes hibajavítás a tulajdonszerzéshez kapcsolódik</strong>, mert onnantól
+          szűnik meg a folyamatos felügyelet. Akkor jár, ha a Megrendelő a 8. pont szerinti vételi
+          opcióval kivásárolja a weboldalt a menedzselt szolgáltatásból, illetve egyszeri vásárlásnál.
+          Mindkét esetben az utolsó, Ügyfélkapuban igazolt technikai átadási lépéstől számított 30 napig
+          a Vállalkozó díjmentesen kivizsgálja és javítja az átadáskor vállalt működés igazolt hibáit —
+          akkor is, ha a rendszer ettől kezdve már teljes egészében a Megrendelő tulajdonában és
+          üzemeltetésében van. A 30 nap az átadás lezárásától indul, nem a kivásárlás megrendelésétől.
+        </p>
+        <p>
+          A garancia nem tartalmaz új funkciót, új tartalmat, utólagos módosítást, harmadik felek
+          szolgáltatásainak kieséséből eredő hibát, sem a Megrendelő vagy harmadik fél által végzett
+          módosítások következményeit. A garancia nem karbantartási előfizetés; a hibát a Megrendelő az
+          Ügyfélkapun jelzi. A 30 nap letelte után a Megrendelő külön megállapodás alapján kérhet
+          további gondozást.
         </p>
 
         <h2>10. Együttműködés és határidők</h2>
@@ -167,7 +182,7 @@ export default function TermsPage() {
         <h2>12. Vitarendezés</h2>
         <p>
           A felek a vitáikat elsődlegesen békés úton rendezik. Ennek eredménytelensége esetén a
-          hatáskörrel és illetékességgel rendelkező magyar bíróság jár el. Panasz a {PROVIDER.email} címen
+          hatáskörrel és illetékességgel rendelkező magyar bíróság jár el. Panasz {huArticle(PROVIDER.email)} {PROVIDER.email} címen
           nyújtható be; az írásbeli panaszt a Szolgáltató főszabály szerint 30 napon belül megválaszolja.
           Fogyasztói jogvita esetén a Megrendelő a lakóhelye vagy tartózkodási helye szerinti békéltető
           testülethez fordulhat, amelynek eljárásában a Szolgáltatót együttműködési kötelezettség terheli.

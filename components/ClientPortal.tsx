@@ -40,9 +40,11 @@ import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
 import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
-import { trackEvent, trackLeadConversion } from "@/lib/analytics";
+import { trackLeadConversion } from "@/lib/analytics";
 import type { Project, Ticket, TicketMessage, ClientChangeRequest, WebsitePurchase } from "@/components/portal/types";
 import type { WebsitePurchasePaymentMethod } from "@/lib/website-purchase";
+import Image from "next/image";
+import type { AppNotification } from "@/components/admin/types";
 import {
   audienceChips,
   briefSteps,
@@ -69,6 +71,7 @@ import {
   statusLabels,
   transferReference
 } from "@/components/portal/format";
+import { hardNavigate } from "@/lib/auth-navigation";
 
 const initialProject = initialBriefForm;
 
@@ -159,7 +162,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [customFontOpen, setCustomFontOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [supportThreadOpen, setSupportThreadOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [profileName, setProfileName] = useState("");
@@ -292,6 +295,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   // Brief draft persistence: keep the half-filled wizard across reloads so an
   // interrupted brief is never lost. Cleared on successful submit.
   const draftKey = userId ? `pe-brief-draft-${userId}` : "";
+  // A `userId` szándékos függőség: felhasználóváltáskor új, nullázott jelzőt
+  // akarunk, különben az új belépő piszkozatát már visszatöltöttnek hinnénk.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const draftRestored = useMemo(() => ({ done: false }), [userId]);
 
   useEffect(() => {
@@ -510,14 +516,15 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         setNotice("Fiókod sikeresen törölve lett. Kijelentkeztetés...");
         setTimeout(() => {
           supabase.auth.signOut().then(() => {
-            window.location.href = "/ugyfelkapu";
+            hardNavigate("/ugyfelkapu");
           });
         }, 1500);
       } else {
         setNotice(`Sikertelen törlés: ${resData.error || "Ismeretlen hiba"}`);
       }
-    } catch (err: any) {
-      setNotice(`Hiba történt a törlés során: ${err.message}`);
+    } catch (err: unknown) {
+      const detail = err instanceof Error ? err.message : "Ismeretlen hiba";
+      setNotice(`Hiba történt a törlés során: ${detail}`);
     }
   }
 
@@ -683,7 +690,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const sessionUser = data.session?.user;
       if (!sessionUser) {
         if (view === "dashboard") {
-          window.location.href = "/ugyfelkapu";
+          hardNavigate("/ugyfelkapu");
           return;
         }
 
@@ -695,7 +702,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setEmail(sessionUser.email ?? "");
       void ensureClientProfile(sessionUser);
       if (view === "auth") {
-        window.location.href = "/ugyfelkapu/dashboard";
+        hardNavigate("/ugyfelkapu/dashboard");
         return;
       }
 
@@ -709,7 +716,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       if (sessionUser) {
         void ensureClientProfile(sessionUser);
         if (view === "auth") {
-          window.location.href = "/ugyfelkapu/dashboard";
+          hardNavigate("/ugyfelkapu/dashboard");
           return;
         }
 
@@ -720,7 +727,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         setTickets([]);
         setMessages({});
         if (view === "dashboard") {
-          window.location.href = "/ugyfelkapu";
+          hardNavigate("/ugyfelkapu");
         }
       }
     });
@@ -728,6 +735,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     return () => {
       listener.subscription.unsubscribe();
     };
+    // A `loadPortal` minden renderben új referencia, függőségként végtelen
+    // újratöltést okozna. Ez az effekt szándékosan csak nézetváltáskor fut.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
   useEffect(() => {
@@ -794,6 +804,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+    // Lásd fent: a `loadPortal` referenciája renderenként változik, ezért nem
+    // függőség — a realtime feliratkozás a felhasználóhoz kötődik.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
@@ -880,7 +893,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
         setNotice("Nem sikerült belépni. Ellenőrizd az emailt és a jelszót.");
         return;
       }
-      window.location.href = "/ugyfelkapu/dashboard";
+      hardNavigate("/ugyfelkapu/dashboard");
       return;
     }
 
@@ -923,7 +936,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
 
     if (data.session) {
-      window.location.href = "/ugyfelkapu/dashboard";
+      hardNavigate("/ugyfelkapu/dashboard");
       return;
     }
 
@@ -3180,7 +3193,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     ) : null}
                     {projectForm.domainStatus === "need" ? (
                       <div className="domain-help-card">
-                        <img className="domain-guide-cover" src="/guides/domain-guide-cover.png" alt="Rackhost domainvásárlási útmutató borítója" />
+                        <Image className="domain-guide-cover" src="/guides/domain-guide-cover.png" alt="Rackhost domainvásárlási útmutató borítója" width={560} height={320} sizes="(max-width: 760px) 100vw, 280px" />
                         <div className="domain-help-copy">
                           <span className="micro-label">Rackhost · teljes vásárlási útmutató</span>
                           <h4>Vásárlás képernyőről képernyőre</h4>

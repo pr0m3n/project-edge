@@ -209,7 +209,7 @@ export function PublicBriefWizard() {
                   (`/ugyfelkapu?model=purchase`) — ide szándékosan nem kerül be.
                   A `purchase` ágak lentebb megmaradnak a régi, még be nem
                   küldött piszkozatok miatt. */}
-              <header><span>01 / Csomag</span><h3>Mekkora weboldalra van szükséged?</h3><p>Havidíjas, menedzselt weboldal — induló díj nélkül. A domaint, a tárhelyet és a karbantartást is mi intézzük.</p></header>
+              <header><span>01 / Csomag</span><h3>Mekkora weboldalra van szükséged?</h3><p>Havidíjas, menedzselt weboldal. Külön belépési díj nincs: az első havidíj indítja a munkát, a domaint, a tárhelyet és a karbantartást pedig mi intézzük.</p></header>
               {form.commercialModel === "subscription" ? <div className="public-plan-grid">
                 {SUBSCRIPTION_PLANS.map((plan) => <button className={form.subscriptionPlan === plan.key ? "selected" : ""} key={plan.key} onClick={() => update({ subscriptionPlan: plan.key })} type="button"><span>{plan.name}</span><strong>{formatHuf(plan.price)}<small>/hó</small></strong><p>{plan.short}</p></button>)}
               </div> : <div className="public-chip-grid">

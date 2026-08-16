@@ -66,7 +66,7 @@ const extras = [
   {
     Icon: IconLock,
     title: "Hogyan indul a fizetés",
-    copy: "Bérlésnél az első havidíj indítja a munkát, induló díj nincs. Vásárlásnál foglaló, majd átadás."
+    copy: "Bérlésnél az első havidíj indítja a munkát — külön belépési díj nincs. Vásárlásnál foglaló, majd átadás."
   }
 ];
 
@@ -111,7 +111,7 @@ export default function ProcessPage() {
             <ol>
               <li>Kitöltöd az adatlapot és csomagot választasz</li>
               <li>Elfogadod a szerződést az ügyfélkapun</li>
-              <li>Elindul az előfizetés — nincs induló díj</li>
+              <li>Elindul az előfizetés — az első havidíj indítja a munkát</li>
               <li>Megépítem az oldalt</li>
               <li>Előnézet, módosítás, jóváhagyás</li>
               <li>Élesítés, majd folyamatos üzemeltetés</li>

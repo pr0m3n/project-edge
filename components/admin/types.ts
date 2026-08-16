@@ -78,6 +78,13 @@ export type ClientProject = {
   coupon_max_discount: number | null;
   coupon_discount_amount: number;
   client_decision_note: string | null;
+  /**
+   * A brief nyers JSON-je. Szándékosan `any`: a mezőkészlet briefverziónként
+   * eltér (régi, még be nem küldött piszkozatok is előfordulnak), és a
+   * megjelenítés a `parseBrief`-en keresztül úgyis ellenőrzött. Szigorú típus
+   * itt csak látszatbiztonságot adna, cserébe tucatnyi kényszerített castot.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   brief_data: any;
   last_modified_at: string | null;
   last_modified_by: string | null;
@@ -193,3 +200,19 @@ export type ChangeRequest = {
 };
 
 export type AdminWebsitePurchase = WebsitePurchase;
+
+/**
+ * Értesítés (`public.notifications`, 006-os migráció).
+ *
+ * A `user_id === null` adminisztrátori értesítést jelöl — a mezők pontosan a
+ * tábla oszlopai, hogy a realtime payload típusa is ez lehessen.
+ */
+export type AppNotification = {
+  id: string;
+  user_id: string | null;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+};

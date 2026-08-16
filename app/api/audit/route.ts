@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { checkDurableRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
+import { supportResumePath } from "@/lib/support-link";
 
 type AuditPayload = {
   name?: string;
@@ -118,7 +119,9 @@ export async function POST(request: Request) {
     subject: `Megkaptam a weboldal-elemzési kérésedet: ${websiteUrl}`,
     eyebrow: "PROJECTEDGE · INGYENES GYORSELEMZÉS",
     preheader: `Szia ${name}! Átnézem a(z) ${websiteUrl} oldalt és 24 órán belül küldöm az észrevételeimet.`,
-    message: `Szia ${name}!\n\nKöszönöm az igénylést! Megkaptam a weboldalad címét (${websiteUrl}).\n\n24 órán belül (munkanapokon) átnézem a felületet az alábbi 3 fő szempont szerint:\n\n1. Betöltési sebesség és technikai alapok (mobil és asztali nézetben)\n2. Konverziós struktúra (érthető-e az ajánlat, könnyű-e kapcsolatba lépni veled)\n3. Vizuális hierarchia és használhatóság (mi az, ami elriaszthatja a látogatókat)\n\nAz összefoglalót közvetlenül erre az email címre küldöm el neked.`,
+    message: `Szia ${name}!\n\nKöszönöm az igénylést! Megkaptam a weboldalad címét (${websiteUrl}).\n\n24 órán belül (munkanapokon) átnézem a felületet az alábbi 3 fő szempont szerint:\n\n1. Betöltési sebesség és technikai alapok (mobil és asztali nézetben)\n2. Konverziós struktúra (érthető-e az ajánlat, könnyű-e kapcsolatba lépni veled)\n3. Vizuális hierarchia és használhatóság (mi az, ami elriaszthatja a látogatókat)\n\nAz összefoglalót közvetlenül erre az email címre küldöm el neked. Ha közben kérdésed van, a lenti gombbal bármelyik eszközön írhatsz.`,
+    link: supportResumePath(ticket.id, visitorToken),
+    linkLabel: "Beszélgetés megnyitása",
     details: [
       { label: "Elemzett oldal", value: websiteUrl },
       { label: "Várható válaszidő", value: "24 órán belül" }

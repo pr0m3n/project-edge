@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { hardNavigate } from "@/lib/auth-navigation";
 
 export function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -46,7 +47,7 @@ export function AdminLogin() {
       return;
     }
 
-    window.location.href = "/admin/dashboard";
+    hardNavigate("/admin/dashboard");
   }
 
   return (

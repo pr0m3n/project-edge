@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BLOG_POSTS } from "@/lib/blog";
 
 const baseUrl = "https://www.projectedge.hu";
 
@@ -9,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/folyamat", priority: 0.8 },
     { path: "/munkak", priority: 0.8 },
     { path: "/munkak/checky", priority: 0.85 },
+    { path: "/blog", priority: 0.75 },
     { path: "/weboldal-keszites", priority: 0.9 },
     { path: "/havidijas-weboldal", priority: 0.9 },
     { path: "/weboldal-kisvallalkozasoknak", priority: 0.85 },
@@ -21,9 +23,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/aszf", priority: 0.3 }
   ];
 
-  return routes.map((route) => ({
+  const staticRoutes: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${baseUrl}${route.path}`,
     changeFrequency: "monthly",
     priority: route.priority
   }));
+
+  // A cikkek a `lib/blog.ts`-ből jönnek, tehát új poszttal a sitemap magától
+  // bővül — nem lehet elfelejteni felvenni ide.
+  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.publishedAt),
+    changeFrequency: "yearly",
+    priority: 0.7
+  }));
+
+  return [...staticRoutes, ...blogRoutes];
 }

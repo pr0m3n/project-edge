@@ -127,7 +127,7 @@ export const SUBSCRIPTION_SHARED_INCLUDED = [
   "Folyamatos működésfelügyelet",
   "Írásos kérésre 1 munkanapon belül visszaigazolok",
   "Technikai hibára 1 munkanapon belül reagálok — és nem fogyasztja a keretet",
-  "Nincs induló díj és nincs hűségidő"
+  "Nincs külön belépési díj és nincs hűségidő — az első havidíj indítja a munkát"
 ];
 
 /** Mi számít bele a módosítási keretbe — a vita elkerülése a lényeg. */

@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 
 async function removeUserStorage(
-  adminSupabase: SupabaseClient<any, "public", "public", any, any>,
+  adminSupabase: SupabaseClient,
   userId: string,
   bucket: string
 ) {

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
 import { useDemoNotice } from "@/components/demo/DemoNotice";
@@ -117,7 +118,11 @@ function PropertyModal({ home, saved, onClose, onSave }: { home: Home; saved: bo
       <section aria-label={`${home.title} részletes adatlap`} aria-modal="true" className="property-modal" role="dialog">
         <button aria-label="Részletek bezárása" className="property-close" onClick={onClose} type="button">×</button>
         <div className="property-gallery">
-          <img alt={`${home.title} ingatlan`} src={home.image} />
+          {/* A galéria cellája CSS-ből kap méretet (object-fit: cover), ezért
+              `fill` — így a next/image is a viewporthoz illő változatot adja. */}
+          <div className="property-gallery-main">
+            <Image alt={`${home.title} ingatlan`} src={home.image} fill sizes="(max-width: 900px) 100vw, 60vw" style={{ objectFit: "cover" }} />
+          </div>
           <div className="property-gallery-side">
             <div className="property-plan"><span>ALAPRAJZ</span><i /><i /><i /><i /></div>
             <div className="property-map"><span>KÖRNYÉK</span><b>●</b><i /><i /><i /></div>

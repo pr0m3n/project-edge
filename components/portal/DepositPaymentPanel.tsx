@@ -1,6 +1,7 @@
 import type { Project } from "@/components/portal/types";
 import { formatPrice } from "@/components/portal/format";
 import { PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
+import { huArticle } from "@/lib/hu";
 
 type DepositPaymentPanelProps = {
   project: Project;
@@ -15,8 +16,8 @@ export function DepositPaymentPanel({ project, onStartPayment, paymentStarting =
       <div className="first-payment-card">
         <div className="first-payment-copy">
           <span>ELSŐ SZÁMLÁZÁSI IDŐSZAK</span>
-          <h4>Indítsd el a {plan.name} előfizetést.</h4>
-          <p>Az első havi díj indítja el a weboldal elkészítését. Külön induló díj nincs.</p>
+          <h4>Indítsd el {huArticle(plan.name)} {plan.name} előfizetést.</h4>
+          <p>Az első havi díj indítja el a weboldal elkészítését. Ezen felül nincs külön induló díj.</p>
         </div>
         <div className="first-payment-price">
           <span>Most fizetendő</span>

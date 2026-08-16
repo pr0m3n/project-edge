@@ -724,6 +724,59 @@ p {
   width: 100%;
 }
 
+/* ════ 3D modell betöltése ════
+   A model-viewer csomag ~1 MB, a GLB feldolgozása pedig további időt vesz el,
+   ezért a modell korábban üres helyre, késve, egyben „bepattant". Itt a váz
+   (halkan lüktető fénygömb) a modell HELYÉN ül, és a két réteg egymásba tűnik
+   át, amikor a geometria tényleg kész. Így nincs ugrás, csak élesedés. */
+.model-host {
+  position: relative;
+}
+
+.model-host .model-loading {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(118, 171, 174, 0.34), transparent 58%),
+    radial-gradient(circle at 50% 50%, rgba(255, 87, 34, 0.14), transparent 46%);
+  border-radius: 50%;
+  inset: 8%;
+  min-height: 0;
+  opacity: 1;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 620ms ease;
+  animation: model-skeleton-pulse 2.4s ease-in-out infinite;
+}
+
+.model-host.is-loaded .model-loading {
+  animation: none;
+  opacity: 0;
+}
+
+.model-host model-viewer {
+  opacity: 0;
+  transition: opacity 760ms ease;
+}
+
+.model-host.is-loaded model-viewer {
+  opacity: 1;
+}
+
+@keyframes model-skeleton-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.97); }
+  50% { opacity: 0.9; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-host .model-loading {
+    animation: none;
+  }
+
+  .model-host model-viewer,
+  .model-host .model-loading {
+    transition: none;
+  }
+}
+
 .laptop-model {
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 87, 34, 0.24), transparent 42%),
@@ -10474,20 +10527,24 @@ details.admin-collapse summary:hover {
   }
 }
 
-/* ════ Süti-hozzájárulás ════ */
+/* ════ Süti-hozzájárulás ════
+   Szándékosan alacsony profilú sáv. A korábbi 620px széles, kétsoros gombokkal
+   szedett doboz 1280×720-on ráfeküdt a hero CTA-gombjaira: az első képernyőn a
+   „Csomagok és árak" gomb a banner alá került. Itt a szöveg rövidebb, a gombok
+   egy sorban vannak, így a doboz nagyjából feleakkora magas. */
 .cookie-banner {
   align-items: center;
   background: var(--night);
   border: 1px solid rgba(245, 245, 245, 0.14);
-  border-radius: 22px;
-  bottom: 22px;
-  box-shadow: 0 30px 80px rgba(17, 23, 28, 0.4);
+  border-radius: 16px;
+  bottom: 18px;
+  box-shadow: 0 20px 54px rgba(17, 23, 28, 0.38);
   color: var(--paper);
   display: flex;
-  gap: 22px;
-  left: 22px;
-  max-width: 620px;
-  padding: 20px 22px;
+  gap: 16px;
+  left: 18px;
+  max-width: 460px;
+  padding: 13px 15px;
   position: fixed;
   z-index: 500;
   animation: cookie-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -10502,14 +10559,14 @@ details.admin-collapse summary:hover {
 
 .cookie-copy strong {
   display: block;
-  font-size: 15px;
-  margin-bottom: 6px;
+  font-size: 13px;
+  margin-bottom: 3px;
 }
 
 .cookie-copy p {
-  color: rgba(245, 245, 245, 0.68);
-  font-size: 12.5px;
-  line-height: 1.6;
+  color: rgba(245, 245, 245, 0.66);
+  font-size: 11.5px;
+  line-height: 1.5;
 }
 
 .cookie-copy a {
@@ -10521,17 +10578,17 @@ details.admin-collapse summary:hover {
 .cookie-actions {
   display: flex;
   flex: none;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  gap: 7px;
 }
 
 .cookie-accept,
 .cookie-ghost {
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 800;
-  padding: 11px 18px;
+  padding: 9px 13px;
   transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
   white-space: nowrap;
 }
@@ -13582,5 +13639,703 @@ details.admin-collapse summary:hover {
 
   .site-footer {
     padding-bottom: 104px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   BLOG
+   A meglévő designrendszer nyelvén: ugyanaz a paletta, ugyanaz a tipográfiai
+   ritmus, mint a szolgáltatás-oldalakon. Az interakciók (haladásjelző,
+   tartalomjegyzék-követés, kipipálható lista) nem díszek: az olvasó ezekkel
+   tudja a saját oldalára alkalmazni, amit olvas.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.blog-page .page-hero h1 {
+  max-width: 940px;
+}
+
+.blog-index {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: 8px clamp(18px, 6vw, 88px) clamp(60px, 8vw, 100px);
+}
+
+/* ── Kategóriaszűrő ── */
+.blog-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 34px;
+}
+
+.blog-filter button {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 15px;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.blog-filter button:hover {
+  border-color: var(--aqua);
+}
+
+.blog-filter button.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.blog-filter button em {
+  background: rgba(48, 56, 65, 0.08);
+  border-radius: 999px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  padding: 3px 7px;
+}
+
+.blog-filter button.active em {
+  background: rgba(245, 245, 245, 0.16);
+}
+
+/* ── Cikk-kártyák ── */
+.blog-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.blog-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(22px, 3vw, 32px);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.blog-card:hover {
+  border-color: var(--aqua);
+  box-shadow: 0 24px 54px rgba(48, 56, 65, 0.1);
+  transform: translateY(-4px);
+}
+
+/* A legfrissebb cikk teljes szélességben, nagyobb címmel — így van a listának
+   iránya, nem csak egy egyenrangú rács. */
+.blog-card.featured {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  grid-column: 1 / -1;
+}
+
+.blog-card-cat {
+  color: var(--aqua);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.blog-card h2,
+.blog-card h3 {
+  font-size: clamp(21px, 2.4vw, 27px);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.blog-card.featured h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  max-width: 900px;
+}
+
+.blog-card p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 760px;
+}
+
+.blog-card.featured p {
+  color: rgba(245, 245, 245, 0.7);
+  font-size: 15px;
+}
+
+.blog-card-meta {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.blog-card.featured .blog-card-meta {
+  color: rgba(245, 245, 245, 0.55);
+}
+
+.blog-card-cta {
+  color: var(--ember);
+  font-size: 12.5px;
+  font-weight: 850;
+}
+
+/* ── Cikkoldal ── */
+.article-shell {
+  margin: 0 auto;
+  max-width: 1180px;
+  /* A fejléc fixen ül a lap tetején (0–104px), ezért a cikk feje ugyanazt a
+     felső elhagyást kapja, mint a .page-hero a többi oldalon. */
+  padding: 160px clamp(18px, 6vw, 88px) 0;
+}
+
+.article-head {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 14px;
+  padding-bottom: 30px;
+}
+
+.article-back {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  justify-self: start;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.article-back:hover {
+  color: var(--ember);
+}
+
+.article-cat {
+  color: var(--aqua);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.article-head h1 {
+  font-size: clamp(34px, 5.4vw, 62px);
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+  margin: 0;
+  max-width: 900px;
+}
+
+.article-audience {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 720px;
+}
+
+.article-meta {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  font-weight: 700;
+  gap: 16px;
+}
+
+/* ── Elrendezés: tartalomjegyzék + törzs ── */
+.article-layout {
+  display: grid;
+  gap: clamp(24px, 4vw, 56px);
+  grid-template-columns: minmax(0, 1fr) 232px;
+  padding: 36px 0 clamp(50px, 7vw, 90px);
+}
+
+/* Olvasási haladás — a fejléc alatti vékony sáv. */
+.article-progress {
+  background: rgba(48, 56, 65, 0.1);
+  height: 3px;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 400;
+}
+
+.article-progress i {
+  background: linear-gradient(90deg, var(--aqua), var(--ember));
+  display: block;
+  height: 100%;
+  transition: width 120ms linear;
+}
+
+.article-toc {
+  align-self: start;
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 104px;
+}
+
+.article-toc-title {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.article-toc nav {
+  border-left: 2px solid var(--line);
+  display: grid;
+}
+
+.article-toc a {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-left: -2px;
+  border-left: 2px solid transparent;
+  padding: 9px 0 9px 14px;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+
+.article-toc a:hover {
+  color: var(--ink);
+}
+
+.article-toc a.active {
+  border-left-color: var(--ember);
+  color: var(--ink);
+}
+
+.article-body {
+  grid-column: 1;
+  grid-row: 1;
+  max-width: 720px;
+}
+
+.article-body h2 {
+  font-size: clamp(25px, 3.2vw, 34px);
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  margin: 46px 0 14px;
+  scroll-margin-top: 100px;
+}
+
+.article-body h3 {
+  font-size: clamp(18px, 2.2vw, 22px);
+  letter-spacing: -0.02em;
+  margin: 32px 0 10px;
+}
+
+.article-body p {
+  color: #3f4a52;
+  font-size: 16.5px;
+  line-height: 1.75;
+  margin: 0 0 18px;
+}
+
+.article-body a {
+  color: var(--ember);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-body code {
+  background: rgba(48, 56, 65, 0.07);
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 2px 6px;
+}
+
+.article-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 4px 0 24px;
+  padding: 0;
+}
+
+.article-list li {
+  color: #3f4a52;
+  font-size: 16px;
+  line-height: 1.7;
+  padding-left: 26px;
+  position: relative;
+}
+
+.article-list li::before {
+  color: var(--aqua);
+  content: "—";
+  font-weight: 900;
+  left: 0;
+  position: absolute;
+}
+
+.article-list.ordered {
+  counter-reset: article-step;
+}
+
+.article-list.ordered li::before {
+  counter-increment: article-step;
+  content: counter(article-step) ".";
+  color: var(--ember);
+}
+
+/* ── Kiemelt doboz ── */
+.article-callout {
+  background: rgba(118, 171, 174, 0.1);
+  border: 1px solid rgba(118, 171, 174, 0.3);
+  border-radius: 20px;
+  display: grid;
+  gap: 8px;
+  margin: 28px 0;
+  padding: 22px 24px;
+}
+
+.article-callout strong {
+  font-size: 15px;
+}
+
+.article-callout p {
+  font-size: 14.5px !important;
+  line-height: 1.65 !important;
+  margin: 0 !important;
+}
+
+/* ── Összehasonlító blokk ── */
+.article-compare {
+  margin: 32px 0;
+}
+
+.article-compare h4 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+
+.article-compare-head {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 8px;
+  padding-left: 0;
+}
+
+.article-compare-head span {
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.article-compare-head span:first-child {
+  color: #b4401b;
+}
+
+.article-compare-head span:last-child {
+  color: #3d7f6f;
+}
+
+.article-compare-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.article-compare-rows article {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.compare-label {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  grid-column: 1 / -1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.compare-bad,
+.compare-good {
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 15px 17px;
+}
+
+.compare-bad {
+  background: rgba(255, 87, 34, 0.08);
+  border: 1px solid rgba(255, 87, 34, 0.22);
+  color: #7d3b25;
+}
+
+.compare-good {
+  background: rgba(118, 171, 174, 0.13);
+  border: 1px solid rgba(118, 171, 174, 0.32);
+  color: #235450;
+}
+
+/* ── Kipipálható ellenőrzőlista ── */
+.article-checklist {
+  background: var(--ink);
+  border-radius: 26px;
+  color: var(--paper);
+  margin: 34px 0;
+  padding: clamp(22px, 3vw, 30px);
+}
+
+.article-checklist header {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.article-checklist h4 {
+  font-size: 20px;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
+}
+
+.article-checklist header p {
+  color: rgba(245, 245, 245, 0.62) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+  max-width: 460px;
+}
+
+.checklist-score {
+  display: grid;
+  flex: none;
+  gap: 2px;
+  justify-items: end;
+  text-align: right;
+}
+
+.checklist-score strong {
+  font-size: 26px;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.checklist-score small {
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.checklist-score span {
+  color: rgba(245, 245, 245, 0.5);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.checklist-progress {
+  background: rgba(245, 245, 245, 0.12);
+  border-radius: 999px;
+  height: 4px;
+  margin: 18px 0 16px;
+  overflow: hidden;
+}
+
+.checklist-progress i {
+  background: linear-gradient(90deg, var(--aqua), var(--ember));
+  display: block;
+  height: 100%;
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.article-checklist ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-checklist button {
+  align-items: center;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(245, 245, 245, 0.1);
+  border-radius: 14px;
+  color: var(--paper);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 46px;
+  padding: 11px 14px;
+  text-align: left;
+  transition: background 200ms ease, border-color 200ms ease;
+  width: 100%;
+}
+
+.article-checklist button:hover {
+  border-color: rgba(118, 171, 174, 0.55);
+}
+
+.checklist-box {
+  align-items: center;
+  border: 1.5px solid rgba(245, 245, 245, 0.35);
+  border-radius: 7px;
+  display: flex;
+  flex: none;
+  font-size: 12px;
+  font-weight: 900;
+  height: 22px;
+  justify-content: center;
+  transition: background 200ms ease, border-color 200ms ease;
+  width: 22px;
+}
+
+.article-checklist button.checked {
+  background: rgba(118, 171, 174, 0.16);
+  border-color: rgba(118, 171, 174, 0.5);
+}
+
+.article-checklist button.checked .checklist-box {
+  background: var(--aqua);
+  border-color: var(--aqua);
+  color: var(--ink);
+}
+
+.checklist-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.article-checklist button.checked .checklist-text {
+  opacity: 0.62;
+  text-decoration: line-through;
+}
+
+.checklist-done {
+  color: var(--aqua) !important;
+  font-size: 13px !important;
+  font-weight: 800;
+  margin: 16px 0 0 !important;
+}
+
+/* ── Kapcsolódó cikkek ── */
+.article-related {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(40px, 6vw, 70px) clamp(18px, 6vw, 88px);
+}
+
+.article-related .section-head {
+  margin-bottom: 24px;
+}
+
+/* ── Beszélgetés-folytató oldal ── */
+.resume-conversation {
+  min-height: 60vh;
+}
+
+/* ── Reszponzív ── */
+@media (max-width: 1000px) {
+  .article-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .article-toc {
+    grid-column: 1;
+    grid-row: 1;
+    position: static;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+  }
+
+  .article-toc nav {
+    border-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .article-toc a {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    border-radius: 999px;
+    margin-left: 0;
+    padding: 8px 13px;
+  }
+
+  .article-toc a.active {
+    border-color: var(--ember);
+  }
+
+  .article-body {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .blog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .article-compare-head {
+    display: none;
+  }
+
+  .article-compare-rows article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Mobilon egymás alatt a két oszlop, ezért kell felirat is melléjük. */
+  .compare-bad::before,
+  .compare-good::before {
+    display: block;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .compare-bad::before {
+    content: "Gyakori";
+  }
+
+  .compare-good::before {
+    content: "Ami működik";
+  }
+
+  .article-checklist header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checklist-score {
+    justify-items: start;
+    text-align: left;
   }
 }

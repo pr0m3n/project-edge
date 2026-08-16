@@ -20,10 +20,10 @@ import { WebsitePurchaseAdminPanel } from "@/components/admin/WebsitePurchaseAdm
 import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
-import { PARKING_MONTHLY_PRICE, consumesChangeQuota, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, quotaPeriodKey, subscriptionPlan } from "@/lib/subscriptions";
+import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan } from "@/lib/subscriptions";
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
-import { BANK_TRANSFER_DETAILS, parseBrief, splitLines, transferReference, formatPrice as formatPriceWithFallback } from "@/components/portal/format";
+import { BANK_TRANSFER_DETAILS, parseBrief } from "@/components/portal/format";
 import { paletteByName } from "@/components/portal/brief-fields";
 import type {
   BillingoIssue,
@@ -33,12 +33,34 @@ import type {
   Lead,
   Ticket,
   TicketMessage,
-  WebsitePurchase
+  WebsitePurchase,
+  AppNotification
 } from "@/components/admin/types";
+import { hardNavigate } from "@/lib/auth-navigation";
 
-function formatPrice(value: number | null, currency = "Ft") {
-  return formatPriceWithFallback(value, currency, "Nincs ár megadva");
+let optimisticCounter = 0;
+
+/**
+ * Ideiglenes azonosító az optimista üzenetekhez.
+ *
+ * Modulszinten él, nem a komponensben: így a React purity-szabálya sem jelzi,
+ * és a növekvő számláló miatt két, ugyanabban az ezredmásodpercben elküldött
+ * válasz sem kaphat azonos azonosítót.
+ */
+function optimisticId() {
+  optimisticCounter += 1;
+  return `optimistic-${Date.now()}-${optimisticCounter}`;
 }
+
+/**
+ * Supabase realtime esemény törzse. INSERT/UPDATE-nél a `new` a teljes sor,
+ * DELETE-nél viszont csak a kulcsokat tartalmazza — ezért `Partial`.
+ */
+type RealtimePayload<Row> = {
+  eventType: string;
+  new: Row;
+  old: Partial<Row>;
+};
 
 function messageKind(text: string): ToastKind {
   if (/nem sikerült|hiba|sikertelen|nem lehet/i.test(text)) {
@@ -49,9 +71,6 @@ function messageKind(text: string): ToastKind {
   }
   return "info";
 }
-
-const TICKET_STALE_MS = 48 * 60 * 60 * 1000;
-
 
 const statuses = [
   ["new", "Új"],
@@ -152,24 +171,28 @@ export function AdminDashboard() {
   const [paymentTestLoading, setPaymentTestLoading] = useState(false);
 
   // Upgraded flow states
-  const [changeLogs, setChangeLogs] = useState<Record<string, any[]>>({});
   const [newMilestoneTitle, setNewMilestoneTitle] = useState<Record<string, string>>({});
   const [projectSubTab, setProjectSubTab] = useState<Record<string, "prompt" | "brief" | "build" | "changes" | "subscription">>({});
 
   // Phase 2 state variables
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  /**
+   * Referencia-idő a lejáratok kiértékeléséhez (pl. garancia aktív-e).
+   * Effektből jön, nem renderből: így ugyanaz a render kétszer lefuttatva
+   * ugyanazt adja, és percenként frissül anélkül, hogy bárhol újratöltés kéne.
+   */
+  const [nowMs, setNowMs] = useState(0);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
-  const [showClosedTickets, setShowClosedTickets] = useState(false);
 
   // Navigation & Master-Detail state
   const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "leads">("inbox");
   const [ticketScope, setTicketScope] = useState<"all" | "public" | "portal">("all");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [selectedTicketType, setSelectedTicketType] = useState<"public" | "portal">("public");
+  const [, setSelectedTicketType] = useState<"public" | "portal">("public");
   const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "open" | "answered" | "closed">("all");
 
   const { toasts, pushToast, dismissToast } = useToasts();
@@ -201,6 +224,12 @@ export function AdminDashboard() {
       setPaymentTestLoading(false);
     }
   }
+
+  useEffect(() => {
+    setNowMs(Date.now());
+    const timer = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!message || message.endsWith("...")) return;
@@ -257,17 +286,6 @@ export function AdminDashboard() {
 
   const wizardProject =
     activeProjects.find((p) => p.id === wizardProjectId) ?? activeProjects[0] ?? null;
-
-  const filteredTickets = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    return clientTickets.filter((t) => {
-      if (selectedClientFilter !== "all" && t.user_id !== selectedClientFilter) return false;
-      if (!query) return true;
-      return [t.subject, t.contact_name, t.contact_email]
-        .filter(Boolean)
-        .some((field) => (field as string).toLowerCase().includes(query));
-    });
-  }, [clientTickets, selectedClientFilter, searchQuery]);
 
   /**
    * A `targetEmail` szándékosan NEM megy át a szerverre: a címzettet a
@@ -510,7 +528,7 @@ export function AdminDashboard() {
     });
   }
 
-  function mergeClientProject(payload: { eventType: string; new: any; old: any }) {
+  function mergeClientProject(payload: RealtimePayload<ClientProject>) {
     if (payload.eventType === "DELETE") {
       const removedId = payload.old?.id;
       if (removedId) {
@@ -527,7 +545,7 @@ export function AdminDashboard() {
     );
   }
 
-  function mergeClientTicket(payload: { eventType: string; new: any; old: any }) {
+  function mergeClientTicket(payload: RealtimePayload<ClientTicket>) {
     if (payload.eventType === "DELETE") {
       const removedId = payload.old?.id;
       if (removedId) {
@@ -544,7 +562,7 @@ export function AdminDashboard() {
     );
   }
 
-  function mergeNotification(payload: { eventType: string; new: any; old: any }) {
+  function mergeNotification(payload: RealtimePayload<AppNotification>) {
     if (payload.eventType === "DELETE") {
       const removedId = payload.old?.id;
       if (removedId) {
@@ -582,7 +600,7 @@ export function AdminDashboard() {
     const { data: sessionData } = await supabase.auth.getSession();
 
     if (!sessionData.session) {
-      window.location.href = "/admin";
+      hardNavigate("/admin");
       return;
     }
 
@@ -594,7 +612,7 @@ export function AdminDashboard() {
 
     if (adminCheckError || !adminCheck) {
       await supabase.auth.signOut();
-      window.location.href = "/admin?error=unauthorized";
+      hardNavigate("/admin?error=unauthorized");
       return;
     }
 
@@ -683,23 +701,12 @@ export function AdminDashboard() {
       return groups;
     }, {});
 
-    const { data: logsData } = await supabase
-      .from("project_change_logs")
-      .select("*")
-      .order("changed_at", { ascending: false });
-
-    const groupedLogs = (logsData ?? []).reduce<Record<string, any[]>>((groups, item) => {
-      groups[item.project_id] = [...(groups[item.project_id] ?? []), item];
-      return groups;
-    }, {});
-
     setLeads(data ?? []);
     setTickets(ticketData ?? []);
     setTicketMessages(groupedMessages);
     setClientProjects(clientProjectError ? [] : clientProjectData ?? []);
     setClientTickets(clientTicketError ? [] : clientTicketData ?? []);
     setClientTicketMessages(groupedClientMessages);
-    setChangeLogs(groupedLogs);
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
     setWebsitePurchases((websitePurchaseData ?? []) as WebsitePurchase[]);
@@ -744,6 +751,10 @@ export function AdminDashboard() {
     }
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars --
+     Az alábbi négy művelet működik és tesztelt, de jelenleg NINCS hozzájuk gomb
+     az admin felületen — a hiányzó UI a teendő, nem a kód törlése. Ha bekerül a
+     gomb, ez a kikapcsolás törölhető. */
   async function updateChangeRequest(id: string, patch: Partial<ChangeRequest>) {
     const { error } = await supabase.from("change_requests").update(patch).eq("id", id);
     if (error) {
@@ -855,6 +866,7 @@ export function AdminDashboard() {
     });
     await loadLeads(true);
   }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   async function sendFollowupReminder(project: ClientProject) {
     const ok = await confirm({
@@ -1140,7 +1152,7 @@ export function AdminDashboard() {
       return;
     }
 
-    const tempId = `optimistic-${Date.now()}`;
+    const tempId = optimisticId();
     const optimisticMessage: TicketMessage = {
       id: tempId,
       ticket_id: ticketId,
@@ -1197,7 +1209,7 @@ export function AdminDashboard() {
 
     const { data: sessionData } = await supabase.auth.getSession();
     const adminUserId = sessionData?.session?.user?.id;
-    const tempId = `optimistic-${Date.now()}`;
+    const tempId = optimisticId();
 
     const optimisticMessage: TicketMessage = {
       id: tempId,
@@ -1255,7 +1267,7 @@ export function AdminDashboard() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.href = "/admin";
+    hardNavigate("/admin");
   }
 
   useEffect(() => {
@@ -1309,7 +1321,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "client_projects"
         },
-        (payload) => mergeClientProject(payload as any)
+        (payload) => mergeClientProject(payload as unknown as RealtimePayload<ClientProject>)
       )
       .on(
         "postgres_changes",
@@ -1318,7 +1330,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "client_tickets"
         },
-        (payload) => mergeClientTicket(payload as any)
+        (payload) => mergeClientTicket(payload as unknown as RealtimePayload<ClientTicket>)
       )
       .on(
         "postgres_changes",
@@ -1338,7 +1350,7 @@ export function AdminDashboard() {
           schema: "public",
           table: "notifications"
         },
-        (payload) => mergeNotification(payload as any)
+        (payload) => mergeNotification(payload as unknown as RealtimePayload<AppNotification>)
       )
       .on(
         "postgres_changes",
@@ -1366,7 +1378,7 @@ export function AdminDashboard() {
     const rating = project.client_rating;
     const review = project.client_review;
     const warrantyUntil = project.warranty_expires_at ? new Date(project.warranty_expires_at) : null;
-    const warrantyActive = warrantyUntil ? warrantyUntil.getTime() > Date.now() : false;
+    const warrantyActive = warrantyUntil ? warrantyUntil.getTime() > nowMs : false;
     if (project.commercial_model === "subscription" && project.subscription_status === "cancelled") {
       return (
         <article className="admin-project-card compact-closed" key={project.id} style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
@@ -2056,8 +2068,6 @@ export function AdminDashboard() {
                 ].filter(([, value]) => Boolean(value));
 
                 const s = project.status;
-                const showOffer = s === "request_received" || s === "planning";
-                const showBuild = s === "in_progress" || (s === "review" && project.review_approved);
                 const showHandover = project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && s !== "closed" && s !== "deletion_pending";
 
                 return (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { checkDurableRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
+import { supportResumePath } from "@/lib/support-link";
 
 type TicketPayload = {
   email?: string;
@@ -105,6 +106,25 @@ export async function POST(request: Request) {
       { label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }
     ]
   });
+
+  // Visszaigazolás a látogatónak, benne a beszélgetés folytatására szolgáló
+  // linkkel. Enélkül a beszélgetés ahhoz az egy böngészőhöz volt kötve, ahol
+  // elindult: aki törölte a tárolt adatait vagy eszközt váltott, elvesztette.
+  // A kézbesítés hibája nem buktatja el a ticket létrehozását — a beszélgetés
+  // az aktuális eszközön mindenképp működik.
+  const receiptResult = await sendProjectEdgeEmail({
+    to: ticket.email,
+    subject: "Megkaptam az üzeneted — ProjectEdge",
+    eyebrow: "PROJECTEDGE · ÜZENET RÖGZÍTVE",
+    preheader: `Szia ${ticket.name}! Megkaptam az üzeneted, hamarosan válaszolok.`,
+    message: `Szia ${ticket.name}!\n\nMegkaptam az üzeneted, munkanapokon jellemzően 1 munkanapon belül válaszolok.\n\nAmit írtál:\n\n${message}\n\nA lenti gombbal bármelyik eszközön megnyithatod és folytathatod a beszélgetést — a válaszomról is emailt küldök.`,
+    link: supportResumePath(ticket.id, ticket.visitor_token),
+    linkLabel: "Beszélgetés megnyitása",
+    details: [{ label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }]
+  });
+  if (!receiptResult.ok) {
+    console.error("Support ticket receipt email failed", receiptResult.error);
+  }
 
   return NextResponse.json({
     ticket: {

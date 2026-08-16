@@ -1,10 +1,14 @@
 /**
  * Mérés és hirdetési konverziókövetés.
  *
- * Minden azonosító környezeti változóból jön. Ha egyik sincs beállítva, a
- * mérés teljesen inaktív: nem töltődik be szkript, és a süti-banner sem
- * jelenik meg — így a jogi állapot is helyes marad (nem kérünk hozzájárulást
- * olyasmihez, amit nem is használunk).
+ * A GA4 és a Clarity azonosítója környezeti változóból jön; a Google Ads
+ * azonosítójának van beégetett alapértéke, mert az élesben mindig ugyanaz.
+ *
+ * Ennek következménye, hogy a `measurementEnabled` a gyakorlatban MINDIG igaz,
+ * tehát a süti-banner akkor is megjelenik, ha egyetlen környezeti változó sincs
+ * beállítva. Ez szándékos: az Ads konverziómérés a hirdetések alapja, nem
+ * szeretnénk, hogy egy hiányzó env változótól némán kikapcsoljon. Ha valaha
+ * tényleg mérés nélküli telepítés kell, ezt az alapértéket kell kivenni.
  */
 
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? "";

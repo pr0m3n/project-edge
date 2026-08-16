@@ -9,7 +9,7 @@ import { AuditRequestSection } from "@/components/AuditRequestSection";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
-  description: "Egyedi, gyors weboldal készítés 0 Ft induló díjjal, 14 900 Ft/hó-tól. Domain, tárhely, email továbbítás és folyamatos karbantartás egyben, rugalmas vételi opcióval.",
+  description: "Egyedi, gyors weboldal készítés 14 900 Ft/hó-tól, külön belépési díj nélkül. Domain, tárhely, email továbbítás és folyamatos karbantartás egyben, rugalmas vételi opcióval.",
   alternates: { canonical: "/" }
 };
 
@@ -48,7 +48,7 @@ const proof = [
 const faqs = [
   [
     "Mennyibe kerül a weboldal?",
-    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz, 0 Ft induló díj mellett — a domain, a tárhely és a havi karbantartás mind benne van a díjban. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
+    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Külön belépési vagy beállítási díj nincs: az első havidíj indítja a munkát, és a domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -68,7 +68,7 @@ const faqs = [
   ],
   [
     "Mi van az élesítés után?",
-    "A havidíj tartalmazza a folyamatos technikai felügyeletet, a 99.9%-os rendelkezésre állást, az automata biztonsági mentéseket és a csomagodhoz tartozó havi kisebb tartalmi/design módosításokat."
+    "A havidíj tartalmazza a folyamatos technikai felügyeletet, az automata biztonsági mentéseket, a technikai hibák javítását és a csomagodhoz tartozó kisebb tartalmi/design módosításokat. Nagy megbízhatóságú felhőinfrastruktúrán futtatom az oldalt, de százalékos rendelkezésre állást szándékosan nem ígérek: az üzemidő részben olyan harmadik felektől függ, amelyekre nincs ráhatásom. Ha kiesés van, azt díjmentesen és soron kívül kezelem."
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
@@ -86,14 +86,19 @@ export default function Home() {
         <div className="home-hero-grid">
           <div className="hero-editorial">
             <p className="micro-label">ProjectEdge / Digital Build Studio</p>
+            {/* A sorok külön <span>-ek, de a szöveges tartalmuk összeragadna
+                („Weboldal, amitbérelsz.Én építem…") — pont ezt olvassa ki a
+                Google és a képernyőolvasó. A sorvégi szóköz állítja helyre a
+                mondatot anélkül, hogy a tördelés változna. */}
             <h1 className="hero-statement">
-              <span>Weboldal, amit</span>
-              <span className="hero-accent">bérelsz.</span>
+              <span>Weboldal, amit </span>
+              <span className="hero-accent">bérelsz. </span>
               <span>Én építem, én üzemeltetem.</span>
             </h1>
             <p className="hero-lead">
-              Nincs induló díj. A domaint, a tárhelyet és a karbantartást is én intézem — egy
-              havidíjért. Ha inkább a sajátod lenne, meg is veheted.
+              Nincs külön belépési díj: az első havidíj indítja a munkát. A domaint, a tárhelyet és
+              a karbantartást is én intézem — ugyanabból az összegből. Ha inkább a sajátod lenne,
+              meg is veheted.
             </p>
             <div className="hero-command">
               <a className="button primary" href="#arak">Csomagok és árak</a>
@@ -257,13 +262,15 @@ export default function Home() {
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Menedzselt weboldal, 0 Ft induló díjjal.</h2>
+          <h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2>
           <p>
-            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem egyetlen fix havidíjért.
+            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem ugyanabból az összegből.
             Ha később a saját tulajdonodba vennéd, a forráskóddal együtt bármikor megvásárolhatod.
           </p>
         </div>
-        <PriceEstimator />
+        {/* A saját bevezetője itt kikapcsolva: a fenti section-head már
+            ugyanezt mondja el, két azonos „Árak" fejléc egymás alatt volt. */}
+        <PriceEstimator showLead={false} />
       </section>
 
       <section className="orbit-section">
@@ -331,13 +338,14 @@ export default function Home() {
           </article>
           <article className="voice-card">
             <p className="voice-claim">
-              Ha megveszed, a végén minden a tiéd: domain, forráskód, adatbázis. Az átadás
-              lépésenként megy, írásban.
+              Ha a bérlésből kivásárolod, a végén minden a tiéd: domain, forráskód, adatbázis. Az
+              átadás lépésenként megy, írásban — és a lezárásától még 30 napig díjmentesen javítom,
+              ami elromlik.
             </p>
             <div className="voice-author">
               <div>
                 <strong>Nincs bezárás</strong>
-                <span>átadás + 30 napos garancia</span>
+                <span>kivásárlás + 30 nap hibajavítás</span>
               </div>
             </div>
           </article>

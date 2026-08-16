@@ -17,26 +17,42 @@ import {
   type SubscriptionPlanKey
 } from "@/lib/subscriptions";
 import { TransitionLink } from "@/components/TransitionLink";
+import { huArticle } from "@/lib/hu";
 
-export function PriceEstimator() {
+type PriceEstimatorProps = {
+  /**
+   * Van-e MÁR fejléc a blokk fölött. A főoldalon és a landing oldalakon a
+   * befoglaló szekciónak saját „Árak" felcímkéje és H2-je van, tehát a saját
+   * bevezetőnk ott szó szerint megismételné ugyanazt két sorral lejjebb.
+   */
+  showLead?: boolean;
+};
+
+export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
 
   return (
     <section className="model-pricing" id="arak">
-      <div className="pricing-lead">
-        <p className="micro-label dark">Árak</p>
-        <h3>Havidíjas weboldal, induló díj nélkül.</h3>
-        <p>
-          A domaint, a tárhelyet és a karbantartást is én intézem. Ha később a sajátod lenne, bármikor
-          megveheted — <a href="#veteli-opcio">lentebb látod, mennyiért</a>.
-        </p>
-      </div>
+      {showLead ? (
+        <div className="pricing-lead">
+          <p className="micro-label dark">Árak</p>
+          <h3>Havidíjas weboldal, egyetlen fix díjjal.</h3>
+          <p>
+            A domaint, a tárhelyet és a karbantartást is én intézem. Ha később a sajátod lenne, bármikor
+            megveheted — <a href="#veteli-opcio">lentebb látod, mennyiért</a>.
+          </p>
+        </div>
+      ) : null}
 
       <div className="subscription-pricing-panel" id="pricing-panel-subscription">
+          {/* Az „induló díj" megfogalmazása szándékosan konkrét: külön belépési
+              vagy beállítási díj tényleg nincs, de az első havidíjat előre kell
+              fizetni — a korábbi „0 Ft induló díj" ezt elmosta, és úgy hangzott,
+              mintha fizetés nélkül indulna a munka. */}
           <div className="pricing-promise">
             <span className="live-pulse" />
-            <p><strong>Nincs induló díj.</strong> Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt.</p>
+            <p><strong>Nincs külön belépési vagy beállítási díj</strong> — az első havidíj indítja a munkát, és utána sincs más költséged. Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt.</p>
           </div>
           <div className="subscription-plan-grid">
             {SUBSCRIPTION_PLANS.map((plan) => (
@@ -110,10 +126,10 @@ export function PriceEstimator() {
           <section className="plan-detail-panel" id="csomag-reszletek">
             <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
-            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak a {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{activePlan.name} csomagot választom</TransitionLink></footer>
+            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</TransitionLink></footer>
           </section>
           <div className="subscription-footnotes">
-            <span>0 Ft induló díj</span>
+            <span>Az első havidíj indítja a munkát</span>
             <span>Bármikor lemondható</span>
             <span>Kötelező jogi oldalak díjmentesek</span>
             <span>Díjmentes email továbbítás</span>
@@ -139,10 +155,13 @@ export function PriceEstimator() {
             <li>Átadási összefoglalót és fizetési adatokat kapsz</li>
             <li>A vételár beérkezése után átadom a forráskódot és a hozzáféréseket</li>
             <li>A domaint átíratom a saját fiókodra</li>
+            <li>Az átadás lezárásától <strong>30 nap díjmentes hibajavítás</strong> jár</li>
           </ol>
           <p className="buyout-note">
             Az átadás lépésenként megy, írásban, útmutatókkal — és végigkísérlek rajta. Jelszót,
-            bankkártyaadatot vagy API kulcsot egyik fél sem küld a másiknak.
+            bankkártyaadatot vagy API kulcsot egyik fél sem küld a másiknak. Az utolsó átadási
+            lépéstől számított 30 napban az átadáskor vállalt működés igazolt hibáit díjmentesen
+            javítom, akkor is, ha az oldal onnantól már teljesen a tiéd.
           </p>
         </div>
         <div className="buyout-prices">

@@ -10,6 +10,7 @@ const links = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
   { href: "/folyamat", label: "Folyamat" },
   { href: "/munkak", label: "Munkák" },
+  { href: "/blog", label: "Blog" },
   { href: "/ugyfelkapu", label: "Ügyfélkapu" }
 ];
 

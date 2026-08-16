@@ -18,14 +18,20 @@ const csp = [
   //   modult példányosít — enélkül a modell némán nem töltődik be.
   // 'unsafe-eval' CSAK fejlesztésben: a React dev módban eval()-t használ a
   //   hibakereséshez; élesben nincs rá szükség.
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com`,
+  // Mérési célpontok, amelyek eddig hiányoztak és ezért NÉMÁN blokkolódtak:
+  //  - www.clarity.ms: a Microsoft Clarity szkriptje (a felvételek a régiós
+  //    *.clarity.ms aldomainekre mennek), enélkül a hőtérkép üresen maradt;
+  //  - pagead2.googlesyndication.com és googleads.g.doubleclick.net: ide küldi
+  //    a gtag a Google Ads konverziókat. Enélkül a hirdetési konverziómérés
+  //    egyáltalán nem működött, pedig a kód végig ott volt az oldalon.
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.clarity.ms`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com",
   "font-src 'self' data:",
   // blob: — a model-viewer a GLB textúráit blob URL-ként tölti be.
   // ws://localhost CSAK fejlesztésben: a Next HMR websocketjét a 'self' nem
   // fedi le, enélkül a helyi fejlesztés folyamatosan újracsatlakozni próbál.
-  `connect-src 'self' blob: data:${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""} https://*.supabase.co wss://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com`,
+  `connect-src 'self' blob: data:${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""} https://*.supabase.co wss://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.clarity.ms https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net`,
   "frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net",
   "media-src 'self'",
   "worker-src 'self' blob:",

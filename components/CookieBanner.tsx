@@ -37,20 +37,22 @@ export function CookieBanner() {
 
   return (
     <div aria-live="polite" className="cookie-banner" role="dialog" aria-label="Süti beállítások">
+      {/* Rövid szöveg: a banner az első képernyőn jelenik meg, ott minden
+          fölösleges sor a hero CTA-t takarja. A részletek egy kattintásra
+          vannak, és a döntés bármikor módosítható a láblécből. */}
       <div className="cookie-copy">
-        <strong>Sütiket használnánk a méréshez.</strong>
+        <strong>Sütik a méréshez</strong>
         <p>
-          A működéshez szükséges sütik mindig aktívak. A statisztikai és hirdetési sütikhez a te
-          engedélyed kell — ezekből látom, mi működik az oldalon. Bármikor meggondolhatod magad.{" "}
-          <Link href="/adatkezeles">Részletek</Link>
+          A működéshez szükségesek mindig aktívak. A statisztikai és hirdetési sütikhez a te
+          engedélyed kell. <Link href="/adatkezeles">Részletek</Link>
         </p>
       </div>
       <div className="cookie-actions">
         <button className="cookie-ghost" onClick={() => decide("denied")} type="button">
-          Csak a szükségesek
+          Csak a szükséges
         </button>
         <button className="cookie-accept" onClick={() => decide("granted")} type="button">
-          Rendben, elfogadom
+          Elfogadom
         </button>
       </div>
     </div>

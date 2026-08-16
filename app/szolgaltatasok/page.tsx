@@ -70,11 +70,10 @@ const specialCases: Array<[string, string, string]> = [
 const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: string; copy: string }> = [
   { Icon: IconGlobe, title: "Vágyott domain", copy: "Írj három névötletet prioritási sorrendben. Előfizetésnél a regisztrációt és a megújítást én intézem." },
   { Icon: IconKey, title: "Technikai teendők", copy: "Előfizetésnél nincs Vercel-, Supabase- vagy tárhelyfiók: minden infrastruktúrát a ProjectEdge kezel." },
-  // A logótervezés a briefben csak egyszeri projektnél kérhető (ott van ajánlat,
-  // amiben tételként szerepelhet). Bérlésnél nincs ajánlati kör, ezért ott
-  // szöveges (wordmark) logót készítek a márkanévből — ezt itt is kimondjuk,
-  // különben az ár olyasmit ígérne, amit a brief nem tud befogadni.
-  { Icon: IconShapes, title: "Logó", copy: `Lehetőleg vektoros (ai/svg/pdf). Ha nincs: bérlésnél letisztult szöveges logót készítek a márkanévből, felár nélkül. Egyszeri projektnél kérhetsz teljes logótervezést ${formatHuf(LOGO_DESIGN_PRICE)} egyszeri felárért, ami az ajánlatban külön tételként szerepel.` },
+  // A logótervezés MINDEN konstrukcióban kérhető — bérlésnél is, mindhárom
+  // csomagban. A brief és az ügyfélkapu is így működik; korábban ez az oldal
+  // egyedül állította, hogy csak egyszeri projektnél elérhető.
+  { Icon: IconShapes, title: "Logó", copy: `Lehetőleg vektoros (ai/svg/pdf). Ha nincs: letisztult szöveges logót készítek a márkanévből, felár nélkül. Teljes logótervezést bármelyik havidíjas csomagnál és egyszeri projektnél is kérhetsz ${formatHuf(LOGO_DESIGN_PRICE)} egyszeri felárért — bérlésnél a projekt indításakor kapsz rá fizetési adatokat, egyszeri projektnél az ajánlatban külön tételként szerepel.` },
   { Icon: IconDroplet, title: "Színek, betűtípus", copy: "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod." },
   { Icon: IconPen, title: "Szövegek", copy: "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem." },
   { Icon: IconCamera, title: "Képek", copy: "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom." },
@@ -93,9 +92,9 @@ export default function ServicesPage() {
         <h1>Annyit építek, amennyi kell.</h1>
         <p>
           A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem — a domaintől a
-          karbantartásig mindent én intézek, induló díj nélkül. Ha egy idő után a sajátod lenne,
-          bármikor kivásárolhatod, és akkor a forráskódot is átadom. Meglévő oldal átalakítása és
-          webapp nem bérelhető: azok egyszeri, egyedi projektek.
+          karbantartásig mindent én intézek. Külön belépési díj nincs: az első havidíj indítja a
+          munkát. Ha egy idő után a sajátod lenne, bármikor kivásárolhatod, és akkor a forráskódot is
+          átadom. Meglévő oldal átalakítása és webapp nem bérelhető: azok egyszeri, egyedi projektek.
         </p>
       </section>
 

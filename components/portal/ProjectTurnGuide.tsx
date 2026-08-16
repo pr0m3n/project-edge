@@ -55,7 +55,7 @@ function buildGuide(project: Project): Guide | null {
       if (project.commercial_model === "subscription") {
         return project.deposit_transfer_reported
           ? { who: "studio", headline: "Ellenőrizzük az első havidíjat", detail: "Jelezted az utalást. Amint jóváhagytuk, elindul a weboldal elkészítése." }
-          : { who: "client", headline: "Fizesd be az első havidíjat", detail: "Nincs induló díj: az első havi szolgáltatási díj indítja el a kivitelezést." };
+          : { who: "client", headline: "Fizesd be az első havidíjat", detail: "Az első havi szolgáltatási díj indítja el a kivitelezést. Ezen felül nincs külön belépési vagy beállítási díj." };
       }
       return project.deposit_transfer_reported
         ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }

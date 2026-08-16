@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
+import { supportResumePath } from "@/lib/support-link";
 
 type Params = { params: Promise<{ ticketId: string }> };
 
@@ -34,7 +35,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!body || body.length > 5_000) return NextResponse.json({ error: "Érvénytelen üzenet." }, { status: 400 });
 
   const admin = createServerSupabaseAdminClient();
-  const { data: ticket } = await admin.from("support_tickets").select("id, name, email, status").eq("id", ticketId).maybeSingle();
+  const { data: ticket } = await admin.from("support_tickets").select("id, name, email, status, visitor_token").eq("id", ticketId).maybeSingle();
   if (!ticket) return NextResponse.json({ error: "A ticket nem található." }, { status: 404 });
   if (ticket.status === "closed") return NextResponse.json({ error: "A ticket lezárt." }, { status: 409 });
 
@@ -45,14 +46,17 @@ export async function POST(request: Request, { params }: Params) {
   }).select("id, ticket_id, sender, body, created_at").single();
   if (error || !message) return NextResponse.json({ error: "A válasz mentése nem sikerült." }, { status: 500 });
 
+  // A link a `visitor_token`-t hordozza a hash-ében, tehát a beszélgetés
+  // bármelyik eszközön folytatható — nem csak abban a böngészőben, amelyikben
+  // elindult.
   const emailResult = await sendProjectEdgeEmail({
     to: ticket.email,
     subject: "Új válasz érkezett a ProjectEdge-től",
     eyebrow: "PROJECTEDGE · SUPPORT VÁLASZ",
     preheader: "Új válasz érkezett a support beszélgetésedben.",
-    message: `Szia ${ticket.name}!\n\nÚj válasz érkezett:\n\n${body}\n\nA beszélgetést azon az eszközön tudod folytatni, amelyiken elindítottad.`,
-    link: "/",
-    linkLabel: "Beszélgetés megnyitása",
+    message: `Szia ${ticket.name}!\n\nÚj válasz érkezett:\n\n${body}\n\nA lenti gombbal bármelyik eszközön folytathatod a beszélgetést — telefonon is.`,
+    link: supportResumePath(ticket.id, ticket.visitor_token),
+    linkLabel: "Beszélgetés folytatása",
     details: [{ label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }]
   });
 

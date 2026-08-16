@@ -54,7 +54,9 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
         <ol>{content.process.map((item, index) => <li key={item.title}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{item.title}</h3><p>{item.copy}</p></div></li>)}</ol>
       </section>
 
-      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Menedzselt weboldal, 0 Ft induló díjjal.</h2><p>A domain, a tárhely és a folyamatos karbantartás mind benne van a fix havidíjban — rugalmas vételi opcióval.</p></div><PriceEstimator /></section>
+      {/* A PriceEstimator saját bevezetője itt kikapcsolva: a fenti section-head
+          már ugyanazt mondja el, két azonos árfejléc volt egymás alatt. */}
+      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2><p>A domain, a tárhely és a folyamatos karbantartás mind benne van a havidíjban — külön belépési díj nélkül, rugalmas vételi opcióval.</p></div><PriceEstimator showLead={false} /></section>
 
       <section className="faq-section">
         <div className="section-head"><p className="micro-label dark">GYIK</p><h2>A döntés előtt.</h2></div>
