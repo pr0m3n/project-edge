@@ -6,6 +6,10 @@ import { useState } from "react";
  * A /szolgaltatasok korábban egyetlen, 4100 pixel magas és 857 szavas
  * szekcióban sorolta fel az összes helyzetet. Itt a látogató előbb a saját
  * állapotát választja ki, és onnantól csak a rá tartozó ágat olvassa.
+ *
+ * Megjelenés: a választó egy tömör kapcsolósáv (nem három nagy kártya), az
+ * eredmény pedig EGYETLEN sötét panel hajszálvonalas oszlopokkal — így nincs
+ * doboz a dobozban, amitől a szekció korábban zsúfoltnak hatott.
  */
 
 export type Branch = {
@@ -22,23 +26,24 @@ export function SolutionBranches({ branches }: { branches: Branch[] }) {
 
   return (
     <div className="branch-block">
-      <div className="branch-tabs" role="tablist" aria-label="Hol tartasz most?">
+      <div className="branch-switch" role="tablist" aria-label="Hol tartasz most?">
         {branches.map((branch) => (
           <button
             aria-controls={`branch-panel-${branch.id}`}
             aria-selected={branch.id === activeId}
-            className={`branch-tab${branch.id === activeId ? " on" : ""}`}
+            className={`branch-pill${branch.id === activeId ? " on" : ""}`}
             id={`branch-tab-${branch.id}`}
             key={branch.id}
             onClick={() => setActiveId(branch.id)}
             role="tab"
             type="button"
           >
-            <strong>{branch.label}</strong>
-            <span>{branch.hint}</span>
+            {branch.label}
           </button>
         ))}
       </div>
+
+      <p className="branch-hint" key={`hint-${active.id}`}>{active.hint}</p>
 
       <div
         aria-labelledby={`branch-tab-${active.id}`}
@@ -47,23 +52,28 @@ export function SolutionBranches({ branches }: { branches: Branch[] }) {
         key={active.id}
         role="tabpanel"
       >
-        <div className="branch-cards">
+        <div className="branch-cols" data-count={active.cards.length}>
           {active.cards.map((card, index) => (
-            <article className="solution-card" key={card.type} style={{ "--i": index } as React.CSSProperties}>
+            <article className="branch-col" key={card.type} style={{ "--i": index } as React.CSSProperties}>
               <h3>{card.type}</h3>
-              <p className="solution-who">{card.who}</p>
-              <div className="solution-stack">
-                <span>Mit használok</span>
-                <p>{card.stack}</p>
-              </div>
+              <dl>
+                <div>
+                  <dt>Kinek szól</dt>
+                  <dd>{card.who}</dd>
+                </div>
+                <div>
+                  <dt>Mit használok</dt>
+                  <dd>{card.stack}</dd>
+                </div>
+              </dl>
             </article>
           ))}
         </div>
 
         {active.extras.length > 0 && (
-          <div className="special-cases">
+          <div className="branch-extras">
             {active.extras.map((extra) => (
-              <div className="special-case-row" key={extra.title}>
+              <div className="branch-extra" key={extra.title}>
                 <div>
                   <strong>{extra.title}</strong>
                   <span>{extra.copy}</span>
