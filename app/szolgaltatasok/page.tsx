@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import { BuildTower } from "@/components/BuildTower";
+import { SolutionBranches, type Branch } from "@/components/SolutionBranches";
 import { LOGO_DESIGN_PRICE, formatHuf } from "@/lib/subscriptions";
 import {
   IconGlobe,
@@ -60,11 +62,43 @@ const solutions: Array<{
   }
 ];
 
-// Ezek nem illenek a fenti, egyszeri projekt-becslőbe (egyedi ajánlat, illetve
-// havi visszatérő díj), ezért külön, egyszerű sorként jelennek meg.
-const specialCases: Array<[string, string, string]> = [
-  ["Webshop kell", "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel — bevált alapra építek (Shopify / WooCommerce).", "Egyedi ajánlat"],
-  ["Meglévő oldal gondozása (nem tőlem származó oldalra)", "Már van egy működő oldalad mástól, és kell valaki, aki figyel rá: frissítés, mentés, mérés, apró javítások, havi riport. Ez NEM a weboldal-bérlés — ott a gondozás már benne van a havidíjban.", "15 000 – 35 000 Ft / hó"]
+// A négy megoldás és a két különleges eset a látogató kiindulási helyzete
+// szerint van ágakba rendezve. Korábban mind a hat egyetlen, 4100 pixel magas
+// szekcióban állt egymás alatt — mindenki elolvasta a másik háromnak szólót is.
+const branches: Branch[] = [
+  {
+    id: "uj",
+    label: "Még nincs oldalam",
+    hint: "Most indulok, vagy nincs online jelenlétem",
+    cards: [solutions[0], solutions[1]],
+    extras: []
+  },
+  {
+    id: "van",
+    label: "Van, de nem hoz ügyfelet",
+    hint: "Lassú, elavult, vagy nem érkezik rajta megkeresés",
+    cards: [solutions[2]],
+    extras: [
+      {
+        title: "Meglévő oldal gondozása (nem tőlem származó oldalra)",
+        copy: "Már van egy működő oldalad mástól, és kell valaki, aki figyel rá: frissítés, mentés, mérés, apró javítások, havi riport. Ez NEM a weboldal-bérlés — ott a gondozás már benne van a havidíjban.",
+        price: "15 000 – 35 000 Ft / hó"
+      }
+    ]
+  },
+  {
+    id: "rendszer",
+    label: "Egyedi rendszer kell",
+    hint: "Belépés, adatbázis, ügyfélkapu, webshop",
+    cards: [solutions[3]],
+    extras: [
+      {
+        title: "Webshop kell",
+        copy: "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel — bevált alapra építek (Shopify / WooCommerce).",
+        price: "Egyedi ajánlat"
+      }
+    ]
+  }
 ];
 
 const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: string; copy: string }> = [
@@ -87,15 +121,18 @@ export default function ServicesPage() {
   return (
     <main className="site-shell light-page">
       <SiteNav />
-      <section className="page-hero compact">
-        <p className="micro-label dark">Szolgáltatások</p>
-        <h1>Annyit építek, amennyi kell.</h1>
-        <p>
-          A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem — a domaintől a
-          karbantartásig mindent én intézek. Külön belépési díj nincs: az első havidíj indítja a
-          munkát. Ha egy idő után a sajátod lenne, bármikor kivásárolhatod, és akkor a forráskódot is
-          átadom. Meglévő oldal átalakítása és webapp nem bérelhető: azok egyszeri, egyedi projektek.
-        </p>
+      {/* A hero korábban egy 57 szavas bekezdéssel indult — a részletek
+          (kivásárlás, mi nem bérelhető) lejjebb, a saját águkban vannak. */}
+      <section className="page-hero compact hero-with-tower">
+        <div>
+          <p className="micro-label dark">Szolgáltatások</p>
+          <h1>Annyit építek, amennyi kell.</h1>
+          <p>
+            A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem. Külön belépési
+            díj nincs — az első havidíj indítja a munkát.
+          </p>
+        </div>
+        <BuildTower level={3} />
       </section>
 
       <section className="service-board">
@@ -114,35 +151,13 @@ export default function ServicesPage() {
           <h2>Megnézem, hol tartasz — és pontosan azt ajánlom, ami kell.</h2>
           <p>
             Nem akarlak rábeszélni egy összetett rendszerre, ha egy jól felépített landing is elég.
-            Először a használati módot választod ki, utána pontosan azt a csomagot, amire szükséged van.
+            Válaszd ki, hol tartasz most — és csak a rád tartozó részt olvasd el.
           </p>
         </div>
-        <div className="solutions-grid">
-          {solutions.map((item) => (
-            <article className="solution-card" key={item.type}>
-              <h3>{item.type}</h3>
-              <p className="solution-who">{item.who}</p>
-              <div className="solution-stack">
-                <span>Mit használok</span>
-                <p>{item.stack}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+
+        <SolutionBranches branches={branches} />
 
         <PriceEstimator />
-
-        <div className="special-cases">
-          {specialCases.map(([title, copy, price]) => (
-            <div className="special-case-row" key={title}>
-              <div>
-                <strong>{title}</strong>
-                <span>{copy}</span>
-              </div>
-              <b>{price}</b>
-            </div>
-          ))}
-        </div>
 
         <p className="solutions-note">
           A bérlés első hónapja előre fizetendő. Hűségidő nincs, bármikor lemondható vagy
