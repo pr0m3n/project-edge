@@ -109,7 +109,7 @@ const bring: Array<{ Icon: (props: { size?: number }) => ReactElement; title: st
   // A logótervezés MINDEN konstrukcióban kérhető — bérlésnél is, mindhárom
   // csomagban. A brief és az ügyfélkapu is így működik; korábban ez az oldal
   // egyedül állította, hogy csak egyszeri projektnél elérhető.
-  { Icon: IconShapes, title: "Logó", copy: `Lehetőleg vektoros (ai/svg/pdf). Ha nincs: letisztult szöveges logót készítek a márkanévből, felár nélkül. Teljes logótervezést bármelyik havidíjas csomagnál és egyszeri projektnél is kérhetsz ${formatHuf(LOGO_DESIGN_PRICE)} egyszeri felárért — bérlésnél a projekt indításakor kapsz rá fizetési adatokat, egyszeri projektnél az ajánlatban külön tételként szerepel.` },
+  { Icon: IconShapes, title: "Logó", copy: `Lehetőleg vektoros (ai/svg/pdf). Ha nincs: letisztult szöveges logót készítek a márkanévből, felár nélkül. Teljes logótervezést bármelyik havidíjas csomagnál kérhetsz ${formatHuf(LOGO_DESIGN_PRICE)} egyszeri felárért — a projekt indításakor kapsz rá fizetési adatokat.` },
   { Icon: IconDroplet, title: "Színek, betűtípus", copy: "Ha van márkaszíned vagy betűtípusod, jelezd. Ha nincs, rám bízhatod." },
   { Icon: IconPen, title: "Szövegek", copy: "A szövegeket az ár tartalmazza — vázlatból megírom. Ha te írod, azt is szívesen átveszem." },
   { Icon: IconCamera, title: "Képek", copy: "Saját fotók sokat dobnak az oldalon. Ha nincs, stock képpel és segítséggel megoldom." },
@@ -124,7 +124,7 @@ export default function ServicesPage() {
     <main className="site-shell light-page">
       <SiteNav />
       {/* A hero korábban egy 57 szavas bekezdéssel indult — a részletek
-          (kivásárlás, mi nem bérelhető) lejjebb, a saját águkban vannak. */}
+          (kivásárlás, felújítás, egyedi rendszer) lejjebb, a saját águkban vannak. */}
       <section className="page-hero compact hero-with-tower">
         <div>
           <p className="micro-label dark">Szolgáltatások</p>
