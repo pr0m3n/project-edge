@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
-import { IconMessageCircle, IconCompass, IconPenTool, IconGear, IconSparkles, IconPackage, IconWrench, IconLock } from "@/components/icons";
+import { IconMessageCircle, IconPackage, IconWrench, IconLock } from "@/components/icons";
+import { ProcessTimeline, type FlowStep } from "@/components/ProcessTimeline";
 
 export const metadata: Metadata = {
   title: "A közös munka folyamata | ProjectEdge",
@@ -9,41 +10,41 @@ export const metadata: Metadata = {
   alternates: { canonical: "/folyamat" }
 };
 
-const steps = [
+const steps: FlowStep[] = [
   {
     number: "01",
     title: "Átbeszéljük",
     copy: "Kitöltesz egy adatlapot: mid van most, mi nem működik, kiket szeretnél elérni. Írásban vagy gyors hívással is egyeztethetünk.",
     tag: "rugalmas egyeztetés",
-    Icon: IconMessageCircle
+    scene: "brief"
   },
   {
     number: "02",
     title: "Rendet rakok",
     copy: "Összerakom, milyen oldalak kellenek és mi hova kerül. Itt dől el, mire nincs szükséged — hogy ne fizess feleslegesen.",
     tag: "az első 1–2 nap",
-    Icon: IconCompass
+    scene: "terv"
   },
   {
     number: "03",
     title: "Felépítem",
     copy: "Megépítem, mobilra is. A domaint és az élesítést is én intézem. Közben az ügyfélkapun végig látod, hol tartok.",
     tag: "a projekt nagy része",
-    Icon: IconGear
+    scene: "epites"
   },
   {
     number: "04",
     title: "Megnézed és jóváhagyod",
     copy: "Privát előnézeti linken megkapod a kész oldalt. Itt kérsz módosítást, és csak a te jóváhagyásod után kerül élesbe.",
     tag: "nálad a döntés",
-    Icon: IconPenTool
+    scene: "jovahagyas"
   },
   {
     number: "05",
     title: "Finomítom",
     copy: "Indulás után javítom, ami csak éles használatban derül ki. Nem tűnök el az átadás után.",
     tag: "indulás után is",
-    Icon: IconSparkles
+    scene: "finomitas"
   }
 ];
 
@@ -83,19 +84,7 @@ export default function ProcessPage() {
         </p>
       </section>
       <section className="proc-list">
-        {steps.map(({ number, title, copy, tag, Icon }) => (
-          <article className="proc-step" key={number}>
-            <span className="proc-num">{number}</span>
-            <div className="proc-body">
-              <h2>{title}</h2>
-              <p>{copy}</p>
-              <span className="step-tag">{tag}</span>
-            </div>
-            <div className="proc-icon" aria-hidden="true">
-              <Icon size={28} />
-            </div>
-          </article>
-        ))}
+        <ProcessTimeline steps={steps} />
       </section>
       {/* A két konstrukció NEM ugyanazon a folyamaton megy végig: bérlésnél
           nincs ajánlati kör, vásárlásnál viszont van, és átadás is. Korábban egy
