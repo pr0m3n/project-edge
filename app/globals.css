@@ -15316,3 +15316,36 @@ details.admin-collapse summary:hover {
 @media (max-width: 860px) {
   .process-extras { grid-template-columns: 1fr; margin-top: 40px; }
 }
+
+/* Az egyedi rendszer ágának kiútja: nincs ár, nincs űrlap — beszélgetés.
+   Szándékosan halkabb, mint egy csomagválasztó, hogy ne versenyezzen a
+   bérléssel, de egyértelműen cselekvésre hívjon. */
+.branch-talk {
+  align-items: center;
+  border-top: 1px solid rgba(245, 245, 245, 0.11);
+  display: grid;
+  gap: clamp(16px, 2.4vw, 32px);
+  grid-template-columns: 1fr auto;
+  padding: clamp(24px, 3vw, 34px) clamp(26px, 3.4vw, 42px);
+}
+
+.branch-talk strong {
+  color: var(--paper);
+  display: block;
+  font-size: clamp(16px, 1.8vw, 19px);
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.branch-talk p {
+  color: rgba(245, 245, 245, 0.66);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+
+@media (max-width: 860px) {
+  .branch-talk { grid-template-columns: 1fr; }
+  .branch-talk .button { justify-self: start; }
+}

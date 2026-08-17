@@ -30,7 +30,7 @@ const services = [
   ["Kivásárlás bármikor", "A bérelt oldalt egyszeri díjért megveheted: a forráskód, a domain és a hozzáférések a tieddé válnak, az előfizetés pedig lezárul."],
   ["Folyamatos gondozás", "A bérelt oldalt figyelem, frissítem, és a csomag szerinti módosításokat elvégzem. Neked nincs technikai feladatod."],
   ["Díjmentes email továbbítás", "A domainhez tartozó email címekről (pl. info@cegnev.hu) automatikusan továbbítom a leveleket a saját postafiókodba."],
-  ["Egyedi webapp vagy admin", "Belépés, adatbázis, ügyfélkapu csak megvásárolható projektként kérhető."]
+  ["Meglévő oldal felújítása", "A régi oldal nem akadály, hanem kiindulás: a tartalmat áthozom, és ugyanúgy bérelt oldalként épül újra."]
 ];
 
 // Ügyféltípus → megoldás → mire használjuk (az ár a lenti csúszkás becslőben van,
@@ -51,12 +51,12 @@ const solutions: Array<{
     stack: "Egyedi prémium oldal — Next.js + Vercel, igény szerint ügyfélkapuval és ajánlatkérő folyamattal."
   },
   {
-    type: "Már van WordPress oldalad — egyszeri projekt",
-    who: "Van működő oldalad, de lassú, elavult vagy nem hoz ügyfelet — vagy csak frissítés kell.",
-    stack: "Megnézem, mi van benne. Ha jó az alap, marad a WordPress és csak felújítom. Ha gátol, átültetem modern rendszerre — a tartalmat áthozom."
+    type: "Már van oldalad, de nem hoz ügyfelet",
+    who: "Van működő oldalad, de lassú, elavult vagy nem érkezik rajta megkeresés.",
+    stack: "Új oldal épül a helyére, a tartalmat áthozom — ugyanabban a havidíjas konstrukcióban, mint bármelyik új oldal. A domainedet megtartod."
   },
   {
-    type: "Egyedi rendszer, ügyfélkapu, admin — egyszeri projekt",
+    type: "Egyedi rendszer, ügyfélkapu, admin",
     who: "Belépés, adatkezelés, dashboard, foglalás, automatizált folyamatok kellenek.",
     stack: "Egyedi webapp — Next.js + Supabase (adatbázis, belépés, jogosultság) + Vercel. Pont ilyen a ProjectEdge ügyfélkapu is."
   }
@@ -76,7 +76,7 @@ const branches: Branch[] = [
   {
     id: "van",
     label: "Van, de nem hoz ügyfelet",
-    hint: "Lassú, elavult, vagy nem érkezik rajta megkeresés",
+    hint: "Ugyanaz a havidíjas konstrukció — a régi oldal csak a kiindulás",
     cards: [solutions[2]],
     extras: [
       {
@@ -89,15 +89,17 @@ const branches: Branch[] = [
   {
     id: "rendszer",
     label: "Egyedi rendszer kell",
-    hint: "Belépés, adatbázis, ügyfélkapu, webshop",
+    hint: "Belépés, adatbázis, ügyfélkapu — ez az egyetlen, amit nem lehet bérelni",
     cards: [solutions[3]],
-    extras: [
-      {
-        title: "Webshop kell",
-        copy: "Terméket vagy szolgáltatást árulnál online, kosárral és fizetéssel — bevált alapra építek (Shopify / WooCommerce).",
-        price: "Egyedi ajánlat"
-      }
-    ]
+    extras: [],
+    // Egy webapp nem termék, hanem megbízás: nem űrlapon rendelik meg, hanem
+    // beszélgetés után. Ezért itt nincs ár és nincs önkiszolgáló brief —
+    // csak egy kapcsolatfelvételi kiút, hogy ne versenyezzen a bérléssel.
+    talk: {
+      title: "Ilyet nem lehet bérelni.",
+      copy: "Egy belépéssel, adatbázissal és jogosultságkezeléssel működő rendszer több száz órás munka — ez egyszeri, egyedi fejlesztés, saját ajánlattal. Írd le, mire van szükséged, és átbeszéljük.",
+      cta: "Írok róla"
+    }
   }
 ];
 

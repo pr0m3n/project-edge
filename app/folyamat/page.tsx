@@ -92,7 +92,7 @@ export default function ProcessPage() {
       <section className="flow-split" aria-labelledby="flow-split-title">
         <div className="flow-split-head">
           <p className="micro-label">Két útvonal</p>
-          <h2 id="flow-split-title">A lépések attól függenek, bérelsz vagy egyszeri projektet kérsz.</h2>
+          <h2 id="flow-split-title">Bérléssel indulsz — és bármikor a sajátod lehet.</h2>
         </div>
         <div className="flow-split-grid">
           <article>
@@ -105,19 +105,19 @@ export default function ProcessPage() {
               <li>Előnézet, módosítás, jóváhagyás</li>
               <li>Élesítés, majd folyamatos üzemeltetés</li>
             </ol>
-            <p>Nincs ajánlati kör és nincs technikai átadás — az infrastruktúrát végig én kezelem. Ha később a sajátod lenne, a rögzített vételi opcióval bármikor kivásárolhatod.</p>
+            <p>Meglévő oldal felújítása is ezen az úton megy: a régi tartalmat áthozom, és új oldal épül a helyére. Az infrastruktúrát végig én kezelem.</p>
           </article>
           <article>
-            <span>EGYSZERI PROJEKT · webapp, felújítás</span>
+            <span>KIVÁSÁRLÁS · ha a sajátod lenne</span>
             <ol>
-              <li>Kitöltöd az adatlapot</li>
-              <li>Egyedi ajánlatot kapsz, amit elfogadsz</li>
-              <li>Szerződés, majd foglaló utalása</li>
-              <li>Megépítem az oldalt</li>
-              <li>Előnézet, módosítás, jóváhagyás</li>
-              <li>Végszámla, majd vezetett technikai átadás</li>
+              <li>Az oldalad már él, bérlésben</li>
+              <li>Jelzed, hogy élnél a vételi opcióval</li>
+              <li>Megkapod a rögzített egyszeri díjat</li>
+              <li>Szerződés, majd a díj utalása</li>
+              <li>Vezetett technikai átadás lépésenként</li>
+              <li>A forráskód, a domain és a fiókok a tieid</li>
             </ol>
-            <p>Webapp, meglévő oldal felújítása és webshop nem bérelhető — ezek egyszeri, egyedi projektek. Az átadás lépésenként megy az ügyfélkapun, néhány fiókot neked kell létrehoznod, ehhez írásos útmutatót adok.</p>
+            <p>Az átadás lépésenként megy az ügyfélkapun. Néhány fiókot neked kell létrehoznod — ehhez írásos útmutatót adok. A lezárástól még 30 napig díjmentesen javítom, ami elromlik.</p>
           </article>
         </div>
       </section>
