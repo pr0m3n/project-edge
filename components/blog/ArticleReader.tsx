@@ -126,6 +126,20 @@ function Block({ block, storageKey }: { block: BlogBlock; storageKey: string }) 
       return <CompareBlock block={block} />;
     case "checklist":
       return <ChecklistBlock block={block} storageKey={storageKey} />;
+    case "stat":
+      return (
+        <aside className="article-stat">
+          <strong>{block.value}</strong>
+          <span>{block.label}</span>
+          {block.note ? <small>{block.note}</small> : null}
+        </aside>
+      );
+    case "quote":
+      return (
+        <blockquote className="article-pullquote">
+          <p><RichText text={block.text} /></p>
+        </blockquote>
+      );
   }
 }
 

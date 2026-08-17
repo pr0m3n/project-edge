@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { TransitionLink } from "@/components/TransitionLink";
+import { BlogCover } from "@/components/blog/BlogCover";
 import { BLOG_CATEGORIES, formatBlogDate, type BlogPost } from "@/lib/blog";
 
 const ALL = "Összes";
@@ -48,6 +49,9 @@ export function BlogList({ posts }: { posts: BlogPost[] }) {
             href={`/blog/${post.slug}`}
             key={post.slug}
           >
+            <span className="blog-card-art" aria-hidden="true">
+              <BlogCover slug={post.slug} />
+            </span>
             <span className="blog-card-cat">{post.category}</span>
             <h2>{post.title}</h2>
             <p>{post.excerpt}</p>

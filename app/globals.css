@@ -14898,3 +14898,70 @@ details.admin-collapse summary:hover {
   .scene-jovahagyas .sc-check, .scene-finomitas .sc-live { opacity: 1; transform: none; }
   .sc-sliders b::after { width: var(--p); }
 }
+
+/* ============================================================
+   Blog — borítóábrák és két új blokktípus
+   ============================================================ */
+
+.blog-cover { display: block; height: 100%; width: 100%; }
+
+.blog-card-art {
+  border-radius: 14px;
+  display: block;
+  margin-bottom: 18px;
+  overflow: hidden;
+  aspect-ratio: 40 / 21;
+}
+
+.blog-card-art .blog-cover { transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1); }
+.blog-card:hover .blog-card-art .blog-cover { transform: scale(1.04); }
+
+.article-art {
+  border-radius: 18px;
+  margin-top: 28px;
+  overflow: hidden;
+  aspect-ratio: 40 / 21;
+}
+
+/* Nagy szám: a hosszú szövegtömb megtörése egy megjegyezhető állítással. */
+.article-stat {
+  background: var(--ink);
+  border-radius: 20px;
+  color: var(--paper);
+  display: grid;
+  gap: 6px;
+  margin: clamp(28px, 4vw, 44px) 0;
+  padding: clamp(24px, 4vw, 38px);
+  text-align: center;
+}
+
+.article-stat strong {
+  color: var(--ember);
+  font-size: clamp(40px, 7vw, 68px);
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.article-stat span { font-size: clamp(15px, 1.8vw, 19px); font-weight: 800; }
+.article-stat small { color: rgba(245, 245, 245, 0.62); font-size: 14px; line-height: 1.5; }
+
+/* Kiemelt idézet: a cikk egyetlen legfontosabb mondata. */
+.article-pullquote {
+  border-left: 4px solid var(--ember);
+  margin: clamp(26px, 4vw, 42px) 0;
+  padding: 6px 0 6px clamp(18px, 3vw, 28px);
+}
+
+.article-pullquote p {
+  color: var(--ink);
+  font-size: clamp(19px, 2.6vw, 27px);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* A kiemelt kártya teljes szélességű, ott a 40/21 arány 550 pixel magas
+   borítót adna — ezért ott fix, alacsonyabb sáv (az SVG „slice”-ol). */
+.blog-card.featured .blog-card-art { aspect-ratio: auto; height: clamp(180px, 22vw, 250px); }
