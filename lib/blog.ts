@@ -19,7 +19,11 @@ export type BlogBlock =
   /** Kipipálható lista — a látogató végig tudja vezetni magát a saját oldalán. */
   | { type: "checklist"; title: string; intro?: string; items: string[] }
   /** Két oszlop: mi a gyakori hiba és mi helyette a jó megoldás. */
-  | { type: "compare"; title: string; rows: Array<{ label: string; bad: string; good: string }> };
+  | { type: "compare"; title: string; rows: Array<{ label: string; bad: string; good: string }> }
+  /** Nagy szám + magyarázat: megtöri a szövegtömböt, és megjegyezhető. */
+  | { type: "stat"; value: string; label: string; note?: string }
+  /** A cikk egyetlen legfontosabb állítása, kiemelve. */
+  | { type: "quote"; text: string };
 
 export type BlogPost = {
   slug: string;
@@ -56,6 +60,10 @@ const posts: BlogPost[] = [
       {
         type: "p",
         text: "Az emberek nem olvassák a weboldalakat, hanem **pásztázzák**. Néhány másodpercet kapsz arra, hogy három kérdésre válaszolj: hol vagyok, mit kapok itt, és mi a következő lépés. Ha ebből bármelyik hiányzik, a látogató visszalép — nem azért, mert nem tetszett neki, hanem mert nem érte meg neki gondolkodni rajta."
+      },
+      {
+        type: "quote",
+        text: "A szépség és az eredmény két külön dolog. Az egyik arról szól, milyen érzést kelt az oldal — a másik arról, hogy a látogató érti-e, mit nyer vele."
       },
       { type: "h2", text: "A négy leggyakoribb ok" },
       { type: "h3", text: "1. Az első képernyő magadról szól, nem a látogatóról" },
@@ -160,6 +168,12 @@ const posts: BlogPost[] = [
         type: "callout",
         title: "Az árban a legfontosabb kérdés nem az összeg",
         text: "Hanem az, hogy mi NINCS benne. A domain? A tárhely? A szöveg? A későbbi módosítás? Két ajánlat közül gyakran az olcsóbb kerül többe, mire minden hiányzó tétel előkerül."
+      },
+      {
+        type: "stat",
+        value: "5 tétel",
+        label: "ennyiből áll össze egy weboldal ára",
+        note: "Gondolkodás, szöveg, design, fejlesztés, üzemeltetés. Az ajánlatok jellemzően abban térnek el, hogy ebből mennyi hiányzik."
       },
       { type: "h2", text: "Egyszeri vásárlás vagy havidíj?" },
       {

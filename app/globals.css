@@ -14339,3 +14339,980 @@ details.admin-collapse summary:hover {
     text-align: left;
   }
 }
+
+/* ============================================================
+   Blokk-torony (/szolgaltatasok hero)
+   Izometrikus, CSS-transzformált dobozok — szándékosan nem .glb,
+   mert ez az oldal fizetett forgalmat is fogad, és egy modell
+   1-2 MB lenne a ~2 KB helyett.
+   ============================================================ */
+
+.build-tower {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  justify-content: center;
+  min-height: 380px;
+  perspective: 1400px;
+}
+
+/* A blokkok a stage tetejéből felfelé épülnek, ezért a stage-nek lejjebb kell
+   ülnie, különben a torony csúcsa benyúl a lebegő menüsáv alá. */
+.tower-stage {
+  height: 190px;
+  margin-top: 150px;
+  position: relative;
+  transform: rotateX(58deg) rotateZ(45deg);
+  transform-style: preserve-3d;
+  width: 160px;
+}
+
+.tower-ground {
+  background: radial-gradient(ellipse at center, rgba(118, 171, 174, 0.32), transparent 68%);
+  border-radius: 50%;
+  bottom: -34px;
+  height: 190px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 260px;
+}
+
+.tower-block {
+  height: 42px;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  transform: translateZ(0) translateY(26px);
+  transform-style: preserve-3d;
+  width: 160px;
+}
+
+.build-tower.is-live .tower-block.on {
+  animation: tower-rise 640ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 130ms);
+}
+
+@keyframes tower-rise {
+  from { opacity: 0; transform: translateZ(calc(var(--i) * 42px + 60px)); }
+  to   { opacity: 1; transform: translateZ(calc(var(--i) * 42px)); }
+}
+
+.tower-face {
+  border-radius: 3px;
+  display: block;
+  position: absolute;
+}
+
+.tower-face.top {
+  background: linear-gradient(135deg, #3d4753, #2b333c);
+  height: 160px;
+  inset: 0;
+  width: 160px;
+}
+
+/* A rétegek 34px vastagok, de 42px-enként követik egymást: a 8px légrés
+   teszi láthatóvá, hogy ez több különálló elem egymásra rakva, nem egy tömb. */
+.tower-face.left {
+  background: #1f262e;
+  border-top: 1px solid rgba(245, 245, 245, 0.09);
+  height: 34px;
+  transform: rotateX(-90deg);
+  transform-origin: bottom;
+  top: 160px;
+  width: 160px;
+}
+
+.tower-face.right {
+  background: #262f38;
+  border-top: 1px solid rgba(245, 245, 245, 0.09);
+  height: 160px;
+  left: 160px;
+  transform: rotateY(90deg);
+  transform-origin: left;
+  top: 0;
+  width: 34px;
+}
+
+/* Rétegenként egy árnyalattal világosabb: enélkül a torony egyetlen tömör
+   hasábnak látszik, és pont az vész el belőle, hogy ez több egymásra rakott
+   elem. A ground az első gyerek, ezért a blokkok a 2.-tól indulnak. */
+.tower-block:nth-child(2) .tower-face.left { background: #161c22; }
+.tower-block:nth-child(2) .tower-face.right { background: #1c232a; }
+.tower-block:nth-child(3) .tower-face.left { background: #1b222a; }
+.tower-block:nth-child(3) .tower-face.right { background: #222a33; }
+.tower-block:nth-child(4) .tower-face.left { background: #202832; }
+.tower-block:nth-child(4) .tower-face.right { background: #28313b; }
+.tower-block:nth-child(5) .tower-face.left { background: #252e39; }
+.tower-block:nth-child(5) .tower-face.right { background: #2e3843; }
+.tower-block:nth-child(6) .tower-face.left { background: #2a3441; }
+.tower-block:nth-child(6) .tower-face.right { background: #343f4c; }
+
+/* A legfelső blokk viszi a márkaszínt — ez a „kész, látszik az interneten" réteg. */
+.tower-block.crown .tower-face.top { background: linear-gradient(135deg, #ff7043, var(--ember)); }
+.tower-block.crown .tower-face.right { background: #d9410f; }
+.tower-block.crown .tower-face.left { background: #b8360b; }
+
+.tower-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  max-width: 340px;
+  padding: 0;
+}
+
+.tower-legend li {
+  background: rgba(48, 56, 65, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 7px 14px;
+}
+
+/* ============================================================
+   Elágazás (/szolgaltatasok) — a korábbi 857 szavas fal helyett
+   Tömör kapcsolósáv + EGYETLEN sötét panel hajszálvonalas oszlopokkal.
+   A korábbi „három nagy kártya fölött két nagy kártya" felállás
+   doboz-a-dobozban hatást keltett.
+   ============================================================ */
+
+.branch-block { display: grid; gap: 18px; }
+
+.branch-switch {
+  background: rgba(48, 56, 65, 0.07);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 4px;
+  justify-self: start;
+  max-width: 100%;
+  padding: 5px;
+}
+
+.branch-pill {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: clamp(13px, 1.4vw, 15px);
+  font-weight: 850;
+  letter-spacing: -0.005em;
+  padding: 11px clamp(14px, 1.8vw, 24px);
+  transition: background 220ms ease, color 220ms ease;
+  white-space: nowrap;
+}
+
+.branch-pill:hover { color: var(--ink); }
+
+.branch-pill.on {
+  background: var(--ink);
+  box-shadow: 0 6px 18px rgba(17, 23, 28, 0.2);
+  color: var(--paper);
+}
+
+.branch-hint {
+  animation: branch-in 240ms ease;
+  color: var(--muted);
+  font-size: clamp(14px, 1.5vw, 16px);
+  margin: 0;
+}
+
+.branch-panel {
+  animation: branch-in 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--ink);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+@keyframes branch-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.branch-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.branch-cols[data-count="1"] { grid-template-columns: 1fr; }
+
+.branch-col {
+  border-right: 1px solid rgba(245, 245, 245, 0.11);
+  padding: clamp(26px, 3.4vw, 42px);
+}
+
+.branch-col:last-child { border-right: 0; }
+
+.branch-col h3 {
+  color: var(--paper);
+  font-size: clamp(19px, 2.2vw, 26px);
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin: 0 0 22px;
+}
+
+.branch-col dl { display: grid; gap: 18px; margin: 0; }
+
+.branch-col dt {
+  color: var(--aqua);
+  font-size: 10.5px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+
+.branch-col dd {
+  color: rgba(245, 245, 245, 0.76);
+  font-size: clamp(14px, 1.5vw, 15.5px);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.branch-extras { border-top: 1px solid rgba(245, 245, 245, 0.11); }
+
+.branch-extra {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr auto;
+  padding: clamp(20px, 2.6vw, 28px) clamp(26px, 3.4vw, 42px);
+}
+
+.branch-extra strong {
+  color: var(--paper);
+  display: block;
+  font-size: clamp(15px, 1.6vw, 17px);
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.branch-extra span {
+  color: rgba(245, 245, 245, 0.6);
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.branch-extra b {
+  background: rgba(255, 87, 34, 0.14);
+  border: 1px solid rgba(255, 87, 34, 0.4);
+  border-radius: 999px;
+  color: #ff8a5c;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .branch-switch { border-radius: 18px; display: grid; width: 100%; }
+  .branch-pill { text-align: left; white-space: normal; }
+  .branch-cols { grid-template-columns: 1fr; }
+  .branch-col { border-bottom: 1px solid rgba(245, 245, 245, 0.11); border-right: 0; }
+  .branch-col:last-child { border-bottom: 0; }
+  .branch-extra { grid-template-columns: 1fr; }
+  .branch-extra b { justify-self: start; }
+  .tower-stage { transform: rotateX(58deg) rotateZ(45deg) scale(0.78); }
+  .build-tower { min-height: 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .build-tower.is-live .tower-block.on,
+  .branch-panel,
+  .branch-hint {
+    animation: none;
+    opacity: 1;
+  }
+  .build-tower.is-live .tower-block.on { transform: translateZ(calc(var(--i) * 42px)); }
+}
+
+/* A hero két oszlopra bomlik, ha torony is van benne. */
+.page-hero.hero-with-tower {
+  align-items: center;
+  display: grid;
+  gap: clamp(24px, 5vw, 64px);
+  grid-template-columns: 1.05fr 0.95fr;
+}
+
+@media (max-width: 860px) {
+  .page-hero.hero-with-tower { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Folyamat-idővonal (/folyamat)
+   Egy folytonos vonal rajzolódik ki görgetésre, a lépések mellett
+   nem ikon áll, hanem egy jelenet, ami eljátssza az adott fázist.
+   ============================================================ */
+
+.flow-rail {
+  --p: 0;
+  color: rgba(118, 171, 174, 0.55);
+  display: grid;
+  gap: clamp(64px, 9vw, 130px);
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: clamp(40px, 7vw, 90px) clamp(18px, 5vw, 60px) clamp(60px, 9vw, 120px);
+  position: relative;
+}
+
+.flow-line {
+  height: 100%;
+  left: clamp(10px, 3.4vw, 44px);
+  position: absolute;
+  top: 0;
+  width: 60px;
+}
+
+.flow-line path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--p));
+}
+
+.flow-step {
+  align-items: center;
+  display: grid;
+  gap: clamp(20px, 4vw, 48px);
+  grid-template-columns: 46px 1fr 0.86fr;
+  opacity: 0.42;
+  transform: translateY(12px);
+  transition: opacity 520ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.flow-step.lit { opacity: 1; transform: translateY(0); }
+
+.flow-node {
+  align-items: center;
+  display: flex;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.flow-node b {
+  background: var(--night);
+  border: 2px solid rgba(118, 171, 174, 0.5);
+  border-radius: 50%;
+  display: block;
+  height: 15px;
+  transition: background 420ms ease, border-color 420ms ease, box-shadow 420ms ease, transform 420ms ease;
+  width: 15px;
+}
+
+.flow-step.lit .flow-node b {
+  background: var(--ember);
+  border-color: var(--ember);
+  box-shadow: 0 0 0 6px rgba(255, 87, 34, 0.16);
+  transform: scale(1.2);
+}
+
+.flow-num {
+  color: var(--ember);
+  display: block;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  margin-bottom: 8px;
+}
+
+.flow-copy h2 {
+  color: var(--paper);
+  font-size: clamp(24px, 3.2vw, 40px);
+  line-height: 1.06;
+  margin: 0 0 12px;
+}
+
+.flow-copy p {
+  color: rgba(245, 245, 245, 0.74);
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.62;
+  margin: 0 0 14px;
+  max-width: 46ch;
+}
+
+/* ---- jelenetek ---- */
+
+.flow-visual { display: flex; justify-content: flex-end; }
+
+.flow-scene {
+  background: linear-gradient(150deg, rgba(245, 245, 245, 0.07), rgba(245, 245, 245, 0.02));
+  border: 1px solid rgba(245, 245, 245, 0.12);
+  border-radius: 18px;
+  display: grid;
+  gap: 10px;
+  min-height: 168px;
+  overflow: hidden;
+  padding: 18px;
+  position: relative;
+  width: min(320px, 100%);
+}
+
+.sc-label {
+  color: rgba(245, 245, 245, 0.45);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+/* 01 — az adatlap sorai maguktól kitöltődnek */
+.scene-brief i {
+  background: rgba(245, 245, 245, 0.16);
+  border-radius: 999px;
+  display: block;
+  height: 11px;
+  width: 0;
+}
+
+.flow-step.lit .scene-brief i {
+  animation: sc-type 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d);
+}
+
+@keyframes sc-type { to { width: var(--w); } }
+
+.scene-brief .sc-caret {
+  background: var(--ember);
+  bottom: 18px;
+  height: 13px;
+  left: 18px;
+  position: absolute;
+  width: 2px;
+}
+
+.flow-step.lit .scene-brief .sc-caret { animation: sc-blink 900ms steps(2) infinite; }
+
+@keyframes sc-blink { 50% { opacity: 0; } }
+
+/* 02 — a drótváz dobozai a helyükre pattannak */
+.sc-wire { display: grid; gap: 7px; grid-template-columns: repeat(3, 1fr); }
+.sc-wire b {
+  background: rgba(245, 245, 245, 0.1);
+  border: 1px dashed rgba(245, 245, 245, 0.24);
+  border-radius: 7px;
+  display: block;
+  height: 30px;
+  opacity: 0;
+  transform: scale(0.84);
+}
+.sc-wire b:first-child { grid-column: span 3; height: 34px; }
+.sc-wire b:nth-child(5) { grid-column: span 2; }
+
+.flow-step.lit .sc-wire b {
+  animation: sc-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--d);
+}
+
+@keyframes sc-pop { to { opacity: 1; transform: scale(1); } }
+
+/* 03 — kódsorok futnak, majd végigsöpör rajtuk a szín */
+.sc-code { display: grid; gap: 8px; }
+.sc-code i {
+  background: linear-gradient(90deg, rgba(118, 171, 174, 0.5), rgba(245, 245, 245, 0.14));
+  border-radius: 999px;
+  display: block;
+  height: 9px;
+  width: 0;
+}
+.flow-step.lit .sc-code i { animation: sc-type 520ms ease forwards; animation-delay: var(--d); }
+
+.scene-epites .sc-sweep {
+  background: linear-gradient(90deg, transparent, rgba(255, 87, 34, 0.32), transparent);
+  bottom: 0;
+  left: -40%;
+  position: absolute;
+  top: 0;
+  width: 40%;
+}
+.flow-step.lit .scene-epites .sc-sweep { animation: sc-sweep 1700ms 900ms ease-in-out infinite; }
+
+@keyframes sc-sweep { to { left: 120%; } }
+
+/* 04 — előnézeti keret, majd pipa */
+.sc-frame {
+  border: 1px solid rgba(245, 245, 245, 0.16);
+  border-radius: 10px;
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+}
+.sc-bar { background: rgba(245, 245, 245, 0.2); border-radius: 999px; height: 7px; width: 54%; }
+.sc-block { background: rgba(245, 245, 245, 0.1); border-radius: 6px; display: block; height: 26px; }
+.sc-block.two { width: 62%; }
+
+.scene-jovahagyas .sc-check {
+  align-items: center;
+  background: #2f9e6b;
+  border-radius: 50%;
+  bottom: 16px;
+  color: #fff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  right: 16px;
+  transform: scale(0.5);
+  width: 34px;
+}
+.flow-step.lit .scene-jovahagyas .sc-check {
+  animation: sc-pop 460ms 760ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 05 — csúszkák beállnak, kigyullad az ÉLES jelzés */
+.sc-sliders { display: grid; gap: 12px; padding-top: 4px; }
+.sc-sliders b {
+  background: rgba(245, 245, 245, 0.12);
+  border-radius: 999px;
+  display: block;
+  height: 6px;
+  position: relative;
+}
+.sc-sliders b::after {
+  background: var(--aqua);
+  border-radius: 999px;
+  content: "";
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 8%;
+}
+.flow-step.lit .sc-sliders b::after {
+  animation: sc-slide 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d);
+}
+
+@keyframes sc-slide { to { width: var(--p); } }
+
+.scene-finomitas .sc-live {
+  background: rgba(47, 158, 107, 0.16);
+  border: 1px solid rgba(47, 158, 107, 0.5);
+  border-radius: 999px;
+  bottom: 16px;
+  color: #56c893;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  opacity: 0;
+  padding: 5px 12px;
+  position: absolute;
+  right: 16px;
+}
+.flow-step.lit .scene-finomitas .sc-live { animation: sc-fade 500ms 1100ms forwards; }
+
+@keyframes sc-fade { to { opacity: 1; } }
+
+@media (max-width: 900px) {
+  .flow-step { grid-template-columns: 34px 1fr; }
+  .flow-visual { grid-column: 2; justify-content: flex-start; }
+  .flow-node { height: 34px; width: 34px; }
+  .flow-line { left: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-step, .flow-step.lit { opacity: 1; transform: none; }
+  .flow-scene *, .flow-scene *::after { animation: none !important; }
+  .scene-brief i { width: var(--w); }
+  .sc-code i { width: var(--w); }
+  .sc-wire b { opacity: 1; transform: none; }
+  .scene-jovahagyas .sc-check, .scene-finomitas .sc-live { opacity: 1; transform: none; }
+  .sc-sliders b::after { width: var(--p); }
+}
+
+/* ============================================================
+   Blog — borítóábrák és két új blokktípus
+   ============================================================ */
+
+.blog-cover { display: block; height: 100%; width: 100%; }
+
+.blog-card-art {
+  border-radius: 14px;
+  display: block;
+  margin-bottom: 18px;
+  overflow: hidden;
+  aspect-ratio: 40 / 21;
+}
+
+.blog-card-art .blog-cover { transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1); }
+.blog-card:hover .blog-card-art .blog-cover { transform: scale(1.04); }
+
+.article-art {
+  border-radius: 18px;
+  margin-top: 28px;
+  overflow: hidden;
+  aspect-ratio: 40 / 21;
+}
+
+/* Nagy szám: a hosszú szövegtömb megtörése egy megjegyezhető állítással. */
+.article-stat {
+  background: var(--ink);
+  border-radius: 20px;
+  color: var(--paper);
+  display: grid;
+  gap: 6px;
+  margin: clamp(28px, 4vw, 44px) 0;
+  padding: clamp(24px, 4vw, 38px);
+  text-align: center;
+}
+
+.article-stat strong {
+  color: var(--ember);
+  font-size: clamp(40px, 7vw, 68px);
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.article-stat span { font-size: clamp(15px, 1.8vw, 19px); font-weight: 800; }
+.article-stat small { color: rgba(245, 245, 245, 0.62); font-size: 14px; line-height: 1.5; }
+
+/* Kiemelt idézet: a cikk egyetlen legfontosabb mondata. */
+.article-pullquote {
+  border-left: 4px solid var(--ember);
+  margin: clamp(26px, 4vw, 42px) 0;
+  padding: 6px 0 6px clamp(18px, 3vw, 28px);
+}
+
+.article-pullquote p {
+  color: var(--ink);
+  font-size: clamp(19px, 2.6vw, 27px);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* A kiemelt kártya teljes szélességű, ott a 40/21 arány 550 pixel magas
+   borítót adna — ezért ott fix, alacsonyabb sáv (az SVG „slice”-ol). */
+.blog-card.featured .blog-card-art { aspect-ratio: auto; height: clamp(180px, 22vw, 250px); }
+
+/* ============================================================
+   Szolgáltatás-lista (/szolgaltatasok)
+   Öt nagy kocka helyett egy összefüggő, hajszálvonalas lista.
+   ============================================================ */
+
+.service-ledger {
+  border-top: 1px solid var(--line);
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 clamp(18px, 5vw, 60px);
+  width: 100%;
+}
+
+.ledger-row {
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: clamp(12px, 3vw, 40px);
+  grid-template-columns: 64px minmax(0, 0.9fr) minmax(0, 1.25fr);
+  padding: clamp(22px, 3.4vw, 34px) 0 clamp(22px, 3.4vw, 34px) clamp(0px, 1vw, 14px);
+  position: relative;
+  transition: padding-left 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ledger-row::before {
+  background: var(--ember);
+  content: "";
+  height: calc(100% - 24px);
+  left: 0;
+  position: absolute;
+  top: 12px;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: 3px;
+}
+
+.ledger-row:hover { padding-left: clamp(14px, 2.2vw, 26px); }
+.ledger-row:hover::before { transform: scaleY(1); }
+
+.ledger-num {
+  color: var(--ember);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  padding-top: 5px;
+}
+
+.ledger-row h2 {
+  color: var(--ink);
+  font-size: clamp(19px, 2.1vw, 25px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.18;
+  margin: 0;
+}
+
+.ledger-row p {
+  color: var(--muted);
+  font-size: clamp(14px, 1.5vw, 16px);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .service-ledger { padding: 0 18px; }
+  .ledger-row {
+    gap: 6px 14px;
+    grid-template-columns: 42px 1fr;
+    padding: 20px 0;
+  }
+  .ledger-row p { grid-column: 2; }
+  .ledger-row:hover { padding-left: 10px; }
+}
+
+/* ============================================================
+   Két útvonal + extrák (/folyamat) — átdolgozott megjelenés
+   A két doboz és a négy ikonos kártya korábban semleges, sablonos
+   volt. A lépések most számozott, összekötött sorok, hogy a fenti
+   idővonal nyelvét folytassák.
+   ============================================================ */
+
+.flow-split-grid > article {
+  background: linear-gradient(160deg, rgba(245, 245, 245, 0.06), rgba(245, 245, 245, 0.015));
+  border: 1px solid rgba(245, 245, 245, 0.13);
+  border-radius: 22px;
+  overflow: hidden;
+  padding: clamp(24px, 3.4vw, 36px);
+  position: relative;
+}
+
+/* A leggyakoribb útvonal kap egy finom márkaszín-glóriát a tetején. */
+.flow-split-grid > article:first-child::before {
+  background: linear-gradient(90deg, var(--ember), rgba(255, 87, 34, 0));
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 62%;
+}
+
+.flow-split-grid > article:last-child::before {
+  background: linear-gradient(90deg, var(--aqua), rgba(118, 171, 174, 0));
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 62%;
+}
+
+.flow-split-grid > article > span {
+  color: rgba(245, 245, 245, 0.5);
+  display: block;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  margin-bottom: 22px;
+}
+
+.flow-split-grid ol {
+  counter-reset: routestep;
+  display: grid;
+  gap: 0;
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.flow-split-grid ol li {
+  color: rgba(245, 245, 245, 0.82);
+  counter-increment: routestep;
+  font-size: clamp(14px, 1.5vw, 15.5px);
+  line-height: 1.5;
+  padding: 12px 0 12px 44px;
+  position: relative;
+}
+
+/* Számozott pont + a pontokat összekötő függőleges vonal. */
+.flow-split-grid ol li::before {
+  align-items: center;
+  background: rgba(245, 245, 245, 0.08);
+  border: 1px solid rgba(245, 245, 245, 0.2);
+  border-radius: 50%;
+  color: rgba(245, 245, 245, 0.72);
+  content: counter(routestep);
+  display: flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 24px;
+  justify-content: center;
+  left: 0;
+  position: absolute;
+  top: 10px;
+  width: 24px;
+  z-index: 1;
+}
+
+.flow-split-grid ol li::after {
+  background: rgba(245, 245, 245, 0.16);
+  content: "";
+  left: 11.5px;
+  position: absolute;
+  top: 34px;
+  width: 1px;
+  height: calc(100% - 24px);
+}
+
+.flow-split-grid ol li:last-child::after { display: none; }
+
+.flow-split-grid > article:first-child ol li:last-child::before {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: #fff;
+}
+
+.flow-split-grid > article:last-child ol li:last-child::before {
+  background: var(--aqua);
+  border-color: var(--aqua);
+  color: var(--night);
+}
+
+.flow-split-grid > article > p {
+  border-top: 1px solid rgba(245, 245, 245, 0.12);
+  color: rgba(245, 245, 245, 0.56);
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0;
+  padding-top: 18px;
+}
+
+/* --- extrák: a tömör narancs ikonnégyzetek helyett letisztult sorok --- */
+.process-extra {
+  background: transparent;
+  border: 1px solid rgba(245, 245, 245, 0.12);
+  border-radius: 18px;
+  padding: clamp(20px, 2.6vw, 26px);
+  transition: background 260ms ease, border-color 260ms ease, transform 260ms ease;
+}
+
+.process-extra:hover {
+  background: rgba(245, 245, 245, 0.04);
+  border-color: rgba(255, 87, 34, 0.4);
+  transform: translateY(-3px);
+}
+
+.process-extra .extra-ico {
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 87, 34, 0.45);
+  border-radius: 11px;
+  color: var(--ember);
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 42px;
+}
+
+@media (max-width: 860px) {
+  .flow-split-grid > article { padding: 22px 18px; }
+  .flow-split-grid ol li { padding-left: 38px; }
+}
+
+/* ============================================================
+   Checky esettanulmány (/munkak) — átdolgozott blokkok
+   ============================================================ */
+
+.case-story .case-block {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  counter-increment: casestep;
+  padding: clamp(22px, 3vw, 30px);
+  position: relative;
+  transition: border-color 260ms ease, transform 260ms ease;
+}
+
+.case-story { counter-reset: casestep; }
+
+.case-story .case-block::before {
+  color: var(--ember);
+  content: "0" counter(casestep);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  position: absolute;
+  right: clamp(22px, 3vw, 30px);
+  top: clamp(22px, 3vw, 30px);
+}
+
+/* A három lépést nyíl köti össze — így folyamat, nem három különálló doboz. */
+.case-story .case-block:not(:last-child)::after {
+  color: var(--line);
+  content: "→";
+  font-size: 22px;
+  position: absolute;
+  right: -21px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.case-story .case-block:hover { border-color: rgba(255, 87, 34, 0.45); transform: translateY(-3px); }
+
+.case-facts {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: clamp(24px, 3.4vw, 38px);
+  overflow: hidden;
+}
+
+.case-fact {
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  padding: clamp(22px, 3vw, 32px) clamp(18px, 2.4vw, 28px);
+  text-align: center;
+}
+
+.case-fact:last-child { border-right: 0; }
+
+.case-fact strong {
+  color: var(--ink);
+  font-size: clamp(24px, 3.4vw, 38px);
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.case-fact span { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+
+@media (max-width: 860px) {
+  .case-story .case-block:not(:last-child)::after {
+    bottom: -20px;
+    content: "↓";
+    right: 50%;
+    top: auto;
+    transform: translateX(50%);
+  }
+  .case-facts { grid-template-columns: 1fr; }
+  .case-fact { border-bottom: 1px solid var(--line); border-right: 0; }
+  .case-fact:last-child { border-bottom: 0; }
+}
+
+/* A szekció eddig felső térköz nélkül, egy határvonallal tapadt a fenti
+   „két útvonal" blokkhoz — így egyetlen összefüggő rácsnak látszott.
+   Levegőt kap, és a csempék külön elemekké válnak. */
+.process-extras {
+  border-top: 0;
+  gap: clamp(14px, 1.8vw, 20px);
+  margin-top: clamp(48px, 7vw, 96px);
+  padding: 0 18px;
+  width: 100%;
+}
+
+.process-extra { border-bottom: 1px solid rgba(245, 245, 245, 0.12); }
+
+@media (max-width: 860px) {
+  .process-extras { grid-template-columns: 1fr; margin-top: 40px; }
+}

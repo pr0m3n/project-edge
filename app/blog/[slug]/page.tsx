@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { JsonLd } from "@/components/JsonLd";
 import { ArticleReader } from "@/components/blog/ArticleReader";
+import { BlogCover } from "@/components/blog/BlogCover";
 import { BLOG_POSTS, blogPost, formatBlogDate, relatedPosts } from "@/lib/blog";
 import { PROVIDER } from "@/lib/legal";
 
@@ -68,6 +69,9 @@ export default async function BlogPostPage({ params }: Params) {
             <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
             <span>{post.readingMinutes} perc olvasás</span>
             <span>{PROVIDER.contactName}</span>
+          </div>
+          <div className="article-art">
+            <BlogCover slug={post.slug} />
           </div>
         </header>
 
