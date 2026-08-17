@@ -18,6 +18,12 @@ export type Branch = {
   hint: string;
   cards: Array<{ type: string; who: string; stack: string }>;
   extras: Array<{ title: string; copy: string; price: string }>;
+  /**
+   * Csak az egyedi rendszer ágán: nincs ár és nincs önkiszolgáló brief.
+   * Egy webapp nem termék, hanem megbízás — beszélgetés után indul, nem
+   * űrlapon. Így nem versenyzik a bérléssel a látogató figyelméért.
+   */
+  talk?: { title: string; copy: string; cta: string };
 };
 
 export function SolutionBranches({ branches }: { branches: Branch[] }) {
@@ -69,6 +75,16 @@ export function SolutionBranches({ branches }: { branches: Branch[] }) {
             </article>
           ))}
         </div>
+
+        {active.talk && (
+          <div className="branch-talk">
+            <div>
+              <strong>{active.talk.title}</strong>
+              <p>{active.talk.copy}</p>
+            </div>
+            <a className="button primary" href="/ugyfelkapu">{active.talk.cta}</a>
+          </div>
+        )}
 
         {active.extras.length > 0 && (
           <div className="branch-extras">
