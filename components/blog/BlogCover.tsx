@@ -78,25 +78,38 @@ function CoverLayers() {
   );
 }
 
-/** „Helyi vállalkozás a Google-ben" — térképrács egy pulzáló ponttal. */
+/**
+ * „Hogyan találjon meg a Google" — találati lista, a tiéd legfelül.
+ *
+ * A korábbi térképrács + gombostű a lap színvilágából is kilógott, és a cikk
+ * nem a térképről szól, hanem arról, hogy megjelensz-e a találatok között.
+ */
 function CoverLocal() {
-  const lines = [];
-  for (let i = 1; i < 6; i += 1) {
-    lines.push(<line key={`h${i}`} x1={0} y1={i * 35} x2={400} y2={i * 35} stroke={FOG} strokeWidth={1} />);
-  }
-  for (let i = 1; i < 9; i += 1) {
-    lines.push(<line key={`v${i}`} x1={i * 44} y1={0} x2={i * 44} y2={210} stroke={FOG} strokeWidth={1} />);
-  }
+  const rows = [
+    { y: 34, on: true },
+    { y: 90 },
+    { y: 146 }
+  ];
   return (
     <Frame>
-      {lines}
-      <circle cx={224} cy={105} r={46} fill={EMBER} fillOpacity={0.12} />
-      <circle cx={224} cy={105} r={26} fill={EMBER} fillOpacity={0.2} />
-      <path
-        d="M224 78a19 19 0 0 0-19 19c0 14 19 34 19 34s19-20 19-34a19 19 0 0 0-19-19z"
-        fill={EMBER}
-      />
-      <circle cx={224} cy={96} r={7} fill={INK} />
+      {rows.map((row) => (
+        <g key={row.y}>
+          <rect
+            x={38}
+            y={row.y}
+            width={324}
+            height={44}
+            rx={10}
+            fill={row.on ? "rgba(255,87,34,0.13)" : "rgba(245,245,245,0.05)"}
+            stroke={row.on ? EMBER : FOG}
+            strokeWidth={row.on ? 1.5 : 1}
+          />
+          <rect x={54} y={row.y + 12} width={row.on ? 148 : 116} height={9} rx={4.5} fill={row.on ? EMBER : FOG_STRONG} />
+          <rect x={54} y={row.y + 27} width={row.on ? 236 : 190} height={6} rx={3} fill={FOG} />
+        </g>
+      ))}
+      <circle cx={344} cy={56} r={11} fill={EMBER} />
+      <path d="M340 56l3 3 6-6" fill="none" stroke={INK} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
     </Frame>
   );
 }

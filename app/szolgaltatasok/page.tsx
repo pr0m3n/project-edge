@@ -135,10 +135,13 @@ export default function ServicesPage() {
         <BuildTower level={3} />
       </section>
 
-      <section className="service-board">
+      {/* Korábban öt nagy, váltakozó színű kocka volt, bennük 40 pixeles
+          címsorokkal — dobozokként olvasódtak, nem tartalomként. Most egy
+          összefüggő lista hajszálvonalakkal, bal oldali sorszámoszloppal. */}
+      <section className="service-ledger">
         {services.map(([title, copy], index) => (
-          <article className="service-slab" key={title}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
+          <article className="ledger-row" key={title}>
+            <span className="ledger-num">{String(index + 1).padStart(2, "0")}</span>
             <h2>{title}</h2>
             <p>{copy}</p>
           </article>

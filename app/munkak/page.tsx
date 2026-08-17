@@ -133,7 +133,9 @@ export default function WorkPage() {
             width={2940}
           />
         </a>
-        <div className="case-grid">
+        {/* Három különálló doboz helyett egy összefüggő, számozott narratíva:
+            helyzet → megoldás → eredmény, összekötve. */}
+        <div className="case-grid case-story">
           <article className="case-block">
             <span>A helyzet</span>
             <p>
@@ -156,16 +158,18 @@ export default function WorkPage() {
             </p>
           </article>
         </div>
-        <div className="case-metrics">
-          <div className="case-metric">
+        {/* Korábban három nagy színes tábla volt, köztük egy türkiz — kilógott
+            a lap színvilágából. Most egy sáv, függőleges elválasztókkal. */}
+        <div className="case-facts">
+          <div className="case-fact">
             <strong>Éles</strong>
             <span>valós felhasználóknak készült rendszer</span>
           </div>
-          <div className="case-metric">
+          <div className="case-fact">
             <strong>Full-stack</strong>
             <span>felület, adat és háttérfolyamat együtt</span>
           </div>
-          <div className="case-metric">
+          <div className="case-fact">
             <strong>End-to-end</strong>
             <span>tervezéstől az éles indulásig</span>
           </div>

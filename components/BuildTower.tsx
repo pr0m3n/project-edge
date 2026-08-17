@@ -68,9 +68,8 @@ export function BuildTower({ level = 1 }: { level?: 1 | 2 | 3 }) {
             <b className="tower-face right" />
           </span>
         ))}
-        <span className={`tower-beacon${level >= 3 ? " strong" : ""}`} />
-        <span className={`tower-wire one${level >= 3 ? " on" : ""}`} />
-        <span className={`tower-wire two${level >= 3 ? " on" : ""}`} />
+        {/* A korábbi lebegő, pulzáló pont a torony fölött lógott a semmiben —
+            kikerült. A „kész" jelzést a legfelső réteg márkaszíne adja. */}
       </div>
       <ul className="tower-legend">
         {BLOCKS.slice(0, active).map((block) => (

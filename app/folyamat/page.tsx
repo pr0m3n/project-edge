@@ -92,7 +92,7 @@ export default function ProcessPage() {
       <section className="flow-split" aria-labelledby="flow-split-title">
         <div className="flow-split-head">
           <p className="micro-label">Két útvonal</p>
-          <h2 id="flow-split-title">A lépések attól függenek, bérelsz vagy veszel.</h2>
+          <h2 id="flow-split-title">A lépések attól függenek, bérelsz vagy egyszeri projektet kérsz.</h2>
         </div>
         <div className="flow-split-grid">
           <article>
@@ -105,10 +105,10 @@ export default function ProcessPage() {
               <li>Előnézet, módosítás, jóváhagyás</li>
               <li>Élesítés, majd folyamatos üzemeltetés</li>
             </ol>
-            <p>Nincs ajánlati kör és nincs technikai átadás — az infrastruktúrát végig én kezelem.</p>
+            <p>Nincs ajánlati kör és nincs technikai átadás — az infrastruktúrát végig én kezelem. Ha később a sajátod lenne, a rögzített vételi opcióval bármikor kivásárolhatod.</p>
           </article>
           <article>
-            <span>VÁSÁRLÁS · saját tulajdon</span>
+            <span>EGYSZERI PROJEKT · webapp, felújítás</span>
             <ol>
               <li>Kitöltöd az adatlapot</li>
               <li>Egyedi ajánlatot kapsz, amit elfogadsz</li>
@@ -117,7 +117,7 @@ export default function ProcessPage() {
               <li>Előnézet, módosítás, jóváhagyás</li>
               <li>Végszámla, majd vezetett technikai átadás</li>
             </ol>
-            <p>Az átadás lépésenként megy az ügyfélkapun. Néhány fiókot neked kell létrehoznod — ehhez írásos útmutatót adok.</p>
+            <p>Webapp, meglévő oldal felújítása és webshop nem bérelhető — ezek egyszeri, egyedi projektek. Az átadás lépésenként megy az ügyfélkapun, néhány fiókot neked kell létrehoznod, ehhez írásos útmutatót adok.</p>
           </article>
         </div>
       </section>
