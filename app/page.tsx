@@ -34,8 +34,6 @@ const paths = [
   }
 ];
 
-const metrics = ["Stratégia", "Szöveg", "Design", "Fejlesztés"];
-
 const proof = [
   "Egyedi felépítés",
   "Mobilra tervezve",
@@ -141,12 +139,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="signal-strip" aria-label="Technológiai alapok">
-        {metrics.map((metric) => (
-          <span key={metric}>{metric}</span>
-        ))}
-      </section>
-
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -154,152 +146,6 @@ export default function Home() {
               {item}
             </span>
           ))}
-        </div>
-      </section>
-
-      <section className="featured-work">
-        <div className="featured-copy">
-          <p className="micro-label dark">Referencia</p>
-          <h2>Checky.hu</h2>
-          <p>
-            A Checky.hu-nál nem csak a felület készült el. Magam raktam össze a teljes rendszert:
-            frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
-            egy kézben épültek.
-          </p>
-          <TransitionLink className="button primary" href="/munkak/checky">
-            Így épült a Checky
-          </TransitionLink>
-        </div>
-        <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
-          <span className="case-tag">Full-stack munka</span>
-          {/* 1,25 MB PNG volt nyers <img>-ként — a főoldal legnagyobb LCP-tétele.
-              A next/image automatikusan WebP/AVIF változatot és a viewporthoz
-              illő méretet szolgál ki. */}
-          <Image
-            alt="Checky.hu weboldal referencia"
-            height={1662}
-            sizes="(max-width: 880px) calc(100vw - 36px), 46vw"
-            src="/work/checky.png"
-            width={2940}
-          />
-          <div>
-            <strong>Checky.hu</strong>
-            <small>Frontend, backend, adatfolyamok, komplex webes rendszer.</small>
-          </div>
-        </a>
-      </section>
-
-      <section className="route-section">
-        <div className="route-intro">
-          <p className="micro-label dark">Hova tovább?</p>
-          <h2>Mi érdekel?</h2>
-        </div>
-        <div className="route-grid">
-          {paths.map((path) => (
-            <TransitionLink className="route-tile" href={path.href} key={path.href}>
-              <span>{path.eyebrow}</span>
-              <h3>{path.title}</h3>
-              <p>{path.copy}</p>
-              <strong>Megnyitás</strong>
-            </TransitionLink>
-          ))}
-        </div>
-      </section>
-
-      <section className="founder-section">
-        <div className="founder-card">
-          <Image
-            alt="Patrik, a ProjectEdge alapítója és fejlesztője"
-            className="founder-photo"
-            fill
-            sizes="(max-width: 880px) calc(100vw - 36px), 42vw"
-            src="/profile/patrik.png"
-          />
-          <span className="founder-photo-tag">{"// Szia, Patrik vagyok."}</span>
-          <div className="founder-badge">
-            <strong>Patrik</strong>
-            <span>alapító · fejlesztő · ProjectEdge</span>
-          </div>
-        </div>
-        <div className="founder-copy">
-          <p className="micro-label dark">Ki vagyok</p>
-          <h2>Egy ember, aki végigviszi a projektedet.</h2>
-          <p>
-            Nem ügynökség vagyok, hanem egy fejlesztő, aki a tervezéstől a kódig és az indításig
-            mindent maga csinál. Nálad nem lesz kihez passzolgatni a felelősséget — velem beszélsz,
-            én építem, és én is felelek érte.
-          </p>
-          <div className="founder-tags">
-            <span>Next.js</span>
-            <span>Supabase</span>
-            <span>Full-stack</span>
-            <span>3D / Motion</span>
-            <span>UI/UX</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="no-call">
-        <div>
-          <p className="micro-label">Ügyfélkapu & Egyeztetés</p>
-          <h2>Nem kötelező telefonálnod.</h2>
-          <p className="nc-copy">
-            Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
-            neked kényelmes. A teljes folyamat zökkenőmentesen végigvihető írásban, kötelező értekezletek
-            nélkül, de ha telefonon vagy online megbeszélésen egyeztetnél, természetesen állok rendelkezésedre.
-          </p>
-          <TransitionLink className="button primary" href="/ugyfelkapu">
-            Indítás az ügyfélkapun
-          </TransitionLink>
-        </div>
-        <ul className="nc-list">
-          <li>Teljes folyamat írásban — vagy igény szerint gyors hívással</li>
-          <li>Adatlap, státusz és fizetés egy helyen</li>
-          <li>Közvetlen segítség és válaszok az ügyfélkapun</li>
-        </ul>
-      </section>
-
-      <section className="price-teaser">
-        <div className="section-head">
-          <p className="micro-label dark">Árak</p>
-          <h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2>
-          <p>
-            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem ugyanabból az összegből.
-            Ha később a saját tulajdonodba vennéd, a forráskóddal együtt bármikor megvásárolhatod.
-          </p>
-        </div>
-        {/* A saját bevezetője itt kikapcsolva: a fenti section-head már
-            ugyanezt mondja el, két azonos „Árak" fejléc egymás alatt volt. */}
-        <PriceEstimator showLead={false} />
-      </section>
-
-      <section className="orbit-section">
-        <div className="orbit-copy">
-          <p className="micro-label">Egy kézben / az ötlettől az indulásig</p>
-          <h2>Végigviszem az egész pályát.</h2>
-          <p>
-            Nem kell külön tervezőt, fejlesztőt és technikai kapcsolattartót összehangolnod. A
-            felépítéstől az éles indulásig egy kézben marad a projekt, ezért gyorsabbak a döntések
-            és kevesebb részlet vész el útközben.
-          </p>
-          <ul className="orbit-facts">
-            <li>Struktúra és vizuális tervezés</li>
-            <li>Fejlesztés és rendszerkapcsolatok</li>
-            <li>Mobilos finomhangolás és élesítés</li>
-          </ul>
-          <TransitionLink className="button spectral" href="/folyamat">
-            Megnézem, hogyan dolgozol
-          </TransitionLink>
-        </div>
-        <div className="planet-stage">
-          <ModelViewer
-            alt="A teljes projektfolyamatot jelképező pixelbolygó"
-            className="model-frame planet-model"
-            exposure="0.9"
-            src="/models/pixel_planet_trappist-1-e.glb"
-          />
-          <span className="orbit-line one" />
-          <span className="orbit-line two" />
         </div>
       </section>
 
@@ -352,9 +198,138 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="price-teaser">
+        <div className="section-head">
+          <p className="micro-label dark">Árak</p>
+          <h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2>
+          <p>
+            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem ugyanabból az összegből.
+            Ha később a saját tulajdonodba vennéd, a forráskóddal együtt bármikor megvásárolhatod.
+          </p>
+        </div>
+        {/* A saját bevezetője itt kikapcsolva: a fenti section-head már
+            ugyanezt mondja el, két azonos „Árak" fejléc egymás alatt volt. */}
+        <PriceEstimator showLead={false} />
+      </section>
+
       <PublicBriefWizard />
 
-      <AuditRequestSection />
+      <section className="featured-work">
+        <div className="featured-copy">
+          <p className="micro-label dark">Referencia</p>
+          <h2>Checky.hu</h2>
+          <p>
+            A Checky.hu-nál nem csak a felület készült el. Magam raktam össze a teljes rendszert:
+            frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
+            egy kézben épültek.
+          </p>
+          <TransitionLink className="button primary" href="/munkak/checky">
+            Így épült a Checky
+          </TransitionLink>
+        </div>
+        <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
+          <span className="case-tag">Full-stack munka</span>
+          {/* 1,25 MB PNG volt nyers <img>-ként — a főoldal legnagyobb LCP-tétele.
+              A next/image automatikusan WebP/AVIF változatot és a viewporthoz
+              illő méretet szolgál ki. */}
+          <Image
+            alt="Checky.hu weboldal referencia"
+            height={1662}
+            sizes="(max-width: 880px) calc(100vw - 36px), 46vw"
+            src="/work/checky.png"
+            width={2940}
+          />
+          <div>
+            <strong>Checky.hu</strong>
+            <small>Frontend, backend, adatfolyamok, komplex webes rendszer.</small>
+          </div>
+        </a>
+      </section>
+
+      <section className="founder-section">
+        <div className="founder-card">
+          <Image
+            alt="Patrik, a ProjectEdge alapítója és fejlesztője"
+            className="founder-photo"
+            fill
+            sizes="(max-width: 880px) calc(100vw - 36px), 42vw"
+            src="/profile/patrik.png"
+          />
+          <span className="founder-photo-tag">{"// Szia, Patrik vagyok."}</span>
+          <div className="founder-badge">
+            <strong>Patrik</strong>
+            <span>alapító · fejlesztő · ProjectEdge</span>
+          </div>
+        </div>
+        <div className="founder-copy">
+          <p className="micro-label dark">Ki vagyok</p>
+          <h2>Egy ember, aki végigviszi a projektedet.</h2>
+          <p>
+            Nem ügynökség vagyok, hanem egy fejlesztő, aki a tervezéstől a kódig és az indításig
+            mindent maga csinál. Nálad nem lesz kihez passzolgatni a felelősséget — velem beszélsz,
+            én építem, és én is felelek érte.
+          </p>
+          <div className="founder-tags">
+            <span>Next.js</span>
+            <span>Supabase</span>
+            <span>Full-stack</span>
+            <span>3D / Motion</span>
+            <span>UI/UX</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="orbit-section">
+        {/* A „mindent egy kézben" üzenetet a fenti founder-szekció mondja ki;
+            itt már csak az érdekel, mi történik a start és az élesítés között. */}
+        <div className="orbit-copy">
+          <p className="micro-label">Folyamat / lépésről lépésre</p>
+          <h2>Mi történik az indulás és az élesítés között?</h2>
+          <p>
+            Nem kell külön tervezőt, fejlesztőt és technikai kapcsolattartót összehangolnod, ezért
+            gyorsabbak a döntések és kevesebb részlet vész el útközben. Három szakasz van, és
+            mindegyik végén látod, hol tart az oldalad.
+          </p>
+          <ul className="orbit-facts">
+            <li>Struktúra és vizuális tervezés</li>
+            <li>Fejlesztés és rendszerkapcsolatok</li>
+            <li>Mobilos finomhangolás és élesítés</li>
+          </ul>
+          <TransitionLink className="button spectral" href="/folyamat">
+            Megnézem, hogyan dolgozol
+          </TransitionLink>
+        </div>
+        <div className="planet-stage">
+          <ModelViewer
+            alt="A teljes projektfolyamatot jelképező pixelbolygó"
+            className="model-frame planet-model"
+            exposure="0.9"
+            src="/models/pixel_planet_trappist-1-e.glb"
+          />
+          <span className="orbit-line one" />
+          <span className="orbit-line two" />
+        </div>
+      </section>
+
+      <section className="no-call">
+        <div>
+          <p className="micro-label">Ügyfélkapu & Egyeztetés</p>
+          <h2>Nem kötelező telefonálnod.</h2>
+          <p className="nc-copy">
+            Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
+            neked kényelmes. A teljes folyamat zökkenőmentesen végigvihető írásban, kötelező értekezletek
+            nélkül, de ha telefonon vagy online megbeszélésen egyeztetnél, természetesen állok rendelkezésedre.
+          </p>
+          <TransitionLink className="button primary" href="/ugyfelkapu">
+            Indítás az ügyfélkapun
+          </TransitionLink>
+        </div>
+        <ul className="nc-list">
+          <li>Teljes folyamat írásban — vagy igény szerint gyors hívással</li>
+          <li>Adatlap, státusz és fizetés egy helyen</li>
+          <li>Közvetlen segítség és válaszok az ügyfélkapun</li>
+        </ul>
+      </section>
 
       <section className="faq-section">
         <div className="section-head">
@@ -367,6 +342,27 @@ export default function Home() {
               <summary>{question}</summary>
               <p>{answer}</p>
             </details>
+          ))}
+        </div>
+      </section>
+
+      <AuditRequestSection />
+
+      {/* Kivezető linkek szándékosan a lap végén: a funnel közepén elvitték
+          a fizetett forgalmat az árak és a brief elől. */}
+      <section className="route-section">
+        <div className="route-intro">
+          <p className="micro-label dark">Hova tovább?</p>
+          <h2>Mi érdekel?</h2>
+        </div>
+        <div className="route-grid">
+          {paths.map((path) => (
+            <TransitionLink className="route-tile" href={path.href} key={path.href}>
+              <span>{path.eyebrow}</span>
+              <h3>{path.title}</h3>
+              <p>{path.copy}</p>
+              <strong>Megnyitás</strong>
+            </TransitionLink>
           ))}
         </div>
       </section>
