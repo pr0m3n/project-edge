@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ContactButton } from "@/components/ContactButton";
 
 /**
  * A /szolgaltatasok korábban egyetlen, 4100 pixel magas és 857 szavas
@@ -82,7 +83,10 @@ export function SolutionBranches({ branches }: { branches: Branch[] }) {
               <strong>{active.talk.title}</strong>
               <p>{active.talk.copy}</p>
             </div>
-            <a className="button primary" href="/ugyfelkapu">{active.talk.cta}</a>
+            {/* Nem az ügyfélkapuba visz: ott a bérléses brief az alapértelmezés,
+                ami pont az ellenkezője annak, amit ez az ág mond. A beépített
+                üzenetküldő panelt nyitja, ami ticketet hoz létre az adminban. */}
+            <ContactButton className="button primary">{active.talk.cta}</ContactButton>
           </div>
         )}
 
