@@ -156,17 +156,17 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     key: "presence",
     name: "Jelenlét",
     price: 14900,
-    short: "Egy tiszta, gyors oldal az induláshoz.",
+    short: "Megtalálnak a Google-ben, és felhívnak.",
     pages: "1 oldal, legfeljebb 7 blokk",
-    changes: "Évente 3 kisebb módosítás",
-    changeQuota: { count: 3, period: "year" },
+    changes: "Havi 1 kisebb módosítás",
+    changeQuota: { count: 1, period: "month" },
     changeLeadDays: 5,
     features: [
-      "1 oldal, legfeljebb 7 tartalmi blokk",
       "Egyedi, letisztult egyoldalas design",
       "Kapcsolati űrlap és hívásgomb",
       "Alap keresőoptimalizálás",
-      "Évente 3 kisebb módosítás",
+      "1 oldal, legfeljebb 7 tartalmi blokk",
+      "Havi 1 kisebb módosítás",
       "A kért módosítás 5 munkanapon belül elkészül"
     ],
     idealFor: "Induló vállalkozásnak vagy egyetlen szolgáltatás világos bemutatásához.",
@@ -180,24 +180,24 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     featureQuestion: "Mi legyen az oldal elsődleges kapcsolatfelvételi módja?",
     detailGroups: [
       { title: "Elkészítés", items: ["Egyedi, mobilbarát egyoldalas design", "Legfeljebb 7 tartalmi blokk", "Kapcsolati űrlap és köszönőüzenet", "Alap szöveggondozás"] },
-      { title: "Üzemeltetés", items: ["Domain regisztráció és megújítás", "Hosting, SSL és technikai frissítések", "Űrlap és elérhetőség felügyelete", "Évente 3 kisebb tartalmi módosítás"] }
+      { title: "Üzemeltetés", items: ["Domain regisztráció és megújítás", "Hosting, SSL és technikai frissítések", "Űrlap és elérhetőség felügyelete", "Havi 1 kisebb tartalmi módosítás"] }
     ]
   },
   {
     key: "business",
     name: "Üzleti",
     price: 24900,
-    short: "Többoldalas rendszer, ami ajánlatkérést hoz.",
+    short: "Több szolgáltatás, mindegyik saját oldallal.",
     pages: "Legfeljebb 5 aloldal",
     changes: "Havi 1 kisebb módosítás",
     changeQuota: { count: 1, period: "month" },
     changeLeadDays: 3,
     featured: true,
     features: [
-      "Legfeljebb 5 aloldal",
       "Egyedi többoldalas struktúra és szövegezés",
       "Részletes ajánlatkérő folyamat",
       "Analitika és konverziómérés",
+      "Legfeljebb 5 aloldal",
       "Havi 1 kisebb módosítás",
       "A kért módosítás 3 munkanapon belül elkészül"
     ],
@@ -220,16 +220,16 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     key: "custom",
     name: "Egyedi",
     price: 39900,
-    short: "Karakteresebb design és összetettebb működés.",
+    short: "Foglalás, webshop vagy egyedi folyamat.",
     pages: "Legfeljebb 8–10 aloldal",
     changes: "Havi 2 kisebb módosítás",
     changeQuota: { count: 2, period: "month" },
     changeLeadDays: 2,
     features: [
-      "Legfeljebb 8–10 aloldal",
       "Teljesen egyedi vizuális rendszer",
       "Többlépcsős ajánlatkérés vagy foglalás",
       "Részletes mérés és optimalizálás",
+      "Legfeljebb 8–10 aloldal",
       "Havi 2 kisebb módosítás",
       "A kért módosítás 2 munkanapon belül elkészül"
     ],
