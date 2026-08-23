@@ -5,6 +5,7 @@ import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BriefStage } from "@/components/BriefStage";
+import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
 
 export const metadata: Metadata = {
@@ -217,37 +218,7 @@ export default function Home() {
         <PriceEstimator showLead={false} />
       </section>
 
-      <section className="featured-work">
-        <div className="featured-copy">
-          <p className="micro-label dark">Referencia</p>
-          <h2>Checky.hu</h2>
-          <p>
-            A Checky.hu-nál nem csak a felület készült el. Magam raktam össze a teljes rendszert:
-            frontend, backend, adatkezelés, üzleti logika és a bonyolultabb működési folyamatok is
-            egy kézben épültek.
-          </p>
-          <TransitionLink className="button primary" href="/munkak/checky">
-            Így épült a Checky
-          </TransitionLink>
-        </div>
-        <a className="checky-card" href="https://checky.hu" rel="noreferrer" target="_blank">
-          <span className="case-tag">Full-stack munka</span>
-          {/* 1,25 MB PNG volt nyers <img>-ként — a főoldal legnagyobb LCP-tétele.
-              A next/image automatikusan WebP/AVIF változatot és a viewporthoz
-              illő méretet szolgál ki. */}
-          <Image
-            alt="Checky.hu weboldal referencia"
-            height={1662}
-            sizes="(max-width: 880px) calc(100vw - 36px), 46vw"
-            src="/work/checky.png"
-            width={2940}
-          />
-          <div>
-            <strong>Checky.hu</strong>
-            <small>Frontend, backend, adatfolyamok, komplex webes rendszer.</small>
-          </div>
-        </a>
-      </section>
+      <WorkDeck />
 
       <section className="founder-section">
         <div className="founder-card">

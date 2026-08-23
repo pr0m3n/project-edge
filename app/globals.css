@@ -16556,3 +16556,104 @@ details.admin-collapse summary:hover {
   .brief-stage.glitching .brief-gate-swap span.on{animation:none;text-shadow:0 2px 44px rgba(0,0,0,.55)}
   .brief-stage.glitching .brief-slice{animation:none}
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   MUNKÁK — perspektivikus pakli a főoldalon
+   ════════════════════════════════════════════════════════════════════
+   Korábban egyetlen projekt (Checky.hu) állt itt. A `/munkak` oldalon hat
+   munka van öt iparágból; ez a szakasz mindet megmutatja, és a gyűjtőoldalra
+   visz. Tiszta CSS 3D — nincs JS, nincs böngészőfüggő szűrő. */
+
+.work-deck{position:relative;isolation:isolate;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);
+  gap:clamp(28px,5vw,72px);align-items:center;
+  padding:clamp(64px,9vw,124px) clamp(18px,5vw,76px);
+  background:linear-gradient(168deg,#11171c 0%,#1b2027 55%,#232a32 100%);color:var(--paper)}
+/* Ugyanaz az átúsztatás, mint a brief-színpadnál: sok köztes megálló egy
+   lassuló görbe mentén, hogy ne rajzolódjon Mach-sáv a szakaszhatárra. */
+.work-deck::before,.work-deck::after{content:"";position:absolute;left:0;right:0;z-index:1;pointer-events:none}
+.work-deck::before{top:0;height:clamp(110px,18vh,220px);
+  background:linear-gradient(180deg,
+    var(--paper) 0%,rgba(214,215,216,1) 8%,rgba(160,164,167,.96) 18%,
+    rgba(108,113,118,.9) 29%,rgba(64,70,76,.82) 40%,rgba(36,42,48,.7) 52%,
+    rgba(23,29,35,.52) 64%,rgba(17,23,28,.32) 78%,rgba(17,23,28,.12) 90%,rgba(17,23,28,0) 100%)}
+.work-deck::after{bottom:0;height:clamp(140px,22vh,280px);
+  background:linear-gradient(180deg,
+    rgba(35,42,50,0) 0%,rgba(35,42,50,.12) 12%,rgba(37,44,52,.3) 25%,
+    rgba(44,51,58,.5) 38%,rgba(66,72,78,.66) 51%,rgba(103,108,113,.79) 64%,
+    rgba(150,153,156,.89) 77%,rgba(205,206,207,.96) 89%,var(--paper) 100%)}
+.work-deck-glow{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(52% 46% at 78% 16%,rgba(255,87,34,.28),transparent 66%),
+             radial-gradient(46% 42% at 12% 92%,rgba(118,171,174,.22),transparent 68%)}
+
+.work-deck-copy{position:relative;z-index:2}
+.work-deck-copy h2{margin:14px 0 16px;font-size:clamp(30px,4.2vw,54px);line-height:1.02;
+  letter-spacing:-.035em;font-weight:690;color:#fff}
+.work-deck-copy h2 em{font-style:normal;
+  background:linear-gradient(96deg,#ff9147,var(--ember) 46%,#ff8fb0);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.work-deck-copy>p{margin:0 0 26px;max-width:46ch;color:rgba(255,255,255,.66);font-size:clamp(14.5px,1.6vw,16px);line-height:1.6}
+
+.work-deck-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.8vw,26px);margin:30px 0 0;max-width:460px}
+.work-deck-stats div{display:grid;gap:3px}
+.work-deck-stats dt{font-size:clamp(24px,2.6vw,34px);font-weight:700;letter-spacing:-.03em;color:#fff;line-height:1}
+.work-deck-stats dd{margin:0;font-size:12px;color:rgba(255,255,255,.5);line-height:1.35;text-wrap:balance}
+
+/* ── A pakli ────────────────────────────────────────────────────── */
+.work-deck-stack{position:relative;z-index:2;display:block;
+  height:clamp(300px,33vw,450px);perspective:1500px;perspective-origin:62% 45%}
+.work-deck-card{position:absolute;top:13%;left:0;width:70%;
+  border-radius:16px;overflow:hidden;background:#0d1116;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 34px 70px -34px rgba(0,0,0,.95);
+  transform-origin:left center;
+  /* Lépcsőzetes kaszkád: minden lap jobbra-fel csúszik és hátrébb kerül. */
+  transform:translate3d(calc(var(--i) * 5%),calc(var(--i) * -3.2%),calc(var(--i) * -34px))
+            rotateY(-21deg) rotateX(5deg) rotateZ(-1.2deg);
+  z-index:calc(20 - var(--i));
+  transition:transform .55s cubic-bezier(.2,.9,.3,1),box-shadow .4s ease,border-color .3s ease}
+.work-deck-card img{display:block;width:100%;height:auto}
+.work-deck-card::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(196deg,rgba(255,255,255,.14),transparent 42%),
+             linear-gradient(0deg,rgba(8,11,15,.86) 0%,rgba(8,11,15,.15) 34%,transparent 62%)}
+
+.work-deck-label{position:absolute;left:14px;bottom:12px;z-index:3;display:grid;gap:2px}
+.work-deck-label b{font-size:clamp(13px,1.4vw,15.5px);font-weight:660;color:#fff;letter-spacing:-.01em}
+.work-deck-label small{font:600 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:#ffb08a}
+
+/* Szétnyílás: a lapok távolabb kerülnek és kevésbé dőlnek. */
+.work-deck-stack:hover .work-deck-card,
+.work-deck-stack:focus-visible .work-deck-card{
+  transform:translate3d(calc(var(--i) * 6.6%),calc(var(--i) * -4.6%),calc(var(--i) * -22px))
+            rotateY(-13deg) rotateX(2deg) rotateZ(-.6deg)}
+/* A megcélzott lap teljesen előrejön. */
+.work-deck-stack .work-deck-card:hover{
+  transform:translate3d(calc(var(--i) * 6.6% + 3%),calc(var(--i) * -4.6%),60px)
+            rotateY(-4deg) rotateX(0deg) rotateZ(0deg);
+  z-index:30;border-color:rgba(255,87,34,.55);
+  box-shadow:0 44px 90px -30px rgba(255,87,34,.5),0 34px 70px -34px rgba(0,0,0,.95)}
+.work-deck-stack .work-deck-card:hover::after{background:linear-gradient(0deg,rgba(8,11,15,.7) 0%,transparent 52%)}
+
+.work-deck-hint{position:absolute;right:2%;bottom:-4px;z-index:25;
+  font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.34);transition:color .3s}
+.work-deck-stack:hover .work-deck-hint{color:rgba(255,176,138,.8)}
+
+@media (max-width:980px){
+  .work-deck{grid-template-columns:1fr;gap:clamp(30px,7vw,54px)}
+  .work-deck-stack{height:clamp(280px,52vw,400px);perspective-origin:56% 45%}
+  .work-deck-card{width:74%}
+}
+@media (max-width:620px){
+  /* Érintőn nincs hover: a pakli eleve nyitottabb, hogy minden címke látszódjon. */
+  .work-deck-stack{height:clamp(280px,74vw,380px)}
+  .work-deck-card{width:86%;
+    transform:translate3d(calc(var(--i) * 5.4%),calc(var(--i) * -5.2%),0) rotateY(-11deg) rotateX(2deg)}
+  .work-deck-label b{font-size:12.5px}
+  .work-deck-label small{font-size:8.5px}
+  .work-deck-hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .work-deck-card{transition:none}
+}
