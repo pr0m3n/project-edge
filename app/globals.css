@@ -11082,7 +11082,7 @@ details.admin-collapse summary:hover {
 
 @media(max-width:900px){.landing-hero,.landing-process,.delivery-times,.case-detail-hero,.case-detail-problem{grid-template-columns:1fr}.landing-outcomes>div,.case-detail-proof{grid-template-columns:1fr}.case-detail-system>div{grid-template-columns:repeat(2,1fr)}.case-detail-shot{min-height:420px}}@media(max-width:600px){.landing-hero h1,.case-detail-hero h1{font-size:52px}.landing-outcomes article{min-height:220px}.case-detail-system>div{grid-template-columns:1fr}.case-detail-shot{min-height:330px}}
 
-.public-draft-choice{align-items:center;background:rgba(118,171,174,.13);border:1px solid rgba(118,171,174,.35);border-radius:22px;display:flex;gap:24px;justify-content:space-between;margin:0 auto 24px;max-width:1240px;padding:18px 22px;position:relative}.public-draft-choice>div:first-child{display:grid;gap:4px}.public-draft-choice span{color:#76abae;font:800 8px var(--mono);letter-spacing:.13em}.public-draft-choice strong{font-size:17px}.public-draft-choice p{color:var(--muted);font-size:12.5px;margin:0}.public-draft-choice>div:last-child{display:flex;gap:8px}.public-draft-choice .button{min-height:42px;padding:9px 15px}.public-brief-steps button:disabled{cursor:not-allowed;opacity:.55}@media(max-width:640px){.public-draft-choice{align-items:stretch;flex-direction:column}.public-draft-choice>div:last-child{align-items:stretch;flex-direction:column}.public-draft-choice .button{width:100%}}
+.public-draft-choice{align-items:center;background:rgba(118,171,174,.13);border:1px solid rgba(118,171,174,.35);border-radius:22px;display:flex;gap:24px;justify-content:space-between;margin:0 auto 24px;max-width:1240px;padding:18px 22px;position:relative}.public-draft-choice>div:first-child{display:grid;gap:4px}.public-draft-choice span{color:#76abae;font:800 8px var(--mono);letter-spacing:.13em}.public-draft-choice strong{font-size:17px}.public-draft-choice p{color:rgba(255,255,255,.62);font-size:12.5px;margin:0}.public-draft-choice>div:last-child{display:flex;gap:8px}.public-draft-choice .button{min-height:42px;padding:9px 15px}.public-brief-steps button:disabled{cursor:not-allowed;opacity:.55}@media(max-width:640px){.public-draft-choice{align-items:stretch;flex-direction:column}.public-draft-choice>div:last-child{align-items:stretch;flex-direction:column}.public-draft-choice .button{width:100%}}
 
 .honeypot{height:1px!important;left:-10000px!important;overflow:hidden!important;position:absolute!important;width:1px!important}body:has(.mobile-nav.open) .support-widget{pointer-events:none;visibility:hidden}.model-loading{display:block;height:100%;min-height:260px;width:100%}
 
@@ -16365,103 +16365,133 @@ details.admin-collapse summary:hover {
    viszont korábban a 13 szekcióból az 5. volt: tízből nyolcan el sem görgettek
    odáig. Ez a szakasz közvetlenül a heró alatt ül, egyetlen kérdéssel.
 
-   A háttér EGY üstökös: vastag fej, utána elvékonyodó hosszú farok, ami zárt
-   pályán kering. A szegmenseket a `BriefStage.tsx` hozza létre, a `#brief-goo`
-   szűrő pedig egyetlen összefüggő folyadékcsíkká olvasztja őket. Nincs futó
-   JS-ciklus — az `offset-distance`-t a böngésző animálja. */
+   SÖTÉT szakasz, alulról felizzó kék–magenta–rózsa derengéssel. Ez nem idegen
+   elem: a `.public-brief` eredetileg is sötét volt, csak a szolgáltatás-
+   oldalakon maradt úgy. Így a brief a saját, natív megjelenését kapja vissza.
 
-.brief-stage{position:relative;overflow:hidden;isolation:isolate;background:var(--paper);
-  padding:clamp(56px,7vw,90px) clamp(16px,4vw,26px) clamp(64px,8vw,100px);
-  min-height:min(880px,92vh);display:flex;align-items:center}
+   A fény NAGY és teljesen lágy radiális gradiensekből áll, amik átlátszóba
+   futnak ki — nincs élük, amit foltnak lehetne látni. Se SVG-szűrő, se más
+   böngészőfüggő trükk: korábban pont egy 0x0 méretű defs-konténerben lévő
+   szűrő okozta, hogy Safariban karikákra esett szét a háttér. */
+
+.brief-stage{position:relative;overflow:hidden;isolation:isolate;background:#0a0d11;color:var(--paper);
+  padding:clamp(64px,8vw,104px) clamp(16px,4vw,26px) clamp(96px,11vw,150px);
+  min-height:min(860px,92vh);display:flex;align-items:center}
 .brief-stage-defs{position:absolute;width:0;height:0}
 
-.brief-flowwrap{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-/* A cseppek összeolvasztása CSS-blurral, NEM SVG-szűrővel.
-   Az SVG `filter` egy 0x0 méretű defs-konténerben Safariban némán nem
-   érvényesül — ott a folyadék különálló karikákra esett szét. A blur minden
-   böngészőben ugyanazt adja, és a cseppek lapos színe (gradiens helyett)
-   megszünteti az egyedi korongok látszatát. */
-.brief-flow{position:absolute;left:50%;top:50%;width:1600px;height:900px;margin:-450px 0 0 -800px;
-  transform:scale(var(--brief-fit,.66));filter:blur(12px) saturate(1.18)}
-.brief-flow span{position:absolute;left:0;top:0;border-radius:50%;
-  background:var(--ember);
-  offset-path:path("M 210,470 C 190,230 520,110 810,175 C 1090,240 1195,110 1375,265 C 1535,400 1470,655 1225,730 C 985,805 815,700 600,765 C 345,840 232,700 210,470 Z");
-  offset-rotate:0deg;animation:brief-course var(--dur,27s) linear infinite;animation-delay:var(--del,0s);
-  will-change:offset-distance}
-@keyframes brief-course{to{offset-distance:100%}}
+/* ── A derengés ─────────────────────────────────────────────────── */
+.brief-flowwrap{position:absolute;inset:-8%;z-index:0;pointer-events:none;
+  filter:blur(66px) saturate(1.35)}
+.brief-flow{position:absolute;inset:0}
+.brief-flow span{position:absolute;border-radius:50%;will-change:transform;
+  animation:brief-rise var(--dur,40s) ease-in-out infinite;animation-delay:var(--del,0s)}
+@keyframes brief-rise{
+  0%,100%{transform:translate(0,0) scale(var(--s0,1))}
+  50%{transform:translate(var(--dx,0),var(--dy,0)) scale(var(--s1,1.15))}}
 
-.brief-veil{position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:radial-gradient(44% 30% at 50% 44%,rgba(245,245,245,.93) 0%,rgba(245,245,245,.66) 52%,rgba(245,245,245,.18) 82%,rgba(245,245,245,0) 100%)}
-.brief-grain{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:.2;mix-blend-mode:multiply}
-.brief-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.26;
-  background:repeating-linear-gradient(180deg,rgba(48,56,65,.05) 0 1px,transparent 1px 3px);
+/* ── Átúsztatás a szomszédos szakaszokba ────────────────────────
+   Fölötte a heró (sötét, `#11171c → #303841`), alatta a világos oldal.
+   Enélkül két éles színváltás lenne; így a főoldal egyben marad. */
+.brief-stage::before,.brief-stage::after{content:"";position:absolute;left:0;right:0;z-index:2;pointer-events:none}
+/* Sok köztes szín-megállóval, nem két végponttal: két szín közötti egyenletes
+   átmenet Mach-sávot rajzol, amit a szem élként lát. A megállók egy lassuló
+   görbét követnek, ezért nincs hol megakadnia a tekintetnek. */
+.brief-stage::before{top:0;height:clamp(150px,26vh,320px);
+  background:linear-gradient(180deg,
+    #343c44 0%,
+    rgba(46,54,62,.94) 12%,
+    rgba(38,45,53,.86) 24%,
+    rgba(30,37,44,.74) 37%,
+    rgba(22,28,35,.58) 50%,
+    rgba(16,21,27,.40) 63%,
+    rgba(12,16,21,.23) 76%,
+    rgba(10,13,17,.09) 89%,
+    rgba(10,13,17,0) 100%)}
+.brief-stage::after{bottom:0;height:clamp(240px,38vh,460px);
+  background:linear-gradient(180deg,
+    rgba(10,13,17,0) 0%,
+    rgba(10,13,17,.10) 12%,
+    rgba(11,14,19,.24) 24%,
+    rgba(14,18,23,.42) 36%,
+    rgba(21,26,32,.60) 47%,
+    rgba(36,42,48,.74) 58%,
+    rgba(64,70,76,.85) 69%,
+    rgba(108,113,118,.92) 79%,
+    rgba(160,164,167,.97) 88%,
+    rgba(214,215,216,1) 95%,
+    var(--paper) 100%)}
+
+/* ── Glitch — sötéten világos vonalakkal, nem sötétekkel ────────── */
+.brief-grain{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;
+  opacity:.13;mix-blend-mode:overlay}
+.brief-scan{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:.22;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px);
   animation:brief-scan 9s linear infinite}
 @keyframes brief-scan{to{transform:translateY(3px)}}
-.brief-slice{position:absolute;left:0;right:0;z-index:3;pointer-events:none;height:var(--h,10px);top:var(--t,30%);
-  backdrop-filter:hue-rotate(22deg) saturate(1.6);opacity:0}
+.brief-slice{position:absolute;left:0;right:0;z-index:4;pointer-events:none;height:var(--h,10px);top:var(--t,30%);
+  backdrop-filter:hue-rotate(38deg) saturate(1.9) brightness(1.25);opacity:0}
 .brief-stage.glitching .brief-slice{animation:brief-slice .38s steps(1) 1}
 @keyframes brief-slice{0%{opacity:.9;transform:translateX(-11px)}35%{opacity:.9;transform:translateX(9px)}
   60%{opacity:.7;transform:translateX(-4px)}100%{opacity:0;transform:none}}
 
-.brief-stage-inner{position:relative;z-index:4;width:100%;max-width:1180px;margin:0 auto}
+.brief-stage-inner{position:relative;z-index:5;width:100%;max-width:1180px;margin:0 auto}
 
 /* ── A kapu ─────────────────────────────────────────────────────── */
-.brief-gate{text-align:center;padding:clamp(8px,3vw,30px) 0 12px}
+.brief-gate{text-align:center;padding:clamp(8px,3vw,28px) 0 12px}
 /* Mindkét szöveg UGYANABBAN a rács-cellában ül, egymáson. A doboz magassága
    így mindig a HOSSZABBIKHOZ igazodik — váltáskor semmi nem mozdul el alatta. */
-.brief-gate-swap{display:grid;place-items:center;margin:0 auto 14px;max-width:16ch;
-  font-size:clamp(27px,4.7vw,54px);line-height:1.05;letter-spacing:-.035em;font-weight:680;color:var(--ink)}
+.brief-gate-swap{display:grid;place-items:center;margin:0 auto 14px;max-width:16ch;color:#fff;
+  font-size:clamp(27px,4.7vw,54px);line-height:1.05;letter-spacing:-.035em;font-weight:680;
+  text-shadow:0 2px 44px rgba(0,0,0,.55)}
 .brief-gate-swap span{grid-area:1/1;opacity:0;transition:opacity .1s linear}
 .brief-gate-swap span.on{opacity:1}
 .brief-stage.glitching .brief-gate-swap span.on{
-  text-shadow:-2.5px 0 rgba(255,87,34,.9),2.5px 0 rgba(118,171,174,.9);
+  text-shadow:-2.5px 0 rgba(255,87,34,.95),2.5px 0 rgba(90,200,255,.95);
   animation:brief-jit .38s steps(1) 1}
 @keyframes brief-jit{0%{transform:translate(2px,-1px) skewX(-1.2deg)}30%{transform:translate(-3px,1px) skewX(1.4deg)}
   55%{transform:translate(1px,0)}100%{transform:none}}
-.brief-gate-sub{margin:0 auto clamp(26px,4vw,40px);max-width:46ch;color:var(--muted);font-size:clamp(15px,1.6vw,16.5px)}
+.brief-gate-sub{margin:0 auto clamp(26px,4vw,40px);max-width:46ch;color:rgba(255,255,255,.66);font-size:clamp(15px,1.6vw,16.5px)}
 
 .brief-gate-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,20px);max-width:780px;margin:0 auto}
-.brief-gate-choice{position:relative;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);
+.brief-gate-choice{position:relative;text-align:left;cursor:pointer;font-family:inherit;color:#fff;
   padding:clamp(20px,3vw,28px) clamp(18px,2.6vw,26px) clamp(20px,3vw,26px);border-radius:19px;
-  background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);
-  box-shadow:0 1px 0 rgba(255,255,255,.95) inset,0 20px 46px -28px rgba(48,56,65,.6);
-  backdrop-filter:blur(18px) saturate(1.3);
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 30px 62px -30px rgba(0,0,0,.85);
+  backdrop-filter:blur(18px) saturate(1.2);
   transition:box-shadow .3s ease,border-color .22s ease,background .22s ease}
-.brief-gate-choice:hover,.brief-gate-choice:focus-visible{outline:none;border-color:rgba(255,87,34,.55);
-  background:rgba(255,255,255,.78);box-shadow:0 1px 0 rgba(255,255,255,.95) inset,0 26px 58px -28px rgba(255,87,34,.65)}
-.brief-gate-n{display:block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:#d93b08;margin-bottom:13px}
-.brief-gate-choice strong{display:block;font-size:clamp(18px,2.2vw,22px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660}
-.brief-gate-choice p{margin:0;padding-right:44px;color:var(--muted);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
+.brief-gate-choice:hover,.brief-gate-choice:focus-visible{outline:none;border-color:rgba(255,255,255,.36);
+  background:rgba(255,255,255,.13);box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 34px 70px -28px rgba(255,87,34,.45)}
+.brief-gate-n{display:block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:#ffb08a;margin-bottom:13px}
+.brief-gate-choice strong{display:block;font-size:clamp(18px,2.2vw,22px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660;color:#fff}
+.brief-gate-choice p{margin:0;padding-right:44px;color:rgba(255,255,255,.6);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
 .brief-gate-arrow{position:absolute;right:20px;bottom:20px;width:34px;height:34px;border-radius:50%;
   display:grid;place-items:center;background:var(--ember);color:#fff;font-size:15px;
   opacity:0;transform:translateX(-5px);transition:opacity .26s,transform .26s}
 .brief-gate-choice:hover .brief-gate-arrow,.brief-gate-choice:focus-visible .brief-gate-arrow{opacity:1;transform:none}
 
-/* ── A brief a színpadon: üveg, hogy a folyadék átlásson rajta ──── */
-/* A `.public-brief` alapból SÖTÉT hátterű, `color:var(--paper)` szöveggel — a
-   szolgáltatás-oldalakon máig az. A színpadon világos üvegen ül, ezért a
-   szövegszínt is vissza kell venni, különben minden elem, aminek nincs saját
-   színe (pl. a mentett piszkozat panel címe), fehéren beleolvad a háttérbe. */
-.brief-stage .public-brief.bare{padding:0;background:none;max-width:none;color:var(--ink)}
-.brief-stage .public-brief.bare .public-draft-choice{
-  background:rgba(255,255,255,.72);border-color:rgba(255,87,34,.32);
-  backdrop-filter:blur(14px) saturate(1.2);color:var(--ink)}
-.brief-stage .public-brief.bare .public-draft-choice span{color:#d93b08;font-size:10px}
-.brief-stage .public-brief.bare .public-draft-choice strong{color:var(--ink);font-size:17px}
-.brief-stage .public-brief.bare .public-draft-choice p{color:var(--muted)}
-/* A másodlagos gomb a sötét változatból világos szöveget hozna. */
-.brief-stage .public-brief.bare .public-draft-choice .button.spectral,
-.brief-stage .public-brief.bare .button.spectral{
-  background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--ink)}
-.brief-stage .public-brief.bare .button.spectral:hover{border-color:rgba(255,87,34,.5);background:#fff}
+/* ── A brief a színpadon ────────────────────────────────────────
+   A `.public-brief` alapból sötét hátterű, világos szöveggel — itt csak a
+   saját hátterét vesszük le, hogy a derengés átlátsszon rajta. A szövegszínt
+   NEM írjuk felül: sötéten az az eredeti, helyes megjelenés. */
+.brief-stage .public-brief.bare{padding:0;background:none;max-width:none}
 .brief-stage .public-brief.bare .public-brief-shell{
-  background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.92);
-  box-shadow:0 34px 88px -44px rgba(48,56,65,.75);backdrop-filter:blur(22px) saturate(1.3);
+  /* Az eredeti szekció középtónusa (#253039) — ezen a háttéren lettek
+     beállítva a brief saját szövegszínei, ezért itt is ezt kell tartani,
+     különben a halványabb feliratok olvashatatlanul sötétbe fulladnak. */
+  background:rgba(250,249,248,.94);border:1px solid rgba(255,255,255,.5);
+  box-shadow:0 44px 100px -46px rgba(0,0,0,.95);backdrop-filter:blur(22px) saturate(1.1);
   transform-origin:center center}
+.brief-stage .public-brief.bare .public-draft-choice{backdrop-filter:blur(14px)}
+/* A doboz világos panel: a benne lévő, eredetileg sötét háttérre szánt
+   halvány feliratok itt olvashatatlanok lennének. */
+.brief-stage .public-brief.bare .public-brief-shell .public-field-hint,
+.brief-stage .public-brief.bare .public-brief-shell .public-save-state{color:var(--muted)}
+.brief-stage .public-brief.bare .public-brief-shell .public-secure-note{color:var(--ink)}
+.brief-stage .public-brief.bare .public-brief-shell .public-secure-note p{color:var(--muted)}
 
 /* ── Csomagajánlás (3. lépés) ───────────────────────────────────── */
-.brief-recommend{border:1px solid rgba(255,87,34,.3);border-radius:16px;padding:20px;margin-bottom:24px;
-  background:linear-gradient(180deg,rgba(255,87,34,.07),rgba(255,87,34,.02))}
+.brief-recommend{border:1px solid rgba(255,87,34,.34);border-radius:16px;padding:20px;margin-bottom:24px;
+  background:linear-gradient(180deg,rgba(255,87,34,.09),rgba(255,87,34,.03))}
 .brief-recommend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .brief-recommend-head span{display:block;font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.17em;color:#d93b08;margin-bottom:7px}
 .brief-recommend-head strong{display:block;font-size:23px;letter-spacing:-.02em;font-weight:670;color:var(--ink)}
@@ -16470,9 +16500,9 @@ details.admin-collapse summary:hover {
 .brief-recommend-why{margin:12px 0 4px;font-size:14.5px;color:var(--ink)}
 .brief-recommend-scope{margin:0;font-size:13px;color:var(--muted)}
 .brief-recommend-toggle{margin-top:14px;padding:9px 15px;border-radius:10px;cursor:pointer;font-family:inherit;
-  font-size:13.5px;font-weight:550;color:#d93b08;background:rgba(255,255,255,.8);border:1px solid rgba(255,87,34,.35);
+  font-size:13.5px;font-weight:550;color:#d93b08;background:rgba(255,255,255,.85);border:1px solid rgba(255,87,34,.4);
   transition:background .18s,border-color .18s}
-.brief-recommend-toggle:hover{background:#fff;border-color:rgba(255,87,34,.6)}
+.brief-recommend-toggle:hover{background:#fff;border-color:rgba(255,87,34,.65)}
 .brief-recommend .public-plan-grid{margin-top:16px}
 
 /* ── Mentés emailben (fiók nélküli kimenet) ─────────────────────── */
@@ -16480,24 +16510,24 @@ details.admin-collapse summary:hover {
 .public-link-trigger{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
   padding:18px 20px;border-radius:15px;font-family:inherit;color:var(--ink);
   background:rgba(255,255,255,.6);border:1px dashed var(--line);transition:border-color .2s,background .2s}
-.public-link-trigger:hover{border-color:rgba(255,87,34,.55);background:rgba(255,255,255,.85)}
+.public-link-trigger:hover{border-color:rgba(255,87,34,.55);background:#fff}
 .public-link-trigger>span{width:38px;height:38px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
-  background:rgba(255,87,34,.12);color:#d93b08;font-size:17px}
+  background:rgba(255,87,34,.13);color:#d93b08;font-size:17px}
 .public-link-trigger strong{display:block;font-size:15.5px;font-weight:620;margin-bottom:3px}
 .public-link-trigger small{display:block;font-size:13px;color:var(--muted);line-height:1.45}
 .public-link-trigger i{margin-left:auto;font-style:normal;color:var(--muted);font-size:17px}
-.public-link-form{padding:20px;border-radius:15px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
-.public-link-form label span{display:block;font-size:13.5px;font-weight:560;margin-bottom:9px}
+.public-link-form{padding:20px;border-radius:15px;background:rgba(255,255,255,.72);border:1px solid var(--line)}
+.public-link-form label span{display:block;font-size:13.5px;font-weight:560;margin-bottom:9px;color:var(--ink)}
 .public-link-form input{width:100%;padding:13px 15px;border-radius:12px;font-size:15px;font-family:inherit;color:var(--ink);
   background:#fff;border:1px solid var(--line);outline:none;transition:border-color .2s,box-shadow .2s}
-.public-link-form input:focus{border-color:var(--ember);box-shadow:0 0 0 4px rgba(255,87,34,.14)}
+.public-link-form input:focus{border-color:var(--ember);box-shadow:0 0 0 4px rgba(255,87,34,.16)}
 .public-link-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .public-link-form small{display:block;margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5}
 .public-link-done{display:flex;gap:14px;padding:20px;border-radius:15px;
-  background:rgba(53,192,122,.09);border:1px solid rgba(53,192,122,.34)}
+  background:rgba(53,192,122,.11);border:1px solid rgba(53,192,122,.36)}
 .public-link-done>span{width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
   background:#35c07a;color:#fff;font-size:16px}
-.public-link-done strong{display:block;font-size:15.5px;margin-bottom:5px}
+.public-link-done strong{display:block;font-size:15.5px;margin-bottom:5px;color:var(--ink)}
 .public-link-done p{margin:0;font-size:13.6px;color:var(--muted);line-height:1.55}
 
 .public-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
@@ -16506,14 +16536,14 @@ details.admin-collapse summary:hover {
 
 /* ── Reszponzív ─────────────────────────────────────────────────── */
 @media (max-width:900px){
-  .brief-stage{--brief-fit:.46;min-height:auto;padding-top:44px;padding-bottom:56px}
+  .brief-stage{min-height:auto;padding-top:52px;padding-bottom:72px}
   .brief-gate-choices{grid-template-columns:1fr}
   .brief-gate-choice p{padding-right:0}
   .brief-gate-arrow{display:none}
   .brief-recommend-head b{font-size:18px}
 }
 @media (max-width:560px){
-  .brief-stage{--brief-fit:.34;padding-left:14px;padding-right:14px}
+  .brief-stage{padding-left:14px;padding-right:14px}
   .brief-gate-swap{max-width:20ch}
   .brief-recommend{padding:16px}
   .public-link-trigger{padding:15px 16px;gap:11px}
@@ -16523,7 +16553,6 @@ details.admin-collapse summary:hover {
 
 @media (prefers-reduced-motion:reduce){
   .brief-flow span,.brief-scan{animation:none}
-  .brief-flow{filter:blur(38px);opacity:.45}
-  .brief-stage.glitching .brief-gate-swap span.on{animation:none;text-shadow:none}
+  .brief-stage.glitching .brief-gate-swap span.on{animation:none;text-shadow:0 2px 44px rgba(0,0,0,.55)}
   .brief-stage.glitching .brief-slice{animation:none}
 }

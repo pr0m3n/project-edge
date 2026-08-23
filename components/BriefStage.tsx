@@ -32,33 +32,35 @@ export function BriefStage() {
   const cardRect = useRef<DOMRect | null>(null);
   const morphed = useRef(false);
 
-  /* ── A folyadék: EGY üstökös — vastag fej, utána elvékonyodó hosszú farok.
-        Sok szegmens szorosan egymás mögött ugyanazon a zárt pályán; a `goo`
-        SVG-szűrő egyetlen összefüggő, elnyúló csíkká olvasztja őket. Nincs
-        futó JS-ciklus: a böngésző animálja az `offset-distance`-t. ── */
+  /* ── A derengés: négy HATALMAS, teljesen lágy fényfolt, ami alulról izzik
+        fel és lassan sodródik. Mindegyik `closest-side` gradiens, ami
+        átlátszóba fut ki — nincs éle, amit foltnak lehetne látni. A korábbi
+        változat kicsi, éles korongokat használt, és azokat egy SVG-szűrő
+        próbálta összeolvasztani; Safariban a szűrő nem érvényesült, ezért
+        karikákra esett szét. Itt nincs mit elrontani: sima CSS. ── */
   useEffect(() => {
     const flow = flowRef.current;
     if (!flow || flow.childElementCount) return;
-    // Sűrűbb és jobban átfedő szegmensek, mint korábban: a CSS-blur csak akkor
-    // olvasztja őket folytonos csíkká, ha nincs köztük rés.
-    const SEGMENTS = 44;
-    const DURATION = 27;
-    const HEAD = 132;
-    const TAIL = 14;
-    const GAP = 0.0058;
-    for (let index = 0; index < SEGMENTS; index += 1) {
-      const ratio = index / (SEGMENTS - 1);
-      const radius = HEAD + (TAIL - HEAD) * Math.pow(ratio, 0.7);
-      const drop = document.createElement("span");
-      drop.style.width = `${radius}px`;
-      drop.style.height = `${radius}px`;
-      drop.style.marginLeft = `${-radius / 2}px`;
-      drop.style.marginTop = `${-radius / 2}px`;
-      // A farok vége halkan elfogy, hogy ne legyen levágott vége a csíknak.
-      drop.style.opacity = `${Math.max(0.16, 1 - Math.pow(ratio, 1.9))}`;
-      drop.style.setProperty("--dur", `${DURATION}s`);
-      drop.style.setProperty("--del", `${-DURATION * GAP * index}s`);
-      flow.appendChild(drop);
+    const AURORA = [
+      { w: "92vmin", h: "70vmin", x: "left:-12%", y: "-14%", color: "43,75,255", dur: 38, dx: "26vmin", dy: "-14vmin", s0: 1, s1: 1.16 },
+      { w: "76vmin", h: "66vmin", x: "left:22%", y: "-18%", color: "194,59,255", dur: 46, dx: "-20vmin", dy: "-22vmin", s0: 1.08, s1: 0.9 },
+      { w: "84vmin", h: "64vmin", x: "right:-8%", y: "-12%", color: "255,79,149", dur: 42, dx: "-30vmin", dy: "-16vmin", s0: 1, s1: 1.2 },
+      { w: "62vmin", h: "52vmin", x: "left:50%", y: "-6%", color: "255,122,61", dur: 55, dx: "16vmin", dy: "-26vmin", s0: 0.92, s1: 1.15 }
+    ];
+    for (const light of AURORA) {
+      const node = document.createElement("span");
+      const [side, offset] = light.x.split(":");
+      node.style.width = light.w;
+      node.style.height = light.h;
+      node.style.setProperty(side, offset);
+      node.style.bottom = light.y;
+      node.style.background = `radial-gradient(closest-side, rgb(${light.color}), rgba(${light.color},0) 70%)`;
+      node.style.setProperty("--dur", `${light.dur}s`);
+      node.style.setProperty("--dx", light.dx);
+      node.style.setProperty("--dy", light.dy);
+      node.style.setProperty("--s0", `${light.s0}`);
+      node.style.setProperty("--s1", `${light.s1}`);
+      flow.appendChild(node);
     }
   }, []);
 
@@ -214,7 +216,6 @@ export function BriefStage() {
       <div aria-hidden="true" className="brief-flowwrap">
         <div className="brief-flow" ref={flowRef} />
       </div>
-      <div aria-hidden="true" className="brief-veil" />
       <svg aria-hidden="true" className="brief-grain" focusable="false">
         <rect filter="url(#brief-grain)" height="100%" width="100%" />
       </svg>
