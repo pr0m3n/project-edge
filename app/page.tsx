@@ -4,7 +4,7 @@ import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
-import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { BriefStage } from "@/components/BriefStage";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
 
 export const metadata: Metadata = {
@@ -139,6 +139,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* A brief közvetlenül a heró alatt: a látogatók 95%-a ide érkezik és
+          ~32 másodpercet tölt itt. Korábban a 13 szekcióból az 5. volt, és
+          tízből nyolcan el sem görgettek odáig. */}
+      <BriefStage />
+
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -211,8 +216,6 @@ export default function Home() {
             ugyanezt mondja el, két azonos „Árak" fejléc egymás alatt volt. */}
         <PriceEstimator showLead={false} />
       </section>
-
-      <PublicBriefWizard />
 
       <section className="featured-work">
         <div className="featured-copy">

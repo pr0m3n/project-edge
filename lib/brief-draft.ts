@@ -15,6 +15,14 @@ export const initialBriefForm = {
   projectType: "",
   priority: "",
   primaryAction: "",
+  /**
+   * A csomagajánláshoz használt két kérdés. Szándékosan a vállalkozásról
+   * kérdeznek, nem a weboldalról: az oldalszámot egy laikus felfelé becsüli
+   * (minden témát külön oldalnak érez), és a drágább csomagtól visszariad.
+   * Lásd `recommendPlan()` a lib/subscriptions.ts-ben.
+   */
+  serviceCount: "",
+  visitorTask: "",
   style: "",
   title: "",
   vibe: "",

@@ -281,6 +281,57 @@ export const PLAN_COMPARISON_ROWS: Array<{ label: string; value: (plan: Subscrip
 ];
 
 /** Egymondatos döntési szabály — a „melyiket válasszam?" kérdésre. */
+/**
+ * A csomagajánló két kérdésének válaszkészlete.
+ *
+ * Miért nem az oldalszámot kérdezzük: azt egy laikus nem tudja megbecsülni.
+ * Minden témát, amiről beszélni szeretne, külön oldalnak érez, ezért felfelé
+ * mond — a drágább csomagtól pedig visszariad, és inkább elmegy. Ezek a
+ * kérdések viszont a SAJÁT vállalkozásáról szólnak, tehát pontosan tudja rá a
+ * választ, és nincs mellettük ár.
+ */
+export const SERVICE_COUNT_OPTIONS = [
+  ["one", "Egyet"],
+  ["few", "Néhányat (2–5)"],
+  ["many", "Sokfélét"]
+] as const;
+
+export const VISITOR_TASK_OPTIONS = [
+  ["contact", "Nem, elég ha felhív vagy ír"],
+  ["booking", "Időpontot foglal"],
+  ["order", "Rendel vagy vásárol"]
+] as const;
+
+export type ServiceCountKey = (typeof SERVICE_COUNT_OPTIONS)[number][0];
+export type VisitorTaskKey = (typeof VISITOR_TASK_OPTIONS)[number][0];
+
+/**
+ * A `PLAN_DECISION_RULE` szabályainak gépi megfelelője — ugyanaz a logika,
+ * amit a látogató is olvas az árkártyákon:
+ *
+ *   foglalás / rendelés          → Egyedi
+ *   több szolgáltatás            → Üzleti
+ *   egy szolgáltatás + hívás     → Jelenlét
+ *
+ * Mindig a LEGOLCSÓBB csomagot adja vissza, ami elég — soha nem tol felfelé.
+ * Az ajánlás felülbírálható, ez csak a kiindulópont.
+ */
+export function recommendPlan(serviceCount: string, visitorTask: string): SubscriptionPlanKey | null {
+  if (!serviceCount || !visitorTask) return null;
+  if (visitorTask === "booking" || visitorTask === "order") return "custom";
+  if (serviceCount === "few" || serviceCount === "many") return "business";
+  return "presence";
+}
+
+/** Egy mondat arról, MIÉRT ezt ajánljuk — a látogató lássa az indoklást. */
+export function recommendationReason(serviceCount: string, visitorTask: string) {
+  if (visitorTask === "booking") return "Mert foglalási folyamat kell az oldalra, az pedig egyedi fejlesztés.";
+  if (visitorTask === "order") return "Mert rendelési folyamat kell az oldalra, az pedig egyedi fejlesztés.";
+  if (serviceCount === "many") return "Mert sokféle szolgáltatásod van, és mindegyiknek kell saját hely.";
+  if (serviceCount === "few") return "Mert több szolgáltatásod van, és mindegyik megérdemel egy saját oldalt.";
+  return "Mert egy szolgáltatásod van — ahhoz elég egy jól felépített oldal.";
+}
+
 export const PLAN_DECISION_RULE: Record<SubscriptionPlanKey, string> = {
   presence: "Válaszd ezt, ha egy szolgáltatásod van, és elég egy meggyőző oldal.",
   business: "Válaszd ezt, ha több szolgáltatásod van, és rendszeresen szeretnél ajánlatkérést.",

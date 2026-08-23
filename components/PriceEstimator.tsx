@@ -28,6 +28,24 @@ type PriceEstimatorProps = {
   showLead?: boolean;
 };
 
+/**
+ * Az árkártyáról indított csomagválasztás átadása a briefnek.
+ *
+ * Session storage-ban megy, nem URL-ben: így ugyanazon az oldalon marad a
+ * látogató (a `#projektbrief` horgony csak odagörget), és a landing oldalakon
+ * is működik, ahol a brief a lap alján van.
+ */
+export const PLAN_PRESELECT_KEY = "pe-preselect-plan";
+
+function preselectPlan(key: SubscriptionPlanKey) {
+  try {
+    window.sessionStorage.setItem(PLAN_PRESELECT_KEY, key);
+    window.dispatchEvent(new CustomEvent("projectedge:plan-preselected", { detail: key }));
+  } catch {
+    /* Privát módban a sessionStorage tiltott lehet — a horgony ettől még működik. */
+  }
+}
+
 export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
@@ -74,7 +92,11 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
                 </ul>
                 <div className="plan-meta"><span>{plan.changes}</span><span>{changeLeadLabel(plan.changeLeadDays)}</span></div>
                 <button className="plan-detail-trigger" type="button" onClick={() => { setDetailPlan(plan.key); window.setTimeout(() => document.getElementById("csomag-reszletek")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}>Részletes tartalom</button>
-                <TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${plan.key}`}>Ezt választom</TransitionLink>
+                {/* Korábban ez az ügyfélkapuba vitt, ahol fiókot kellett létrehozni:
+                    a mérés szerint öten eljutottak idáig, és egyikük sem regisztrált.
+                    A regisztráció ott legyen kötelező, ahol van mit védeni (szerződés,
+                    fizetés) — nem ott, ahol valaki még csak érdeklődik. */}
+                <a className="button primary" href="#projektbrief" onClick={() => preselectPlan(plan.key)}>Ezt választom</a>
               </article>
             ))}
           </div>
@@ -126,7 +148,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
           <section className="plan-detail-panel" id="csomag-reszletek">
             <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
-            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><TransitionLink className="button primary" href={`/ugyfelkapu?model=subscription&plan=${activePlan.key}`}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</TransitionLink></footer>
+            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><a className="button primary" href="#projektbrief" onClick={() => preselectPlan(activePlan.key)}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</a></footer>
           </section>
           <div className="subscription-footnotes">
             <span>Az első havidíj indítja a munkát</span>

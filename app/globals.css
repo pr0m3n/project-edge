@@ -16357,3 +16357,153 @@ details.admin-collapse summary:hover {
   --adm-ink-80: rgba(18, 24, 31, 0.80);
   --adm-ink-90: rgba(18, 24, 31, 0.90);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   BRIEF-SZÍNPAD — a heró alatti belépő
+   ════════════════════════════════════════════════════════════════════
+   A látogatók 95%-a a főoldalra érkezik és ~32 másodpercet tölt itt, a brief
+   viszont korábban a 13 szekcióból az 5. volt: tízből nyolcan el sem görgettek
+   odáig. Ez a szakasz közvetlenül a heró alatt ül, egyetlen kérdéssel.
+
+   A háttér EGY üstökös: vastag fej, utána elvékonyodó hosszú farok, ami zárt
+   pályán kering. A szegmenseket a `BriefStage.tsx` hozza létre, a `#brief-goo`
+   szűrő pedig egyetlen összefüggő folyadékcsíkká olvasztja őket. Nincs futó
+   JS-ciklus — az `offset-distance`-t a böngésző animálja. */
+
+.brief-stage{position:relative;overflow:hidden;isolation:isolate;background:var(--paper);
+  padding:clamp(56px,7vw,90px) clamp(16px,4vw,26px) clamp(64px,8vw,100px);
+  min-height:min(880px,92vh);display:flex;align-items:center}
+.brief-stage-defs{position:absolute;width:0;height:0}
+
+.brief-flowwrap{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.brief-flow{position:absolute;left:50%;top:50%;width:1600px;height:900px;margin:-450px 0 0 -800px;
+  transform:scale(var(--brief-fit,.66));filter:url(#brief-goo)}
+.brief-flow span{position:absolute;left:0;top:0;border-radius:50%;
+  background:radial-gradient(circle at 42% 38%,#ff9147,var(--ember) 58%,#d93b08);
+  offset-path:path("M 210,470 C 190,230 520,110 810,175 C 1090,240 1195,110 1375,265 C 1535,400 1470,655 1225,730 C 985,805 815,700 600,765 C 345,840 232,700 210,470 Z");
+  offset-rotate:0deg;animation:brief-course var(--dur,27s) linear infinite;animation-delay:var(--del,0s);
+  will-change:offset-distance}
+@keyframes brief-course{to{offset-distance:100%}}
+
+.brief-veil{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(44% 30% at 50% 44%,rgba(245,245,245,.93) 0%,rgba(245,245,245,.66) 52%,rgba(245,245,245,.18) 82%,rgba(245,245,245,0) 100%)}
+.brief-grain{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:.2;mix-blend-mode:multiply}
+.brief-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.26;
+  background:repeating-linear-gradient(180deg,rgba(48,56,65,.05) 0 1px,transparent 1px 3px);
+  animation:brief-scan 9s linear infinite}
+@keyframes brief-scan{to{transform:translateY(3px)}}
+.brief-slice{position:absolute;left:0;right:0;z-index:3;pointer-events:none;height:var(--h,10px);top:var(--t,30%);
+  backdrop-filter:hue-rotate(22deg) saturate(1.6);opacity:0}
+.brief-stage.glitching .brief-slice{animation:brief-slice .38s steps(1) 1}
+@keyframes brief-slice{0%{opacity:.9;transform:translateX(-11px)}35%{opacity:.9;transform:translateX(9px)}
+  60%{opacity:.7;transform:translateX(-4px)}100%{opacity:0;transform:none}}
+
+.brief-stage-inner{position:relative;z-index:4;width:100%;max-width:1180px;margin:0 auto}
+
+/* ── A kapu ─────────────────────────────────────────────────────── */
+.brief-gate{text-align:center;padding:clamp(8px,3vw,30px) 0 12px}
+/* Mindkét szöveg UGYANABBAN a rács-cellában ül, egymáson. A doboz magassága
+   így mindig a HOSSZABBIKHOZ igazodik — váltáskor semmi nem mozdul el alatta. */
+.brief-gate-swap{display:grid;place-items:center;margin:0 auto 14px;max-width:16ch;
+  font-size:clamp(27px,4.7vw,54px);line-height:1.05;letter-spacing:-.035em;font-weight:680;color:var(--ink)}
+.brief-gate-swap span{grid-area:1/1;opacity:0;transition:opacity .1s linear}
+.brief-gate-swap span.on{opacity:1}
+.brief-stage.glitching .brief-gate-swap span.on{
+  text-shadow:-2.5px 0 rgba(255,87,34,.9),2.5px 0 rgba(118,171,174,.9);
+  animation:brief-jit .38s steps(1) 1}
+@keyframes brief-jit{0%{transform:translate(2px,-1px) skewX(-1.2deg)}30%{transform:translate(-3px,1px) skewX(1.4deg)}
+  55%{transform:translate(1px,0)}100%{transform:none}}
+.brief-gate-sub{margin:0 auto clamp(26px,4vw,40px);max-width:46ch;color:var(--muted);font-size:clamp(15px,1.6vw,16.5px)}
+
+.brief-gate-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,20px);max-width:780px;margin:0 auto}
+.brief-gate-choice{position:relative;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);
+  padding:clamp(20px,3vw,28px) clamp(18px,2.6vw,26px) clamp(20px,3vw,26px);border-radius:19px;
+  background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 1px 0 rgba(255,255,255,.95) inset,0 20px 46px -28px rgba(48,56,65,.6);
+  backdrop-filter:blur(18px) saturate(1.3);
+  transition:box-shadow .3s ease,border-color .22s ease,background .22s ease}
+.brief-gate-choice:hover,.brief-gate-choice:focus-visible{outline:none;border-color:rgba(255,87,34,.55);
+  background:rgba(255,255,255,.78);box-shadow:0 1px 0 rgba(255,255,255,.95) inset,0 26px 58px -28px rgba(255,87,34,.65)}
+.brief-gate-n{display:block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:#d93b08;margin-bottom:13px}
+.brief-gate-choice strong{display:block;font-size:clamp(18px,2.2vw,22px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660}
+.brief-gate-choice p{margin:0;padding-right:44px;color:var(--muted);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
+.brief-gate-arrow{position:absolute;right:20px;bottom:20px;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;background:var(--ember);color:#fff;font-size:15px;
+  opacity:0;transform:translateX(-5px);transition:opacity .26s,transform .26s}
+.brief-gate-choice:hover .brief-gate-arrow,.brief-gate-choice:focus-visible .brief-gate-arrow{opacity:1;transform:none}
+
+/* ── A brief a színpadon: üveg, hogy a folyadék átlásson rajta ──── */
+.brief-stage .public-brief.bare{padding:0;background:none;max-width:none}
+.brief-stage .public-brief.bare .public-brief-shell{
+  background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.92);
+  box-shadow:0 34px 88px -44px rgba(48,56,65,.75);backdrop-filter:blur(22px) saturate(1.3);
+  transform-origin:center center}
+
+/* ── Csomagajánlás (3. lépés) ───────────────────────────────────── */
+.brief-recommend{border:1px solid rgba(255,87,34,.3);border-radius:16px;padding:20px;margin-bottom:24px;
+  background:linear-gradient(180deg,rgba(255,87,34,.07),rgba(255,87,34,.02))}
+.brief-recommend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brief-recommend-head span{display:block;font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.17em;color:#d93b08;margin-bottom:7px}
+.brief-recommend-head strong{display:block;font-size:23px;letter-spacing:-.02em;font-weight:670;color:var(--ink)}
+.brief-recommend-head b{font-size:20px;font-weight:670;color:var(--ink);white-space:nowrap}
+.brief-recommend-head b small{font-size:13px;font-weight:500;color:var(--muted)}
+.brief-recommend-why{margin:12px 0 4px;font-size:14.5px;color:var(--ink)}
+.brief-recommend-scope{margin:0;font-size:13px;color:var(--muted)}
+.brief-recommend-toggle{margin-top:14px;padding:9px 15px;border-radius:10px;cursor:pointer;font-family:inherit;
+  font-size:13.5px;font-weight:550;color:#d93b08;background:rgba(255,255,255,.8);border:1px solid rgba(255,87,34,.35);
+  transition:background .18s,border-color .18s}
+.brief-recommend-toggle:hover{background:#fff;border-color:rgba(255,87,34,.6)}
+.brief-recommend .public-plan-grid{margin-top:16px}
+
+/* ── Mentés emailben (fiók nélküli kimenet) ─────────────────────── */
+.public-link-gate{margin-top:16px}
+.public-link-trigger{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+  padding:18px 20px;border-radius:15px;font-family:inherit;color:var(--ink);
+  background:rgba(255,255,255,.6);border:1px dashed var(--line);transition:border-color .2s,background .2s}
+.public-link-trigger:hover{border-color:rgba(255,87,34,.55);background:rgba(255,255,255,.85)}
+.public-link-trigger>span{width:38px;height:38px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
+  background:rgba(255,87,34,.12);color:#d93b08;font-size:17px}
+.public-link-trigger strong{display:block;font-size:15.5px;font-weight:620;margin-bottom:3px}
+.public-link-trigger small{display:block;font-size:13px;color:var(--muted);line-height:1.45}
+.public-link-trigger i{margin-left:auto;font-style:normal;color:var(--muted);font-size:17px}
+.public-link-form{padding:20px;border-radius:15px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.public-link-form label span{display:block;font-size:13.5px;font-weight:560;margin-bottom:9px}
+.public-link-form input{width:100%;padding:13px 15px;border-radius:12px;font-size:15px;font-family:inherit;color:var(--ink);
+  background:#fff;border:1px solid var(--line);outline:none;transition:border-color .2s,box-shadow .2s}
+.public-link-form input:focus{border-color:var(--ember);box-shadow:0 0 0 4px rgba(255,87,34,.14)}
+.public-link-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.public-link-form small{display:block;margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.public-link-done{display:flex;gap:14px;padding:20px;border-radius:15px;
+  background:rgba(53,192,122,.09);border:1px solid rgba(53,192,122,.34)}
+.public-link-done>span{width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+  background:#35c07a;color:#fff;font-size:16px}
+.public-link-done strong{display:block;font-size:15.5px;margin-bottom:5px}
+.public-link-done p{margin:0;font-size:13.6px;color:var(--muted);line-height:1.55}
+
+.public-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.public-save-link{background:none;border:0;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;
+  color:#d93b08;text-decoration:underline;text-underline-offset:2px}
+
+/* ── Reszponzív ─────────────────────────────────────────────────── */
+@media (max-width:900px){
+  .brief-stage{--brief-fit:.46;min-height:auto;padding-top:44px;padding-bottom:56px}
+  .brief-gate-choices{grid-template-columns:1fr}
+  .brief-gate-choice p{padding-right:0}
+  .brief-gate-arrow{display:none}
+  .brief-recommend-head b{font-size:18px}
+}
+@media (max-width:560px){
+  .brief-stage{--brief-fit:.34;padding-left:14px;padding-right:14px}
+  .brief-gate-swap{max-width:20ch}
+  .brief-recommend{padding:16px}
+  .public-link-trigger{padding:15px 16px;gap:11px}
+  .public-link-trigger>span{width:32px;height:32px;font-size:15px}
+  .public-link-actions .button{flex:1 1 auto}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .brief-flow span,.brief-scan{animation:none}
+  .brief-flow{filter:blur(38px);opacity:.45}
+  .brief-stage.glitching .brief-gate-swap span.on{animation:none;text-shadow:none}
+  .brief-stage.glitching .brief-slice{animation:none}
+}
