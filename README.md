@@ -149,6 +149,36 @@ submitted it. Drafts older than 30 days are left alone, and a draft is skipped (
 closed) if the user meanwhile started a project. Admins can trigger a run manually with
 a session token.
 
+### Admin user overview
+
+`GET /api/admin/users` (admin bearer token) backs the **Felhasználók** tab. It exists as
+a server route because `last_sign_in_at`, email confirmation and the sign-in provider
+live in `auth.users`, which the browser's anon key can never read — only the service-role
+`auth.admin` API. It joins that with projects, tickets, change requests and brief drafts
+into one "who was here, and what did they do" row per user, and returns no secrets. The
+tab fetches lazily, only when it is opened.
+
+### Admin light mode
+
+The admin surface is dark by default; light mode is **purely additive overrides** scoped
+under `.admin-page[data-admin-theme="light"]`, so not one dark-mode rule changes and the
+client portal — which shares classes like `.handover-*` and `.status-pill` — is untouched.
+The toggle sits in the admin command bar and persists in `localStorage`.
+
+Two rules make the mapping work, and both matter if you add admin CSS later:
+
+- A white veil (`rgba(255,255,255,α)`) becomes a dark veil at the **same** alpha. That
+  single flip is correct for both roles: as a background it yields the same subtle grey,
+  as text the same readable ink. The exception is a veil at α ≥ 0.5 used as a
+  *background* — that was a near-solid light surface on the dark theme and must stay
+  light, not become a near-black box.
+- White text on a **brand-coloured** background (the orange primary button, the badges)
+  stays white. Only white text on a neutral dark surface flips to ink.
+
+Inline `style={{ color: … }}` in the admin components beats every selector, so those
+literals were replaced with `--adm-*` variables defined on `.admin-page`. Use those
+variables in new admin inline styles rather than hard-coding a colour.
+
 ### Registration notifications
 
 `POST /api/auth/register-notify` requires the caller's own bearer token and only accepts

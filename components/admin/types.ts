@@ -216,3 +216,32 @@ export type AppNotification = {
   read: boolean;
   created_at: string;
 };
+
+/**
+ * Egy regisztrált felhasználó és az aktivitása — a `/api/admin/users` válasza.
+ *
+ * Itt él, nem a route-fájlban, mert a route `runtime`/`maxDuration` exportokat
+ * is kiad: a kliens komponens ne függjön egy szerveroldali modultól akkor sem,
+ * ha a típusimport önmagában eltűnne a fordításkor.
+ *
+ * A `lastSignInAt` az `auth.users`-ből jön, amit a kliensoldali anon kulcs nem
+ * lát — ezért van egyáltalán API-végpont e mögött.
+ */
+export type AdminUserActivity = {
+  id: string;
+  email: string;
+  fullName: string | null;
+  registeredAt: string;
+  lastSignInAt: string | null;
+  emailConfirmedAt: string | null;
+  providers: string[];
+  projectCount: number;
+  activeProjectCount: number;
+  ticketCount: number;
+  openTicketCount: number;
+  changeRequestCount: number;
+  monthlyRevenue: number;
+  lastActivityAt: string | null;
+  lastActivityLabel: string | null;
+  draft: { step: number; stepCount: number; updatedAt: string; reminderSentAt: string | null } | null;
+};

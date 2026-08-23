@@ -15349,3 +15349,1011 @@ details.admin-collapse summary:hover {
   .branch-talk { grid-template-columns: 1fr; }
   .branch-talk .button { justify-self: start; }
 }
+
+/* ==========================================================================
+   ADMIN — FELHASZNÁLÓI LISTA ÉS FÉLBEHAGYOTT ADATLAPOK
+   ========================================================================== */
+
+.admin-card-dark-sub {
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.admin-users-toolbar {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-users-toolbar input {
+  flex: 1;
+  max-width: 420px;
+}
+
+.admin-empty-note {
+  color: rgba(255, 255, 255, 0.45);
+  padding: 30px;
+  text-align: center;
+}
+
+.admin-inline-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  color: #ff9d9d;
+  font-size: 13px;
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.admin-user-name {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.admin-user-strong {
+  color: #ffffff;
+  display: block;
+  font-size: 13.5px;
+}
+
+.admin-user-email {
+  font-size: 12.5px;
+  margin: 2px 0 0;
+}
+
+.admin-user-email a {
+  color: #76abae;
+}
+
+.admin-user-meta {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 2px 0 0;
+}
+
+.admin-user-meta.warn {
+  color: #f5b942;
+}
+
+.status-pill.live {
+  background: rgba(118, 171, 174, 0.35);
+}
+
+/* ==========================================================================
+   ADMIN — VILÁGOS MÓD
+   --------------------------------------------------------------------------
+   A felület alapból sötét. A világos változat KIZÁRÓLAG felülírásokból áll,
+   `.admin-page[data-admin-theme="light"]` alá zárva: így a sötét mód egyetlen
+   szabálya sem változik, és a `.handover-*`, `.change-*`, `.status-pill`
+   típusú, az ügyfélkapuval KÖZÖS osztályok is csak az adminban öltöznek át.
+
+   A leképezés egységes: a fehér fátyol (`rgba(255,255,255,α)`) ugyanazzal az
+   alfával sötét fátyollá válik — háttérként finom szürke, szövegként olvasható
+   tinta lesz belőle. A sötét felületek világosak lesznek, a mélységi sorrend
+   megfordul (sötét módban a lap a legsötétebb; világosban a lap a legszürkébb
+   és a kártya a legfehérebb). A márkaszínek maradnak, kivéve ahol SZÖVEGKÉNT
+   használjuk őket: fehér háttéren a #76ABAE és a #FF5722 kontrasztja kevés,
+   ott sötétebb párjuk lép be.
+   ========================================================================== */
+
+.admin-page[data-admin-theme="light"] {
+  background: #eef1f4;
+  color: #12181f;
+  /* A natív vezérlők (görgetősáv, dátumválasztó, autofill) is váltsanak. */
+  color-scheme: light;
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard input::placeholder,
+.admin-page[data-admin-theme="light"] .admin-dashboard textarea::placeholder {
+  color: rgba(18, 24, 31, 0.42);
+}
+
+.admin-page[data-admin-theme="light"] .admin-card-dark-sub,
+.admin-page[data-admin-theme="light"] .admin-empty-note,
+.admin-page[data-admin-theme="light"] .admin-user-meta {
+  color: rgba(18, 24, 31, 0.55);
+}
+
+.admin-page[data-admin-theme="light"] .admin-user-name,
+.admin-page[data-admin-theme="light"] .admin-user-strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-user-email a {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-user-meta.warn {
+  color: #8a5a00;
+}
+
+.admin-page[data-admin-theme="light"] .admin-inline-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #b3261e;
+}
+
+.admin-page[data-admin-theme="light"] .status-pill.live {
+  background: rgba(118, 171, 174, 0.3);
+}
+
+/* A téma-váltó gomb maga. */
+.admin-theme-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  transition: all 0.16s ease;
+}
+
+.admin-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.admin-page[data-admin-theme="light"] .admin-theme-toggle {
+  background: rgba(18, 24, 31, 0.05);
+  border-color: rgba(18, 24, 31, 0.14);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-theme-toggle:hover {
+  background: rgba(18, 24, 31, 0.1);
+  border-color: rgba(18, 24, 31, 0.28);
+}
+
+/* ── Gépi leképezés a meglévő sötét szabályokból (lásd a fenti magyarázatot) ── */
+
+.admin-page[data-admin-theme="light"] .admin-card {
+  background: rgba(18, 24, 31, 0.08);
+  border: 1px solid rgba(18, 24, 31, 0.16);
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard input, .admin-page[data-admin-theme="light"] .admin-dashboard select, .admin-page[data-admin-theme="light"] .admin-dashboard textarea {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard label {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard .admin-field > span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-logo-badge {
+  border: 1px solid rgba(18, 24, 31, 0.25);
+}
+
+.admin-page[data-admin-theme="light"] .admin-brand-titles h1 {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-brand-titles p {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .admin-sandbox-btn {
+  background: rgba(18, 24, 31, 0.04) !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-sandbox-btn:hover:not(:disabled) {
+  background: rgba(18, 24, 31, 0.08) !important;
+  border-color: rgba(18, 24, 31, 0.25) !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-notif-btn {
+  background: rgba(18, 24, 31, 0.05);
+  border: 1px solid rgba(18, 24, 31, 0.12);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-notif-btn:hover {
+  background: rgba(18, 24, 31, 0.1);
+  border-color: rgba(18, 24, 31, 0.25);
+}
+
+.admin-page[data-admin-theme="light"] .admin-notif-badge {
+  border: 2px solid #ffffff;
+}
+
+.admin-page[data-admin-theme="light"] .admin-logout-btn {
+  color: #b3261e;
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-card {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-card:hover {
+  background: #eef2f5;
+  border-color: rgba(18, 24, 31, 0.18);
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-card.urgent {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.14) 0%, #eef2f5 100%);
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-label {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-val {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-kpi-sub {
+  color: rgba(18, 24, 31, 0.45);
+}
+
+.admin-page[data-admin-theme="light"] .admin-main-nav {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-nav-item {
+  color: rgba(18, 24, 31, 0.65);
+}
+
+.admin-page[data-admin-theme="light"] .admin-nav-item:hover {
+  background: rgba(18, 24, 31, 0.06);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-nav-item.active {
+  box-shadow: 0 4px 16px rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-nav-badge {
+  background: rgba(18, 24, 31, 0.12);
+}
+
+.admin-page[data-admin-theme="light"] .admin-nav-item.active .admin-nav-badge {
+  background: rgba(18, 24, 31, 0.048);
+}
+
+.admin-page[data-admin-theme="light"] .admin-filter-bar {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-search-input {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-select-dark {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-card {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  box-shadow: 0 16px 50px rgba(18, 24, 31, 0.102);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-top {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-top h3 {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-top p {
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-contact strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-contact a {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-contact span {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .admin-delete-project {
+  color: #b3261e;
+}
+
+.admin-page[data-admin-theme="light"] .admin-fact-pill {
+  background: rgba(18, 24, 31, 0.03);
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-fact-label {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-fact-value {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-studio-subnav {
+  background: #ffffff;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-studio-tab {
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .admin-studio-tab:hover {
+  background: rgba(18, 24, 31, 0.05);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-btn-secondary {
+  background: rgba(18, 24, 31, 0.07) !important;
+  border: 1px solid rgba(18, 24, 31, 0.18) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-btn-secondary:hover {
+  background: rgba(18, 24, 31, 0.14) !important;
+  border-color: rgba(18, 24, 31, 0.35) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-btn-primary {
+  border: 1px solid rgba(18, 24, 31, 0.25) !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab:hover {
+  background: #eef2f5;
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab.active {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab-phase {
+  background: rgba(18, 24, 31, 0.112);
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-visual, .admin-page[data-admin-theme="light"] .admin-assets-block {
+  background: #eef2f5 !important;
+  border: 1px solid rgba(18, 24, 31, 0.08) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-visual > strong, .admin-page[data-admin-theme="light"] .admin-assets-block > strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-visual p {
+  color: rgba(18, 24, 31, 0.85);
+}
+
+.admin-page[data-admin-theme="light"] .admin-palette-strip span {
+  border: 1px solid rgba(18, 24, 31, 0.25);
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-grid > div {
+  background: rgba(18, 24, 31, 0.096);
+  border: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-grid span {
+  color: #25696d !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-brief-grid p, .admin-page[data-admin-theme="light"] .admin-brief-grid strong {
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-control-panel {
+  background: #eef2f5 !important;
+  border: 1px solid rgba(18, 24, 31, 0.08) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-control-panel > strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-control-grid span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-panel {
+  background: linear-gradient(135deg, rgba(118, 171, 174, 0.1) 0%, #eef2f5 100%) !important;
+  box-shadow: 0 8px 32px rgba(18, 24, 31, 0.09) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-head {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-head span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-head h4 {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-head p {
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-metrics div {
+  background: rgba(18, 24, 31, 0.112) !important;
+  border: 1px solid rgba(18, 24, 31, 0.08) !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-metrics span {
+  color: rgba(18, 24, 31, 0.5) !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-metrics strong {
+  color: #25696d !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button:hover {
+  background: rgba(18, 24, 31, 0.06) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button.selected {
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button b {
+  color: #25696d !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button span {
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-sections button small {
+  color: #5b6773 !important;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-switches {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .ai-prompt-preview {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.08) !important;
+  color: rgba(18, 24, 31, 0.9) !important;
+}
+
+.admin-page[data-admin-theme="light"] details.admin-collapse {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] details.admin-collapse summary {
+  background: rgba(18, 24, 31, 0.03);
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] details.admin-collapse summary:hover {
+  background: rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-card {
+  background: #eef2f5 !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-head strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-head small {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary > div {
+  background: #eef2f5 !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary small {
+  color: rgba(18, 24, 31, 0.45);
+}
+
+.admin-page[data-admin-theme="light"] .admin-offer-builder {
+  background: #eef2f5 !important;
+  border: 1px solid rgba(18, 24, 31, 0.08) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .admin-offer-head {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-offer-head strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-offer-head small {
+  color: rgba(18, 24, 31, 0.45);
+}
+
+.admin-page[data-admin-theme="light"] .admin-offer-grid span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-wizard-nav {
+  background: rgba(18, 24, 31, 0.02);
+  border: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-wizard-step {
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .change-quote-box {
+  background: rgba(18, 24, 31, 0.112);
+}
+
+.admin-page[data-admin-theme="light"] .change-quote-state strong {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .change-quote-state small {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .change-quote-state span {
+  color: rgba(18, 24, 31, 0.75);
+}
+
+.admin-page[data-admin-theme="light"] .admin-card-dark {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  box-shadow: 0 12px 40px rgba(18, 24, 31, 0.09);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-card-dark-header {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-sidebar {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-sidebar-head {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-tabs {
+  background: rgba(18, 24, 31, 0.04);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-tab-btn {
+  color: rgba(18, 24, 31, 0.6);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-tab-btn.active {
+  background: rgba(18, 24, 31, 0.12);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-item:hover {
+  background: rgba(18, 24, 31, 0.04);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-item-top strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-item-top span {
+  color: rgba(18, 24, 31, 0.4);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-item-snippet {
+  color: rgba(18, 24, 31, 0.6);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-detail {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-detail-head {
+  background: rgba(18, 24, 31, 0.02);
+  border-bottom: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-detail-messages {
+  background: linear-gradient(180deg, rgba(18, 24, 31, 0.048) 0%, transparent 100%);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-detail-composer {
+  background: rgba(18, 24, 31, 0.02);
+  border-top: 1px solid rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-ticket-detail-composer textarea {
+  background: #ffffff !important;
+  border: 1px solid rgba(18, 24, 31, 0.12) !important;
+  color: #12181f !important;
+}
+
+.admin-page[data-admin-theme="light"] .lead-table {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .lead-row {
+  border-bottom: 1px solid rgba(18, 24, 31, 0.05);
+}
+
+.admin-page[data-admin-theme="light"] .lead-row:hover:not(.header) {
+  background: rgba(18, 24, 31, 0.02);
+}
+
+.admin-page[data-admin-theme="light"] .lead-row.header {
+  background: rgba(18, 24, 31, 0.04);
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .asset-preview-grid button {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-card .button.secondary:hover {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-card .button.secondary {
+  color: #12181f;
+  border-color: rgba(18, 24, 31, 0.2);
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-card .button.secondary:hover {
+  color: #12181f;
+  background: rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .admin-warranty-card {
+  color: rgba(18, 24, 31, 0.76);
+}
+
+.admin-page[data-admin-theme="light"] .admin-warranty-card strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-warranty-card small, .admin-page[data-admin-theme="light"] .admin-warranty-card li {
+  color: rgba(18, 24, 31, 0.62);
+}
+
+.admin-page[data-admin-theme="light"] .toast {
+  background: rgba(18, 24, 31, 0.368);
+  box-shadow: 0 18px 50px rgba(18, 24, 31, 0.14);
+}
+
+.admin-page[data-admin-theme="light"] .confirm-overlay {
+  background: rgba(18, 24, 31, 0.22);
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard .skeleton-shimmer {
+  background: rgba(18, 24, 31, 0.06);
+}
+
+.admin-page[data-admin-theme="light"] .admin-dashboard .skeleton-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(18, 24, 31, 0.12),
+    transparent
+  );
+}
+
+.admin-page[data-admin-theme="light"] .offline-banner {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab {
+  background: rgba(18, 24, 31, 0.04);
+  border: 1px solid rgba(18, 24, 31, 0.1);
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .admin-project-tab:hover {
+  background: rgba(18, 24, 31, 0.08);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-collapse {
+  background: rgba(18, 24, 31, 0.05);
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary>div {
+  background: linear-gradient(145deg,#252b32,#eef2f5);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-summary small {
+  color: rgba(18, 24, 31, 0.5);
+}
+
+.admin-page[data-admin-theme="light"] .managed-admin-card {
+  background: linear-gradient(145deg,rgba(118,171,174,.1),rgba(18, 24, 31, 0.55));
+}
+
+.admin-page[data-admin-theme="light"] .billingo-issues {
+  background: linear-gradient(145deg,rgba(255,87,34,.12),rgba(18, 24, 31, 0.6));
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox {
+  background: rgba(18, 24, 31, 0.04);
+  border: 1px solid rgba(18, 24, 31, 0.1);
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox header span, .admin-page[data-admin-theme="light"] .admin-inbox.empty span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox p {
+  color: rgba(18, 24, 31, 0.55);
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox-row {
+  background: rgba(18, 24, 31, 0.04);
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  border-left: 3px solid rgba(18, 24, 31, 0.2);
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox-row.prio-5, .admin-page[data-admin-theme="light"] .admin-inbox-row.prio-6 {
+  border-left-color: rgba(18, 24, 31, 0.22);
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox-main p {
+  color: rgba(18, 24, 31, 0.68);
+}
+
+.admin-page[data-admin-theme="light"] .admin-inbox-side small {
+  color: rgba(18, 24, 31, 0.42);
+}
+
+.admin-page[data-admin-theme="light"] .change-quote-box {
+  border-top: 1px solid rgba(18, 24, 31, 0.12);
+}
+
+.admin-page[data-admin-theme="light"] .change-thread-body {
+  background: rgba(18, 24, 31, 0.05);
+}
+
+.admin-page[data-admin-theme="light"] .change-message.mine {
+  background: linear-gradient(135deg, #2A323D 0%, #eef2f5 100%);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .change-message.mine span {
+  color: rgba(18, 24, 31, 0.7);
+}
+
+.admin-page[data-admin-theme="light"] .purchase-price-lockup, .admin-page[data-admin-theme="light"] .website-purchase-admin-price {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-price-lockup span, .admin-page[data-admin-theme="light"] .website-purchase-admin-price span {
+  color: #41505c;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-price-lockup strong, .admin-page[data-admin-theme="light"] .website-purchase-admin-price strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-flow-steps .is-current b {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-benefit-grid > div, .admin-page[data-admin-theme="light"] .purchase-state-card, .admin-page[data-admin-theme="light"] .purchase-billing-block, .admin-page[data-admin-theme="light"] .purchase-selected-payment, .admin-page[data-admin-theme="light"] .purchase-transfer-box, .admin-page[data-admin-theme="light"] .purchase-admin-action, .admin-page[data-admin-theme="light"] .purchase-close-card, .admin-page[data-admin-theme="light"] .purchase-handover-explainer {
+  background: #ffffff;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-card {
+  background: #eef2f5;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-head h4 {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-head p {
+  color: #5b6773;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-price {
+  background: #ffffff;
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-price span {
+  color: #25696d;
+}
+
+.admin-page[data-admin-theme="light"] .website-purchase-admin-price strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-action {
+  background: #ffffff;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-action strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-action p {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-action small {
+  color: #5b6773;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-action pre {
+  background: #ffffff;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-waiting {
+  color: #41505c;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-handover {
+  background: #ffffff;
+  border: 1px solid rgba(18, 24, 31, 0.08);
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-handover-copy strong {
+  color: #12181f;
+}
+
+.admin-page[data-admin-theme="light"] .purchase-admin-handover-copy p {
+  color: #12181f;
+}
+
+/* ==========================================================================
+   ADMIN — INLINE STÍLUSOK TÉMAVÁLTOZÓI
+   --------------------------------------------------------------------------
+   Az admin komponensek több tucat helyen `style={{ color: … }}`-tal írnak
+   színt. Az inline stílus MINDEN szelektornál erősebb, tehát a fenti világos
+   felülírások nem érnék el őket — a világos mód ezeknél sötét maradna. Ezért a
+   literálok helyén itt definiált változók állnak, és csak az értékük vált.
+
+   Az `--adm-ink-*` fátylak alfája mindkét témában azonos: fehér alapon sötét
+   fátyol ugyanolyan finom szürkét ad háttérként, mint amilyen olvasható tintát
+   szövegként — pont úgy, ahogy fordítva a fehér fátyol a sötét felületen.
+   ========================================================================== */
+
+.admin-page {
+  --adm-text: #ffffff;
+  --adm-text-soft: #e2e8f0;
+  --adm-text-muted: #94a3b8;
+  --adm-accent-text: #76abae;
+  --adm-danger-text: #ff9d9d;
+  --adm-warn-text: #ff9800;
+  --adm-panel: #181e2b;
+  --adm-inset: #0e1218;
+  --adm-ink-02: rgba(255, 255, 255, 0.02);
+  --adm-ink-03: rgba(255, 255, 255, 0.03);
+  --adm-ink-04: rgba(255, 255, 255, 0.04);
+  --adm-ink-05: rgba(255, 255, 255, 0.05);
+  --adm-ink-06: rgba(255, 255, 255, 0.06);
+  --adm-ink-08: rgba(255, 255, 255, 0.08);
+  --adm-ink-10: rgba(255, 255, 255, 0.10);
+  --adm-ink-12: rgba(255, 255, 255, 0.12);
+  --adm-ink-15: rgba(255, 255, 255, 0.15);
+  --adm-ink-20: rgba(255, 255, 255, 0.20);
+  --adm-ink-24: rgba(255, 255, 255, 0.24);
+  --adm-ink-30: rgba(255, 255, 255, 0.30);
+  --adm-ink-40: rgba(255, 255, 255, 0.40);
+  --adm-ink-45: rgba(255, 255, 255, 0.45);
+  --adm-ink-50: rgba(255, 255, 255, 0.50);
+  --adm-ink-58: rgba(255, 255, 255, 0.58);
+  --adm-ink-60: rgba(255, 255, 255, 0.60);
+  --adm-ink-70: rgba(255, 255, 255, 0.70);
+  --adm-ink-72: rgba(255, 255, 255, 0.72);
+  --adm-ink-75: rgba(255, 255, 255, 0.75);
+  --adm-ink-80: rgba(255, 255, 255, 0.80);
+  --adm-ink-90: rgba(255, 255, 255, 0.90);
+}
+
+.admin-page[data-admin-theme="light"] {
+  --adm-text: #12181f;
+  --adm-text-soft: #2b3540;
+  --adm-text-muted: #5b6773;
+  --adm-accent-text: #25696d;
+  --adm-danger-text: #b3261e;
+  --adm-warn-text: #8a5a00;
+  --adm-panel: #ffffff;
+  --adm-inset: #f5f8fa;
+  --adm-ink-02: rgba(18, 24, 31, 0.02);
+  --adm-ink-03: rgba(18, 24, 31, 0.03);
+  --adm-ink-04: rgba(18, 24, 31, 0.04);
+  --adm-ink-05: rgba(18, 24, 31, 0.05);
+  --adm-ink-06: rgba(18, 24, 31, 0.06);
+  --adm-ink-08: rgba(18, 24, 31, 0.08);
+  --adm-ink-10: rgba(18, 24, 31, 0.10);
+  --adm-ink-12: rgba(18, 24, 31, 0.12);
+  --adm-ink-15: rgba(18, 24, 31, 0.15);
+  --adm-ink-20: rgba(18, 24, 31, 0.20);
+  --adm-ink-24: rgba(18, 24, 31, 0.24);
+  --adm-ink-30: rgba(18, 24, 31, 0.30);
+  --adm-ink-40: rgba(18, 24, 31, 0.40);
+  --adm-ink-45: rgba(18, 24, 31, 0.45);
+  --adm-ink-50: rgba(18, 24, 31, 0.50);
+  --adm-ink-58: rgba(18, 24, 31, 0.58);
+  --adm-ink-60: rgba(18, 24, 31, 0.60);
+  --adm-ink-70: rgba(18, 24, 31, 0.70);
+  --adm-ink-72: rgba(18, 24, 31, 0.72);
+  --adm-ink-75: rgba(18, 24, 31, 0.75);
+  --adm-ink-80: rgba(18, 24, 31, 0.80);
+  --adm-ink-90: rgba(18, 24, 31, 0.90);
+}

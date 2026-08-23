@@ -352,11 +352,11 @@ export function AdminInbox({
 
   if (!items.length) {
     return (
-      <section className="admin-inbox empty" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "24px" }}>
+      <section className="admin-inbox empty" style={{ background: "var(--adm-panel)", border: "1px solid var(--adm-ink-08)", borderRadius: "20px", padding: "24px" }}>
         <div style={{ display: "grid", gap: "8px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>TEENDŐK</span>
-          <strong style={{ fontSize: "18px", color: "#fff" }}>Nincs aktív nyitott teendő.</strong>
-          <p style={{ margin: 0, color: "rgba(255,255,255,0.6)", fontSize: "13.5px" }}>Minden ügyfélkérés, befizetés és számlázás elintézve.</p>
+          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>TEENDŐK</span>
+          <strong style={{ fontSize: "18px", color: "var(--adm-text)" }}>Nincs aktív nyitott teendő.</strong>
+          <p style={{ margin: 0, color: "var(--adm-ink-60)", fontSize: "13.5px" }}>Minden ügyfélkérés, befizetés és számlázás elintézve.</p>
           {dismissedIds.length > 0 && (
             <button
               type="button"
@@ -376,12 +376,12 @@ export function AdminInbox({
   const visible = showAll ? items : items.slice(0, 8);
 
   return (
-    <section className="admin-inbox" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "16px" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "14px" }}>
+    <section className="admin-inbox" style={{ background: "var(--adm-panel)", border: "1px solid var(--adm-ink-08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "16px" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid var(--adm-ink-06)", paddingBottom: "14px" }}>
         <div>
-          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>TEENDŐK</span>
-          <strong style={{ fontSize: "18px", color: "#fff", display: "block", marginTop: "2px" }}>{items.length} nyitott ügy</strong>
-          <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>
+          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>TEENDŐK</span>
+          <strong style={{ fontSize: "18px", color: "var(--adm-text)", display: "block", marginTop: "2px" }}>{items.length} nyitott ügy</strong>
+          <p style={{ margin: "2px 0 0", color: "var(--adm-ink-60)", fontSize: "13px" }}>
             {urgent > 0 ? `Ebből ${urgent} sürgős — pénz vagy beavatkozást igényel.` : "Nincs sürgős tétel."}
           </p>
         </div>
@@ -400,7 +400,7 @@ export function AdminInbox({
           <button
             type="button"
             className="admin-btn-secondary"
-            style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px", borderColor: "rgba(255,255,255,0.15)" }}
+            style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px", borderColor: "var(--adm-ink-15)" }}
             onClick={() => handleDismissAll(items.map((i) => i.id))}
             title="Összes jelenlegi teendő elrejtése"
           >
@@ -418,8 +418,8 @@ export function AdminInbox({
               key={item.id}
               className={`admin-inbox-row prio-${Math.min(item.priority, 6)}`}
               style={{
-                background: isPurchase ? "rgba(118, 171, 174, 0.08)" : "#0E1218",
-                border: isPurchase ? "1px solid rgba(118, 171, 174, 0.35)" : "1px solid rgba(255,255,255,0.06)",
+                background: isPurchase ? "rgba(118, 171, 174, 0.08)" : "var(--adm-inset)",
+                border: isPurchase ? "1px solid rgba(118, 171, 174, 0.35)" : "1px solid var(--adm-ink-06)",
                 borderRadius: "14px",
                 padding: "14px",
                 display: "flex",
@@ -438,16 +438,16 @@ export function AdminInbox({
                       textTransform: "uppercase",
                       padding: "2px 7px",
                       borderRadius: "6px",
-                      background: isPurchase ? "rgba(118, 171, 174, 0.2)" : "rgba(255,255,255,0.06)",
-                      color: isPurchase ? "#76ABAE" : "#94A3B8"
+                      background: isPurchase ? "rgba(118, 171, 174, 0.2)" : "var(--adm-ink-06)",
+                      color: isPurchase ? "var(--adm-accent-text)" : "var(--adm-text-muted)"
                     }}
                   >
                     {item.label}
                   </span>
-                  {waited ? <small style={{ color: "rgba(255,255,255,0.45)", fontSize: "11.5px" }}>{waited}</small> : null}
+                  {waited ? <small style={{ color: "var(--adm-ink-45)", fontSize: "11.5px" }}>{waited}</small> : null}
                 </div>
-                <strong style={{ color: "#FFFFFF", fontSize: "14.5px" }}>{item.client}</strong>
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.8)", fontSize: "13px", lineHeight: 1.4 }}>{item.detail}</p>
+                <strong style={{ color: "var(--adm-text)", fontSize: "14.5px" }}>{item.client}</strong>
+                <p style={{ margin: 0, color: "var(--adm-ink-80)", fontSize: "13px", lineHeight: 1.4 }}>{item.detail}</p>
               </div>
 
               <div className="admin-inbox-side" style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
@@ -479,8 +479,8 @@ export function AdminInbox({
                   onClick={() => handleDismiss(item.id)}
                   style={{
                     background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "rgba(255,255,255,0.5)",
+                    border: "1px solid var(--adm-ink-10)",
+                    color: "var(--adm-ink-50)",
                     borderRadius: "8px",
                     padding: "6px 10px",
                     cursor: "pointer",

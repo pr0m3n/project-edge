@@ -27,6 +27,7 @@ import { BANK_TRANSFER_DETAILS, parseBrief } from "@/components/portal/format";
 import { briefSteps, paletteByName } from "@/components/portal/brief-fields";
 import { briefDraftProgress, type BriefDraftRow } from "@/lib/brief-draft";
 import type {
+  AdminUserActivity,
   BillingoIssue,
   ChangeRequest,
   ClientProject,
@@ -38,6 +39,9 @@ import type {
   AppNotification
 } from "@/components/admin/types";
 import { hardNavigate } from "@/lib/auth-navigation";
+
+/** A választott admin téma tárolókulcsa — egy helyen, hogy ne csússzon el. */
+const ADMIN_THEME_KEY = "projectedge-admin-theme";
 
 let optimisticCounter = 0;
 
@@ -131,6 +135,36 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+/** Dátum + óra:perc — a felhasználói listán a nap önmagában kevés. */
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("hu-HU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+/**
+ * „3 napja", „2 órája" — a felhasználói listán ez mondja meg egy pillantásra,
+ * ki aktív és ki hűlt ki. A pontos időpont a cím-tooltipben marad.
+ */
+function relativeTime(value: string | null) {
+  if (!value) return "soha";
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 1) return "épp most";
+  if (minutes < 60) return `${minutes} perce`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} órája`;
+  const days = Math.round(hours / 24);
+  if (days < 31) return `${days} napja`;
+  const months = Math.round(days / 30);
+  if (months < 12) return `${months} hónapja`;
+  return `${Math.round(months / 12)} éve`;
+}
+
 function websitePurchasePreparationNote(project: ClientProject, purchase: WebsitePurchase) {
   return [
     "A weboldal tulajdonba vétele elindult.",
@@ -191,9 +225,22 @@ export function AdminDashboard() {
 
   /** Félbehagyott projektindító adatlapok — beküldetlen `brief_drafts` sorok. */
   const [briefDrafts, setBriefDrafts] = useState<BriefDraftRow[]>([]);
+  /** Regisztrált felhasználók és aktivitásuk — a `/api/admin/users` végpontról. */
+  const [adminUsers, setAdminUsers] = useState<AdminUserActivity[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  /**
+   * Admin téma. Az alapértelmezés a sötét — a világos mód tisztán felülírás,
+   * `.admin-page[data-admin-theme="light"]` alá zárva (lásd `globals.css`).
+   * Azért az `.admin-page` elemre kerül és nem a `<html>`-re, hogy az
+   * ügyfélkapuval közös osztályok (`.handover-*`, `.status-pill`) csak itt
+   * öltözzenek át.
+   */
+  const [adminTheme, setAdminTheme] = useState<"dark" | "light">("dark");
 
   // Navigation & Master-Detail state
-  const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "drafts" | "leads">("inbox");
+  const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "drafts" | "users" | "leads">("inbox");
   const [ticketScope, setTicketScope] = useState<"all" | "public" | "portal">("all");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [, setSelectedTicketType] = useState<"public" | "portal">("public");
@@ -739,6 +786,54 @@ export function AdminDashboard() {
     setBriefDrafts(briefDraftError ? [] : briefDraftData ?? []);
 
     setLoading(false);
+  }
+
+  // A mentett témaválasztás visszaállítása. Csak a böngészőben létező érték,
+  // ezért effektben — renderben olvasva hidratációs eltérést adna.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(ADMIN_THEME_KEY);
+      if (stored === "light" || stored === "dark") setAdminTheme(stored);
+    } catch {
+      /* privát böngészés — marad az alapértelmezett sötét */
+    }
+  }, []);
+
+  // A választás kiírása a wrapper elemre és a tárolóba.
+  useEffect(() => {
+    document.querySelector(".admin-page")?.setAttribute("data-admin-theme", adminTheme);
+    try {
+      window.localStorage.setItem(ADMIN_THEME_KEY, adminTheme);
+    } catch {
+      /* privát böngészés — a téma csak erre a munkamenetre marad meg */
+    }
+  }, [adminTheme]);
+
+  /**
+   * A felhasználói lista betöltése.
+   *
+   * Külön kérés, nem a `loadDashboard` része: az `auth.users` adatai (utolsó
+   * belépés, e-mail megerősítés) csak service role kulccsal olvashatók, tehát
+   * mindenképp szerveren keresztül jönnek. Csak akkor kérjük le, amikor az
+   * admin tényleg megnyitja a fület.
+   */
+  async function loadAdminUsers() {
+    setUsersLoading(true);
+    setUsersError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("A munkamenet lejárt. Jelentkezz be újra.");
+      const response = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      const result = await response.json().catch(() => ({})) as { users?: AdminUserActivity[]; error?: string };
+      if (!response.ok) throw new Error(result.error || "A felhasználói lista nem tölthető be.");
+      setAdminUsers(result.users ?? []);
+    } catch (error) {
+      setUsersError(error instanceof Error ? error.message : "A felhasználói lista nem tölthető be.");
+    } finally {
+      setUsersLoading(false);
+    }
   }
 
   async function retryBillingoInvoice(paymentId: string) {
@@ -1398,27 +1493,27 @@ export function AdminDashboard() {
     const warrantyActive = warrantyUntil ? warrantyUntil.getTime() > nowMs : false;
     if (project.commercial_model === "subscription" && project.subscription_status === "cancelled") {
       return (
-        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
-          <div><strong style={{ color: "#fff" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "#ff9d9d" }}>Előfizetés lezárva</span></div>
-          <p style={{ color: "rgba(255,255,255,.58)", margin: 0 }}>Ez lemondott menedzselt szolgáltatás, nem elkészült és átadott projekt. Nem tartozik hozzá projektlezárási értékelés vagy 30 napos technikai garancia.</p>
-          <small style={{ color: "rgba(255,255,255,.4)" }}>Leállítás dátuma: {project.cancel_effective_at ? new Date(project.cancel_effective_at).toLocaleDateString("hu-HU") : "nincs rögzítve"}</small>
+        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "var(--adm-ink-02)", border: "1px solid var(--adm-ink-06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
+          <div><strong style={{ color: "var(--adm-text)" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "var(--adm-danger-text)" }}>Előfizetés lezárva</span></div>
+          <p style={{ color: "var(--adm-ink-58)", margin: 0 }}>Ez lemondott menedzselt szolgáltatás, nem elkészült és átadott projekt. Nem tartozik hozzá projektlezárási értékelés vagy 30 napos technikai garancia.</p>
+          <small style={{ color: "var(--adm-ink-40)" }}>Leállítás dátuma: {project.cancel_effective_at ? new Date(project.cancel_effective_at).toLocaleDateString("hu-HU") : "nincs rögzítve"}</small>
         </article>
       );
     }
     const completedPurchase = project.commercial_model === "purchase" && Boolean(project.warranty_started_at || project.final_payment_paid_at || project.final_payment_paid);
     if (!completedPurchase) {
       return (
-        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
-          <div><strong style={{ color: "#fff" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "rgba(255,255,255,.5)" }}>{project.offer_status === "declined" ? "Ajánlat elutasítva" : "Teljesítés nélkül lezárva"}</span></div>
-          <p style={{ color: "rgba(255,255,255,.58)", margin: 0 }}>Nem történt kész weboldal-átadás, ezért ehhez az ügyhöz nem tartozik projektértékelés vagy 30 napos technikai garancia.</p>
+        <article className="admin-project-card compact-closed" key={project.id} style={{ background: "var(--adm-ink-02)", border: "1px solid var(--adm-ink-06)", padding: "16px 20px", borderRadius: "20px", display: "grid", gap: "10px" }}>
+          <div><strong style={{ color: "var(--adm-text)" }}>{project.title}</strong><span style={{ marginLeft: 10, color: "var(--adm-ink-50)" }}>{project.offer_status === "declined" ? "Ajánlat elutasítva" : "Teljesítés nélkül lezárva"}</span></div>
+          <p style={{ color: "var(--adm-ink-58)", margin: 0 }}>Nem történt kész weboldal-átadás, ezért ehhez az ügyhöz nem tartozik projektértékelés vagy 30 napos technikai garancia.</p>
           <button className="admin-delete-project" type="button" onClick={() => approveDeletion(project)}>Projekt végleges törlése</button>
         </article>
       );
     }
     return (
       <article className="admin-project-card compact-closed" key={project.id} style={{
-        background: "rgba(255, 255, 255, 0.02)",
-        border: "1px solid rgba(255, 255, 255, 0.06)",
+        background: "var(--adm-ink-02)",
+        border: "1px solid var(--adm-ink-06)",
         padding: "16px 20px",
         borderRadius: "20px",
         display: "flex",
@@ -1428,10 +1523,10 @@ export function AdminDashboard() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <strong style={{ fontSize: "16px", color: "#fff" }}>{project.title}</strong>
+              <strong style={{ fontSize: "16px", color: "var(--adm-text)" }}>{project.title}</strong>
               <span style={{
                 background: "rgba(118, 171, 174, 0.15)",
-                color: "#76ABAE",
+                color: "var(--adm-accent-text)",
                 padding: "2px 8px",
                 borderRadius: "6px",
                 fontSize: "11px",
@@ -1440,13 +1535,13 @@ export function AdminDashboard() {
                 Lezárva
               </span>
             </div>
-            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+            <div style={{ fontSize: "13px", color: "var(--adm-ink-40)", marginTop: "4px" }}>
               Típus: <strong>{project.project_type}</strong> · Cégnév: <strong>{project.company || "Nincs cégnév"}</strong>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: "13px" }}>
             <strong>{project.contact_name || "Ügyfél"}</strong>
-            {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "#76ABAE", fontSize: "12px" }}>{project.contact_email}</a> : null}
+            {project.contact_email ? <a href={`mailto:${project.contact_email}`} style={{ color: "var(--adm-accent-text)", fontSize: "12px" }}>{project.contact_email}</a> : null}
             <button className="admin-delete-project" type="button" onClick={() => approveDeletion(project)}>
               Projekt végleges törlése
             </button>
@@ -1454,17 +1549,17 @@ export function AdminDashboard() {
         </div>
 
         {rating ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px" }}>
-            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>Ügyfél értékelése:</span>
-            <div style={{ color: "#FF9800", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(rating)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid var(--adm-ink-04)", paddingTop: "10px" }}>
+            <span style={{ fontSize: "13px", color: "var(--adm-ink-60)" }}>Ügyfél értékelése:</span>
+            <div style={{ color: "var(--adm-warn-text)", fontSize: "16px", letterSpacing: "2px" }}>{"★".repeat(rating)}</div>
             {review && (
-              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+              <span style={{ fontSize: "13px", color: "var(--adm-ink-50)", fontStyle: "italic" }}>
                 - "{review}"
               </span>
             )}
           </div>
         ) : (
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "10px", fontSize: "13px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+          <div style={{ borderTop: "1px solid var(--adm-ink-04)", paddingTop: "10px", fontSize: "13px", color: "var(--adm-ink-40)", fontStyle: "italic" }}>
             Még nem érkezett értékelés az ügyféltől.
           </div>
         )}
@@ -1645,8 +1740,8 @@ export function AdminDashboard() {
           borderRadius: "18px",
           padding: "18px 22px",
           margin: "0 0 8px",
-          background: isAdmin ? "linear-gradient(135deg, rgba(118, 171, 174, 0.16) 0%, rgba(20, 24, 34, 0.95) 100%)" : "rgba(255,255,255,0.03)",
-          border: isAdmin ? "1px solid rgba(118, 171, 174, 0.45)" : "1px solid rgba(255,255,255,0.08)"
+          background: isAdmin ? "linear-gradient(135deg, rgba(118, 171, 174, 0.16) 0%, rgba(20, 24, 34, 0.95) 100%)" : "var(--adm-ink-03)",
+          border: isAdmin ? "1px solid rgba(118, 171, 174, 0.45)" : "1px solid var(--adm-ink-08)"
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
@@ -1660,13 +1755,13 @@ export function AdminDashboard() {
               padding: "4px 10px",
               borderRadius: "999px",
               marginBottom: "8px",
-              background: isAdmin ? "#76ABAE" : "rgba(255,255,255,0.12)",
-              color: isAdmin ? "#0E1218" : "#94A3B8"
+              background: isAdmin ? "var(--adm-accent-text)" : "var(--adm-ink-12)",
+              color: isAdmin ? "var(--adm-inset)" : "var(--adm-text-muted)"
             }}>
               {isAdmin ? (guide.step ? `${guide.step} · Rajtad a sor` : "Rajtad a sor") : "⏳ Ügyfélre vár"}
             </span>
-            <strong style={{ display: "block", fontSize: "18px", fontWeight: "900", color: "#FFFFFF", marginBottom: "4px" }}>{guide.headline}</strong>
-            <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255, 255, 255, 0.8)", lineHeight: 1.5 }}>{guide.detail}</p>
+            <strong style={{ display: "block", fontSize: "18px", fontWeight: "900", color: "var(--adm-text)", marginBottom: "4px" }}>{guide.headline}</strong>
+            <p style={{ margin: 0, fontSize: "13.5px", color: "var(--adm-ink-80)", lineHeight: 1.5 }}>{guide.detail}</p>
           </div>
           {isAdmin && guide.actions?.length ? (
             <div className="admin-guide-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
@@ -1699,7 +1794,7 @@ export function AdminDashboard() {
                 <h1>Admin Központ</h1>
                 <span style={{
                   background: "rgba(118, 171, 174, 0.15)",
-                  color: "#76ABAE",
+                  color: "var(--adm-accent-text)",
                   fontSize: "11px",
                   fontWeight: "800",
                   padding: "2px 8px",
@@ -1713,6 +1808,16 @@ export function AdminDashboard() {
           </div>
 
           <div className="admin-header-actions">
+            <button
+              aria-pressed={adminTheme === "light"}
+              className="admin-theme-toggle"
+              onClick={() => setAdminTheme(adminTheme === "light" ? "dark" : "light")}
+              title={adminTheme === "light" ? "Váltás sötét módra" : "Váltás világos módra"}
+              type="button"
+            >
+              {adminTheme === "light" ? "🌙 Sötét mód" : "☀️ Világos mód"}
+            </button>
+
             <button
               className="button ghost admin-sandbox-btn"
               disabled={paymentTestLoading}
@@ -1746,7 +1851,7 @@ export function AdminDashboard() {
                   right: 0,
                   width: "360px",
                   background: "#161A22",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  border: "1px solid var(--adm-ink-12)",
                   borderRadius: "18px",
                   boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
                   zIndex: 1000,
@@ -1756,15 +1861,15 @@ export function AdminDashboard() {
                   maxHeight: "420px",
                   overflowY: "auto"
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "8px" }}>
-                    <strong style={{ color: "#fff", fontSize: "14px" }}>Értesítések ({unreadNotificationsCount})</strong>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--adm-ink-06)", paddingBottom: "8px" }}>
+                    <strong style={{ color: "var(--adm-text)", fontSize: "14px" }}>Értesítések ({unreadNotificationsCount})</strong>
                     {notifications.some((n) => !n.read) && (
                       <button
                         onClick={async () => {
                           await supabase.from("notifications").update({ read: true }).is("user_id", null);
                           setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
                         }}
-                        style={{ background: "none", border: "none", color: "#76ABAE", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
+                        style={{ background: "none", border: "none", color: "var(--adm-accent-text)", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}
                         type="button"
                       >
                         Mind olvasott
@@ -1773,7 +1878,7 @@ export function AdminDashboard() {
                   </div>
 
                   {notifications.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "20px 0" }}>Nincsenek értesítések.</p>
+                    <p style={{ margin: 0, fontSize: "13px", color: "var(--adm-ink-40)", textAlign: "center", padding: "20px 0" }}>Nincsenek értesítések.</p>
                   ) : (
                     <div style={{ display: "grid", gap: "8px" }}>
                       {notifications.map((n) => (
@@ -1794,9 +1899,9 @@ export function AdminDashboard() {
                             gap: "2px"
                           }}
                         >
-                          <span style={{ color: n.read ? "#fff" : "#76ABAE", fontWeight: "bold" }}>{n.title}</span>
-                          <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "12px" }}>{n.message}</p>
-                          <small style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px", marginTop: "4px" }}>{new Date(n.created_at).toLocaleString("hu-HU")}</small>
+                          <span style={{ color: n.read ? "var(--adm-text)" : "var(--adm-accent-text)", fontWeight: "bold" }}>{n.title}</span>
+                          <p style={{ margin: 0, color: "var(--adm-ink-70)", fontSize: "12px" }}>{n.message}</p>
+                          <small style={{ color: "var(--adm-ink-30)", fontSize: "10px", marginTop: "4px" }}>{new Date(n.created_at).toLocaleString("hu-HU")}</small>
                         </div>
                       ))}
                     </div>
@@ -1818,7 +1923,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("inbox")}
           >
             <span className="admin-kpi-label">SÜRGŐS TEENDŐ</span>
-            <strong className="admin-kpi-val" style={{ color: totalUrgentCount > 0 ? "#FF8A65" : "#FFFFFF" }}>{totalUrgentCount} db</strong>
+            <strong className="admin-kpi-val" style={{ color: totalUrgentCount > 0 ? "#FF8A65" : "var(--adm-text)" }}>{totalUrgentCount} db</strong>
             <span className="admin-kpi-sub">{totalUrgentCount === 0 ? "Minden naprakész" : "Beavatkozást igényel"}</span>
           </div>
 
@@ -1836,7 +1941,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("tickets")}
           >
             <span className="admin-kpi-label">NYITOTT TICKET</span>
-            <strong className="admin-kpi-val" style={{ color: totalOpenTickets > 0 ? "#76ABAE" : "#FFFFFF" }}>{totalOpenTickets} db</strong>
+            <strong className="admin-kpi-val" style={{ color: totalOpenTickets > 0 ? "var(--adm-accent-text)" : "var(--adm-text)" }}>{totalOpenTickets} db</strong>
             <span className="admin-kpi-sub">{openPublicTicketsCount} widget + {openClientTicketsCount} ügyfélkapu</span>
           </div>
 
@@ -1905,6 +2010,21 @@ export function AdminDashboard() {
           </button>
 
           <button
+            className={`admin-nav-item ${activeTab === "users" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("users");
+              // Csak a fül megnyitásakor kérjük le — az `auth.users` lekérdezése
+              // service role kulccsal fut, nincs értelme minden betöltésnél.
+              if (!adminUsers.length && !usersLoading) void loadAdminUsers();
+            }}
+            type="button"
+          >
+            <span className="admin-nav-icon">👥</span>
+            <span>Felhasználók</span>
+            {adminUsers.length > 0 ? <span className="admin-nav-badge">{adminUsers.length}</span> : null}
+          </button>
+
+          <button
             className={`admin-nav-item ${activeTab === "leads" ? "active" : ""}`}
             onClick={() => setActiveTab("leads")}
             type="button"
@@ -1969,7 +2089,7 @@ export function AdminDashboard() {
                     type="button"
                     onClick={() => setSearchQuery("")}
                     aria-label="Keresés törlése"
-                    style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "16px" }}
+                    style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--adm-ink-50)", cursor: "pointer", fontSize: "16px" }}
                   >
                     ×
                   </button>
@@ -1993,7 +2113,7 @@ export function AdminDashboard() {
                 type="button"
                 className="button ghost"
                 onClick={() => setShowArchive((v) => !v)}
-                style={{ color: "#f5f5f5", borderColor: "rgba(245,245,245,.24)", minHeight: "auto", padding: "8px 14px", fontSize: "12.5px" }}
+                style={{ color: "var(--adm-text)", borderColor: "var(--adm-ink-24)", minHeight: "auto", padding: "8px 14px", fontSize: "12.5px" }}
               >
                 {showArchive ? "Archív elrejtése" : `Archív (${archivedProjects.length})`}
               </button>
@@ -2040,7 +2160,7 @@ export function AdminDashboard() {
             ) : activeProjects.length === 0 ? (
               <div className="admin-card-dark" style={{ textAlign: "center", padding: "40px" }}>
                 <strong style={{ fontSize: "18px" }}>{searchQuery ? "Nincs találat a keresésre." : "Nincs aktív ügyfélkapus projekt."}</strong>
-                <p style={{ color: "rgba(255,255,255,0.5)", margin: "8px 0 0" }}>
+                <p style={{ color: "var(--adm-ink-50)", margin: "8px 0 0" }}>
                   {searchQuery ? "Próbálj más kulcsszót, vagy töröld a keresést." : "A regisztrált ügyfelek projektindításai itt jelennek meg."}
                 </p>
               </div>
@@ -2100,16 +2220,16 @@ export function AdminDashboard() {
                 const showHandover = project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && s !== "closed" && s !== "deletion_pending";
 
                 return (
-                <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+                <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid var(--adm-ink-08)', position: 'relative' }}>
                   {project.delete_requested && (
                     <div style={{ background: '#721C24', border: '1px solid #F5C6CB', color: '#F8D7DA', padding: '16px', borderRadius: '18px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
                         <strong style={{ display: 'block', fontSize: '15px' }}>ÜGYFÉL TÖRLÉSI KÉRELMET NYÚJTOTT BE!</strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>Kérés ideje: {project.delete_requested_at ? new Date(project.delete_requested_at).toLocaleString('hu-HU') : 'nem ismert'}</p>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--adm-ink-80)' }}>Kérés ideje: {project.delete_requested_at ? new Date(project.delete_requested_at).toLocaleString('hu-HU') : 'nem ismert'}</p>
                       </div>
                       <div style={{ display: 'flex', gap: '12px' }}>
                         <button className="button primary" style={{ background: '#DC3545', borderColor: '#DC3545', minHeight: 'auto', padding: '8px 14px' }} onClick={() => approveDeletion(project)}>Törlés jóváhagyása</button>
-                        <button className="button secondary" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', minHeight: 'auto', padding: '8px 14px' }} onClick={() => rejectDeletion(project)}>Elutasítás</button>
+                        <button className="button secondary" style={{ color: 'var(--adm-text)', borderColor: 'var(--adm-ink-30)', minHeight: 'auto', padding: '8px 14px' }} onClick={() => rejectDeletion(project)}>Elutasítás</button>
                       </div>
                     </div>
                   )}
@@ -2120,7 +2240,7 @@ export function AdminDashboard() {
                       <h3>{project.title}</h3>
                       <p>{brief["Cél"] || project.goals}</p>
                       {project.last_modified_at && (
-                        <small style={{ color: 'rgba(255,255,255,0.5)', display: 'block', marginTop: '6px', fontStyle: 'italic' }}>
+                        <small style={{ color: 'var(--adm-ink-50)', display: 'block', marginTop: '6px', fontStyle: 'italic' }}>
                           Utoljára módosítva: {new Date(project.last_modified_at).toLocaleString('hu-HU')} ({project.last_modified_by_name || 'Felhasználó'})
                         </small>
                       )}
@@ -2160,14 +2280,14 @@ export function AdminDashboard() {
                       <>
                         <div className="admin-fact-pill">
                           <span className="admin-fact-label">Előfizetés</span>
-                          <strong className="admin-fact-value" style={{ color: project.subscription_status === "active" ? "#76ABAE" : "#FFA726" }}>
+                          <strong className="admin-fact-value" style={{ color: project.subscription_status === "active" ? "var(--adm-accent-text)" : "#FFA726" }}>
                             {project.subscription_status ?? "inactive"}
                             {project.next_billing_at ? ` (Köv: ${new Date(project.next_billing_at).toLocaleDateString("hu-HU")})` : ""}
                           </strong>
                         </div>
                         <div className="admin-fact-pill">
                           <span className="admin-fact-label">Oldal állapota</span>
-                          <strong className="admin-fact-value" style={{ color: project.site_health_status === "healthy" ? "#76ABAE" : "#EF4444" }}>
+                          <strong className="admin-fact-value" style={{ color: project.site_health_status === "healthy" ? "var(--adm-accent-text)" : "#EF4444" }}>
                             {project.site_health_status === "healthy" ? "🟢 Rendszer rendben" : "🔴 Figyelmet igényel"}
                           </strong>
                         </div>
@@ -2189,7 +2309,7 @@ export function AdminDashboard() {
                     return (
                       <div style={{
                         background: "rgba(118, 171, 174, 0.15)",
-                        border: "1px solid #76ABAE",
+                        border: "1px solid var(--adm-accent-text)",
                         borderRadius: "14px",
                         padding: "14px 18px",
                         display: "flex",
@@ -2200,11 +2320,11 @@ export function AdminDashboard() {
                         marginTop: "10px"
                       }}>
                         <div>
-                          <span style={{ fontSize: "11px", fontWeight: "900", textTransform: "uppercase", color: "#76ABAE", letterSpacing: "0.05em" }}>💎 FONTOS TEENDŐ</span>
-                          <strong style={{ display: "block", color: "#FFFFFF", fontSize: "15px", marginTop: "2px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "900", textTransform: "uppercase", color: "var(--adm-accent-text)", letterSpacing: "0.05em" }}>💎 FONTOS TEENDŐ</span>
+                          <strong style={{ display: "block", color: "var(--adm-text)", fontSize: "15px", marginTop: "2px" }}>
                             Az ügyfél kérte a weboldal tulajdonba vételét / végleges megvásárlását!
                           </strong>
-                          <small style={{ color: "rgba(255,255,255,0.75)", fontSize: "12.5px" }}>
+                          <small style={{ color: "var(--adm-ink-75)", fontSize: "12.5px" }}>
                             Vételár: <strong>{formatHuf(activePurchase.amount)}</strong> · Állapot: <strong>{activePurchase.status}</strong>
                           </small>
                         </div>
@@ -2397,11 +2517,11 @@ export function AdminDashboard() {
                               </div>
 
                               {/* ── Mérföldkövek ── */}
-                              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "14px", marginTop: "10px" }}>
-                                <strong style={{ fontSize: "14px", color: "#fff" }}>Mérföldkövek</strong>
+                              <div style={{ borderTop: "1px solid var(--adm-ink-06)", paddingTop: "14px", marginTop: "10px" }}>
+                                <strong style={{ fontSize: "14px", color: "var(--adm-text)" }}>Mérföldkövek</strong>
                                 <div style={{ display: "grid", gap: "6px", marginTop: "8px" }}>
                                   {(project.milestones ?? []).map((m, idx) => (
-                                    <label key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: m.done ? "rgba(255,255,255,0.5)" : "#fff" }}>
+                                    <label key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", color: m.done ? "var(--adm-ink-50)" : "var(--adm-text)" }}>
                                       <input
                                         type="checkbox"
                                         checked={m.done}
@@ -2409,7 +2529,7 @@ export function AdminDashboard() {
                                           const next = (project.milestones ?? []).map((item, i) => (i === idx ? { ...item, done: e.target.checked } : item));
                                           await updateClientProject(project.id, { milestones: next });
                                         }}
-                                        style={{ accentColor: "#76ABAE" }}
+                                        style={{ accentColor: "var(--adm-accent-text)" }}
                                       />
                                       <span style={{ textDecoration: m.done ? "line-through" : "none" }}>{m.title}</span>
                                     </label>
@@ -2420,7 +2540,7 @@ export function AdminDashboard() {
                                     value={newMilestoneTitle[project.id] ?? ""}
                                     onChange={(e) => setNewMilestoneTitle((prev) => ({ ...prev, [project.id]: e.target.value }))}
                                     placeholder="Új mérföldkő címe…"
-                                    style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "6px 10px", color: "#fff", fontSize: "12px", flex: 1 }}
+                                    style={{ background: "var(--adm-inset)", border: "1px solid var(--adm-ink-12)", borderRadius: "8px", padding: "6px 10px", color: "var(--adm-text)", fontSize: "12px", flex: 1 }}
                                   />
                                   <button
                                     type="button"
@@ -2458,12 +2578,12 @@ export function AdminDashboard() {
                         {activeSub === "changes" && (
                           <div className="tab-pane-fade" style={{ display: "grid", gap: "16px" }}>
                             {reqs.length > 0 ? (
-                              <div className="change-requests-admin" style={{ background: "#181E2B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "14px" }}>
+                              <div className="change-requests-admin" style={{ background: "var(--adm-panel)", border: "1px solid var(--adm-ink-08)", borderRadius: "20px", padding: "20px", display: "grid", gap: "14px" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                                   <div>
-                                    <strong style={{ color: "#fff", fontSize: "16px" }}>Ügyfél módosítási kérések ({reqs.length})</strong>
+                                    <strong style={{ color: "var(--adm-text)", fontSize: "16px" }}>Ügyfél módosítási kérések ({reqs.length})</strong>
                                     {isManaged && (
-                                      <small style={{ display: "block", color: "#76ABAE", marginTop: "2px" }}>
+                                      <small style={{ display: "block", color: "var(--adm-accent-text)", marginTop: "2px" }}>
                                         Havi keretfogyasztás ellenőrizve a csomag szerint.
                                       </small>
                                     )}
@@ -2471,11 +2591,11 @@ export function AdminDashboard() {
                                 </div>
                                 <div style={{ display: "grid", gap: "12px" }}>
                                   {reqs.map((req) => (
-                                    <div key={req.id} style={{ background: "#0E1218", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px", display: "grid", gap: "10px" }}>
+                                    <div key={req.id} style={{ background: "var(--adm-inset)", border: "1px solid var(--adm-ink-08)", borderRadius: "14px", padding: "14px", display: "grid", gap: "10px" }}>
                                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", flexWrap: "wrap" }}>
                                         <div>
-                                          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#76ABAE" }}>{req.category}</span>
-                                          <small style={{ color: "rgba(255,255,255,0.5)", marginLeft: "8px" }}>{new Date(req.requested_at).toLocaleString("hu-HU")}</small>
+                                          <span style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>{req.category}</span>
+                                          <small style={{ color: "var(--adm-ink-50)", marginLeft: "8px" }}>{new Date(req.requested_at).toLocaleString("hu-HU")}</small>
                                         </div>
                                         <select
                                           value={req.status}
@@ -2491,7 +2611,7 @@ export function AdminDashboard() {
                                               "/ugyfelkapu/dashboard"
                                             );
                                           }}
-                                          style={{ background: "#1C1E22", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: "8px", padding: "4px 8px", fontSize: "12px" }}
+                                          style={{ background: "var(--adm-panel)", border: "1px solid var(--adm-ink-15)", color: "var(--adm-text)", borderRadius: "8px", padding: "4px 8px", fontSize: "12px" }}
                                         >
                                           <option value="new">Új</option>
                                           <option value="in_progress">Folyamatban</option>
@@ -2501,13 +2621,13 @@ export function AdminDashboard() {
                                           <option value="declined">Elutasítva</option>
                                         </select>
                                       </div>
-                                      <p style={{ margin: 0, color: "rgba(255,255,255,0.9)", fontSize: "13.5px", lineHeight: 1.45 }}>{req.description}</p>
+                                      <p style={{ margin: 0, color: "var(--adm-ink-90)", fontSize: "13.5px", lineHeight: 1.45 }}>{req.description}</p>
 
                                       {req.transfer_reported_at && req.status !== "completed" && (
                                         <div style={{ background: "rgba(118, 171, 174, 0.12)", border: "1px solid rgba(118, 171, 174, 0.4)", borderRadius: "10px", padding: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                                           <div>
-                                            <strong style={{ color: "#76ABAE", fontSize: "13px" }}>Az ügyfél jelezte az utalást!</strong>
-                                            <small style={{ display: "block", color: "rgba(255,255,255,0.7)" }}>Összeg: {formatHuf(req.quoted_amount ?? 0)} · Közlemény: {req.payment_reference}</small>
+                                            <strong style={{ color: "var(--adm-accent-text)", fontSize: "13px" }}>Az ügyfél jelezte az utalást!</strong>
+                                            <small style={{ display: "block", color: "var(--adm-ink-70)" }}>Összeg: {formatHuf(req.quoted_amount ?? 0)} · Közlemény: {req.payment_reference}</small>
                                           </div>
                                           <button
                                             className="admin-btn-primary"
@@ -2525,10 +2645,10 @@ export function AdminDashboard() {
                                           {req.quoted_amount ? (
                                             <div className="change-quote-state">
                                               <div style={{ display: "grid", gap: "2px" }}>
-                                                <strong style={{ fontSize: "15px", color: "#76ABAE" }}>{formatHuf(req.quoted_amount)}</strong>
-                                                <small style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>Közlemény: {req.payment_reference ?? "generálás alatt"}</small>
+                                                <strong style={{ fontSize: "15px", color: "var(--adm-accent-text)" }}>{formatHuf(req.quoted_amount)}</strong>
+                                                <small style={{ color: "var(--adm-ink-50)", fontSize: "11px" }}>Közlemény: {req.payment_reference ?? "generálás alatt"}</small>
                                               </div>
-                                              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
+                                              <span style={{ fontSize: "12px", color: "var(--adm-ink-70)" }}>
                                                 {req.transfer_reported_at
                                                   ? "Az ügyfél jelezte az utalást — ellenőrizd a számlát."
                                                   : req.quote_accepted_at
@@ -2554,11 +2674,11 @@ export function AdminDashboard() {
                                             >
                                               <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "140px 1fr auto", alignItems: "flex-end" }}>
                                                 <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                                  <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Ajánlati ár (Ft)</span>
+                                                  <span style={{ fontSize: "11px", color: "var(--adm-accent-text)", fontWeight: "bold" }}>Ajánlati ár (Ft)</span>
                                                   <input name="amount" type="number" min={1000} step={100} required placeholder="pl. 45000" style={{ width: "100%" }} />
                                                 </label>
                                                 <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                                  <span style={{ fontSize: "11px", color: "#76ABAE", fontWeight: "bold" }}>Mit tartalmaz?</span>
+                                                  <span style={{ fontSize: "11px", color: "var(--adm-accent-text)", fontWeight: "bold" }}>Mit tartalmaz?</span>
                                                   <input name="note" required placeholder="pl. Egyedi naptár modul, 3 munkanap." style={{ width: "100%" }} />
                                                 </label>
                                                 <button className="admin-btn-primary" type="submit" style={{ minHeight: "auto", height: "38px", fontSize: "12px", padding: "0 14px" }}>
@@ -2586,7 +2706,7 @@ export function AdminDashboard() {
                                 </div>
                               </div>
                             ) : (
-                              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13.5px", margin: 0, padding: "16px 0" }}>Jelenleg nincs aktív módosítási kérés ehhez a projekthez.</p>
+                              <p style={{ color: "var(--adm-ink-60)", fontSize: "13.5px", margin: 0, padding: "16px 0" }}>Jelenleg nincs aktív módosítási kérés ehhez a projekthez.</p>
                             )}
 
                             {/* ── Egyedi Árajánlat Készítő ── */}
@@ -2657,8 +2777,8 @@ export function AdminDashboard() {
                                 <div className="managed-admin-head">
                                   <div>
                                     <span className="micro-label">Menedzselt előfizetés vezérlés</span>
-                                    <strong style={{ fontSize: "16px", color: "#fff" }}>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
-                                    <small style={{ color: "rgba(255,255,255,0.6)" }}>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
+                                    <strong style={{ fontSize: "16px", color: "var(--adm-text)" }}>{subscriptionPlan(project.subscription_plan).name} csomag</strong>
+                                    <small style={{ color: "var(--adm-ink-60)" }}>Stripe ügyfél: {project.stripe_customer_id || "Nincs összekapcsolva"} · Előfizetés: {project.stripe_subscription_id || "Nincs összekapcsolva"}</small>
                                   </div>
                                   <div className="managed-admin-actions">
                                     <select
@@ -2703,7 +2823,7 @@ export function AdminDashboard() {
                               ))
                             ) : isManaged ? (
                               <section style={{
-                                background: "#0E1218",
+                                background: "var(--adm-inset)",
                                 border: "1px solid rgba(118, 171, 174, 0.3)",
                                 borderRadius: "16px",
                                 padding: "16px 20px",
@@ -2714,11 +2834,11 @@ export function AdminDashboard() {
                                 gap: "14px"
                               }}>
                                 <div>
-                                  <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "#76ABAE" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
-                                  <strong style={{ display: "block", color: "#fff", fontSize: "15px", marginTop: "2px" }}>
+                                  <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
+                                  <strong style={{ display: "block", color: "var(--adm-text)", fontSize: "15px", marginTop: "2px" }}>
                                     Weboldal tulajdonba vételi opció
                                   </strong>
-                                  <p style={{ margin: "4px 0 0", color: "rgba(255,255,255,0.7)", fontSize: "12.5px" }}>
+                                  <p style={{ margin: "4px 0 0", color: "var(--adm-ink-70)", fontSize: "12.5px" }}>
                                     Vételár erre a csomagra: <strong>{formatHuf(purchaseOptionPrice(project.subscription_plan))}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
                                   </p>
                                 </div>
@@ -2774,7 +2894,7 @@ export function AdminDashboard() {
 
           {showArchive && archivedProjects.length > 0 && (
             <div style={{ display: "grid", gap: "16px", marginTop: "24px" }}>
-              <h3 style={{ color: "rgba(255,255,255,0.7)", margin: 0, fontSize: "16px" }}>Lezárt projektek archívuma ({archivedProjects.length})</h3>
+              <h3 style={{ color: "var(--adm-ink-70)", margin: 0, fontSize: "16px" }}>Lezárt projektek archívuma ({archivedProjects.length})</h3>
               <div className="admin-project-board">
                 {archivedProjects.map((project) => renderClosedProjectCard(project))}
               </div>
@@ -2824,8 +2944,8 @@ export function AdminDashboard() {
                       onClick={() => setTicketStatusFilter(st)}
                       style={{
                         background: ticketStatusFilter === st ? "rgba(118, 171, 174, 0.2)" : "transparent",
-                        border: ticketStatusFilter === st ? "1px solid #76ABAE" : "1px solid rgba(255,255,255,0.08)",
-                        color: ticketStatusFilter === st ? "#76ABAE" : "rgba(255,255,255,0.6)",
+                        border: ticketStatusFilter === st ? "1px solid var(--adm-accent-text)" : "1px solid var(--adm-ink-08)",
+                        color: ticketStatusFilter === st ? "var(--adm-accent-text)" : "var(--adm-ink-60)",
                         borderRadius: "8px",
                         fontSize: "11px",
                         fontWeight: "750",
@@ -2844,9 +2964,9 @@ export function AdminDashboard() {
                   placeholder="Keresés beszélgetésekben…"
                   style={{
                     background: "#181D24",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    border: "1px solid var(--adm-ink-10)",
                     borderRadius: "10px",
-                    color: "#fff",
+                    color: "var(--adm-text)",
                     fontSize: "12.5px",
                     padding: "7px 12px",
                     outline: "none",
@@ -2857,7 +2977,7 @@ export function AdminDashboard() {
 
               <div className="admin-ticket-list">
                 {unifiedTickets.length === 0 ? (
-                  <div style={{ padding: "30px 14px", textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>
+                  <div style={{ padding: "30px 14px", textAlign: "center", color: "var(--adm-ink-40)", fontSize: "13px" }}>
                     Nincs a szűrésnek megfelelő beszélgetés.
                   </div>
                 ) : (
@@ -2887,12 +3007,12 @@ export function AdminDashboard() {
                             fontWeight: "800",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            background: t.status === "open" ? "rgba(255, 87, 34, 0.15)" : t.status === "answered" ? "rgba(118, 171, 174, 0.15)" : "rgba(255,255,255,0.06)",
-                            color: t.status === "open" ? "#FF8A65" : t.status === "answered" ? "#76ABAE" : "rgba(255,255,255,0.4)"
+                            background: t.status === "open" ? "rgba(255, 87, 34, 0.15)" : t.status === "answered" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-06)",
+                            color: t.status === "open" ? "#FF8A65" : t.status === "answered" ? "var(--adm-accent-text)" : "var(--adm-ink-40)"
                           }}>
                             {t.status === "open" ? "Nyitott" : t.status === "answered" ? "Megválaszolva" : "Lezárva"}
                           </span>
-                          <span style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}>
+                          <span style={{ fontSize: "10.5px", color: "var(--adm-ink-30)" }}>
                             {t.lastActivity ? new Date(t.lastActivity).toLocaleDateString("hu-HU", { month: "short", day: "numeric" }) : ""}
                           </span>
                         </div>
@@ -2908,7 +3028,7 @@ export function AdminDashboard() {
               const activeT = unifiedTickets.find((t) => (selectedTicketId ? t.id === selectedTicketId : true)) ?? unifiedTickets[0] ?? null;
               if (!activeT) {
                 return (
-                  <div className="admin-ticket-detail" style={{ alignItems: "center", justifyContent: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>
+                  <div className="admin-ticket-detail" style={{ alignItems: "center", justifyContent: "center", padding: "40px", color: "var(--adm-ink-40)" }}>
                     Válassz ki egy beszélgetést a bal oldali listából.
                   </div>
                 );
@@ -2922,12 +3042,12 @@ export function AdminDashboard() {
                   <div className="admin-ticket-detail-head">
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <strong style={{ fontSize: "16px", color: "#fff" }}>{activeT.title}</strong>
-                        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>({activeT.type === "public" ? "Weboldal látogató" : "Ügyfélkapu"})</span>
+                        <strong style={{ fontSize: "16px", color: "var(--adm-text)" }}>{activeT.title}</strong>
+                        <span style={{ fontSize: "12px", color: "var(--adm-ink-40)" }}>({activeT.type === "public" ? "Weboldal látogató" : "Ügyfélkapu"})</span>
                       </div>
                       <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "4px", fontSize: "12.5px" }}>
-                        {activeT.email && <a href={`mailto:${activeT.email}`} style={{ color: "#76ABAE" }}>{activeT.email}</a>}
-                        <span style={{ color: "rgba(255,255,255,0.4)" }}>{activeT.subtitle}</span>
+                        {activeT.email && <a href={`mailto:${activeT.email}`} style={{ color: "var(--adm-accent-text)" }}>{activeT.email}</a>}
+                        <span style={{ color: "var(--adm-ink-40)" }}>{activeT.subtitle}</span>
                       </div>
                     </div>
 
@@ -2953,7 +3073,7 @@ export function AdminDashboard() {
 
                   <div className="admin-ticket-detail-messages">
                     {msgs.length === 0 ? (
-                      <div style={{ textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>
+                      <div style={{ textAlign: "center", padding: "40px", color: "var(--adm-ink-40)", fontSize: "13px" }}>
                         Még nincsenek üzenetek ebben a beszélgetésben.
                       </div>
                     ) : (
@@ -2963,19 +3083,19 @@ export function AdminDashboard() {
                           className={`admin-chat-message ${item.sender}`}
                           style={{
                             maxWidth: "80%",
-                            background: item.sender === "admin" ? "rgba(118, 171, 174, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                            border: item.sender === "admin" ? "1px solid rgba(118, 171, 174, 0.25)" : "1px solid rgba(255, 255, 255, 0.08)",
+                            background: item.sender === "admin" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-05)",
+                            border: item.sender === "admin" ? "1px solid rgba(118, 171, 174, 0.25)" : "1px solid var(--adm-ink-08)",
                             borderRadius: "16px",
                             padding: "12px 16px",
                             justifySelf: item.sender === "admin" ? "end" : "start",
-                            color: "#fff"
+                            color: "var(--adm-text)"
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", fontSize: "11px", marginBottom: "4px" }}>
-                            <span style={{ color: item.sender === "admin" ? "#76ABAE" : "rgba(255,255,255,0.6)", fontWeight: "bold" }}>
+                            <span style={{ color: item.sender === "admin" ? "var(--adm-accent-text)" : "var(--adm-ink-60)", fontWeight: "bold" }}>
                               {item.sender === "admin" ? "Te (Admin)" : activeT.title}
                             </span>
-                            <small style={{ color: "rgba(255,255,255,0.3)" }}>
+                            <small style={{ color: "var(--adm-ink-30)" }}>
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" }) : ""}
                             </small>
                           </div>
@@ -3087,14 +3207,14 @@ export function AdminDashboard() {
             </div>
             <div style={{ display: "grid", gap: "12px" }}>
               {managedProjects.length === 0 ? (
-                <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>Még nincs menedzselt előfizetéses projekt.</p>
+                <p style={{ margin: 0, color: "var(--adm-ink-40)", fontSize: "13px" }}>Még nincs menedzselt előfizetéses projekt.</p>
               ) : (
                 managedProjects.map((p) => (
                   <div
                     key={p.id}
                     style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      background: "var(--adm-ink-02)",
+                      border: "1px solid var(--adm-ink-06)",
                       borderRadius: "14px",
                       padding: "14px 18px",
                       display: "flex",
@@ -3105,8 +3225,8 @@ export function AdminDashboard() {
                     }}
                   >
                     <div>
-                      <strong style={{ fontSize: "15px", color: "#fff" }}>{p.title}</strong>
-                      <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginTop: "3px" }}>
+                      <strong style={{ fontSize: "15px", color: "var(--adm-text)" }}>{p.title}</strong>
+                      <div style={{ fontSize: "12.5px", color: "var(--adm-ink-50)", marginTop: "3px" }}>
                         {p.contact_name || "Ügyfél"} · {p.contact_email} · {subscriptionPlan(p.subscription_plan).name} ({formatHuf(p.monthly_price ?? 0)}/hó)
                       </div>
                     </div>
@@ -3116,14 +3236,14 @@ export function AdminDashboard() {
                         fontWeight: "800",
                         padding: "3px 8px",
                         borderRadius: "6px",
-                        background: p.subscription_status === "active" ? "rgba(118, 171, 174, 0.15)" : "rgba(255,255,255,0.06)",
-                        color: p.subscription_status === "active" ? "#76ABAE" : "rgba(255,255,255,0.5)"
+                        background: p.subscription_status === "active" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-06)",
+                        color: p.subscription_status === "active" ? "var(--adm-accent-text)" : "var(--adm-ink-50)"
                       }}>
                         {p.subscription_status ?? "inactive"}
                       </span>
                       <button
                         className="button ghost"
-                        style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px", color: "#fff", borderColor: "rgba(255,255,255,0.2)" }}
+                        style={{ minHeight: "auto", padding: "6px 12px", fontSize: "12px", color: "var(--adm-text)", borderColor: "var(--adm-ink-20)" }}
                         onClick={() => {
                           setWizardProjectId(p.id);
                           setActiveTab("projects");
@@ -3153,7 +3273,7 @@ export function AdminDashboard() {
             <div className="admin-card-dark-header">
               <div>
                 <strong>Félbehagyott projektindító adatlapok</strong>
-                <span style={{ display: "block", color: "rgba(255,255,255,0.5)", fontSize: "12.5px", marginTop: "2px" }}>
+                <span className="admin-card-dark-sub">
                   {briefDrafts.length} megkezdett, de be nem küldött adatlap. A beküldés után a sor eltűnik innen, és
                   projektként jelenik meg. 24 óra tétlenség után automatikusan megy egy — és csak egy — emlékeztető levél.
                 </span>
@@ -3161,9 +3281,9 @@ export function AdminDashboard() {
             </div>
 
             {loading ? (
-              <div style={{ padding: "30px", textAlign: "center" }}><strong>Betöltés...</strong></div>
+              <div className="admin-empty-note"><strong>Betöltés...</strong></div>
             ) : briefDrafts.length === 0 ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+              <div className="admin-empty-note">
                 Jelenleg nincs félbehagyott adatlap. (Ha a lista mindig üres, ellenőrizd, hogy lefutott-e a
                 035_brief_drafts.sql migráció.)
               </div>
@@ -3192,20 +3312,20 @@ export function AdminDashboard() {
                   return (
                     <article className="lead-row" key={draft.user_id}>
                       <div>
-                        <strong style={{ fontSize: "14px", color: "#fff" }}>{draft.full_name || "Névtelen"}</strong>
-                        <p style={{ margin: "2px 0 0", fontSize: "12.5px" }}>
-                          <a href={`mailto:${draft.email}`} style={{ color: "#76ABAE" }}>{draft.email}</a>
+                        <strong className="admin-user-name">{draft.full_name || "Névtelen"}</strong>
+                        <p className="admin-user-email">
+                          <a href={`mailto:${draft.email}`}>{draft.email}</a>
                         </p>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                        <p className="admin-user-meta">
                           {draft.company || "Nincs megadva márkanév"}
                         </p>
                       </div>
                       <div>
-                        <strong style={{ fontSize: "13.5px", color: "#fff" }}>{stepLabel}</strong>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+                        <strong className="admin-user-strong">{stepLabel}</strong>
+                        <p className="admin-user-meta">
                           {draft.step + 1}. lépés a(z) {stepCount}-ből · {percent}%
                         </p>
-                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                        <p className="admin-user-meta">
                           {draft.commercial_model === "subscription"
                             ? `Bérlés · ${subscriptionPlan(draft.subscription_plan).name}`
                             : "Egyedi projekt"}
@@ -3213,13 +3333,11 @@ export function AdminDashboard() {
                       </div>
                       <div>
                         {filled.length === 0 ? (
-                          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
-                            Még csak az alapoknál járt.
-                          </span>
+                          <span className="admin-user-meta">Még csak az alapoknál járt.</span>
                         ) : (
                           filled.map(([label, value]) => (
-                            <p key={label} style={{ margin: "0 0 4px", fontSize: "12px", lineHeight: 1.4, color: "rgba(255,255,255,0.7)" }}>
-                              <b style={{ color: "rgba(255,255,255,0.45)" }}>{label}:</b> {value.length > 120 ? `${value.slice(0, 120)}…` : value}
+                            <p className="admin-user-meta" key={label}>
+                              <b>{label}:</b> {value.length > 120 ? `${value.slice(0, 120)}…` : value}
                             </p>
                           ))
                         )}
@@ -3229,18 +3347,128 @@ export function AdminDashboard() {
                       </div>
                       <div>
                         {draft.reminder_sent_at ? (
-                          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
-                            Kiment: {formatDate(draft.reminder_sent_at)}
-                          </span>
+                          <span className="admin-user-meta">Kiment: {formatDate(draft.reminder_sent_at)}</span>
                         ) : (
-                          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
-                            Még nem ment ki
-                          </span>
+                          <span className="admin-user-meta">Még nem ment ki</span>
                         )}
                       </div>
                     </article>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          FÜL 6: FELHASZNÁLÓK
+      ════════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "users" && (
+        <div className="admin-tab-pane">
+          <div className="admin-card-dark">
+            <div className="admin-card-dark-header">
+              <div>
+                <strong>Regisztrált felhasználók</strong>
+                <span className="admin-card-dark-sub">
+                  {adminUsers.length} fiók. A legutóbb mozgó felhasználó van elöl — aki régen járt itt, alulra kerül.
+                </span>
+              </div>
+              <button className="admin-btn-secondary" onClick={() => void loadAdminUsers()} type="button" disabled={usersLoading}>
+                {usersLoading ? "Frissítés..." : "Frissítés"}
+              </button>
+            </div>
+
+            <div className="admin-users-toolbar">
+              <input
+                onChange={(event) => setUserSearch(event.target.value)}
+                placeholder="Keresés név vagy email szerint…"
+                type="search"
+                value={userSearch}
+              />
+            </div>
+
+            {usersError ? (
+              <p className="admin-inline-error" role="alert">{usersError}</p>
+            ) : null}
+
+            {usersLoading && adminUsers.length === 0 ? (
+              <div className="admin-empty-note"><strong>Betöltés...</strong></div>
+            ) : adminUsers.length === 0 ? (
+              <div className="admin-empty-note">Nincs megjeleníthető felhasználó.</div>
+            ) : (
+              <div className="lead-table">
+                <div className="lead-row header">
+                  <span>Felhasználó</span>
+                  <span>Utoljára fent</span>
+                  <span>Mit csinált</span>
+                  <span>Aktivitás</span>
+                  <span>Állapot</span>
+                </div>
+                {adminUsers
+                  .filter((account) => {
+                    const needle = userSearch.trim().toLowerCase();
+                    if (!needle) return true;
+                    return `${account.fullName ?? ""} ${account.email}`.toLowerCase().includes(needle);
+                  })
+                  .map((account) => (
+                    <article className="lead-row" key={account.id}>
+                      <div>
+                        <strong className="admin-user-name">{account.fullName || "Névtelen"}</strong>
+                        <p className="admin-user-email">
+                          <a href={`mailto:${account.email}`}>{account.email}</a>
+                        </p>
+                        <p className="admin-user-meta">
+                          Regisztrált: {formatDate(account.registeredAt)}
+                          {account.providers.includes("google") ? " · Google-belépés" : ""}
+                        </p>
+                      </div>
+                      <div>
+                        <strong
+                          className="admin-user-strong"
+                          title={account.lastSignInAt ? formatDateTime(account.lastSignInAt) : "Még sosem lépett be"}
+                        >
+                          {relativeTime(account.lastSignInAt)}
+                        </strong>
+                        <p className="admin-user-meta">
+                          {account.lastSignInAt ? formatDateTime(account.lastSignInAt) : "Nincs belépés"}
+                        </p>
+                      </div>
+                      <div>
+                        <strong className="admin-user-strong">{account.lastActivityLabel ?? "Még semmit"}</strong>
+                        <p className="admin-user-meta">
+                          {account.lastActivityAt ? relativeTime(account.lastActivityAt) : "—"}
+                        </p>
+                        {account.draft ? (
+                          <p className="admin-user-meta warn">
+                            Félbehagyott adatlap: {briefDraftProgress(account.draft.step, account.draft.stepCount)}%
+                            {account.draft.reminderSentAt ? " · emlékeztetve" : " · nincs emlékeztetve"}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div>
+                        <p className="admin-user-meta">
+                          {account.projectCount} projekt{account.activeProjectCount ? ` (${account.activeProjectCount} aktív)` : ""}
+                        </p>
+                        <p className="admin-user-meta">
+                          {account.ticketCount} ticket{account.openTicketCount ? ` (${account.openTicketCount} nyitott)` : ""}
+                        </p>
+                        <p className="admin-user-meta">{account.changeRequestCount} módosítási kérés</p>
+                      </div>
+                      <div>
+                        {account.monthlyRevenue > 0 ? (
+                          <span className="status-pill live">{formatHuf(account.monthlyRevenue)} / hó</span>
+                        ) : account.projectCount > 0 ? (
+                          <span className="status-pill">Nincs aktív előfizetés</span>
+                        ) : (
+                          <span className="status-pill">Csak fiók</span>
+                        )}
+                        {!account.emailConfirmedAt ? (
+                          <p className="admin-user-meta warn">Email nincs megerősítve</p>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
               </div>
             )}
           </div>
@@ -3253,7 +3481,7 @@ export function AdminDashboard() {
             <div className="admin-card-dark-header">
               <div>
                 <strong>Korábbi érdeklődések (CRM Leadek)</strong>
-                <span style={{ display: "block", color: "rgba(255,255,255,0.5)", fontSize: "12.5px", marginTop: "2px" }}>
+                <span style={{ display: "block", color: "var(--adm-ink-50)", fontSize: "12.5px", marginTop: "2px" }}>
                   {stats.total} lead összesen, ebből {stats.fresh} új és {stats.won} nyert.
                 </span>
               </div>
@@ -3272,20 +3500,20 @@ export function AdminDashboard() {
                   <strong>Betöltés...</strong>
                 </div>
               ) : leads.length === 0 ? (
-                <div style={{ padding: "30px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+                <div style={{ padding: "30px", textAlign: "center", color: "var(--adm-ink-40)" }}>
                   Nincs korábbi érdeklődés rögzítve.
                 </div>
               ) : (
                 leads.map((lead) => (
                   <article className="lead-row" key={lead.id}>
                     <div>
-                      <strong style={{ fontSize: "14px", color: "#fff" }}>{lead.name}</strong>
-                      <p style={{ margin: "2px 0 0", color: "#76ABAE", fontSize: "12.5px" }}>{lead.email}</p>
-                      <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>{lead.phone || lead.company || "Nincs extra adat"}</p>
+                      <strong style={{ fontSize: "14px", color: "var(--adm-text)" }}>{lead.name}</strong>
+                      <p style={{ margin: "2px 0 0", color: "var(--adm-accent-text)", fontSize: "12.5px" }}>{lead.email}</p>
+                      <p style={{ margin: "2px 0 0", color: "var(--adm-ink-40)", fontSize: "12px" }}>{lead.phone || lead.company || "Nincs extra adat"}</p>
                     </div>
                     <div>
-                      <strong style={{ fontSize: "13.5px", color: "#fff" }}>{lead.project_type}</strong>
-                      <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "12px", lineHeight: 1.35 }}>{lead.goals}</p>
+                      <strong style={{ fontSize: "13.5px", color: "var(--adm-text)" }}>{lead.project_type}</strong>
+                      <p style={{ margin: "2px 0 0", color: "var(--adm-ink-60)", fontSize: "12px", lineHeight: 1.35 }}>{lead.goals}</p>
                     </div>
                     <div>
                       <span className="status-pill">{lead.budget || "nincs megadva"}</span>
