@@ -16380,8 +16380,14 @@ details.admin-collapse summary:hover {
 .brief-stage-defs{position:absolute;width:0;height:0}
 
 /* ── A derengés ─────────────────────────────────────────────────── */
+/* A blur sugara SZÁNDÉKOSAN kicsi. A foltok maguk `closest-side` gradiensek,
+   amik átlátszóba futnak ki — a lágyságot ők adják, nem a szűrő. A korábbi
+   66px-es blur egy teljes képernyős rétegen futott négy óriási elemmel: a
+   raszterizálása telefonon ~1 másodpercig tartott, ezért „ugrott be" későn az
+   egész szakasz. A blur költsége a sugárral meredeken nő, a `saturate` viszont
+   olcsó színmátrix — az maradhat. */
 .brief-flowwrap{position:absolute;inset:-8%;z-index:0;pointer-events:none;
-  filter:blur(66px) saturate(1.35)}
+  filter:blur(22px) saturate(1.4)}
 .brief-flow{position:absolute;inset:0}
 .brief-flow span{position:absolute;border-radius:50%;will-change:transform;
   animation:brief-rise var(--dur,40s) ease-in-out infinite;animation-delay:var(--del,0s)}
@@ -16542,6 +16548,10 @@ details.admin-collapse summary:hover {
   .brief-stage{min-height:100svh;padding-top:64px;padding-bottom:80px;align-items:center}
   .brief-stage::before{height:clamp(56px,9vh,110px)}
   .brief-stage::after{height:clamp(80px,13vh,150px)}
+  /* Az SVG-turbulencia egy teljes képernyős felületen drága első festéskor, és
+     telefonon amúgy is alig látszik — a szakasz megjelenése fontosabb nála. */
+  .brief-grain{display:none}
+  .brief-gate-choice{backdrop-filter:blur(10px);background:rgba(255,255,255,.09)}
   .brief-gate-choices{grid-template-columns:1fr}
   .brief-gate-choice p{padding-right:0}
   .brief-gate-arrow{display:none}
