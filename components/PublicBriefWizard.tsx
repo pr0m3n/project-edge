@@ -125,6 +125,13 @@ export function PublicBriefWizard({
   const [manualPlan, setManualPlan] = useState(Boolean(initialPlan));
   /** Nyitva van-e a „másik csomagot választok" panel. */
   const [showPlans, setShowPlans] = useState(false);
+  /**
+   * Melyik lépésről ugrottunk a Mentés képernyőre a „küldjem emailben?"
+   * linkkel. Enélkül a Vissza a Megjelenés lépésre dobna — olyan képernyőre,
+   * ahol a látogató még nem járt —, és a szervernek is rossz lépésszámot
+   * küldenénk, ezért a folytatás-link a brief végén nyílna meg.
+   */
+  const [returnStep, setReturnStep] = useState<number | null>(null);
   /** A piszkozat-link email küldés állapota. */
   const [linkEmail, setLinkEmail] = useState("");
   const [linkState, setLinkState] = useState<"idle" | "open" | "sending" | "sent" | "error">("idle");
@@ -182,6 +189,24 @@ export function PublicBriefWizard({
     setForm((current) => ({ ...current, ...values }));
   }
 
+  /**
+   * A Vissza gomb. Ha a „küldjem emailben?" linkkel ugrottunk ide, akkor arra a
+   * lépésre visz vissza, ahol a látogató valóban tartott — nem a Mentés előtti
+   * képernyőre, amit még nem is látott.
+   */
+  function goBack() {
+    if (returnStep !== null) {
+      const target = returnStep;
+      setReturnStep(null);
+      setLinkState("idle");
+      setLinkError("");
+      setError("");
+      setStep(target);
+      return;
+    }
+    go(step - 1);
+  }
+
   function go(next: number) {
     if (next > step) {
       const message = validate(step, form);
@@ -234,7 +259,8 @@ export function PublicBriefWizard({
       const response = await fetch("/api/briefs/public-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, form, step, startedAt: openedAt.current, honeypot: "" })
+        // A VALÓDI lépés megy el, nem az, ahova a link ugrasztott minket.
+        body: JSON.stringify({ email, form, step: returnStep ?? step, startedAt: openedAt.current, honeypot: "" })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -526,14 +552,14 @@ export function PublicBriefWizard({
 
             {error ? <p className="public-brief-error" role="alert">{error}</p> : null}
             <div className="public-brief-actions">
-              <button className="button secondary" disabled={step === 0} onClick={() => go(step - 1)} type="button">Vissza</button>
+              <button className="button secondary" disabled={step === 0 && returnStep === null} onClick={goBack} type="button">Vissza</button>
               {step < steps.length - 1 ? <button className="button primary" onClick={() => go(step + 1)} type="button">Következő</button> : null}
             </div>
             <div className="public-save-row">
               <small className="public-save-state">● {savedLabel}</small>
               {/* Bármelyik lépésről kimenthető: aki itt hagyja abba, ne vesszen el. */}
               {step > 0 && step < steps.length - 1 && linkState !== "sent" ? (
-                <button className="public-save-link" onClick={() => { setStep(steps.length - 1); setLinkState("open"); }} type="button">
+                <button className="public-save-link" onClick={() => { setReturnStep(step); setStep(steps.length - 1); setLinkState("open"); }} type="button">
                   küldjem emailben?
                 </button>
               ) : null}

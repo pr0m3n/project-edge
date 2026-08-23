@@ -38,19 +38,23 @@ export function BriefStage() {
   useEffect(() => {
     const flow = flowRef.current;
     if (!flow || flow.childElementCount) return;
-    const SEGMENTS = 26;
+    // Sűrűbb és jobban átfedő szegmensek, mint korábban: a CSS-blur csak akkor
+    // olvasztja őket folytonos csíkká, ha nincs köztük rés.
+    const SEGMENTS = 44;
     const DURATION = 27;
-    const HEAD = 124;
-    const TAIL = 10;
-    const GAP = 0.0105;
+    const HEAD = 132;
+    const TAIL = 14;
+    const GAP = 0.0058;
     for (let index = 0; index < SEGMENTS; index += 1) {
       const ratio = index / (SEGMENTS - 1);
-      const radius = HEAD + (TAIL - HEAD) * Math.pow(ratio, 0.68);
+      const radius = HEAD + (TAIL - HEAD) * Math.pow(ratio, 0.7);
       const drop = document.createElement("span");
       drop.style.width = `${radius}px`;
       drop.style.height = `${radius}px`;
       drop.style.marginLeft = `${-radius / 2}px`;
       drop.style.marginTop = `${-radius / 2}px`;
+      // A farok vége halkan elfogy, hogy ne legyen levágott vége a csíknak.
+      drop.style.opacity = `${Math.max(0.16, 1 - Math.pow(ratio, 1.9))}`;
       drop.style.setProperty("--dur", `${DURATION}s`);
       drop.style.setProperty("--del", `${-DURATION * GAP * index}s`);
       flow.appendChild(drop);
@@ -192,14 +196,9 @@ export function BriefStage() {
     <section className={`brief-stage${glitching ? " glitching" : ""}`} id="projektbrief" ref={stageRef}>
       <svg aria-hidden="true" className="brief-stage-defs" focusable="false">
         <defs>
-          <filter id="brief-goo">
-            <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="19" />
-            <feColorMatrix in="blur" mode="matrix" result="goo" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -14" />
-            <feTurbulence baseFrequency="0.008 0.014" numOctaves="3" result="noise" seed="5" type="fractalNoise">
-              <animate attributeName="baseFrequency" dur="28s" repeatCount="indefinite" values="0.008 0.014;0.014 0.008;0.008 0.014" />
-            </feTurbulence>
-            <feDisplacementMap in="goo" in2="noise" scale="46" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
+          {/* A folyadék összeolvasztása CSS-blurral történik, nem itt: egy 0x0
+              méretű defs-konténerben definiált SVG-szűrő Safariban némán nem
+              érvényesül, és a csík különálló karikákra esett szét. */}
           <filter id="brief-grain">
             <feTurbulence baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" type="fractalNoise" />
             <feColorMatrix type="saturate" values="0" />
