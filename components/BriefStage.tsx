@@ -18,6 +18,22 @@ import { trackEvent } from "@/lib/analytics";
 
 const GATE_TEXTS = ["Új weboldalt indítasz, vagy a meglévőt újítanád fel?", "Kezdjük ott, ahol most tartasz."];
 
+/**
+ * A derengés: négy HATALMAS, teljesen lágy fényfolt, ami alulról izzik fel és
+ * lassan sodródik. Mindegyik `closest-side` gradiens, ami átlátszóba fut ki —
+ * nincs éle, amit foltnak lehetne látni.
+ *
+ * A markupban vannak, NEM effektben létrehozva: korábban a hidratálás után
+ * JavaScript szúrta be őket, ezért telefonon a szakasz először feketén jelent
+ * meg, és a fény késve „ugrott be". Így az első festéskor már ott van.
+ */
+const AURORA = [
+  { key: "blue", w: "92vmin", h: "70vmin", side: "left" as const, offset: "-12%", bottom: "-14%", rgb: "43,75,255", dur: 38, dx: "26vmin", dy: "-14vmin", s0: 1, s1: 1.16 },
+  { key: "magenta", w: "76vmin", h: "66vmin", side: "left" as const, offset: "22%", bottom: "-18%", rgb: "194,59,255", dur: 46, dx: "-20vmin", dy: "-22vmin", s0: 1.08, s1: 0.9 },
+  { key: "rose", w: "84vmin", h: "64vmin", side: "right" as const, offset: "-8%", bottom: "-12%", rgb: "255,79,149", dur: 42, dx: "-30vmin", dy: "-16vmin", s0: 1, s1: 1.2 },
+  { key: "ember", w: "62vmin", h: "52vmin", side: "left" as const, offset: "50%", bottom: "-6%", rgb: "255,122,61", dur: 55, dx: "16vmin", dy: "-26vmin", s0: 0.92, s1: 1.15 }
+];
+
 type GateChoice = "no" | "yes";
 
 export function BriefStage() {
@@ -28,41 +44,8 @@ export function BriefStage() {
   const [resumeStep, setResumeStep] = useState(0);
   const [preselectedPlan, setPreselectedPlan] = useState<string | null>(null);
   const stageRef = useRef<HTMLElement>(null);
-  const flowRef = useRef<HTMLDivElement>(null);
   const cardRect = useRef<DOMRect | null>(null);
   const morphed = useRef(false);
-
-  /* ── A derengés: négy HATALMAS, teljesen lágy fényfolt, ami alulról izzik
-        fel és lassan sodródik. Mindegyik `closest-side` gradiens, ami
-        átlátszóba fut ki — nincs éle, amit foltnak lehetne látni. A korábbi
-        változat kicsi, éles korongokat használt, és azokat egy SVG-szűrő
-        próbálta összeolvasztani; Safariban a szűrő nem érvényesült, ezért
-        karikákra esett szét. Itt nincs mit elrontani: sima CSS. ── */
-  useEffect(() => {
-    const flow = flowRef.current;
-    if (!flow || flow.childElementCount) return;
-    const AURORA = [
-      { w: "92vmin", h: "70vmin", x: "left:-12%", y: "-14%", color: "43,75,255", dur: 38, dx: "26vmin", dy: "-14vmin", s0: 1, s1: 1.16 },
-      { w: "76vmin", h: "66vmin", x: "left:22%", y: "-18%", color: "194,59,255", dur: 46, dx: "-20vmin", dy: "-22vmin", s0: 1.08, s1: 0.9 },
-      { w: "84vmin", h: "64vmin", x: "right:-8%", y: "-12%", color: "255,79,149", dur: 42, dx: "-30vmin", dy: "-16vmin", s0: 1, s1: 1.2 },
-      { w: "62vmin", h: "52vmin", x: "left:50%", y: "-6%", color: "255,122,61", dur: 55, dx: "16vmin", dy: "-26vmin", s0: 0.92, s1: 1.15 }
-    ];
-    for (const light of AURORA) {
-      const node = document.createElement("span");
-      const [side, offset] = light.x.split(":");
-      node.style.width = light.w;
-      node.style.height = light.h;
-      node.style.setProperty(side, offset);
-      node.style.bottom = light.y;
-      node.style.background = `radial-gradient(closest-side, rgb(${light.color}), rgba(${light.color},0) 70%)`;
-      node.style.setProperty("--dur", `${light.dur}s`);
-      node.style.setProperty("--dx", light.dx);
-      node.style.setProperty("--dy", light.dy);
-      node.style.setProperty("--s0", `${light.s0}`);
-      node.style.setProperty("--s1", `${light.s1}`);
-      flow.appendChild(node);
-    }
-  }, []);
 
   /* ── Glitch: a két szöveg csak ÁTTŰNIK egymáson (mindkettő ugyanabban a
         rács-cellában ül), ezért a doboz magassága a hosszabbikhoz igazodik, és
@@ -214,7 +197,27 @@ export function BriefStage() {
       </svg>
 
       <div aria-hidden="true" className="brief-flowwrap">
-        <div className="brief-flow" ref={flowRef} />
+        <div className="brief-flow">
+          {AURORA.map((light) => (
+            <span
+              key={light.key}
+              style={
+                {
+                  width: light.w,
+                  height: light.h,
+                  [light.side]: light.offset,
+                  bottom: light.bottom,
+                  background: `radial-gradient(closest-side, rgb(${light.rgb}), rgba(${light.rgb},0) 70%)`,
+                  "--dur": `${light.dur}s`,
+                  "--dx": light.dx,
+                  "--dy": light.dy,
+                  "--s0": `${light.s0}`,
+                  "--s1": `${light.s1}`
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
       </div>
       <svg aria-hidden="true" className="brief-grain" focusable="false">
         <rect filter="url(#brief-grain)" height="100%" width="100%" />
