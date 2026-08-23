@@ -179,14 +179,27 @@ export default function ServicesPage() {
             meg minden. Amit nem tudsz, később pótolható, és sok mindenben segítek.
           </p>
         </div>
-        <div className="bring-grid">
+        {/* Nyíló lista, nem kártyarács. Tíz tétel van, és a Logó szövege
+            ötször hosszabb a többinél — egyforma magasságú kártyákban ez
+            sosem áll össze. Így minden sor egyforma, a részlet pedig
+            kattintásra nyílik. Rejtett jelölőnégyzettel megy, nem
+            JavaScripttel, és több sor is nyitva lehet egyszerre. */}
+        <div className="bring-list">
           {bring.map(({ Icon, title, copy }, index) => (
-            <div className="bring-item" key={title} style={{ animationDelay: `${(index % 5) * 60}ms` }}>
-              <span className="bring-icon" aria-hidden="true"><Icon /></span>
-              <div>
+            <div className="bring-row" key={title} style={{ "--row": index } as React.CSSProperties}>
+              <input className="bring-switch" id={`bring-${index}`} type="checkbox" />
+              <label className="bring-summary" htmlFor={`bring-${index}`}>
+                <span className="bring-num">{String(index + 1).padStart(2, "0")}</span>
+                <span className="bring-icon" aria-hidden="true"><Icon /></span>
                 <strong>{title}</strong>
-                <span>{copy}</span>
+                <span className="bring-caret" aria-hidden="true" />
+              </label>
+              <div className="bring-panel">
+                <div>
+                  <p>{copy}</p>
+                </div>
               </div>
+              <span className="bring-rule" aria-hidden="true" />
             </div>
           ))}
         </div>
