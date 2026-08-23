@@ -107,7 +107,15 @@ export async function POST(request: Request) {
   const name = form.company || email.split("@")[0];
   const summary = summarize(form);
   const resumeToken = crypto.randomUUID();
-  const supabase = createServerSupabaseAdminClient();
+  // Ha a szerver nincs beállítva (hiányzó kulcsok), a látogató kapjon értelmes
+  // üzenetet a nyers hibaoldal helyett — a briefje a böngészőjében megmarad.
+  let supabase: ReturnType<typeof createServerSupabaseAdminClient>;
+  try {
+    supabase = createServerSupabaseAdminClient();
+  } catch (cause) {
+    console.error("Public brief link: Supabase unavailable", cause);
+    return NextResponse.json({ error: "A mentés most nem érhető el. Próbáld újra később." }, { status: 503 });
+  }
 
   const ticketMessage = `Félbehagyott projektindító adatlap (${step + 1}/${STEP_COUNT}. lépés)\n\n${summary}`;
 
@@ -206,17 +214,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Hiányzó azonosító." }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from("public_brief_leads")
-    .select("data, step")
-    .eq("id", id)
-    .eq("resume_token", token)
-    .maybeSingle();
+  try {
+    const supabase = createServerSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("public_brief_leads")
+      .select("data, step")
+      .eq("id", id)
+      .eq("resume_token", token)
+      .maybeSingle();
 
-  if (error || !data) {
-    return NextResponse.json({ error: "A link érvénytelen vagy lejárt." }, { status: 404 });
+    if (error || !data) {
+      return NextResponse.json({ error: "A link érvénytelen vagy lejárt." }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true, form: data.data, step: data.step });
+  } catch (cause) {
+    console.error("Public brief resume failed", cause);
+    return NextResponse.json({ error: "A link most nem ellenőrizhető. Próbáld újra később." }, { status: 503 });
   }
-
-  return NextResponse.json({ ok: true, form: data.data, step: data.step });
 }
