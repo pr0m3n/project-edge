@@ -9,10 +9,28 @@ import {
   type BriefFormValues,
   type PublicBriefDraft
 } from "@/lib/brief-draft";
-import { LOGO_DESIGN_PRICE, formatHuf, SUBSCRIPTION_PLANS, subscriptionPlan } from "@/lib/subscriptions";
+import {
+  LOGO_DESIGN_PRICE,
+  formatHuf,
+  SUBSCRIPTION_PLANS,
+  subscriptionPlan,
+  recommendPlan,
+  recommendationReason,
+  SERVICE_COUNT_OPTIONS,
+  VISITOR_TASK_OPTIONS
+} from "@/lib/subscriptions";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
 
-const steps = ["Csomag", "Cél és ügyfél", "Tartalom", "Megjelenés", "Ellenőrzés"];
+/**
+ * A csomagválasztás szándékosan NEM az első lépés.
+ *
+ * Korábban azzal indult („Mekkora weboldalra van szükséged?"), és a mérés
+ * szerint aki megnyitotta a briefet, annak a fele az első képernyőn kiszállt:
+ * olyan döntést kértünk tőle, amit még nem tudott meghozni. Most a 2. lépés
+ * két üzleti kérdéséből VEZETJÜK LE az ajánlást, és a 3. lépésen mutatjuk meg
+ * — eredményként, nem kapuként. Felülbírálható marad.
+ */
+const steps = ["Rólad", "Mit csinálsz", "Ajánlás", "Megjelenés", "Mentés"];
 const projectTypes = [
   ["premium-business-site", "Céges weboldal"],
   ["redesign", "Meglévő oldal megújítása"],
@@ -49,6 +67,8 @@ function validate(step: number, form: BriefFormValues) {
     if (form.commercialModel === "purchase" && !form.projectType) return "Válaszd ki, milyen projektet szeretnél.";
   }
   if (step === 1) {
+    if (!form.serviceCount) return "Jelöld, hány szolgáltatást vagy terméket árulsz.";
+    if (!form.visitorTask) return "Jelöld, kell-e a látogatónak csinálnia valamit az oldalon.";
     if (form.goals.trim().length < 10) return "Írd le legalább egy mondatban, mit szeretnél elérni.";
     if (form.audience.trim().length < 5) return "Írd le röviden, kiknek készül az oldal.";
     if (!form.primaryAction.trim()) return "Válaszd ki a legfontosabb látogatói műveletet.";
@@ -66,18 +86,55 @@ function validate(step: number, form: BriefFormValues) {
   return "";
 }
 
-export function PublicBriefWizard() {
+export type PublicBriefWizardProps = {
+  /** A heró kapujából érkező válasz — előtölti az 1. lépést. */
+  initialWebsiteStatus?: "no" | "yes";
+  /** Melyik lépésen induljon (árkártyáról érkezve a 3.: Ajánlás). */
+  initialStep?: number;
+  /** Előre kiválasztott csomag (árkártyáról érkezve). */
+  initialPlan?: string;
+  /** A folyadék-színpadon belül a saját bevezető fejléc elmarad. */
+  bare?: boolean;
+};
+
+export function PublicBriefWizard({
+  initialWebsiteStatus,
+  initialStep = 0,
+  initialPlan,
+  bare = false
+}: PublicBriefWizardProps = {}) {
   const router = useRouter();
-  const [form, setForm] = useState<BriefFormValues>(initialBriefForm);
-  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<BriefFormValues>(() => ({
+    ...initialBriefForm,
+    ...(initialWebsiteStatus === "yes"
+      ? { websiteStatus: "yes", domainStatus: "keep" }
+      : initialWebsiteStatus === "no"
+        ? { websiteStatus: "no", domainStatus: "new" }
+        : {}),
+    ...(initialPlan ? { subscriptionPlan: initialPlan as BriefFormValues["subscriptionPlan"] } : {})
+  }));
+  const [step, setStep] = useState(initialStep);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState("");
   const [resumeDraft, setResumeDraft] = useState<PublicBriefDraft | null>(null);
   const skipFirstAutosave = useRef(true);
   const briefStarted = useRef(false);
+  /** Igaz, ha a látogató KÉZZEL írta felül az ajánlott csomagot.
+      Állapot, nem ref: a 3. lépés felirata is ebből olvas renderelés közben. */
+  const [manualPlan, setManualPlan] = useState(Boolean(initialPlan));
+  /** Nyitva van-e a „másik csomagot választok" panel. */
+  const [showPlans, setShowPlans] = useState(false);
+  /** A piszkozat-link email küldés állapota. */
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkState, setLinkState] = useState<"idle" | "open" | "sending" | "sent" | "error">("idle");
+  const [linkError, setLinkError] = useState("");
+  /** Mikor nyílt meg az űrlap — a bot-szűréshez kell a szerveren.
+      Renderelés közben nem hívunk `Date.now()`-ot (tisztaság), csak mount után. */
+  const openedAt = useRef(0);
 
   useEffect(() => {
+    openedAt.current = Date.now();
     const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
     if (saved && (saved.data.company || saved.step > 0)) setResumeDraft(saved);
     setReady(true);
@@ -93,6 +150,16 @@ export function PublicBriefWizard() {
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: form, savedAt: now, step, version: 1 }));
     setSavedAt(now);
   }, [form, ready, resumeDraft, step]);
+
+  /**
+   * A két üzleti kérdésből levezetett ajánlás. Csak akkor írja felül a kiválasztott
+   * csomagot, ha a látogató nem választott kézzel mást — a felülbírálás mindig nyer.
+   */
+  const recommended = recommendPlan(form.serviceCount, form.visitorTask);
+  useEffect(() => {
+    if (!recommended || manualPlan) return;
+    setForm((current) => (current.subscriptionPlan === recommended ? current : { ...current, subscriptionPlan: recommended }));
+  }, [recommended, manualPlan]);
 
   const selectedPlan = subscriptionPlan(form.subscriptionPlan);
   const selectedVibe = vibes.find(([key]) => key === form.vibe) ?? vibes[1];
@@ -147,6 +214,43 @@ export function PublicBriefWizard() {
     router.push("/ugyfelkapu?brief=continue");
   }
 
+  /**
+   * A piszkozat elküldése emailben — fiók nélkül.
+   *
+   * Ez a második kimenet a regisztráció mellett. A mérés szerint aki eddig
+   * eljutott és nem regisztrált, arról NYOMTALANUL elveszett a kitöltött brief:
+   * a localStorage az ő gépén maradt, a rendszer nem tudott róla. Innentől
+   * ticket készül belőle, ő pedig kap egy folytatás-linket.
+   */
+  async function sendDraftLink() {
+    const email = linkEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setLinkError("Adj meg egy érvényes email címet.");
+      return;
+    }
+    setLinkState("sending");
+    setLinkError("");
+    try {
+      const response = await fetch("/api/briefs/public-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, form, step, startedAt: openedAt.current, honeypot: "" })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setLinkState("error");
+        setLinkError(payload?.error || "Nem sikerült elküldeni. Próbáld újra.");
+        return;
+      }
+      setLinkState("sent");
+      trackEvent("brief_link_sent", { step: step + 1 });
+      trackLeadConversion();
+    } catch {
+      setLinkState("error");
+      setLinkError("Hálózati hiba. Próbáld újra.");
+    }
+  }
+
   function continueDraft() {
     if (!resumeDraft) return;
     setForm(resumeDraft.data);
@@ -168,17 +272,21 @@ export function PublicBriefWizard() {
   }
 
   return (
-    <section className="public-brief" id="projektbrief">
-      <div className="public-brief-intro">
-        <p className="micro-label">Projektindító adatlap</p>
-        <h2>Rakjuk össze előbb a jó irányt.</h2>
-        <p>Belépés nélkül elkezdheted. A végén létrehozod a fiókodat, a válaszaid pedig automatikusan átkerülnek az ügyfélkapuba.</p>
-        <div className="public-brief-points">
-          <span>01 · 5 rövid lépés</span>
-          <span>02 · Automatikus mentés</span>
-          <span>03 · Beküldés csak jóváhagyással</span>
+    /* A színpadon belül a `#projektbrief` horgony a külső szekcióé — itt nem
+       ismételjük meg, mert két azonos id törné a lapon belüli ugrásokat. */
+    <section className={`public-brief${bare ? " bare" : ""}`} id={bare ? undefined : "projektbrief"}>
+      {bare ? null : (
+        <div className="public-brief-intro">
+          <p className="micro-label">Projektindító adatlap</p>
+          <h2>Rakjuk össze előbb a jó irányt.</h2>
+          <p>Belépés nélkül elkezdheted. A végén eldöntöd, hogy fiókot hozol létre, vagy csak emailben kéred a folytatás linkjét.</p>
+          <div className="public-brief-points">
+            <span>01 · 5 rövid lépés</span>
+            <span>02 · Automatikus mentés</span>
+            <span>03 · Beküldés csak jóváhagyással</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {resumeDraft ? (
         <div className="public-draft-choice" role="status">
@@ -209,12 +317,10 @@ export function PublicBriefWizard() {
                   (`/ugyfelkapu?model=purchase`) — ide szándékosan nem kerül be.
                   A `purchase` ágak lentebb megmaradnak a régi, még be nem
                   küldött piszkozatok miatt. */}
-              <header><span>01 / Csomag</span><h3>Mekkora weboldalra van szükséged?</h3><p>Havidíjas, menedzselt weboldal. Külön belépési díj nincs: az első havidíj indítja a munkát, a domaint, a tárhelyet és a karbantartást pedig mi intézzük.</p></header>
-              {form.commercialModel === "subscription" ? <div className="public-plan-grid">
-                {SUBSCRIPTION_PLANS.map((plan) => <button className={form.subscriptionPlan === plan.key ? "selected" : ""} key={plan.key} onClick={() => update({ subscriptionPlan: plan.key })} type="button"><span>{plan.name}</span><strong>{formatHuf(plan.price)}<small>/hó</small></strong><p>{plan.short}</p></button>)}
-              </div> : <div className="public-chip-grid">
+              <header><span>01 / Rólad</span><h3>Kezdjük veled.</h3><p>Csomagot most nem kell választanod — azt a következő lépés válaszaiból ajánlom majd. Külön belépési díj nincs: az első havidíj indítja a munkát.</p></header>
+              {form.commercialModel === "purchase" ? <div className="public-chip-grid">
                 {projectTypes.map(([value, label]) => <button className={form.projectType === value ? "selected" : ""} key={value} onClick={() => update({ projectType: value })} type="button">{label}</button>)}
-              </div>}
+              </div> : null}
               <label className="public-field"><span>Vállalkozás vagy márka neve</span><input value={form.company} onChange={(event) => update({ company: event.target.value })} placeholder="Például: Kovács Épületgépészet" /></label>
               <div className="public-field">
                 <span>Milyen projektről van szó?</span>
@@ -269,14 +375,64 @@ export function PublicBriefWizard() {
             </div> : null}
 
             {step === 1 ? <div className="public-brief-slide">
-              <header><span>02 / Cél és ügyfél</span><h3>Mit kell elérnie az oldalnak?</h3><p>Nem szakmai leírást kérünk. Mondd el egyszerűen, milyen eredménynek örülnél.</p></header>
+              <header><span>02 / Mit csinálsz</span><h3>Mit árulsz, és mit csináljon a látogató?</h3><p>Két kérdés a vállalkozásodról — ebből megmondom, melyik csomag elég neked. Az oldalak számát nem kell megbecsülnöd.</p></header>
+              <div className="public-field">
+                <span>Hány különböző szolgáltatást vagy terméket árulsz?</span>
+                <div className="public-chip-grid">
+                  {SERVICE_COUNT_OPTIONS.map(([value, label]) => <button
+                    className={form.serviceCount === value ? "selected" : ""}
+                    key={value}
+                    onClick={() => { setManualPlan(false); update({ serviceCount: value }); }}
+                    type="button"
+                  >{label}</button>)}
+                </div>
+              </div>
+              <div className="public-field">
+                <span>Kell, hogy a látogató csináljon valamit az oldalon?</span>
+                <div className="public-chip-grid">
+                  {VISITOR_TASK_OPTIONS.map(([value, label]) => <button
+                    className={form.visitorTask === value ? "selected" : ""}
+                    key={value}
+                    onClick={() => { setManualPlan(false); update({ visitorTask: value }); }}
+                    type="button"
+                  >{label}</button>)}
+                </div>
+                <small className="public-field-hint">Az oldalak számát soha nem kérdezem — azt a válaszaidból rakom össze.</small>
+              </div>
               <label className="public-field"><span>Mi a legfontosabb cél?</span><textarea value={form.goals} onChange={(event) => update({ goals: event.target.value })} placeholder="Például: több minőségi ajánlatkérés, hitelesebb megjelenés és kevesebb ismétlődő kérdés…" /></label>
               <label className="public-field"><span>Kiknek készül?</span><textarea value={form.audience} onChange={(event) => update({ audience: event.target.value })} placeholder="Például: Veszprém környéki családok, akik megbízható szakembert keresnek…" /></label>
               <div className="public-field"><span>Mi legyen az elsődleges művelet?</span><div className="public-chip-grid">{["Ajánlatot kérek", "Kapcsolatfelvétel", "Telefonálok", "Időpontot foglalok"].map((item) => <button className={form.primaryAction === item ? "selected" : ""} key={item} onClick={() => update({ primaryAction: item })} type="button">{item}</button>)}</div></div>
             </div> : null}
 
             {step === 2 ? <div className="public-brief-slide">
-              <header><span>03 / Tartalom</span><h3>Miből álljon össze az oldal?</h3><p>Jelöld a fontos részeket. A pontos szerkezetet később együtt finomítjuk.</p></header>
+              <header><span>03 / Ajánlás</span><h3>Ez a csomag elég neked.</h3><p>Nem a legdrágábbat ajánlom, hanem a legolcsóbbat, amiben elfér, amit mondtál. Felülbírálhatod.</p></header>
+
+              {form.commercialModel === "subscription" ? <div className="brief-recommend">
+                <div className="brief-recommend-head">
+                  <div>
+                    <span>{manualPlan ? "A VÁLASZTÁSOD" : "A VÁLASZAID ALAPJÁN"}</span>
+                    <strong>{selectedPlan.name}</strong>
+                  </div>
+                  <b>{formatHuf(selectedPlan.price)}<small>/hó</small></b>
+                </div>
+                <p className="brief-recommend-why">{recommendationReason(form.serviceCount, form.visitorTask)}</p>
+                <p className="brief-recommend-scope">{selectedPlan.pages} · {selectedPlan.buildTime.replace("Jellemzően ", "elkészül ")}</p>
+                <button className="brief-recommend-toggle" onClick={() => setShowPlans((value) => !value)} type="button">
+                  {showPlans ? "Rendben, maradjon ez" : "Inkább másik csomagot választok"}
+                </button>
+                {showPlans ? <div className="public-plan-grid">
+                  {SUBSCRIPTION_PLANS.map((plan) => <button
+                    className={form.subscriptionPlan === plan.key ? "selected" : ""}
+                    key={plan.key}
+                    onClick={() => { setManualPlan(true); update({ subscriptionPlan: plan.key }); }}
+                    type="button"
+                  >
+                    <span>{plan.name}</span>
+                    <strong>{formatHuf(plan.price)}<small>/hó</small></strong>
+                    <p>{plan.short}</p>
+                  </button>)}
+                </div> : null}
+              </div> : null}
               <div className="public-field"><span>Oldalak vagy tartalmi blokkok</span><div className="public-chip-grid">{(form.commercialModel === "subscription" ? selectedPlan.pageOptions : pageOptions).map((item) => <button className={parts(form.pages).includes(item) ? "selected" : ""} key={item} onClick={() => update({ pages: toggle(form.pages, item) })} type="button">{item}</button>)}</div></div>
               <div className="public-field"><span>Szükséges funkciók</span><div className="public-chip-grid">{(form.commercialModel === "subscription" ? selectedPlan.featureOptions : featureOptions).map((item) => <button className={parts(form.features).includes(item) ? "selected" : ""} key={item} onClick={() => update({ features: toggle(form.features, item) })} type="button">{item}</button>)}</div></div>
               <label className="public-field"><span>Mesélj röviden a vállalkozásról és az ajánlatodról</span><textarea value={form.contentBrief} onChange={(event) => update({ contentBrief: event.target.value })} placeholder="Mivel foglalkoztok, mitől vagytok jók, miért választanak benneteket? Nem kell marketingesen fogalmazni." /></label>
@@ -313,14 +469,59 @@ export function PublicBriefWizard() {
             </div> : null}
 
             {step === 4 ? <div className="public-brief-slide public-summary">
-              <header><span>05 / Ellenőrzés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. Belépés után kiegészítheted a privát anyagokkal, majd külön jóváhagyással küldheted be.</p></header>
+              <header><span>05 / Mentés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. Válaszd ki, hogyan mented — fiókkal vagy anélkül.</p></header>
               <div className="public-summary-grid">
                 <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Egyedi projekt · egyszeri fejlesztés"}</strong></div>
                 <div><span>Márka</span><strong>{form.company}</strong></div>
                 <div><span>Elsődleges cél</span><strong>{form.primaryAction}</strong></div>
                 <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {form.palette === "custom" ? "Egyedi paletta" : selectedPalette[1]}</strong></div>
               </div>
-              <div className="public-auth-gate"><div><span>UTOLSÓ LÉPÉS</span><h4>Mentsd a saját ügyfélfiókodba.</h4><p>Ha már van fiókod, csak lépj be. Ha nincs, kevesebb mint egy perc alatt létrehozhatod.</p></div><button className="button primary" onClick={continueToAccount} type="button">Belépés vagy regisztráció →</button></div>
+              <div className="public-auth-gate"><div><span>AJÁNLOTT</span><h4>Mentsd a saját ügyfélfiókodba.</h4><p>Itt tudod feltölteni a logót, a képeket és a hozzáféréseket, és innen indul a szerződés is. Ha már van fiókod, csak lépj be.</p></div><button className="button primary" onClick={continueToAccount} type="button">Belépés vagy regisztráció →</button></div>
+
+              {/* Második kimenet fiók nélkül: enélkül a nem regisztrálók
+                  kitöltött briefje nyomtalanul elveszett. */}
+              <div className="public-link-gate">
+                {linkState === "sent" ? (
+                  <div className="public-link-done" role="status">
+                    <span aria-hidden="true">✓</span>
+                    <div>
+                      <strong>Elküldtem a linket.</strong>
+                      <p>Nézd meg a(z) <b>{linkEmail.trim().toLowerCase()}</b> postafiókot — a levélben lévő gombbal bármelyik gépen folytathatod. Én is látom, hogy itt jártál, szóval ha elakadsz, tudok segíteni.</p>
+                    </div>
+                  </div>
+                ) : linkState === "open" || linkState === "sending" || linkState === "error" ? (
+                  <div className="public-link-form">
+                    <label>
+                      <span>Hova küldjem a folytatás linkjét?</span>
+                      <input
+                        autoComplete="email"
+                        inputMode="email"
+                        onChange={(event) => { setLinkEmail(event.target.value); setLinkError(""); }}
+                        placeholder="nev@ceged.hu"
+                        type="email"
+                        value={linkEmail}
+                      />
+                    </label>
+                    <div className="public-link-actions">
+                      <button className="button primary" disabled={linkState === "sending"} onClick={sendDraftLink} type="button">
+                        {linkState === "sending" ? "Küldés…" : "Küldés"}
+                      </button>
+                      <button className="button spectral" onClick={() => { setLinkState("idle"); setLinkError(""); }} type="button">Mégse</button>
+                    </div>
+                    {linkError ? <p className="public-brief-error" role="alert">{linkError}</p> : null}
+                    <small>Nem iratkozol fel semmire. Ezt az egy levelet küldöm el, a benne lévő linkkel folytathatod.</small>
+                  </div>
+                ) : (
+                  <button className="public-link-trigger" onClick={() => setLinkState("open")} type="button">
+                    <span aria-hidden="true">✉</span>
+                    <div>
+                      <strong>Vagy küldd el magadnak emailben</strong>
+                      <small>Fiók nélkül. Kapsz egy linket, amivel bármikor, bármelyik gépen folytathatod.</small>
+                    </div>
+                    <i aria-hidden="true">→</i>
+                  </button>
+                )}
+              </div>
             </div> : null}
 
             {error ? <p className="public-brief-error" role="alert">{error}</p> : null}
@@ -328,7 +529,15 @@ export function PublicBriefWizard() {
               <button className="button secondary" disabled={step === 0} onClick={() => go(step - 1)} type="button">Vissza</button>
               {step < steps.length - 1 ? <button className="button primary" onClick={() => go(step + 1)} type="button">Következő</button> : null}
             </div>
-            <small className="public-save-state">● {savedLabel}</small>
+            <div className="public-save-row">
+              <small className="public-save-state">● {savedLabel}</small>
+              {/* Bármelyik lépésről kimenthető: aki itt hagyja abba, ne vesszen el. */}
+              {step > 0 && step < steps.length - 1 && linkState !== "sent" ? (
+                <button className="public-save-link" onClick={() => { setStep(steps.length - 1); setLinkState("open"); }} type="button">
+                  küldjem emailben?
+                </button>
+              ) : null}
+            </div>
           </form>
 
           <aside className="public-brief-preview">
