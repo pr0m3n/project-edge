@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, isUuid, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
+import { authenticatedUser } from "@/lib/server-auth";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -21,6 +22,14 @@ export async function POST(request: Request) {
       return rateLimitResponse(rate.retryAfterSeconds);
     }
 
+    // A végpont levelet küld, ezért nem maradhat nyitva: hitelesítés nélkül
+    // bárki generálhatott volna vele „Új ügyfél regisztráció" leveleket a
+    // stúdió postafiókjába. Csak a SAJÁT regisztrációját jelentheti be valaki.
+    const user = await authenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Érvénytelen vagy lejárt munkamenet." }, { status: 401 });
+    }
+
     const parsed = await readJsonBody<RegisterNotifyBody>(request, 2_000);
     if (!parsed.ok) return parsed.response;
 
@@ -28,21 +37,30 @@ export async function POST(request: Request) {
     if (typeof userId !== "string" || !isUuid(userId) || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json({ error: "Érvénytelen felhasználói adatok." }, { status: 400 });
     }
+    if (userId !== user.id) {
+      return NextResponse.json({ error: "Csak a saját regisztráció jelenthető be." }, { status: 403 });
+    }
 
     const userEmail = email.trim().toLowerCase();
     const displayName = typeof name === "string" && name.trim() ? name.trim() : userEmail;
 
     const admin = createServerSupabaseAdminClient();
 
-    // Deduplikáció: ellenőrizzük, hogy ehhez a felhasználóhoz küldtünk-e már regisztrációs értesítést
-    const { data: existingNotification } = await admin
+    // Deduplikáció.
+    //
+    // A `maybeSingle()` itt korábban ELRONTOTTA a védelmet: amint két sor is
+    // megvolt ugyanahhoz az e-mail címhez, hibát adott vissza `data: null`-lal,
+    // amit a kód „még nem küldtünk"-nek olvasott — így minden újabb hívás újabb
+    // levelet szült. A `limit(1)` tömböt ad, ami akárhány meglévő sorral is
+    // helyes választ jelent.
+    const { data: existingNotifications } = await admin
       .from("notifications")
       .select("id")
       .eq("title", "Új ügyfél regisztráció")
       .ilike("message", `%${userEmail}%`)
-      .maybeSingle();
+      .limit(1);
 
-    if (existingNotification) {
+    if (existingNotifications?.length) {
       return NextResponse.json({ success: true, alreadyNotified: true });
     }
 

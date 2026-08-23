@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
   initialBriefForm,
+  isBlankBriefDraft,
   PUBLIC_BRIEF_DRAFT_KEY,
   readPublicBriefDraft
 } from "@/lib/brief-draft";
@@ -132,6 +133,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [activeTicketId, setActiveTicketId] = useState("");
   const [reply, setReply] = useState("");
   const portalChatMessagesRef = useRef<HTMLDivElement>(null);
+  /**
+   * Melyik felhasználóra futott már le a profil-létrehozás ebben az
+   * oldalbetöltésben. A `getSession()` és az `onAuthStateChange` közel egyszerre
+   * hívja az `ensureClientProfile`-t; enélkül mindkettő elindulna.
+   */
+  const profileEnsuredRef = useRef("");
+  /** A szerveroldali brief-piszkozat késleltetett mentésének időzítője. */
+  const draftSyncTimerRef = useRef<number | null>(null);
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketRatingComment, setTicketRatingComment] = useState("");
   const [notice, setNotice] = useState("");
@@ -331,6 +340,52 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       /* storage unavailable (private mode) — ignore */
     }
   }, [projectForm, draftKey, projectSubmitted]);
+
+  /**
+   * A piszkozat mentése a SZERVERRE is (`brief_drafts`, 035-ös migráció).
+   *
+   * A fenti localStorage-mentés csak ezt az egy böngészőt védi. Aki elkezdte az
+   * adatlapot és elnavigált, arról eddig semmi nyom nem maradt: nem lehetett
+   * emlékeztetőt küldeni neki, és az admin sem látta, melyik lépésnél állt meg.
+   *
+   * Késleltetve írunk, hogy ne menjen kérés minden leütésre. Érintetlen űrlapot
+   * nem mentünk — az nem félbehagyott kitöltés, csak egy megnyitott oldal.
+   */
+  useEffect(() => {
+    if (!userId || projectSubmitted || isBlankBriefDraft(projectForm)) return;
+
+    if (draftSyncTimerRef.current) window.clearTimeout(draftSyncTimerRef.current);
+    draftSyncTimerRef.current = window.setTimeout(() => {
+      void supabase.from("brief_drafts").upsert(
+        {
+          user_id: userId,
+          email,
+          full_name: profileName || null,
+          company: projectForm.company || null,
+          commercial_model: projectForm.commercialModel,
+          subscription_plan: projectForm.subscriptionPlan,
+          step: projectStep,
+          step_count: briefSteps.length,
+          data: projectForm,
+          // Újranyitás: aki már küldött be egyszer adatlapot, majd újat kezd,
+          // annak a sora ne maradjon lezártnak — különben az admin listáján
+          // láthatatlan lenne a most futó kitöltés. A `reminder_sent_at`-et
+          // SZÁNDÉKOSAN nem nullázzuk: felhasználónként legfeljebb egy
+          // emlékeztető megy, ez itt nem indulhat újra.
+          submitted_at: null,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: "user_id" }
+      );
+    }, 2_500);
+
+    return () => {
+      if (draftSyncTimerRef.current) window.clearTimeout(draftSyncTimerRef.current);
+    };
+    // A `profileName` és az `email` csak kísérőadat; nem érdemes miattuk
+    // újraindítani az időzítőt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectForm, projectStep, projectSubmitted, userId]);
 
   /**
    * A `targetEmail` szándékosan NEM megy át a szerverre: a címzettet a
@@ -587,6 +642,12 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ? [projectForm.customBg, projectForm.customAccent, projectForm.customText, projectForm.customCta]
       : selectedPalette[2];
   const briefProgress = Math.round(((projectStep + 1) / briefSteps.length) * 100);
+  /**
+   * Van-e már megkezdett adatlap — akár a nyilvános oldalról hozva, akár itt
+   * félbehagyva. Ettől függ, hogy az üdvözlő sáv „indítás"-t vagy
+   * „folytatás"-t ígér.
+   */
+  const briefInProgress = publicBriefPending || !isBlankBriefDraft(projectForm);
   const displayedBriefSteps = projectForm.commercialModel === "subscription"
     ? ["Csomag és márka", "Cél és ügyfél", "Csomagtartalom", "Megjelenés", "Induló anyagok", "Ellenőrzés"]
     : briefSteps;
@@ -638,6 +699,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     return true;
   }
 
+  /**
+   * A profil sor létrehozása, és — kizárólag ELSŐ alkalommal — az admin
+   * értesítése az új regisztrációról.
+   *
+   * Két csapdát kerül ki, amiből korábban 4-5 „Új ügyfél regisztráció" levél
+   * lett minden fiókhoz, sőt sima BEJELENTKEZÉSKOR is ment egy:
+   *
+   *  1. Ez a függvény minden munkamenet-betöltéskor lefut (`getSession` ÉS
+   *     `onAuthStateChange`), nem csak regisztrációkor. Az `ignoreDuplicates`
+   *     upsert `select`-tel viszont pontosan megmondja, hogy MOST jött-e létre
+   *     a sor: ha a visszatérő tömb üres, a profil már megvolt, tehát ez nem
+   *     regisztráció, hanem belépés — ilyenkor nem szólunk senkinek.
+   *  2. A két hívó ugyanabban a pillanatban indul, ezért a `profileEnsuredRef`
+   *     a kérés ELINDÍTÁSA előtt jegyzi meg a felhasználót, nem utána.
+   */
   async function ensureClientProfile(sessionUser: {
     id: string;
     email?: string;
@@ -651,27 +727,39 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           ? sessionUser.user_metadata.name
           : "";
 
-    await supabase.from("client_profiles").upsert(
-      {
-        email: userEmail,
-        full_name: metadataName || userEmail,
-        id: sessionUser.id
-      },
-      { onConflict: "id", ignoreDuplicates: true }
-    );
+    if (profileEnsuredRef.current === sessionUser.id) return;
+    profileEnsuredRef.current = sessionUser.id;
 
-    // Értesítés küldése az adminnak az új regisztrációról (a végpont deduplikál)
-    if (sessionUser.id && userEmail) {
-      void fetch("/api/auth/register-notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: sessionUser.id,
+    const { data: created } = await supabase
+      .from("client_profiles")
+      .upsert(
+        {
           email: userEmail,
-          name: metadataName || userEmail
-        })
-      }).catch(() => {});
-    }
+          full_name: metadataName || userEmail,
+          id: sessionUser.id
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      )
+      .select("id");
+
+    // Üres tömb = a profil már létezett, tehát ez belépés, nem regisztráció.
+    if (!created?.length || !sessionUser.id || !userEmail) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
+    void fetch("/api/auth/register-notify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        userId: sessionUser.id,
+        email: userEmail,
+        name: metadataName || userEmail
+      })
+    }).catch(() => {});
   }
 
   useEffect(() => {
@@ -837,7 +925,19 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       resolvedUid
         ? supabase.from("client_profiles").select("full_name").eq("id", resolvedUid).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
-      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20),
+      // A `user_id` szűrő KELL, nem elég az RLS-re bízni. A stúdiónak szóló
+      // értesítések `user_id = null`-lal íródnak, és a policy egyetlen elgépelt
+      // vagy vissza nem játszott migráció után is átengedheti őket — akkor
+      // pedig az ügyfél a saját felugró paneljében olvassa az adminnak szánt
+      // üzeneteket. Itt a lekérdezés maga zárja ki ezt.
+      resolvedUid
+        ? supabase
+            .from("notifications")
+            .select("*")
+            .eq("user_id", resolvedUid)
+            .order("created_at", { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [], error: null }),
       supabase.from("change_requests").select("*").order("requested_at", { ascending: false }),
       supabase.from("website_purchases").select("*").order("created_at", { ascending: false })
     ]);
@@ -918,22 +1018,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       return;
     }
 
-    if (data.user) {
-      await supabase.from("client_profiles").upsert({
-        email: authForm.email,
-        full_name: authForm.name || authForm.email,
-        id: data.user.id
-      });
-      void fetch("/api/auth/register-notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: data.user.id,
-          email: authForm.email,
-          name: authForm.name || authForm.email
-        })
-      }).catch(() => {});
-    }
+    // A profil létrehozása és az admin értesítése SZÁNDÉKOSAN nincs itt: mindkettő
+    // az `ensureClientProfile`-ban történik, egyetlen helyen. Ez az upsert amúgy
+    // is csendben elbukott, ha e-mail megerősítés kell (munkamenet nélkül az
+    // `authenticated` RLS policy nem engedi), az értesítés viszont kiment —
+    // ezért kapott az admin egy levelet innen, majd még többet a dashboardról.
 
     if (data.session) {
       hardNavigate("/ugyfelkapu/dashboard");
@@ -1284,6 +1373,18 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       window.localStorage.removeItem(PUBLIC_BRIEF_DRAFT_KEY);
     } catch {
       /* ignore */
+    }
+
+    // A szerveroldali piszkozat lezárása: innentől ez projekt, nem félbehagyott
+    // adatlap — nem kerülhet be az admin „Félbehagyott adatlapok" listájába, és
+    // nem kaphat emlékeztető levelet sem. A hiba nem buktathatja a beküldést.
+    if (draftSyncTimerRef.current) window.clearTimeout(draftSyncTimerRef.current);
+    const { error: draftCloseError } = await supabase
+      .from("brief_drafts")
+      .update({ submitted_at: new Date().toISOString() })
+      .eq("user_id", userId);
+    if (draftCloseError) {
+      console.error("A brief piszkozat lezárása nem sikerült.", draftCloseError);
     }
     setSubmittedCommercialModel(projectForm.commercialModel);
     setProjectForm(initialProject);
@@ -2649,18 +2750,25 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
       {confirmModal}
 
-      {!loading && projects.length === 0 && !projectSubmitted && (
+      {/* Az üdvözlő sáv csak akkor jelenik meg, ha tényleg a nulláról indul
+          valaki. Aki a nyilvános oldalon már elkezdte az adatlapot (vagy itt
+          félbehagyta), annak a „Projektindító adatlap indítása" felirat azt
+          sugallta, hogy a válaszai elvesztek, és újra kell kezdenie — miközben
+          a wizard alatta már be is töltötte őket. A `new-brief` nézetben pedig
+          egyáltalán nincs helye: ott már a kitöltés folyik. */}
+      {!loading && projects.length === 0 && !projectSubmitted && homeView !== "new-brief" && (
         <div className="portal-welcome">
           <div className="portal-welcome-text">
             <span className="micro-label">Üdvözlünk a fedélzeten</span>
             <h2>Örülünk, hogy itt vagy{profileName ? `, ${profileName}` : ""}!</h2>
             <p>
-            Indítsd el az első projektindító adatlapodat pár perc alatt. Onnantól minden itt fut össze:
-              az ajánlat, a fizetés, a fejlesztési mérföldkövek, az előnézeti link és a support — egy helyen.
+              {briefInProgress
+                ? "A megkezdett projektindító adatlapod megvan — a válaszaid elmentve várnak. Folytasd ott, ahol abbahagytad, majd ellenőrzés után küldd be."
+                : "Indítsd el az első projektindító adatlapodat pár perc alatt. Onnantól minden itt fut össze: az ajánlat, a fizetés, a fejlesztési mérföldkövek, az előnézeti link és a support — egy helyen."}
             </p>
           </div>
           <button className="button primary" type="button" onClick={() => setHomeView("new-brief")}>
-            Projektindító adatlap indítása →
+            {briefInProgress ? "Adatlap folytatása →" : "Projektindító adatlap indítása →"}
           </button>
         </div>
       )}

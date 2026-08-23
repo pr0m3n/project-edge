@@ -24,7 +24,8 @@ import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, purchaseOpt
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
 import { BANK_TRANSFER_DETAILS, parseBrief } from "@/components/portal/format";
-import { paletteByName } from "@/components/portal/brief-fields";
+import { briefSteps, paletteByName } from "@/components/portal/brief-fields";
+import { briefDraftProgress, type BriefDraftRow } from "@/lib/brief-draft";
 import type {
   BillingoIssue,
   ChangeRequest,
@@ -188,8 +189,11 @@ export function AdminDashboard() {
   const [showArchive, setShowArchive] = useState(false);
   const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
 
+  /** Félbehagyott projektindító adatlapok — beküldetlen `brief_drafts` sorok. */
+  const [briefDrafts, setBriefDrafts] = useState<BriefDraftRow[]>([]);
+
   // Navigation & Master-Detail state
-  const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "leads">("inbox");
+  const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "drafts" | "leads">("inbox");
   const [ticketScope, setTicketScope] = useState<"all" | "public" | "portal">("all");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [, setSelectedTicketType] = useState<"public" | "portal">("public");
@@ -720,6 +724,19 @@ export function AdminDashboard() {
       .eq("status", "paid")
       .order("paid_at", { ascending: false });
     setBillingoIssues((billingoData ?? []) as BillingoIssue[]);
+
+    // Félbehagyott projektindító adatlapok (035-ös migráció). Szándékosan KÜLÖN
+    // listában, nem a projektek között: ezek még nem megbízások, csak nyomok
+    // arról, hol állt meg valaki — ha a projektek közé keverednének, elvinnék a
+    // figyelmet a valódi teendőkről.
+    const { data: briefDraftData, error: briefDraftError } = await supabase
+      .from("brief_drafts")
+      .select("*")
+      .is("submitted_at", null)
+      .order("updated_at", { ascending: false })
+      .returns<BriefDraftRow[]>();
+    // A tábla hiánya nem hiba: a migráció kézzel fut, addig a fül csak üres.
+    setBriefDrafts(briefDraftError ? [] : briefDraftData ?? []);
 
     setLoading(false);
   }
@@ -1873,6 +1890,18 @@ export function AdminDashboard() {
             <span className="admin-nav-icon">🌐</span>
             <span>Menedzselt Oldalak</span>
             <span className="admin-nav-badge">{managedProjects.length}</span>
+          </button>
+
+          {/* Külön fül, szándékosan a projektek UTÁN: ezek még nem megbízások,
+              csak jelzés arról, hol állt meg valaki a kitöltésben. */}
+          <button
+            className={`admin-nav-item ${activeTab === "drafts" ? "active" : ""}`}
+            onClick={() => setActiveTab("drafts")}
+            type="button"
+          >
+            <span className="admin-nav-icon">📝</span>
+            <span>Félbehagyott adatlapok</span>
+            <span className="admin-nav-badge">{briefDrafts.length}</span>
           </button>
 
           <button
@@ -3115,6 +3144,109 @@ export function AdminDashboard() {
       {/* ════════════════════════════════════════════════════════════════════════
           FÜL 5: ÉRDEKLŐDŐK (LEADEK CRM)
       ════════════════════════════════════════════════════════════════════════ */}
+      {/* ════════════════════════════════════════════════════════════════════════
+          FÜL 5: FÉLBEHAGYOTT ADATLAPOK
+      ════════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "drafts" && (
+        <div className="admin-tab-pane">
+          <div className="admin-card-dark">
+            <div className="admin-card-dark-header">
+              <div>
+                <strong>Félbehagyott projektindító adatlapok</strong>
+                <span style={{ display: "block", color: "rgba(255,255,255,0.5)", fontSize: "12.5px", marginTop: "2px" }}>
+                  {briefDrafts.length} megkezdett, de be nem küldött adatlap. A beküldés után a sor eltűnik innen, és
+                  projektként jelenik meg. 24 óra tétlenség után automatikusan megy egy — és csak egy — emlékeztető levél.
+                </span>
+              </div>
+            </div>
+
+            {loading ? (
+              <div style={{ padding: "30px", textAlign: "center" }}><strong>Betöltés...</strong></div>
+            ) : briefDrafts.length === 0 ? (
+              <div style={{ padding: "30px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+                Jelenleg nincs félbehagyott adatlap. (Ha a lista mindig üres, ellenőrizd, hogy lefutott-e a
+                035_brief_drafts.sql migráció.)
+              </div>
+            ) : (
+              <div className="lead-table">
+                <div className="lead-row header">
+                  <span>Ki</span>
+                  <span>Hol állt meg</span>
+                  <span>Amit eddig kitöltött</span>
+                  <span>Utolsó mentés</span>
+                  <span>Emlékeztető</span>
+                </div>
+                {briefDrafts.map((draft) => {
+                  const stepCount = draft.step_count || briefSteps.length;
+                  const percent = briefDraftProgress(draft.step, stepCount);
+                  const stepLabel = briefSteps[Math.min(Math.max(draft.step, 0), briefSteps.length - 1)] ?? "Alapok";
+                  const answers = draft.data ?? {};
+                  const filled: Array<[string, string]> = [
+                    ["Cél", answers.goals ?? ""],
+                    ["Célközönség", answers.audience ?? ""],
+                    ["Oldalak", answers.pages ?? ""],
+                    ["Funkciók", answers.features ?? ""],
+                    ["Bemutatkozás", answers.contentBrief ?? ""]
+                  ].filter((pair): pair is [string, string] => Boolean(pair[1]?.trim()));
+
+                  return (
+                    <article className="lead-row" key={draft.user_id}>
+                      <div>
+                        <strong style={{ fontSize: "14px", color: "#fff" }}>{draft.full_name || "Névtelen"}</strong>
+                        <p style={{ margin: "2px 0 0", fontSize: "12.5px" }}>
+                          <a href={`mailto:${draft.email}`} style={{ color: "#76ABAE" }}>{draft.email}</a>
+                        </p>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                          {draft.company || "Nincs megadva márkanév"}
+                        </p>
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: "13.5px", color: "#fff" }}>{stepLabel}</strong>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+                          {draft.step + 1}. lépés a(z) {stepCount}-ből · {percent}%
+                        </p>
+                        <p style={{ margin: "2px 0 0", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                          {draft.commercial_model === "subscription"
+                            ? `Bérlés · ${subscriptionPlan(draft.subscription_plan).name}`
+                            : "Egyedi projekt"}
+                        </p>
+                      </div>
+                      <div>
+                        {filled.length === 0 ? (
+                          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                            Még csak az alapoknál járt.
+                          </span>
+                        ) : (
+                          filled.map(([label, value]) => (
+                            <p key={label} style={{ margin: "0 0 4px", fontSize: "12px", lineHeight: 1.4, color: "rgba(255,255,255,0.7)" }}>
+                              <b style={{ color: "rgba(255,255,255,0.45)" }}>{label}:</b> {value.length > 120 ? `${value.slice(0, 120)}…` : value}
+                            </p>
+                          ))
+                        )}
+                      </div>
+                      <div>
+                        <span className="status-pill">{formatDate(draft.updated_at)}</span>
+                      </div>
+                      <div>
+                        {draft.reminder_sent_at ? (
+                          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
+                            Kiment: {formatDate(draft.reminder_sent_at)}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+                            Még nem ment ki
+                          </span>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {activeTab === "leads" && (
         <div className="admin-tab-pane">
           <div className="admin-card-dark">

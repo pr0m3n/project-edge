@@ -98,6 +98,14 @@ in each serverless instance, so "5 tickets / 10 minutes" was really 5 × instanc
 — it loosened exactly when load made it matter. If the database is unreachable the
 code falls back to the in-memory limiter rather than blocking the support form.
 
+`035_brief_drafts.sql` adds `public.brief_drafts`: one un-submitted project brief per
+user. Until this migration the half-filled brief only ever lived in the visitor's
+`localStorage`, so an abandoned brief left no trace — nobody could be reminded about it
+and the admin could not see where people stopped. The client portal autosaves into this
+table (debounced, RLS-scoped to the owner), the submit marks `submitted_at`, and the
+admin dashboard reads it in its own **Félbehagyott adatlapok** tab. Until the migration
+is applied that tab simply stays empty; nothing else breaks.
+
 To verify the 023–025 database changes without modifying anything, run the read-only
 checks in `supabase/verify_023_025.sql` from the Supabase SQL Editor.
 
@@ -131,6 +139,25 @@ through a direct table write:
 - `POST /api/billingo/retry` re-issues a failed AAM invoice. The admin dashboard shows
   a "Számlázási teendő" card listing paid subscription payments with no Billingo
   document, each with a retry button.
+
+### Abandoned brief reminders
+
+`GET /api/briefs/reminder` runs daily via `vercel.json` cron (09:00 UTC) and needs the
+same `CRON_SECRET`. It sends **one** reminder per abandoned `brief_drafts` row — never
+more — to people who started the project brief, went idle for 24 hours and never
+submitted it. Drafts older than 30 days are left alone, and a draft is skipped (and
+closed) if the user meanwhile started a project. Admins can trigger a run manually with
+a session token.
+
+### Registration notifications
+
+`POST /api/auth/register-notify` requires the caller's own bearer token and only accepts
+their own `userId`. The client portal calls it from exactly one place —
+`ensureClientProfile`, and only when the `client_profiles` upsert actually inserted a row
+— so a plain login never produces a "new registration" email. Before that, the endpoint
+was open, fired from two call sites on every session load, and its dedup query used
+`maybeSingle()`, which errors once two matching rows exist: the result was 4–5 duplicate
+admin emails per account plus one on every sign-in.
 
 Example:
 

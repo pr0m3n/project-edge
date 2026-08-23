@@ -8,6 +8,10 @@
     {
       "path": "/api/reports/monthly",
       "schedule": "0 8 1 * *"
+    },
+    {
+      "path": "/api/briefs/reminder",
+      "schedule": "0 9 * * *"
     }
   ]
 }
