@@ -93,6 +93,12 @@ export type PublicBriefWizardProps = {
   initialStep?: number;
   /** Előre kiválasztott csomag (árkártyáról érkezve). */
   initialPlan?: string;
+  /**
+   * Kész adatlap, emailben kapott folytatás-linkről. Ha meg van adva, a
+   * „Folytatod a korábbi projektbriefet?" kérdés ELMARAD: a link megnyitása
+   * maga a válasz rá, felesleges még egyszer megkérdezni.
+   */
+  initialForm?: Partial<BriefFormValues>;
   /** A folyadék-színpadon belül a saját bevezető fejléc elmarad. */
   bare?: boolean;
 };
@@ -101,18 +107,23 @@ export function PublicBriefWizard({
   initialWebsiteStatus,
   initialStep = 0,
   initialPlan,
+  initialForm,
   bare = false
 }: PublicBriefWizardProps = {}) {
   const router = useRouter();
-  const [form, setForm] = useState<BriefFormValues>(() => ({
-    ...initialBriefForm,
-    ...(initialWebsiteStatus === "yes"
-      ? { websiteStatus: "yes", domainStatus: "keep" }
-      : initialWebsiteStatus === "no"
-        ? { websiteStatus: "no", domainStatus: "new" }
-        : {}),
-    ...(initialPlan ? { subscriptionPlan: initialPlan as BriefFormValues["subscriptionPlan"] } : {})
-  }));
+  const [form, setForm] = useState<BriefFormValues>(() => {
+    // Emailből érkező kész adatlap mindent felülír — a kapu válasza is benne van.
+    if (initialForm) return { ...initialBriefForm, ...initialForm };
+    return {
+      ...initialBriefForm,
+      ...(initialWebsiteStatus === "yes"
+        ? { websiteStatus: "yes", domainStatus: "keep" }
+        : initialWebsiteStatus === "no"
+          ? { websiteStatus: "no", domainStatus: "new" }
+          : {}),
+      ...(initialPlan ? { subscriptionPlan: initialPlan as BriefFormValues["subscriptionPlan"] } : {})
+    };
+  });
   const [step, setStep] = useState(initialStep);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
@@ -142,10 +153,14 @@ export function PublicBriefWizard({
 
   useEffect(() => {
     openedAt.current = Date.now();
-    const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
-    if (saved && (saved.data.company || saved.step > 0)) setResumeDraft(saved);
+    // Emailből érkezve NE kérdezzük meg, hogy folytatja-e: a link megnyitása
+    // maga a válasz. Az adatlap már be van töltve, egyből ott folytatja.
+    if (!initialForm) {
+      const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
+      if (saved && (saved.data.company || saved.step > 0)) setResumeDraft(saved);
+    }
     setReady(true);
-  }, []);
+  }, [initialForm]);
 
   useEffect(() => {
     if (!ready || resumeDraft) return;

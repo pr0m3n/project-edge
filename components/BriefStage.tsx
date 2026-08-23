@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
-import { PUBLIC_BRIEF_DRAFT_KEY } from "@/lib/brief-draft";
+import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft";
 import { trackEvent } from "@/lib/analytics";
 
 /**
@@ -24,7 +24,8 @@ export function BriefStage() {
   const [choice, setChoice] = useState<GateChoice | null>(null);
   const [textIndex, setTextIndex] = useState(0);
   const [glitching, setGlitching] = useState(false);
-  const [resumed, setResumed] = useState(false);
+  const [resumeForm, setResumeForm] = useState<Partial<BriefFormValues> | null>(null);
+  const [resumeStep, setResumeStep] = useState(0);
   const [preselectedPlan, setPreselectedPlan] = useState<string | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const flowRef = useRef<HTMLDivElement>(null);
@@ -93,11 +94,15 @@ export function BriefStage() {
         if (!response.ok) return;
         const payload = await response.json();
         if (cancelled || !payload?.form) return;
+        // A localStorage-ba is beírjuk, hogy a következő látogatáskor is
+        // meglegyen — de a wizardnak közvetlenül adjuk át, hogy ne kelljen
+        // még egyszer rákérdeznie, folytatja-e.
         window.localStorage.setItem(
           PUBLIC_BRIEF_DRAFT_KEY,
           JSON.stringify({ data: payload.form, savedAt: new Date().toISOString(), step: payload.step ?? 0, version: 1 })
         );
-        setResumed(true);
+        setResumeForm(payload.form);
+        setResumeStep(Math.max(0, Math.min(4, Number(payload.step) || 0)));
         setChoice(payload.form?.websiteStatus === "yes" ? "yes" : "no");
         trackEvent("brief_link_resumed", { step: (payload.step ?? 0) + 1 });
       } catch {
@@ -143,7 +148,7 @@ export function BriefStage() {
   /* ── A brief a megnyomott gombból nő ki: lemérjük a gomb helyét és méretét,
         és a doboz ONNAN tágul a végleges helyére. ── */
   useEffect(() => {
-    if (!choice || morphed.current || resumed) return;
+    if (!choice || morphed.current || resumeForm) return;
     const from = cardRect.current;
     const shell = stageRef.current?.querySelector<HTMLElement>(".public-brief-shell");
     if (!shell) return;
@@ -190,7 +195,7 @@ export function BriefStage() {
       });
     });
     shell.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [choice, resumed]);
+  }, [choice, resumeForm]);
 
   return (
     <section className={`brief-stage${glitching ? " glitching" : ""}`} id="projektbrief" ref={stageRef}>
@@ -247,8 +252,9 @@ export function BriefStage() {
         ) : (
           <PublicBriefWizard
             bare
+            initialForm={resumeForm ?? undefined}
             initialPlan={preselectedPlan ?? undefined}
-            initialStep={resumed ? 0 : preselectedPlan ? 2 : 1}
+            initialStep={resumeForm ? resumeStep : preselectedPlan ? 2 : 1}
             initialWebsiteStatus={choice}
           />
         )}
