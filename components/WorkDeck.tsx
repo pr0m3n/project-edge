@@ -41,12 +41,11 @@ export function WorkDeck() {
       <div className="work-deck-copy">
         <p className="micro-label dark">Munkák</p>
         <h2>
-          Valódi, kipróbálható <em>oldalak és funkciók.</em>
+          Nem képek. <em>Élő rendszerek.</em>
         </h2>
         <p>
-          Nem sablonképek vagy statikus látványtervek: mindegyik demó valós működéssel fut.
-          Kattints rájuk, és próbáld ki a webshopot kosárral, az időpontfoglalást vagy az ingatlankeresőt
-          közvetlenül a böngésződben.
+          Egy valódi, éles full-stack rendszer és öt mintaprojekt — webshop, foglalás, dashboard,
+          ingatlankereső, érdeklődőszerzés. Mindegyik végigkattintható, nem csak képernyőkép.
         </p>
         <TransitionLink className="button primary" href="/munkak">
           Az összes munka megnézése
@@ -54,7 +53,7 @@ export function WorkDeck() {
         <dl className="work-deck-stats">
           <div>
             <dt>6</dt>
-            <dd>kipróbálható projekt</dd>
+            <dd>végigkattintható projekt</dd>
           </div>
           <div>
             <dt>5</dt>
@@ -62,7 +61,7 @@ export function WorkDeck() {
           </div>
           <div>
             <dt>1</dt>
-            <dd>kézben az egész folyamat</dd>
+            <dd>ember, a tervtől a kódig</dd>
           </div>
         </dl>
       </div>

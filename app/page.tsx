@@ -140,6 +140,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* A brief közvetlenül a heró alatt: a látogatók 95%-a ide érkezik és
+          ~32 másodpercet tölt itt. Korábban a 13 szekcióból az 5. volt, és
+          tízből nyolcan el sem görgettek odáig. */}
+      <BriefStage />
+
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -150,90 +155,54 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Ezt kapod tőlem: konkrét, átlátható vállalások és funkciók */}
-      <section className="voices-section" id="szolgaltatasok-elonyok">
+      {/* Ezek szándékosan NEM idézetek: saját vállalások. A korábbi
+          blockquote + „szerző" felépítés ügyfélvéleménynek látszott, holott
+          nincs mögötte valós referencia — ezért lett belőle nyílt vállalás-kártya. */}
+      <section className="voices-section">
         <div className="section-head">
           <p className="micro-label dark">Mire számíthatsz</p>
           <h2>Ezt kapod tőlem.</h2>
-          <p>
-            Nem sablonokból építkezem, és nem bújok felesleges értekezletek mögé.
-            Egyetlen kézben tartom a designt, a fejlesztést és az üzemeltetést.
-          </p>
         </div>
         <div className="voices-grid">
-          <article className="voice-card">
-            <div className="voice-card-head">
-              <span className="voice-card-kicker">01 // INFRASTRUKTÚRA</span>
-              <span className="voice-card-chip">Minden egyben</span>
-            </div>
-            <h3>Minden egy kézben, nulla technikai macera</h3>
+          <article className="voice-card feature">
             <p className="voice-claim">
-              Domain regisztráció, gyors felhőtárhely, SSL-tanúsítvány és biztonsági mentések.
-              Nem kell külön szolgáltatókat összevadásznod, a fix havidíj mindent tartalmaz.
+              Nem sablonból dolgozom, és nem kell írogatnod, hogy hol tart. Belépsz, és látod, mi
+              készült el és mi jön ezután.
             </p>
-            <ul className="voice-points">
-              <li>.hu vagy .com domain & gyors felhőtárhely</li>
-              <li>Céges email továbbítás a postafiókodba</li>
-              <li>Folyamatos technikai felügyelet & frissítés</li>
-            </ul>
+            <div className="voice-author">
+              <div>
+                <strong>Átlátható munka</strong>
+                <span>tervezéstől az indításig</span>
+              </div>
+            </div>
           </article>
-
           <article className="voice-card">
-            <div className="voice-card-head">
-              <span className="voice-card-kicker">02 // ÜGYFÉLKAPU</span>
-              <span className="voice-card-chip">Átláthatóság</span>
-            </div>
-            <h3>Valós idejű követés, felesleges körök nélkül</h3>
             <p className="voice-claim">
-              Saját ügyfélkapun látod a fejlesztés fázisait 0-tól 100%-ig. Bármikor írhatsz, kérhetsz
-              módosítást és visszanézheted a verziókat, kötelező hívások nélkül.
+              Aki rákeres a szolgáltatásodra, megtalálja az oldalad, és két koppintással ír neked.
+              Telefonon is.
             </p>
-            <ul className="voice-points">
-              <li>Valós idejű státuszkövetés és ticketek</li>
-              <li>Közvetlen kapcsolat a fejlesztővel</li>
-              <li>1 munkanapon belüli visszaigazolás</li>
-            </ul>
+            <div className="voice-author">
+              <div>
+                <strong>Eredményre tervezve</strong>
+                <span>sebesség + ügyfélszerzés</span>
+              </div>
+            </div>
           </article>
-
           <article className="voice-card">
-            <div className="voice-card-head">
-              <span className="voice-card-kicker">03 // TELJESÍTMÉNY</span>
-              <span className="voice-card-chip">Konverzió</span>
-            </div>
-            <h3>Villámgyors betöltés és mobil fókusz</h3>
             <p className="voice-claim">
-              Egyedi, modern Next.js kód, ami telefonon is azonnal betölt és Google-barát. Átgondolt
-              ajánlatkérő folyamatok, hogy a látogatóból valódi ügyfél legyen.
+              Ha a bérlésből kivásárolod, a végén minden a tiéd: domain, forráskód, adatbázis. Az
+              átadás lépésenként megy, írásban — és a lezárásától még 30 napig díjmentesen javítom,
+              ami elromlik.
             </p>
-            <ul className="voice-points">
-              <li>95+ PageSpeed mutatók & tiszta kód</li>
-              <li>Két koppintásos mobil kapcsolatfelvétel</li>
-              <li>Keresőoptimalizált (SEO) felépítés</li>
-            </ul>
-          </article>
-
-          <article className="voice-card">
-            <div className="voice-card-head">
-              <span className="voice-card-kicker">04 // SZABADSÁG</span>
-              <span className="voice-card-chip">Garancia</span>
+            <div className="voice-author">
+              <div>
+                <strong>Nincs bezárás</strong>
+                <span>kivásárlás + 30 nap hibajavítás</span>
+              </div>
             </div>
-            <h3>100% függetlenség és vételi opció</h3>
-            <p className="voice-claim">
-              Nincs bezártság: ha úgy döntesz, rögzített áron bármikor megvásárolhatod az oldalt a
-              forráskóddal és domainnel együtt — az átadás után 30 napos garanciával.
-            </p>
-            <ul className="voice-points">
-              <li>Bármikor kivásárolható forráskód & adatok</li>
-              <li>Nincs hűségidő, nincs rejtett költség</li>
-              <li>30 nap díjmentes garanciális hibajavítás</li>
-            </ul>
           </article>
         </div>
       </section>
-
-      {/* A brief az Ezt kapod szekció után: a látogató már érti az értéket,
-          és innen zökkenőmentesen lép át a sötét, interaktív brief-szakaszba. */}
-      <BriefStage />
 
       <section className="price-teaser">
         <div className="section-head">
