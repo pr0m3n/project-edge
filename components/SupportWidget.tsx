@@ -51,6 +51,13 @@ export function SupportWidget() {
 
   const [open, setOpen] = useState(false);
   const [entryIntent, setEntryIntent] = useState<"contact" | "review">("contact");
+  /**
+   * Honnan indult a beszélgetés — a ticket `source` mezőjébe megy, és az
+   * adminban ez különbözteti meg a főoldali gyors sávból érkező érdeklődőt a
+   * lebegő chatből érkezőtől. A szerver úgyis szűri az értéket, ez itt csak
+   * annyit tud, amennyit a megnyitó esemény mondott.
+   */
+  const [source, setSource] = useState("projectedge.hu");
   const [form, setForm] = useState(initialForm);
   const [reply, setReply] = useState("");
   const [rating, setRating] = useState(0);
@@ -259,22 +266,29 @@ export function SupportWidget() {
   // Open from custom CTA buttons on landing
   useEffect(() => {
     function openFromCallToAction(event: Event) {
-      const detail = (event as CustomEvent<{ intent?: "contact" | "review" }>).detail;
+      const detail = (event as CustomEvent<{ intent?: "contact" | "review"; message?: string; source?: string }>).detail;
       const nextIntent = detail?.intent === "review" ? "review" : "contact";
+      /* A gyors sávból KÉSZ üzenettel érkezünk: a látogató már leírta, mit
+         akar, ezért az írómezőt átugorjuk, és rögtön a „hogy szólíthatlak"
+         képernyő jön. Enélkül újra kellene gépelnie ugyanazt. */
+      const handedMessage = typeof detail?.message === "string" ? detail.message.trim().slice(0, 5000) : "";
       setEntryIntent(nextIntent);
+      setSource(detail?.source === "gyorssav" ? "gyorssav" : "projectedge.hu");
       setOpen(true);
       formStartedAt.current = Date.now();
-      trackEvent("support_opened", { intent: nextIntent, source: "cta" });
+      trackEvent("support_opened", { intent: nextIntent, source: detail?.source === "gyorssav" ? "quick_lane" : "cta" });
       if (!ticket) {
         setForm((current) => ({
           ...current,
           message:
-            nextIntent === "review"
+            handedMessage ||
+            (nextIntent === "review"
               ? current.message || reviewMessage
               : current.message === reviewMessage
                 ? ""
-                : current.message
+                : current.message)
         }));
+        setDraftStage(handedMessage ? "identify" : "compose");
       }
     }
 
@@ -399,7 +413,7 @@ export function SupportWidget() {
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, website, startedAt: formStartedAt.current })
+        body: JSON.stringify({ ...form, source, website, startedAt: formStartedAt.current })
       });
 
       if (!response.ok) {
@@ -423,6 +437,7 @@ export function SupportWidget() {
       setHasRated(false);
       setForm(initialForm);
       setDraftStage("compose");
+      setSource("projectedge.hu");
       setWebsite("");
       formStartedAt.current = Date.now();
       setStatus("idle");

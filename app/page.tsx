@@ -8,6 +8,7 @@ import { BriefStage } from "@/components/BriefStage";
 import { DeliverStack } from "@/components/DeliverStack";
 import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
+import { STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
@@ -118,20 +119,37 @@ export default function Home() {
         <div className="hero-noise" aria-hidden="true" />
         <div className="home-hero-grid">
           <div className="hero-editorial">
-            <p className="micro-label">ProjectEdge / Digital Build Studio</p>
+            {/* Ez a sor korábban a stúdió önmeghatározása volt („Digital Build
+                Studio") — a látogatónak semmit nem mondott. A fizetett forgalom
+                viszont a `bemutatkozó weboldal`, `egyedi weboldal`,
+                `weboldal tervezés` kifejezésekre érkezik, ezért innentől ez
+                visszaigazolja neki, hogy jó helyen jár. A H1 maradhat
+                eredmény-központú, nem kell kulcsszót beletuszkolni. */}
+            <p className="micro-label">Bemutatkozó és céges weboldal készítés</p>
             {/* A sorok külön <span>-ek, de a szöveges tartalmuk összeragadna
                 („Weboldal, amitbérelsz.Én építem…") — pont ezt olvassa ki a
                 Google és a képernyőolvasó. A sorvégi szóköz állítja helyre a
                 mondatot anélkül, hogy a tördelés változna. */}
             <h1 className="hero-statement">
-              <span>Weboldal, amit </span>
-              <span className="hero-accent">bérelsz. </span>
-              <span>Én építem, én üzemeltetem.</span>
+              <span>Weboldal, ami után </span>
+              <span className="hero-accent">megkeresnek. </span>
+              <span>Bérelhető — én építem, én üzemeltetem.</span>
             </h1>
+            {/* Az ár a heróban: a hirdetésekből érkezők harmada árat keres
+                (`weblap árak`, `weboldal árak`, `landing oldal készítés ár`),
+                és eddig a csomagokig kellett görgetnie érte. Külön sávban áll,
+                nem a bekezdésben, hogy olvasás nélkül is beugorjon. */}
+            <p className="hero-price">
+              <strong>14 900 Ft</strong>
+              <span>/hó-tól</span>
+              <em>nincs belépési díj</em>
+            </p>
+            {/* A bekezdés rövidebb lett: a belépési díjat már a fenti sáv
+                mondja ki, kétszer nem kell. Telefonon így öt sor helyett
+                kettő. */}
             <p className="hero-lead">
-              Nincs külön belépési díj: az első havidíj indítja a munkát. A domaint, a tárhelyet és
-              a karbantartást is én intézem — ugyanabból az összegből. Ha inkább a sajátod lenne,
-              meg is veheted.
+              A domain, a tárhely és a karbantartás is benne van a havidíjban. Ha később inkább a
+              sajátod lenne, meg is veheted.
             </p>
             <div className="hero-command">
               <a className="button primary" href="#arak">Csomagok és árak</a>
@@ -326,6 +344,11 @@ export default function Home() {
           <TransitionLink className="button primary" href="/ugyfelkapu">
             Indítás az ügyfélkapun
           </TransitionLink>
+          {/* A szakasz eddig azzal zárult, hogy „ha telefonon egyeztetnél,
+              állok rendelkezésedre" — csak épp nem volt mit hívni. */}
+          <p className="nc-phone">
+            Ha mégis inkább telefonálnál: <a href={`tel:${STUDIO_PHONE_TEL}`}>{STUDIO_PHONE_LABEL}</a>
+          </p>
         </div>
         <ul className="nc-list">
           <li>Teljes folyamat írásban — vagy igény szerint gyors hívással</li>

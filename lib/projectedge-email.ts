@@ -16,6 +16,13 @@ export type ProjectEdgeEmailInput = {
   details?: EmailDetail[];
   terminalLabel?: string;
   tags?: string[];
+  /**
+   * Felülírja a `Reply-To` fejlécet. Az ÉRTESÍTŐ leveleknél (amiket a stúdió
+   * kap) ide az érdeklődő címe kerül, hogy a levelezőben a „Válasz" gomb neki
+   * menjen, ne magunknak. A látogatónak küldött levelekben nem használjuk:
+   * ott a stúdió címe a helyes válaszcím.
+   */
+  replyTo?: string;
 };
 
 export type ProjectEdgeEmailResult =
@@ -101,7 +108,11 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.projectedge.hu";
   const from = process.env.RESEND_FROM_EMAIL || "ProjectEdge Studio <info@projectedge.hu>";
-  const replyTo = process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+  const defaultReplyTo = process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+  /* Csak érvényes címet engedünk a fejlécbe: a hívó által adott érték
+     végső soron látogatói adat, egy törött cím pedig a Resend hívást bukná. */
+  const overrideReplyTo = input.replyTo?.trim().toLowerCase();
+  const replyTo = overrideReplyTo && isValidEmail(overrideReplyTo) ? overrideReplyTo : defaultReplyTo;
   const safeLink = input.link && input.link.startsWith("/") && !input.link.startsWith("//")
     ? `${siteUrl}${input.link}`
     : null;
@@ -153,7 +164,7 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
           ${tagsHtml(tags)}
           ${safeLink ? `<tr><td style="padding:0 32px 28px 32px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ff5a1f" style="border-radius:30px;"><a href="${escapeHtml(safeLink)}" style="display:block;padding:15px 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#fff4ee;text-decoration:none;border-radius:30px;">${escapeHtml(input.linkLabel || "Megnyitás az ügyfélkapun")} →</a></td></tr></table></td></tr>` : ""}
           <tr><td style="padding:0 32px 36px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#3a3b3f;">Üdvözlettel,<br><strong style="color:#1c1d20;">Patrik</strong><br><span style="color:#7a7b76;">alapító · fejlesztő · ProjectEdge</span></td></tr>
-          <tr><td style="padding:20px 32px 32px 32px;border-top:1px solid #dedcd4;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#8f8f88;">ProjectEdge — egyedi weboldalak, ügyfélkapuk és üzleti rendszerek.<br><a href="${siteUrl}" style="color:#24262b;text-decoration:underline;">projectedge.hu</a> · <a href="mailto:${replyTo}" style="color:#24262b;text-decoration:underline;">${escapeHtml(replyTo)}</a><br><br>Ez egy automatikus értesítés a ProjectEdge ügyfélkapujából.</td></tr>
+          <tr><td style="padding:20px 32px 32px 32px;border-top:1px solid #dedcd4;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#8f8f88;">ProjectEdge — egyedi weboldalak, ügyfélkapuk és üzleti rendszerek.<br><a href="${siteUrl}" style="color:#24262b;text-decoration:underline;">projectedge.hu</a> · <a href="mailto:${defaultReplyTo}" style="color:#24262b;text-decoration:underline;">${escapeHtml(defaultReplyTo)}</a><br><br>Ez egy automatikus értesítés a ProjectEdge ügyfélkapujából.</td></tr>
         </table>
       </td></tr>
     </table>

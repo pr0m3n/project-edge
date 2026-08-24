@@ -35,6 +35,11 @@ export type Ticket = {
   rating_comment: string | null;
   status: string;
   admin_reply: string | null;
+  /** Honnan indult a beszélgetés: `projectedge.hu` (lebegő chat) vagy
+      `gyorssav` (a főoldali brief melletti beíró sáv). A listában címkeként
+      látszik, hogy a fizetett forgalomból érkező érdeklődő azonnal
+      megkülönböztethető legyen. */
+  source: string | null;
 };
 
 export type TicketMessage = {

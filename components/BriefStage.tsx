@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { BriefQuickLane } from "@/components/BriefQuickLane";
 import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft";
 import { trackEvent } from "@/lib/analytics";
 
@@ -281,6 +282,9 @@ export function BriefStage() {
                 </span>
               </button>
             </div>
+            {/* A gyors sáv csak a kapu mellett él: ha a látogató már elindította
+                a briefet, ott a befejezés a dolga, nem egy második kijárat. */}
+            <BriefQuickLane />
           </div>
         ) : (
           <PublicBriefWizard

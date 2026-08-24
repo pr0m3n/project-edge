@@ -510,6 +510,7 @@ export function AdminDashboard() {
     ratingComment?: string | null;
     lastActivity: string;
     snippet: string;
+    source?: string | null;
     user_id?: string | null;
   };
 
@@ -528,6 +529,7 @@ export function AdminDashboard() {
         ratingComment: t.rating_comment,
         lastActivity: t.created_at || t.id,
         snippet: lastMsg,
+        source: t.source,
         user_id: null
       };
     });
@@ -2998,7 +3000,12 @@ export function AdminDashboard() {
                             {isOpen && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#FF5722" }} />}
                             {t.title}
                           </strong>
-                          <span>{t.type === "public" ? "Widget" : "Kapu"}</span>
+                          {/* A gyors sávból érkező érdeklődő fizetett forgalom:
+                              külön címkét kap, hogy a listában ne mosódjon
+                              össze a lebegő chatből jövő kérdésekkel. */}
+                          <span style={t.source === "gyorssav" ? { color: "#FF8A65", fontWeight: 800 } : undefined}>
+                            {t.type === "public" ? (t.source === "gyorssav" ? "Gyors sáv" : "Widget") : "Kapu"}
+                          </span>
                         </div>
                         <p className="admin-ticket-item-snippet">{t.snippet || t.subtitle}</p>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>

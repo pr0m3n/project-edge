@@ -8,12 +8,27 @@ type TicketPayload = {
   email?: string;
   message?: string;
   name?: string;
+  source?: string;
   startedAt?: number;
   website?: string;
 };
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * Honnan indult a beszélgetés. A `source` az adminban listaszűrő és címke,
+ * ezért NEM vesszük át nyersen a klienstől: egy szabadszöveges érték oda
+ * bármit be tudna írni a listába. Csak az itt felsorolt értékek élnek, minden
+ * más az alapértelmezettre esik vissza.
+ */
+const TICKET_SOURCES = ["projectedge.hu", "gyorssav"] as const;
+const DEFAULT_TICKET_SOURCE = TICKET_SOURCES[0];
+
+function ticketSource(value: unknown) {
+  const candidate = clean(value);
+  return (TICKET_SOURCES as readonly string[]).includes(candidate) ? candidate : DEFAULT_TICKET_SOURCE;
 }
 
 export async function POST(request: Request) {
@@ -32,6 +47,7 @@ export async function POST(request: Request) {
   const email = clean(payload.email).toLowerCase();
   const message = clean(payload.message);
   const honeypot = clean(payload.website);
+  const source = ticketSource(payload.source);
   const startedAt = Number(payload.startedAt);
 
   if (
@@ -65,7 +81,7 @@ export async function POST(request: Request) {
       email,
       message,
       status: "open",
-      source: "projectedge.hu",
+      source,
       visitor_token: visitorToken
     })
     .select("id, name, email, status, visitor_token")
@@ -92,17 +108,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save message." }, { status: 500 });
   }
 
+  const fromQuickLane = source === "gyorssav";
   const emailResult = await sendProjectEdgeEmail({
     to: process.env.RESEND_NOTIFICATION_EMAIL || process.env.RESEND_REPLY_TO || "info@projectedge.hu",
-    subject: `Új üzenet a weboldalról: ${name}`,
-    eyebrow: "PROJECTEDGE · ÚJ ÜZENET",
+    subject: fromQuickLane ? `Gyors sáv — új érdeklődő: ${name}` : `Új üzenet a weboldalról: ${name}`,
+    eyebrow: fromQuickLane ? "PROJECTEDGE · GYORS SÁV" : "PROJECTEDGE · ÚJ ÜZENET",
     preheader: `${name} új support üzenetet küldött a projectedge.hu oldalon.`,
     message: `${name} új support beszélgetést indított.\n\n${message}`,
+    // Erre a levélre a stúdió VÁLASZOLNI akar. A levelezőben a „Válasz" gomb
+    // eddig a saját címünkre mutatott, tehát magunknak írtunk volna — így
+    // viszont egyből az érdeklődőnek megy, adminba lépés nélkül.
+    replyTo: email,
     link: "/admin/dashboard",
     linkLabel: "Megnyitás az adminban",
     details: [
       { label: "Név", value: name },
       { label: "Email", value: email },
+      { label: "Forrás", value: fromQuickLane ? "Gyors sáv (főoldal)" : "Weboldali chat" },
       { label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }
     ]
   });

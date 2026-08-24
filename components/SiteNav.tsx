@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { TransitionLink } from "@/components/TransitionLink";
 import { ContactButton } from "@/components/ContactButton";
+import { STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
 
 const links = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -75,6 +76,17 @@ export function SiteNav() {
           ))}
         </div>
         <div className="nav-end">
+          {/* A hirdetésekből érkező forgalom többsége telefonos, és egy részük
+              egyszerűen hívni akar. Ez az egyetlen elem a fejlécben, ami
+              telefonon IS látszik a hamburger mellett — a `nav-cta` ott
+              rejtve van. Ikonra fogyva marad meg, a szám csak asztali
+              nézetben fér ki. */}
+          <a aria-label={`Telefon: ${STUDIO_PHONE_LABEL}`} className="nav-phone" href={`tel:${STUDIO_PHONE_TEL}`}>
+            <svg aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" viewBox="0 0 24 24">
+              <path d="M6.6 3.5h3l1.5 3.7-1.9 1.4a12.5 12.5 0 0 0 5.2 5.2l1.4-1.9 3.7 1.5v3a1.8 1.8 0 0 1-2 1.8A15.7 15.7 0 0 1 4.8 5.5a1.8 1.8 0 0 1 1.8-2Z" />
+            </svg>
+            <span>{STUDIO_PHONE_LABEL}</span>
+          </a>
           <ContactButton className="nav-cta">Kapcsolat</ContactButton>
           <button
             aria-controls="mobile-navigation"
@@ -119,6 +131,9 @@ export function SiteNav() {
           <ContactButton className="button primary" onClick={closeMenu}>
             Kapcsolatfelvétel
           </ContactButton>
+          <a className="mobile-nav-phone" href={`tel:${STUDIO_PHONE_TEL}`} onClick={closeMenu}>
+            {STUDIO_PHONE_LABEL}
+          </a>
         </div>
       </nav>
     </>
