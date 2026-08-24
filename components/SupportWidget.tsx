@@ -65,6 +65,17 @@ export function SupportWidget() {
 
   /** A köszöntő buborék: munkamenetenként egyszer, késleltetve. */
   const [greeting, setGreeting] = useState(false);
+  /**
+   * Az első üzenet két lépésben megy el.
+   *
+   * Korábban a chat megnyitásakor egy háromsoros űrlap fogadta a látogatót
+   * (Neved / Email címed / üzenet), és ez KAPCSOLATI ŰRLAPNAK látszott — mintha
+   * ide beírna valamit, aztán majd valaki emailben keresi. Pedig ez egy
+   * beszélgetés. Innentől a chat felülete fogad: egy üzenet a stúdiótól és egy
+   * beíró mező. A nevet és az emailt csak akkor kérjük, amikor a látogató már
+   * megírta, amit akart — ott már van miért megadnia.
+   */
+  const [draftStage, setDraftStage] = useState<"compose" | "identify">("compose");
 
   // Draggable Chat Head State
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -212,7 +223,9 @@ export function SupportWidget() {
       top: el.scrollHeight,
       behavior: "smooth"
     });
-  }, [messages, open]);
+    // A `draftStage` is szerepel: az első üzenet elküldésekor két új buborék
+    // kerül a falra, és azoknak látszaniuk kell görgetés nélkül.
+  }, [messages, open, draftStage]);
 
   // Auto-resize reply textarea
   const handleReplyInput = (value: string) => {
@@ -409,6 +422,7 @@ export function SupportWidget() {
       setTicketStatus(data.ticket.status ?? "open");
       setHasRated(false);
       setForm(initialForm);
+      setDraftStage("compose");
       setWebsite("");
       formStartedAt.current = Date.now();
       setStatus("idle");
@@ -475,6 +489,21 @@ export function SupportWidget() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void sendReply();
+    }
+  }
+
+  /** Az első üzenet megírva — jöhet a név és az email. */
+  function goToIdentify(event?: FormEvent<HTMLFormElement>) {
+    if (event) event.preventDefault();
+    if (!form.message.trim()) return;
+    setNotice("");
+    setDraftStage("identify");
+  }
+
+  function handleDraftKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      goToIdentify();
     }
   }
 
@@ -660,7 +689,9 @@ export function SupportWidget() {
                 </strong>
                 <span>
                   <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#00E676" }} />
-                  {ticketStatus === "closed" ? "Beszélgetés lezárva" : "Elérhető • Gyors válasz"}
+                  {/* Az érkező üzenetről azonnal megy értesítés, ezért a valóság
+                      jellemzően percekben mérhető — nem munkanapokban. */}
+                  {ticketStatus === "closed" ? "Beszélgetés lezárva" : "Általában pár percen belül válaszolok"}
                 </span>
               </div>
             </div>
@@ -767,48 +798,105 @@ export function SupportWidget() {
               )}
             </>
           ) : (
-            <form className="initial-form" onSubmit={startConversation}>
-              <input
-                aria-hidden="true"
-                autoComplete="off"
-                className="honeypot"
-                name="website"
-                onChange={(e) => setWebsite(e.target.value)}
-                tabIndex={-1}
-                type="text"
-                value={website}
-              />
-              <input
-                maxLength={120}
-                onChange={(e) => updateField("name", e.target.value)}
-                placeholder="Neved"
-                required
-                value={form.name}
-              />
-              <input
-                maxLength={160}
-                onChange={(e) => updateField("email", e.target.value)}
-                placeholder="Email címed"
-                required
-                type="email"
-                value={form.email}
-              />
-              <textarea
-                maxLength={5000}
-                onChange={(e) => updateField("message", e.target.value)}
-                placeholder={
-                  entryIntent === "review"
-                    ? "Írd be a weboldalad címét és röviden, miben kérsz véleményt."
-                    : "Miben segíthetünk? Írd meg bátran!"
-                }
-                required
-                rows={3}
-                value={form.message}
-              />
-              <button className="button primary" disabled={status === "loading"} type="submit">
-                {status === "loading" ? "Beszélgetés indítása…" : "Üzenet küldése"}
-              </button>
-            </form>
+            /* Nem űrlap, hanem CHAT. Ugyanaz az üzenetfal és beíró mező, mint
+               futó beszélgetésnél — csak a stúdió üzenete van benne előre.
+               A háromsoros „Neved / Email címed / üzenet" űrlap kapcsolati
+               űrlapnak látszott, és a látogatók emailes megkeresésre
+               számítottak tőle, nem beszélgetésre. */
+            <>
+              <div className="chat-messages" ref={messagesRef}>
+                <div className="chat-bubble admin">
+                  <p>
+                    {entryIntent === "review"
+                      ? "Szia! Küldd el a weboldalad címét, és leírom, min változtatnék rajta."
+                      : "Szia, Patrik vagyok. Írd meg, miben segíthetek — nem kell telefonálnod."}
+                  </p>
+                </div>
+
+                {draftStage === "identify" ? (
+                  <>
+                    <div className="chat-bubble customer">
+                      <p>{form.message}</p>
+                      <div className="chat-bubble-time">
+                        <button className="chat-draft-edit" onClick={() => setDraftStage("compose")} type="button">
+                          módosítom
+                        </button>
+                      </div>
+                    </div>
+                    <div className="chat-bubble admin">
+                      <p>Megvan. Már csak azt áruld el, hogy szólíthatlak, és hova írjak, ha épp nem vagy az oldalon.</p>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+
+              {draftStage === "compose" ? (
+                <form className="chat-composer" onSubmit={goToIdentify}>
+                  <textarea
+                    autoFocus
+                    maxLength={5000}
+                    onChange={(e) => updateField("message", e.target.value)}
+                    onKeyDown={handleDraftKeyDown}
+                    placeholder={
+                      entryIntent === "review"
+                        ? "A weboldalad címe, és miben kérsz véleményt…"
+                        : "Írj üzenetet… (Enter a küldéshez)"
+                    }
+                    rows={1}
+                    value={form.message}
+                  />
+                  <button
+                    aria-label="Tovább"
+                    className="chat-send-button"
+                    disabled={!form.message.trim()}
+                    type="submit"
+                  >
+                    <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" viewBox="0 0 24 24">
+                      <path d="M22 2L11 13" />
+                      <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+                    </svg>
+                  </button>
+                </form>
+              ) : (
+                <form className="chat-identify" onSubmit={startConversation}>
+                  <input
+                    aria-hidden="true"
+                    autoComplete="off"
+                    className="honeypot"
+                    name="website"
+                    onChange={(e) => setWebsite(e.target.value)}
+                    tabIndex={-1}
+                    type="text"
+                    value={website}
+                  />
+                  <div className="chat-identify-fields">
+                    <input
+                      autoComplete="name"
+                      autoFocus
+                      maxLength={120}
+                      onChange={(e) => updateField("name", e.target.value)}
+                      placeholder="Neved"
+                      required
+                      value={form.name}
+                    />
+                    <input
+                      autoComplete="email"
+                      inputMode="email"
+                      maxLength={160}
+                      onChange={(e) => updateField("email", e.target.value)}
+                      placeholder="Email címed"
+                      required
+                      type="email"
+                      value={form.email}
+                    />
+                  </div>
+                  <button className="button primary" disabled={status === "loading"} type="submit">
+                    {status === "loading" ? "Küldés…" : "Üzenet küldése"}
+                  </button>
+                  <small>Az emailre csak azért van szükség, hogy a válaszom elérjen, ha közben becsuktad az oldalt.</small>
+                </form>
+              )}
+            </>
           )}
 
           {notice && <p className={`support-notice ${status}`}>{notice}</p>}

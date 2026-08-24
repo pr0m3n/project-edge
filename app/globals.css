@@ -6822,10 +6822,54 @@ details.admin-collapse summary:hover {
   transform: scale(0.95);
 }
 
-.support-panel form.initial-form {
+/* A név+email lépés a beszélgetés-indítás MÁSODIK fele: a látogató ekkorra
+   már megírta az üzenetét, tehát van miért megadnia az elérhetőségét.
+   Vizuálisan a beíró mező helyére ül, ugyanabba a sávba. */
+.support-panel form.chat-identify {
+  border-top: 1px solid rgba(48, 56, 65, 0.1);
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+
+.chat-identify-fields {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.support-panel form.chat-identify .button {
+  justify-content: center;
+  width: 100%;
+}
+
+.support-panel form.chat-identify small {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* A beküldött, de még el nem küldött üzenet alatti apró „módosítom". */
+.chat-draft-edit {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  opacity: 0.85;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-draft-edit:hover {
+  opacity: 1;
+}
+
+@media (max-width: 420px) {
+  .chat-identify-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .support-panel input,
@@ -13635,8 +13679,7 @@ details.admin-collapse summary:hover {
   .audit-form textarea,
   .support-panel input,
   .support-panel textarea,
-  .initial-form input,
-  .initial-form textarea,
+  .chat-identify input,
   .chat-composer textarea {
     font-size: 16px;
   }

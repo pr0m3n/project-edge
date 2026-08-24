@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     subject: "Megkaptam az üzeneted — ProjectEdge",
     eyebrow: "PROJECTEDGE · ÜZENET RÖGZÍTVE",
     preheader: `Szia ${ticket.name}! Megkaptam az üzeneted, hamarosan válaszolok.`,
-    message: `Szia ${ticket.name}!\n\nMegkaptam az üzeneted, munkanapokon jellemzően 1 munkanapon belül válaszolok.\n\nAmit írtál:\n\n${message}\n\nA lenti gombbal bármelyik eszközön megnyithatod és folytathatod a beszélgetést — a válaszomról is emailt küldök.`,
+    message: `Szia ${ticket.name}!\n\nMegkaptam az üzeneted — általában pár percen belül válaszolok, legkésőbb a következő munkanapon.\n\nAmit írtál:\n\n${message}\n\nA lenti gombbal bármelyik eszközön megnyithatod és folytathatod a beszélgetést — a válaszomról is emailt küldök.`,
     link: supportResumePath(ticket.id, ticket.visitor_token),
     linkLabel: "Beszélgetés megnyitása",
     details: [{ label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }]
