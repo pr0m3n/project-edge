@@ -6,33 +6,27 @@ import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft"
 import { trackEvent } from "@/lib/analytics";
 
 /**
- * A heró alatti belépő: egyetlen kérdés, és onnan indul a brief.
+ * A főoldal egyetlen sötét szakasza: egy kérdés, és onnan indul a brief.
  *
  * Miért van erre szükség: a látogatók 95%-a a főoldalra érkezik, és átlagosan
  * 32 másodpercet tölt itt. A brief korábban a 13 szekcióból az 5. volt — tízből
- * nyolcan el sem görgettek odáig. Ez a szakasz közvetlenül a heró alatt ül,
+ * nyolcan el sem görgettek odáig. Ez a szakasz a „Ezt kapod" lista után ül,
  * egyetlen, tényszerű kérdéssel, amit bárki meg tud válaszolni gondolkodás
  * nélkül. A válasz után a brief a MEGNYOMOTT GOMBBÓL nő ki, és a válasz már
- * be van jelölve benne.
+ * be van jelölve benne. A heróból a `#projektbrief` link egy koppintással
+ * idehoz, tehát a gyors út nem veszett el a lejjebb kerüléssel.
  */
 
 const GATE_TEXTS = ["Új weboldalt indítasz, vagy a meglévőt újítanád fel?", "Kezdjük ott, ahol most tartasz."];
 
-/**
- * A derengés: négy HATALMAS, teljesen lágy fényfolt, ami alulról izzik fel és
- * lassan sodródik. Mindegyik `closest-side` gradiens, ami átlátszóba fut ki —
- * nincs éle, amit foltnak lehetne látni.
- *
- * A markupban vannak, NEM effektben létrehozva: korábban a hidratálás után
- * JavaScript szúrta be őket, ezért telefonon a szakasz először feketén jelent
- * meg, és a fény késve „ugrott be". Így az első festéskor már ott van.
- */
-const AURORA = [
-  { key: "blue", w: "92vmin", h: "70vmin", side: "left" as const, offset: "-12%", bottom: "-14%", rgb: "43,75,255", dur: 38, dx: "26vmin", dy: "-14vmin", s0: 1, s1: 1.16 },
-  { key: "magenta", w: "76vmin", h: "66vmin", side: "left" as const, offset: "22%", bottom: "-18%", rgb: "194,59,255", dur: 46, dx: "-20vmin", dy: "-22vmin", s0: 1.08, s1: 0.9 },
-  { key: "rose", w: "84vmin", h: "64vmin", side: "right" as const, offset: "-8%", bottom: "-12%", rgb: "255,79,149", dur: 42, dx: "-30vmin", dy: "-16vmin", s0: 1, s1: 1.2 },
-  { key: "ember", w: "62vmin", h: "52vmin", side: "left" as const, offset: "50%", bottom: "-6%", rgb: "255,122,61", dur: 55, dx: "16vmin", dy: "-26vmin", s0: 0.92, s1: 1.15 }
+/* A szakadás-sávok helye és vastagsága. Dekoráció, `aria-hidden`. */
+const TEARS = [
+  { t: "20%", h: "13px" },
+  { t: "47%", h: "6px" },
+  { t: "72%", h: "16px" }
 ];
+
+const GLITCH_MS = 420;
 
 type GateChoice = "no" | "yes";
 
@@ -40,29 +34,66 @@ export function BriefStage() {
   const [choice, setChoice] = useState<GateChoice | null>(null);
   const [textIndex, setTextIndex] = useState(0);
   const [glitching, setGlitching] = useState(false);
+  const [live, setLive] = useState(false);
   const [resumeForm, setResumeForm] = useState<Partial<BriefFormValues> | null>(null);
   const [resumeStep, setResumeStep] = useState(0);
   const [preselectedPlan, setPreselectedPlan] = useState<string | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const cardRect = useRef<DOMRect | null>(null);
   const morphed = useRef(false);
+  const greeted = useRef(false);
+
+  /* ── Csak akkor él a szakasz, amikor tényleg látszik ──────────────
+        A derengés és a pásztázó csík animációja korábban akkor is futott, ha a
+        látogató a lap legalján járt. Az `is-live` osztály állítja meg őket
+        (CSS: `animation-play-state`), és ez kapcsolja ki a glitch-időzítőt is,
+        hogy képernyőn kívül fölösleges újrarajzolás se legyen. ── */
+  useEffect(() => {
+    const node = stageRef.current;
+    if (!node) return;
+    const timers: number[] = [];
+    if (typeof IntersectionObserver === "undefined") {
+      timers.push(window.setTimeout(() => setLive(true), 0));
+      return () => timers.forEach((timer) => window.clearTimeout(timer));
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setLive(entry.isIntersecting);
+        /* Egy glitch rögtön akkor is elsül, amikor a szakasz ELŐSZÖR
+           képernyőre görög. Enélkül az 5,2 másodperces körre kellett várni —
+           telefonon, ahol a látogató gyorsan görget, jó eséllyel sosem látta. */
+        if (!entry.isIntersecting || greeted.current) return;
+        greeted.current = true;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        setGlitching(true);
+        timers.push(window.setTimeout(() => setGlitching(false), GLITCH_MS));
+      },
+      { rootMargin: "160px 0px" }
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
 
   /* ── Glitch: a két szöveg csak ÁTTŰNIK egymáson (mindkettő ugyanabban a
         rács-cellában ül), ezért a doboz magassága a hosszabbikhoz igazodik, és
         váltáskor semmi nem mozdul el alatta. ── */
   useEffect(() => {
+    if (!live) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timers: number[] = [];
     const id = window.setInterval(() => {
       setGlitching(true);
       timers.push(window.setTimeout(() => setTextIndex((value) => (value + 1) % GATE_TEXTS.length), 150));
-      timers.push(window.setTimeout(() => setGlitching(false), 400));
+      timers.push(window.setTimeout(() => setGlitching(false), GLITCH_MS));
     }, 5200);
     return () => {
       window.clearInterval(id);
       timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, []);
+  }, [live]);
 
   /* ── Folytatás emailből: `?brief=<id>~<token>`. A letöltött adatlapot a
         megszokott localStorage-kulcsra írjuk, így a wizard saját „Folytatod a
@@ -183,49 +214,30 @@ export function BriefStage() {
   }, [choice, resumeForm]);
 
   return (
-    <section className={`brief-stage${glitching ? " glitching" : ""}`} id="projektbrief" ref={stageRef}>
-      <svg aria-hidden="true" className="brief-stage-defs" focusable="false">
-        <defs>
-          {/* A folyadék összeolvasztása CSS-blurral történik, nem itt: egy 0x0
-              méretű defs-konténerben definiált SVG-szűrő Safariban némán nem
-              érvényesül, és a csík különálló karikákra esett szét. */}
-          <filter id="brief-grain">
-            <feTurbulence baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" type="fractalNoise" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-        </defs>
-      </svg>
-
-      <div aria-hidden="true" className="brief-flowwrap">
-        <div className="brief-flow">
-          {AURORA.map((light) => (
-            <span
-              key={light.key}
-              style={
-                {
-                  width: light.w,
-                  height: light.h,
-                  [light.side]: light.offset,
-                  bottom: light.bottom,
-                  background: `radial-gradient(closest-side, rgb(${light.rgb}), rgba(${light.rgb},0) 70%)`,
-                  "--dur": `${light.dur}s`,
-                  "--dx": light.dx,
-                  "--dy": light.dy,
-                  "--s0": `${light.s0}`,
-                  "--s1": `${light.s1}`
-                } as React.CSSProperties
-              }
-            />
-          ))}
-        </div>
-      </div>
-      <svg aria-hidden="true" className="brief-grain" focusable="false">
-        <rect filter="url(#brief-grain)" height="100%" width="100%" />
-      </svg>
+    <section
+      className={`brief-stage${live ? " is-live" : ""}${glitching ? " glitching" : ""}`}
+      id="projektbrief"
+      ref={stageRef}
+    >
+      {/* A derengés: KÉT réteg, mindkettő egyetlen elem, több nagy radiális
+          gradienssel a háttérképében. A lágyságot maguk a gradiensek adják,
+          nem egy `filter:blur()` — korábban négy óriási elem animálódott egy
+          elmosó szülőn belül, amit a böngészőnek képkockánként újra kellett
+          raszterizálnia. Így a mozgás rétegenként egyetlen eltolás, amit a
+          kompozitor visz. A markupban vannak, nem JS hozza létre őket: az első
+          festéskor már ott kell lenniük, különben telefonon a szakasz feketén
+          jelenik meg, és a fény késve „ugrik be". */}
+      <div aria-hidden="true" className="brief-aurora one" />
+      <div aria-hidden="true" className="brief-aurora two" />
       <div aria-hidden="true" className="brief-scan" />
-      <div aria-hidden="true" className="brief-slice" style={{ "--t": "20%", "--h": "13px" } as React.CSSProperties} />
-      <div aria-hidden="true" className="brief-slice" style={{ "--t": "47%", "--h": "6px" } as React.CSSProperties} />
-      <div aria-hidden="true" className="brief-slice" style={{ "--t": "72%", "--h": "16px" } as React.CSSProperties} />
+      {TEARS.map((tear) => (
+        <div
+          aria-hidden="true"
+          className="brief-tear"
+          key={tear.t}
+          style={{ "--t": tear.t, "--h": tear.h } as React.CSSProperties}
+        />
+      ))}
 
       <div className="brief-stage-inner">
         {choice === null ? (
@@ -236,6 +248,15 @@ export function BriefStage() {
                   {text}
                 </span>
               ))}
+              {/* A látható szöveg két elszínezett másolata. Nyugalomban
+                  láthatatlanok; glitchkor ellentétes irányba csúsznak szét, és
+                  mindkettő más-más vízszintes sávot mutat belőle. */}
+              <span aria-hidden="true" className="brief-gate-ghost cyan">
+                {GATE_TEXTS[textIndex]}
+              </span>
+              <span aria-hidden="true" className="brief-gate-ghost ember">
+                {GATE_TEXTS[textIndex]}
+              </span>
             </h2>
             <p className="brief-gate-sub">Nincs regisztráció, nincs telefonálás. Válassz, és innentől együtt rakjuk össze.</p>
             <div className="brief-gate-choices">
@@ -243,13 +264,23 @@ export function BriefStage() {
                 <span className="brief-gate-n">01</span>
                 <strong>Új weboldalt indítok</strong>
                 <p>Még nincs oldalam, vagy a mostanit teljesen lecserélném.</p>
-                <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                <span className="brief-gate-cta">
+                  Ezt választom
+                  <span aria-hidden="true" className="brief-gate-arrow">
+                    →
+                  </span>
+                </span>
               </button>
               <button className="brief-gate-choice" onClick={(event) => choose(event, "yes")} type="button">
                 <span className="brief-gate-n">02</span>
                 <strong>Meglévőt újítanék fel</strong>
                 <p>Van már oldalam és domainem, de nem hozza, amit kéne.</p>
-                <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                <span className="brief-gate-cta">
+                  Ezt választom
+                  <span aria-hidden="true" className="brief-gate-arrow">
+                    →
+                  </span>
+                </span>
               </button>
             </div>
           </div>

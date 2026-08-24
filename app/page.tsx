@@ -44,6 +44,39 @@ const proof = [
   "Átlátható projektfolyamat"
 ];
 
+/* Mind a négy tétel ugyanennek az oldalnak a GYIK-jéből és az árazásából jön —
+   szándékosan nincs köztük olyan szám vagy ígéret, ami máshol nem szerepel. */
+const deliverables = [
+  {
+    n: "01",
+    title: "Domain, tárhely, email — nálam van.",
+    copy:
+      "Nem kell szolgáltatókat összevadásznod és számlákat követned. A .hu vagy .com domaint, az SSL-tanúsítványt és a gyors felhőtárhelyet én intézem, ugyanabból a havidíjból.",
+    items: [".hu vagy .com domain", "SSL és felhőtárhely", "céges email továbbítás", "automata mentések"]
+  },
+  {
+    n: "02",
+    title: "Látod, hol tart, anélkül hogy utánam írogatnál.",
+    copy:
+      "Az ügyfélkapun belépsz, és ott van, mi készült el és mi jön ezután. Ticketet nyitsz, ha valami kell, és később visszanézed az összes előzményt.",
+    items: ["saját ügyfélkapu", "ticketek és előzmények", "kötelező hívás nélkül"]
+  },
+  {
+    n: "03",
+    title: "Az élesítést te mondod ki, nem én.",
+    copy:
+      "A kész oldalt egy privát előnézeti linken kapod meg, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Csak a jóváhagyásod után kerül ki élesbe.",
+    items: ["privát előnézeti link", "módosítás, amíg jó nem lesz", "te engeded élesbe"]
+  },
+  {
+    n: "04",
+    title: "Bármikor a tiéd lehet az egész.",
+    copy:
+      "Nincs bezárás: a rögzített vételi opcióval megveheted az oldalt a forráskóddal és a technikai fiókokkal együtt. Az átadás lépésenként megy, írásban.",
+    items: ["forráskód és adatbázis", "domain és fiókok", "30 nap hibajavítás az átadás után"]
+  }
+];
+
 const faqs = [
   [
     "Mennyibe kerül a weboldal?",
@@ -140,11 +173,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* A brief közvetlenül a heró alatt: a látogatók 95%-a ide érkezik és
-          ~32 másodpercet tölt itt. Korábban a 13 szekcióból az 5. volt, és
-          tízből nyolcan el sem görgettek odáig. */}
-      <BriefStage />
-
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -157,52 +185,43 @@ export default function Home() {
 
       {/* Ezek szándékosan NEM idézetek: saját vállalások. A korábbi
           blockquote + „szerző" felépítés ügyfélvéleménynek látszott, holott
-          nincs mögötte valós referencia — ezért lett belőle nyílt vállalás-kártya. */}
-      <section className="voices-section">
-        <div className="section-head">
+          nincs mögötte valós referencia. A vállalás-kártyákból viszont nem
+          derült ki, mit is kap konkrétan a látogató — ezért lett belőle
+          tételes átadási lista. Minden állítás mögött ott áll ugyanennek az
+          oldalnak egy GYIK-pontja: nincs köztük új ígéret. */}
+      <section className="deliver-section">
+        <div className="deliver-intro">
           <p className="micro-label dark">Mire számíthatsz</p>
           <h2>Ezt kapod tőlem.</h2>
+          <p>
+            Nem ügynökség vagy alvállalkozói lánc: egy ember, aki a tervezéstől az üzemeltetésig
+            végigviszi. Ez a négy dolog az, ami ebből neked konkrétan jár.
+          </p>
         </div>
-        <div className="voices-grid">
-          <article className="voice-card feature">
-            <p className="voice-claim">
-              Nem sablonból dolgozom, és nem kell írogatnod, hogy hol tart. Belépsz, és látod, mi
-              készült el és mi jön ezután.
-            </p>
-            <div className="voice-author">
+        <div className="deliver-list">
+          {deliverables.map((item) => (
+            <article className="deliver-row" key={item.title}>
+              <span className="deliver-n">{item.n}</span>
               <div>
-                <strong>Átlátható munka</strong>
-                <span>tervezéstől az indításig</span>
+                <h3>{item.title}</h3>
+                <p>{item.copy}</p>
+                <ul className="deliver-items">
+                  {item.items.map((entry) => (
+                    <li key={entry}>{entry}</li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          </article>
-          <article className="voice-card">
-            <p className="voice-claim">
-              Aki rákeres a szolgáltatásodra, megtalálja az oldalad, és két koppintással ír neked.
-              Telefonon is.
-            </p>
-            <div className="voice-author">
-              <div>
-                <strong>Eredményre tervezve</strong>
-                <span>sebesség + ügyfélszerzés</span>
-              </div>
-            </div>
-          </article>
-          <article className="voice-card">
-            <p className="voice-claim">
-              Ha a bérlésből kivásárolod, a végén minden a tiéd: domain, forráskód, adatbázis. Az
-              átadás lépésenként megy, írásban — és a lezárásától még 30 napig díjmentesen javítom,
-              ami elromlik.
-            </p>
-            <div className="voice-author">
-              <div>
-                <strong>Nincs bezárás</strong>
-                <span>kivásárlás + 30 nap hibajavítás</span>
-              </div>
-            </div>
-          </article>
+            </article>
+          ))}
         </div>
       </section>
+
+      {/* A brief a főoldal egyetlen sötét szakasza. Korábban közvetlenül a heró
+          alatt ült, és a két sötét felület úgy csapódott egymásnak, hogy
+          telefonon zavaró volt. Innen viszont a látogató már érti, miről van
+          szó, mire a feketéhez ér. A heró `#projektbrief` linkje egy
+          koppintással továbbra is idehoz. */}
+      <BriefStage />
 
       <section className="price-teaser">
         <div className="section-head">

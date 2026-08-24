@@ -25,6 +25,8 @@ const REVEAL_SELECTOR = [
   ".manifesto article",
   ".bring-item",
   ".voice-card",
+  ".deliver-intro",
+  ".deliver-row",
   ".process-extra",
   ".proc-step",
   ".founder-card",
@@ -38,6 +40,22 @@ const REVEAL_SELECTOR = [
   ".checky-architecture-flow",
   ".demo-card",
   ".cta-band"
+].join(",");
+
+/* Csak ezek az elemek olvassák a `--mx` / `--my` értéket. Mivel a változók a
+   dokumentum gyökerén ülnek, minden írásuk az EGÉSZ oldal stílusát
+   érvényteleníti — egy 18 000 pixel magas főoldalon ez minden egérmozdulatnál
+   számottevő munka. Ezért a figyelő csak akkor van bekötve, amikor legalább
+   egy ilyen elem képernyőn van; a lap többi részén (brief, árak, GYIK, lábléc)
+   nincs mit kiszámolni. */
+const POINTER_SELECTOR = [
+  ".system-window",
+  ".laptop-model",
+  ".device-main",
+  ".device-panel",
+  ".planet-model",
+  ".checky-card",
+  ".founder-card"
 ].join(",");
 
 function prefersStaticMotion() {
@@ -83,17 +101,64 @@ export function MotionVars() {
     }
 
     setScroll();
-    window.addEventListener("pointermove", setPointer, { passive: true });
     window.addEventListener("scroll", setScroll, { passive: true });
     window.addEventListener("resize", setScroll, { passive: true });
+
+    /* Az egérfigyelő csak addig van bekötve, amíg egy parallaxist használó
+       elem látszik. A megfigyelőt a `load` után kötjük be, hogy a streamelt
+       oldalág is a helyén legyen, mire végigkérdezzük a DOM-ot. */
+    /* Halmaz, nem számláló: az első callback EGYSZERRE jelenti mind a hét
+       elemet, és a képernyőn kívüliek mínuszai elvinnék a számlálót nulla alá —
+       a látható elem mellett is lekapcsolna a figyelő. */
+    const shown = new Set<Element>();
+    let listening = false;
+    let observer: IntersectionObserver | null = null;
+
+    function syncListener() {
+      const shouldListen = shown.size > 0;
+      if (shouldListen === listening) return;
+      listening = shouldListen;
+      if (shouldListen) {
+        window.addEventListener("pointermove", setPointer, { passive: true });
+      } else {
+        window.removeEventListener("pointermove", setPointer);
+      }
+    }
+
+    function observeParallax() {
+      const targets = Array.from(document.querySelectorAll<HTMLElement>(POINTER_SELECTOR));
+      if (!targets.length) return;
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              shown.add(entry.target);
+            } else {
+              shown.delete(entry.target);
+            }
+          });
+          syncListener();
+        },
+        { rootMargin: "200px 0px" }
+      );
+      targets.forEach((target) => observer?.observe(target));
+    }
+
+    if (document.readyState === "complete") {
+      observeParallax();
+    } else {
+      window.addEventListener("load", observeParallax, { once: true });
+    }
 
     return () => {
       if (frame) {
         cancelAnimationFrame(frame);
       }
+      window.removeEventListener("load", observeParallax);
       window.removeEventListener("pointermove", setPointer);
       window.removeEventListener("scroll", setScroll);
       window.removeEventListener("resize", setScroll);
+      observer?.disconnect();
     };
   }, []);
 

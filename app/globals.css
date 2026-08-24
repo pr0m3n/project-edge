@@ -375,8 +375,47 @@ p {
   color: var(--paper);
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 132px clamp(18px, 5vw, 76px) 58px;
+  /* Az alsó térköz azért ekkora, hogy a heró NE elvágva érjen véget: alul egy
+     magas feloldó sáv fut (`.home-hero::before`), és a tartalomnak nem szabad
+     belelógnia. */
+  padding: 132px clamp(18px, 5vw, 76px) clamp(150px, 24vh, 300px);
   position: relative;
+}
+
+/* A heró feloldódik a következő szakaszban, ahelyett hogy elvágva érne véget.
+   Korábban az alatta lévő sötét szakasz próbálta EGYETLEN fix színnel
+   utánozni a heró alját — csakhogy a heró alja egy ferde színátmenet plusz két
+   színes folt plusz rácsminta, vagyis vízszintesen is változik. A két szín
+   sosem egyezett, és a különbség éles vonalként látszott. Így viszont maga a
+   heró úszik át, akármi is van alatta.
+
+   Sok, sűrűsödő megállóval: két végpont között az egyenletes átmenet
+   Mach-sávot rajzol, amit a szem szintén élként lát. */
+.home-hero::before {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 245, 245, 0) 0%,
+    rgba(245, 245, 245, 0.03) 12%,
+    rgba(245, 245, 245, 0.09) 24%,
+    rgba(245, 245, 245, 0.17) 35%,
+    rgba(245, 245, 245, 0.27) 45%,
+    rgba(245, 245, 245, 0.39) 55%,
+    rgba(245, 245, 245, 0.52) 64%,
+    rgba(245, 245, 245, 0.65) 72%,
+    rgba(245, 245, 245, 0.77) 80%,
+    rgba(245, 245, 245, 0.87) 87%,
+    rgba(245, 245, 245, 0.94) 93%,
+    rgba(245, 245, 245, 0.98) 97%,
+    var(--paper) 100%
+  );
+  bottom: 0;
+  content: "";
+  height: clamp(140px, 23vh, 280px);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 2;
 }
 
 .hero-noise {
@@ -389,14 +428,17 @@ p {
   position: absolute;
 }
 
+/* A narancs vonal a feloldó sáv FÖLÉ került: ahol korábban volt (42px-re az
+   aljától), most a halványodás nyelné el. */
 .home-hero::after {
   background: var(--ember);
-  bottom: 42px;
+  bottom: clamp(160px, 25vh, 310px);
   content: "";
   height: 3px;
   left: clamp(18px, 5vw, 76px);
   position: absolute;
   width: min(42vw, 520px);
+  z-index: 3;
 }
 
 .home-hero-grid {
@@ -406,10 +448,10 @@ p {
   grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.78fr);
   margin: 0 auto;
   max-width: 1360px;
-  min-height: calc(100vh - 190px);
-  min-height: calc(100dvh - 190px);
+  min-height: calc(100vh - 132px - clamp(150px, 24vh, 300px));
+  min-height: calc(100dvh - 132px - clamp(150px, 24vh, 300px));
   position: relative;
-  z-index: 1;
+  z-index: 3;
 }
 
 .micro-label {
@@ -16359,64 +16401,86 @@ details.admin-collapse summary:hover {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   BRIEF-SZÍNPAD — a heró alatti belépő
+   BRIEF-SZÍNPAD — a főoldal egyetlen sötét horgonya
    ════════════════════════════════════════════════════════════════════
-   A látogatók 95%-a a főoldalra érkezik és ~32 másodpercet tölt itt, a brief
-   viszont korábban a 13 szekcióból az 5. volt: tízből nyolcan el sem görgettek
-   odáig. Ez a szakasz közvetlenül a heró alatt ül, egyetlen kérdéssel.
+   A főoldal korábban többször váltott világos és sötét között, és minden
+   váltás egy zökkenő volt. Most EGY sötét pont van — ez —, hosszú
+   feloldásokkal mindkét oldalán; minden más világos marad. A szakasz a
+   „Ezt kapod" lista UTÁN áll: mire a látogató ideér, már érti, miről van szó,
+   így a fekete nem hidegzuhanyként érkezik a heró után.
 
-   SÖTÉT szakasz, alulról felizzó kék–magenta–rózsa derengéssel. Ez nem idegen
-   elem: a `.public-brief` eredetileg is sötét volt, csak a szolgáltatás-
-   oldalakon maradt úgy. Így a brief a saját, natív megjelenését kapja vissza.
+   TELJESÍTMÉNY — miért nincs itt egyetlen `filter` és `backdrop-filter` sem:
+   korábban a derengés négy óriási eleme egy `filter:blur()` szülőn BELÜL
+   animálódott, vagyis a böngészőnek képkockánként újra kellett raszterizálnia
+   és szűrnie az egész szakaszt. Fölötte a világos űrlappanel `backdrop-filter`
+   -rel mosta el ugyanezt a MOZGÓ hátteret, és három, sosem látszó glitch-sáv
+   is külön hátteret tartatott fenn. Safariban és Firefoxban ez ütötte ki a
+   képkockákat. A lágyságot most maguk a `radial-gradient`-ek adják (nincs
+   élük, amit foltnak lehetne látni), a mozgás pedig két egyszerű, eltolt
+   rétegre szorítkozik: azt a kompozitor viszi, újrafestés nélkül. */
 
-   A fény NAGY és teljesen lágy radiális gradiensekből áll, amik átlátszóba
-   futnak ki — nincs élük, amit foltnak lehetne látni. Se SVG-szűrő, se más
-   böngészőfüggő trükk: korábban pont egy 0x0 méretű defs-konténerben lévő
-   szűrő okozta, hogy Safariban karikákra esett szét a háttér. */
-
-.brief-stage{position:relative;overflow:hidden;isolation:isolate;background:#0a0d11;color:var(--paper);
-  padding:clamp(64px,8vw,104px) clamp(16px,4vw,26px) clamp(96px,11vw,150px);
-  min-height:min(860px,92vh);display:flex;align-items:center}
-.brief-stage-defs{position:absolute;width:0;height:0}
+/* A felső térköz azért ekkora, hogy a címsor a felső átúsztató sáv ALATT
+   kezdődjön: a sávban a háttér még világosszürke, és a fehér cím ott
+   olvashatatlanná fakulna. */
+.brief-stage{position:relative;overflow:hidden;background:#06080b;color:var(--paper);
+  padding:clamp(96px,12vw,170px) clamp(16px,4vw,26px) clamp(120px,14vw,190px);
+  min-height:min(1000px,100vh);display:flex;align-items:center}
 
 /* ── A derengés ─────────────────────────────────────────────────── */
-/* A blur sugara SZÁNDÉKOSAN kicsi. A foltok maguk `closest-side` gradiensek,
-   amik átlátszóba futnak ki — a lágyságot ők adják, nem a szűrő. A korábbi
-   66px-es blur egy teljes képernyős rétegen futott négy óriási elemmel: a
-   raszterizálása telefonon ~1 másodpercig tartott, ezért „ugrott be" későn az
-   egész szakasz. A blur költsége a sugárral meredeken nő, a `saturate` viszont
-   olcsó színmátrix — az maradhat. */
-.brief-flowwrap{position:absolute;inset:-8%;z-index:0;pointer-events:none;
-  filter:blur(22px) saturate(1.4)}
-.brief-flow{position:absolute;inset:0}
-.brief-flow span{position:absolute;border-radius:50%;will-change:transform;
-  animation:brief-rise var(--dur,40s) ease-in-out infinite;animation-delay:var(--del,0s)}
-@keyframes brief-rise{
-  0%,100%{transform:translate(0,0) scale(var(--s0,1))}
-  50%{transform:translate(var(--dx,0),var(--dy,0)) scale(var(--s1,1.15))}}
+/* Két réteg, mindkettő EGYETLEN elem, több nagy radiális gradienssel a
+   háttérképében. Nem elmosás lágyítja őket: a gradiensek maguk futnak
+   átlátszóba. A mozgás rétegenként egyetlen `transform`.
+   A foltok a szakasz FELSŐ kétharmadában ülnek: korábban az aljára tapadtak,
+   ahol az alsó világosodás úgyis elnyelte őket — telefonon emiatt látszott
+   fekete négyzetnek az egész szakasz. */
+.brief-aurora{position:absolute;inset:-18% -12%;z-index:0;pointer-events:none;
+  will-change:transform}
+.brief-aurora.one{
+  background:
+    radial-gradient(46% 36% at 16% 32%,rgba(43,75,255,.5),rgba(43,75,255,0) 70%),
+    radial-gradient(40% 32% at 62% 18%,rgba(194,59,255,.38),rgba(194,59,255,0) 72%),
+    radial-gradient(52% 38% at 88% 56%,rgba(255,79,149,.34),rgba(255,79,149,0) 72%);
+  animation:brief-drift-a 44s ease-in-out infinite}
+.brief-aurora.two{
+  background:
+    radial-gradient(38% 28% at 40% 64%,rgba(255,122,61,.3),rgba(255,122,61,0) 72%),
+    radial-gradient(44% 32% at 78% 24%,rgba(0,196,255,.24),rgba(0,196,255,0) 74%);
+  animation:brief-drift-b 61s ease-in-out infinite}
+@keyframes brief-drift-a{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(6%,-5%,0) scale(1.14)}}
+@keyframes brief-drift-b{
+  0%,100%{transform:translate3d(0,0,0) scale(1.06)}
+  50%{transform:translate3d(-7%,-3%,0) scale(.94)}}
+/* Képernyőn kívül semmi nem fut: az `is-live` osztályt a szakasz csak akkor
+   kapja meg, amikor tényleg látszik. Korábban az animációk akkor is
+   dolgoztak, ha a látogató a lap legalján járt. */
+.brief-stage:not(.is-live) .brief-aurora,
+.brief-stage:not(.is-live) .brief-scan{animation-play-state:paused}
 
 /* ── Átúsztatás a szomszédos szakaszokba ────────────────────────
-   Fölötte a heró (sötét, `#11171c → #303841`), alatta a világos oldal.
-   Enélkül két éles színváltás lenne; így a főoldal egyben marad. */
+   Fölötte és alatta is a világos oldal van. Sok köztes megállóval, nem két
+   végponttal: két szín közötti egyenletes átmenet Mach-sávot rajzol, amit a
+   szem élként lát. A megállók lassuló görbét követnek, ezért nincs hol
+   megakadnia a tekintetnek. */
 .brief-stage::before,.brief-stage::after{content:"";position:absolute;left:0;right:0;z-index:2;pointer-events:none}
-/* Sok köztes szín-megállóval, nem két végponttal: két szín közötti egyenletes
-   átmenet Mach-sávot rajzol, amit a szem élként lát. A megállók egy lassuló
-   görbét követnek, ezért nincs hol megakadnia a tekintetnek. */
-.brief-stage::before{top:0;height:clamp(150px,26vh,320px);
+.brief-stage::before{top:0;height:clamp(150px,18vh,260px);
   background:linear-gradient(180deg,
-    #343c44 0%,
-    rgba(46,54,62,.94) 12%,
-    rgba(38,45,53,.86) 24%,
-    rgba(30,37,44,.74) 37%,
-    rgba(22,28,35,.58) 50%,
-    rgba(16,21,27,.40) 63%,
-    rgba(12,16,21,.23) 76%,
-    rgba(10,13,17,.09) 89%,
-    rgba(10,13,17,0) 100%)}
+    var(--paper) 0%,
+    rgba(214,215,216,.97) 6%,
+    rgba(160,164,167,.93) 13%,
+    rgba(108,113,118,.87) 21%,
+    rgba(64,70,76,.79) 30%,
+    rgba(36,42,48,.68) 40%,
+    rgba(21,26,32,.54) 51%,
+    rgba(14,18,23,.38) 63%,
+    rgba(10,13,17,.22) 76%,
+    rgba(8,10,14,.08) 89%,
+    rgba(6,8,11,0) 100%)}
 .brief-stage::after{bottom:0;height:clamp(240px,38vh,460px);
   background:linear-gradient(180deg,
-    rgba(10,13,17,0) 0%,
-    rgba(10,13,17,.10) 12%,
+    rgba(6,8,11,0) 0%,
+    rgba(8,10,14,.10) 12%,
     rgba(11,14,19,.24) 24%,
     rgba(14,18,23,.42) 36%,
     rgba(21,26,32,.60) 47%,
@@ -16427,53 +16491,87 @@ details.admin-collapse summary:hover {
     rgba(214,215,216,1) 95%,
     var(--paper) 100%)}
 
-/* ── Glitch — sötéten világos vonalakkal, nem sötétekkel ────────── */
-.brief-grain{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;
-  opacity:.13;mix-blend-mode:overlay}
-.brief-scan{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:.22;
-  background:repeating-linear-gradient(180deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px);
-  animation:brief-scan 9s linear infinite}
+/* ── Glitch ─────────────────────────────────────────────────────
+   A szakadás-sávok korábban `backdrop-filter`-rel színezték át a mögöttük
+   lévő képet, és `opacity:0`-n is bent voltak a lapban — a böngésző
+   mindháromnak külön hátteret tartott fenn. Most saját, világító sávok:
+   ugyanaz a hatás, hátteret olvasni nem kell hozzá. */
+.brief-scan{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:.2;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px);
+  animation:brief-scan 9s linear infinite;will-change:transform}
 @keyframes brief-scan{to{transform:translateY(3px)}}
-.brief-slice{position:absolute;left:0;right:0;z-index:4;pointer-events:none;height:var(--h,10px);top:var(--t,30%);
-  backdrop-filter:hue-rotate(38deg) saturate(1.9) brightness(1.25);opacity:0}
-.brief-stage.glitching .brief-slice{animation:brief-slice .38s steps(1) 1}
-@keyframes brief-slice{0%{opacity:.9;transform:translateX(-11px)}35%{opacity:.9;transform:translateX(9px)}
-  60%{opacity:.7;transform:translateX(-4px)}100%{opacity:0;transform:none}}
+.brief-tear{position:absolute;left:-5%;right:-5%;z-index:4;pointer-events:none;opacity:0;
+  height:var(--h,10px);top:var(--t,30%);
+  background:linear-gradient(90deg,rgba(0,208,255,0),rgba(0,208,255,.34) 18%,rgba(255,255,255,.46) 52%,rgba(255,87,34,.36) 84%,rgba(255,87,34,0))}
+.brief-stage.glitching .brief-tear{animation:brief-tear .4s steps(1) 1}
+@keyframes brief-tear{0%{opacity:.7;transform:translateX(-15px) scaleY(1)}
+  30%{opacity:.75;transform:translateX(12px) scaleY(1.5)}
+  55%{opacity:.4;transform:translateX(-5px) scaleY(1.15)}
+  100%{opacity:0;transform:none}}
 
 .brief-stage-inner{position:relative;z-index:5;width:100%;max-width:1180px;margin:0 auto}
 
 /* ── A kapu ─────────────────────────────────────────────────────── */
 .brief-gate{text-align:center;padding:clamp(8px,3vw,28px) 0 12px}
 /* Mindkét szöveg UGYANABBAN a rács-cellában ül, egymáson. A doboz magassága
-   így mindig a HOSSZABBIKHOZ igazodik — váltáskor semmi nem mozdul el alatta. */
+   így mindig a HOSSZABBIKHOZ igazodik — váltáskor semmi nem mozdul el alatta.
+   A két glitch-másolat is ugyanebbe a cellába kerül. */
 .brief-gate-swap{display:grid;place-items:center;margin:0 auto 14px;max-width:16ch;color:#fff;
-  font-size:clamp(27px,4.7vw,54px);line-height:1.05;letter-spacing:-.035em;font-weight:680;
+  font-size:clamp(29px,5vw,56px);line-height:1.05;letter-spacing:-.035em;font-weight:680;
   text-shadow:0 2px 44px rgba(0,0,0,.55)}
 .brief-gate-swap span{grid-area:1/1;opacity:0;transition:opacity .1s linear}
 .brief-gate-swap span.on{opacity:1}
-.brief-stage.glitching .brief-gate-swap span.on{
-  text-shadow:-2.5px 0 rgba(255,87,34,.95),2.5px 0 rgba(90,200,255,.95);
-  animation:brief-jit .38s steps(1) 1}
-@keyframes brief-jit{0%{transform:translate(2px,-1px) skewX(-1.2deg)}30%{transform:translate(-3px,1px) skewX(1.4deg)}
-  55%{transform:translate(1px,0)}100%{transform:none}}
-.brief-gate-sub{margin:0 auto clamp(26px,4vw,40px);max-width:46ch;color:rgba(255,255,255,.66);font-size:clamp(15px,1.6vw,16.5px)}
+/* A két elszínezett másolat nyugalomban láthatatlan; glitchkor ellentétes
+   irányba csúszik szét, és mindkettő a szöveg más-más vízszintes sávját
+   mutatja. Korábban csak egy kis szövegárnyék jelezte a glitchet, amit
+   telefonon szinte észre sem lehetett venni. */
+.brief-gate-ghost{opacity:0;pointer-events:none;user-select:none;transition:none}
+.brief-gate-ghost.cyan{color:#00d0ff}
+.brief-gate-ghost.ember{color:#ff5722}
+.brief-stage.glitching .brief-gate-ghost.cyan{animation:brief-ghost-a .4s steps(2) 1}
+.brief-stage.glitching .brief-gate-ghost.ember{animation:brief-ghost-b .4s steps(2) 1}
+@keyframes brief-ghost-a{
+  0%{opacity:.9;transform:translate(-9px,-2px);clip-path:inset(4% 0 56% 0)}
+  50%{opacity:.7;transform:translate(6px,2px);clip-path:inset(44% 0 12% 0)}
+  100%{opacity:0;transform:none}}
+@keyframes brief-ghost-b{
+  0%{opacity:.85;transform:translate(10px,2px);clip-path:inset(50% 0 8% 0)}
+  50%{opacity:.65;transform:translate(-7px,-3px);clip-path:inset(2% 0 60% 0)}
+  100%{opacity:0;transform:none}}
+.brief-stage.glitching .brief-gate-swap span.on{animation:brief-jit .4s steps(1) 1}
+@keyframes brief-jit{0%{transform:translate(3px,-1px) skewX(-1.6deg)}30%{transform:translate(-4px,1px) skewX(1.8deg)}
+  55%{transform:translate(2px,0)}100%{transform:none}}
+.brief-gate-sub{margin:0 auto clamp(26px,4vw,40px);max-width:46ch;color:rgba(255,255,255,.7);font-size:clamp(15px,1.6vw,16.5px)}
 
-.brief-gate-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,20px);max-width:780px;margin:0 auto}
-.brief-gate-choice{position:relative;text-align:left;cursor:pointer;font-family:inherit;color:#fff;
-  padding:clamp(20px,3vw,28px) clamp(18px,2.6vw,26px) clamp(20px,3vw,26px);border-radius:19px;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 30px 62px -30px rgba(0,0,0,.85);
-  backdrop-filter:blur(18px) saturate(1.2);
-  transition:box-shadow .3s ease,border-color .22s ease,background .22s ease}
-.brief-gate-choice:hover,.brief-gate-choice:focus-visible{outline:none;border-color:rgba(255,255,255,.36);
-  background:rgba(255,255,255,.13);box-shadow:0 1px 0 rgba(255,255,255,.14) inset,0 34px 70px -28px rgba(255,87,34,.45)}
+.brief-gate-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2vw,20px);max-width:820px;margin:0 auto}
+/* Gomb, ami gombnak is látszik. Korábban a kártya sötét volt a sötéten, a nyíl
+   pedig csak hoverre jelent meg — telefonon (ahol nincs hover) el is volt
+   rejtve, tehát semmi nem mutatta, hogy ezek megnyomhatók. Most saját,
+   világosabb felület, látható szél, felül fénycsík, alul pedig egy ÁLLANDÓAN
+   látszó CTA-sor a narancs nyíllal. Koppintásra a kártya megsüllyed. */
+.brief-gate-choice{position:relative;display:flex;flex-direction:column;text-align:left;cursor:pointer;
+  font-family:inherit;color:#fff;
+  padding:clamp(20px,3vw,28px) clamp(18px,2.6vw,26px) clamp(16px,2.2vw,20px);border-radius:19px;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 30px 62px -30px rgba(0,0,0,.9);
+  transition:box-shadow .3s ease,border-color .22s ease,background .22s ease,transform .16s ease}
+.brief-gate-choice:hover,.brief-gate-choice:focus-visible{outline:none;border-color:rgba(255,255,255,.44);
+  background:linear-gradient(180deg,rgba(255,255,255,.21),rgba(255,255,255,.1));
+  box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 34px 70px -28px rgba(255,87,34,.5)}
+.brief-gate-choice:active{transform:scale(.985)}
 .brief-gate-n{display:block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:#ffb08a;margin-bottom:13px}
-.brief-gate-choice strong{display:block;font-size:clamp(18px,2.2vw,22px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660;color:#fff}
-.brief-gate-choice p{margin:0;padding-right:44px;color:rgba(255,255,255,.6);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
-.brief-gate-arrow{position:absolute;right:20px;bottom:20px;width:34px;height:34px;border-radius:50%;
+.brief-gate-choice strong{display:block;font-size:clamp(19px,2.3vw,23px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660;color:#fff}
+.brief-gate-choice p{margin:0 0 clamp(16px,2.4vw,22px);color:rgba(255,255,255,.68);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
+/* `margin-top:auto` — a CTA-sor a kártya aljára tapad, így a két kártya akkor
+   is egyforma magas marad, ha az egyik leírása hosszabb. */
+.brief-gate-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;
+  padding-top:clamp(13px,1.8vw,16px);border-top:1px solid rgba(255,255,255,.16);
+  font-size:13.5px;font-weight:620;color:#fff}
+.brief-gate-arrow{width:34px;height:34px;flex:0 0 auto;border-radius:50%;
   display:grid;place-items:center;background:var(--ember);color:#fff;font-size:15px;
-  opacity:0;transform:translateX(-5px);transition:opacity .26s,transform .26s}
-.brief-gate-choice:hover .brief-gate-arrow,.brief-gate-choice:focus-visible .brief-gate-arrow{opacity:1;transform:none}
+  box-shadow:0 8px 20px -8px rgba(255,87,34,.9);transition:transform .26s}
+.brief-gate-choice:hover .brief-gate-arrow,.brief-gate-choice:focus-visible .brief-gate-arrow{transform:translateX(4px)}
 
 /* ── A brief a színpadon ────────────────────────────────────────
    A `.public-brief` alapból sötét hátterű, világos szöveggel — itt csak a
@@ -16481,13 +16579,13 @@ details.admin-collapse summary:hover {
    NEM írjuk felül: sötéten az az eredeti, helyes megjelenés. */
 .brief-stage .public-brief.bare{padding:0;background:none;max-width:none}
 .brief-stage .public-brief.bare .public-brief-shell{
-  /* Az eredeti szekció középtónusa (#253039) — ezen a háttéren lettek
-     beállítva a brief saját szövegszínei, ezért itt is ezt kell tartani,
-     különben a halványabb feliratok olvashatatlanul sötétbe fulladnak. */
-  background:rgba(250,249,248,.94);border:1px solid rgba(255,255,255,.5);
-  box-shadow:0 44px 100px -46px rgba(0,0,0,.95);backdrop-filter:blur(22px) saturate(1.1);
+  /* Nincs `backdrop-filter`. A panel amúgy is majdnem átlátszatlan volt, tehát
+     vizuálisan alig adott hozzá — a mögötte MOZGÓ háttér elmosása viszont
+     képkockánkénti újraszámolást kényszerített ki. Ez volt a szakasz
+     legdrágább tétele, és emiatt akadt „némelyik böngészőben". */
+  background:#faf9f8;border:1px solid rgba(255,255,255,.5);
+  box-shadow:0 44px 100px -46px rgba(0,0,0,.95);
   transform-origin:center center}
-.brief-stage .public-brief.bare .public-draft-choice{backdrop-filter:blur(14px)}
 /* A doboz világos panel: a benne lévő, eredetileg sötét háttérre szánt
    halvány feliratok itt olvashatatlanok lennének. */
 .brief-stage .public-brief.bare .public-brief-shell .public-field-hint,
@@ -16542,19 +16640,24 @@ details.admin-collapse summary:hover {
 
 /* ── Reszponzív ─────────────────────────────────────────────────── */
 @media (max-width:900px){
-  /* Telefonon a szakasz KITÖLTI a képernyőt: így a sötét nem egy szűk sáv a
-     világos oldal közepén, hanem önálló, teljes képernyős jelenet. A fade-ek
-     is rövidebbek, különben elfogyasztanák a tömör sötét részt. */
-  .brief-stage{min-height:100svh;padding-top:64px;padding-bottom:80px;align-items:center}
-  .brief-stage::before{height:clamp(56px,9vh,110px)}
-  .brief-stage::after{height:clamp(80px,13vh,150px)}
-  /* Az SVG-turbulencia egy teljes képernyős felületen drága első festéskor, és
-     telefonon amúgy is alig látszik — a szakasz megjelenése fontosabb nála. */
-  .brief-grain{display:none}
-  .brief-gate-choice{backdrop-filter:blur(10px);background:rgba(255,255,255,.09)}
+  /* Telefonon a szakasz TÖBB mint egy képernyő: a fekete birtokolja a nézetet,
+     és tényleg van benne görgetés. Korábban pontosan egy képernyő volt, ezért
+     inkább egy sávnak látszott, mint önálló jelenetnek. */
+  .brief-stage{min-height:116svh;padding-top:clamp(96px,19vh,150px);padding-bottom:clamp(110px,20vh,170px);align-items:center}
+  .brief-stage::before{height:clamp(150px,22vh,250px)}
+  .brief-stage::after{height:clamp(160px,24vh,270px)}
+  /* Telefonon a fény jóval kisebb felületen oszlik el, ezért nagyobb és
+     erősebb foltok kellenek — a korábbi `vmin`-alapú méretek mellett az egész
+     szakasz gyakorlatilag fekete négyzet volt. */
+  .brief-aurora{inset:-24% -26%}
+  .brief-aurora.one{background:
+    radial-gradient(54% 28% at 10% 27%,rgba(43,75,255,.56),rgba(43,75,255,0) 72%),
+    radial-gradient(50% 25% at 74% 13%,rgba(194,59,255,.42),rgba(194,59,255,0) 74%),
+    radial-gradient(58% 30% at 94% 56%,rgba(255,79,149,.36),rgba(255,79,149,0) 74%)}
+  .brief-aurora.two{background:
+    radial-gradient(52% 24% at 36% 68%,rgba(255,122,61,.32),rgba(255,122,61,0) 74%),
+    radial-gradient(54% 26% at 86% 23%,rgba(0,196,255,.26),rgba(0,196,255,0) 76%)}
   .brief-gate-choices{grid-template-columns:1fr}
-  .brief-gate-choice p{padding-right:0}
-  .brief-gate-arrow{display:none}
   .brief-recommend-head b{font-size:18px}
 }
 @media (max-width:560px){
@@ -16567,9 +16670,11 @@ details.admin-collapse summary:hover {
 }
 
 @media (prefers-reduced-motion:reduce){
-  .brief-flow span,.brief-scan{animation:none}
-  .brief-stage.glitching .brief-gate-swap span.on{animation:none;text-shadow:0 2px 44px rgba(0,0,0,.55)}
-  .brief-stage.glitching .brief-slice{animation:none}
+  .brief-aurora,.brief-scan{animation:none}
+  .brief-stage.glitching .brief-gate-swap span.on{animation:none}
+  .brief-stage.glitching .brief-gate-ghost{animation:none;opacity:0}
+  .brief-stage.glitching .brief-tear{animation:none}
+  .brief-gate-choice:active{transform:none}
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -16886,4 +16991,177 @@ details.admin-collapse summary:hover {
 @media (prefers-reduced-motion:reduce){
   .bring-row,.bring-panel,.bring-panel p,.bring-caret,.bring-rule,.bring-summary .bring-icon{
     transition:none;animation:none}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   EZT KAPOD — átadási lista
+   ════════════════════════════════════════════════════════════════════
+   Korábban három vélemény-formájú kártya állt itt (`.voices-*`), holott ezek
+   nem idézetek, hanem saját vállalások — és a felépítés se mondott semmit.
+   Most az, aminek látszania kell: tételes lista arról, mi kerül át hozzád.
+   Balra a cím, jobbra hajszálvonallal elválasztott sorok — sorszám, állítás,
+   és a konkrét tételek.
+
+   SAJÁT névtér, nem a `.voices-*` átírása: azokat a `/munkak` oldal és a
+   szolgáltatás-landingek is használják, ott valódi idézet-elrendezésként. */
+.deliver-section {
+  align-items: start;
+  display: grid;
+  gap: clamp(30px, 5vw, 72px);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: clamp(76px, 9vw, 132px) clamp(18px, 5vw, 76px);
+}
+
+/* A cím végigkíséri a listát, hogy a „mire számíthatsz" kérdés akkor is a
+   szem előtt legyen, amikor már a negyedik tételnél jársz. */
+.deliver-intro {
+  position: sticky;
+  top: clamp(90px, 12vh, 130px);
+}
+
+.deliver-intro h2 {
+  font-size: clamp(36px, 4.4vw, 62px);
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+  margin: 0 0 18px;
+  max-width: 12ch;
+}
+
+.deliver-intro > p:not(.micro-label) {
+  color: rgba(48, 56, 65, 0.66);
+  font-size: clamp(15.5px, 1.7vw, 18px);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 38ch;
+}
+
+.deliver-list {
+  display: grid;
+}
+
+.deliver-row {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: clamp(12px, 2.2vw, 30px);
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: clamp(24px, 3vw, 34px) 0;
+  position: relative;
+}
+
+.deliver-row:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+/* A hajszálvonal hoverre végigfut — ugyanaz a mozdulat, mint a többi
+   listánál az oldalon, hogy ne egy idegen elem legyen. */
+.deliver-row::after {
+  background: var(--ember);
+  content: "";
+  height: 2px;
+  left: 0;
+  position: absolute;
+  top: -1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+}
+
+.deliver-row:hover::after {
+  transform: scaleX(1);
+}
+
+.deliver-n {
+  color: var(--ember);
+  font: 950 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.12em;
+  padding-top: 0.45em;
+}
+
+.deliver-row h3 {
+  font-size: clamp(20px, 2.3vw, 27px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+
+.deliver-row > div > p {
+  color: rgba(48, 56, 65, 0.68);
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.6;
+  margin: 0 0 16px;
+  max-width: 52ch;
+}
+
+.deliver-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deliver-items li {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: rgba(48, 56, 65, 0.82);
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+  padding: 8px 13px;
+}
+
+.deliver-items li::before {
+  background: var(--aqua);
+  border-radius: 50%;
+  content: "";
+  flex: 0 0 auto;
+  height: 6px;
+  width: 6px;
+}
+
+@media (max-width: 900px) {
+  .deliver-section {
+    gap: clamp(24px, 5vw, 40px);
+    grid-template-columns: 1fr;
+  }
+
+  .deliver-intro {
+    position: static;
+  }
+
+  /* Telefonon a sorszám a cím mellé kerülne egy szűk oszlopba; egymás alatt
+     tisztább, és a szövegnek is marad helye. */
+  .deliver-row {
+    gap: 9px;
+    grid-template-columns: 1fr;
+  }
+
+  .deliver-n {
+    padding-top: 0;
+  }
+}
+
+/* Telefonon a pirulák egyesével törnek sorba, és a szekció fölöslegesen
+   hosszúra nyúlik tőlük. Keskeny kijelzőn ezért sima, pontozott felsorolás
+   lesz belőlük — ugyanaz az információ, harmad annyi helyen. */
+@media (max-width: 560px) {
+  .deliver-items {
+    display: grid;
+    gap: 7px;
+  }
+
+  .deliver-items li {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    font-size: 14.5px;
+    padding: 0;
+  }
 }
