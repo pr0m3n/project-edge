@@ -29,6 +29,7 @@ const initialForm = {
 
 const storageKey = "projectedge-support-ticket";
 const positionKey = "projectedge-chat-pos";
+const greetKey = "projectedge-chat-greeted";
 const reviewMessage = "Szeretnék egy rövid weboldal-áttekintést kérni. A weboldalam címe: ";
 
 function formatTime(isoString: string) {
@@ -61,6 +62,9 @@ export function SupportWidget() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
   const [website, setWebsite] = useState("");
+
+  /** A köszöntő buborék: munkamenetenként egyszer, késleltetve. */
+  const [greeting, setGreeting] = useState(false);
 
   // Draggable Chat Head State
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -111,6 +115,41 @@ export function SupportWidget() {
       // Ignore storage errors
     }
   }, []);
+
+  /* ── A köszöntés ───────────────────────────────────────────────────
+        Egy kis buborék a chat gomb fölött: „itt vagyok, írj nyugodtan".
+
+        Szándékosan visszafogott: munkamenetenként EGYSZER jelenik meg, 9
+        másodperc után (a főoldalon átlagosan 32 másodpercet töltenek, tehát
+        ennyi idő alatt már látszik, de nem ugrik az arcába), és magától
+        elmegy 13 másodperc múlva. Aki már írt egy ticketet, annak nem jön
+        elő — ő nem új látogató, akit meg kell szólítani. ── */
+  useEffect(() => {
+    if (open || ticket) return;
+    let shown = false;
+    try {
+      shown = window.sessionStorage.getItem(greetKey) === "1";
+    } catch {
+      /* Privát módban a sessionStorage tiltott lehet — akkor inkább nem
+         köszönünk, mint hogy minden oldalváltásnál újra felugorjon. */
+      return;
+    }
+    if (shown) return;
+
+    const timers: number[] = [];
+    timers.push(
+      window.setTimeout(() => {
+        try {
+          window.sessionStorage.setItem(greetKey, "1");
+        } catch {
+          /* nem baj */
+        }
+        setGreeting(true);
+        timers.push(window.setTimeout(() => setGreeting(false), 13_000));
+      }, 9_000)
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [open, ticket]);
 
   const loadMessages = useCallback(async (currentTicket: StoredTicket, silent = false) => {
     if (!silent) setStatus("loading");
@@ -317,6 +356,8 @@ export function SupportWidget() {
   }
 
   function toggleOpen() {
+    /* A köszöntésnek nincs több dolga, ha egyszer megnyílt a chat. */
+    setGreeting(false);
     if (!open) {
       formStartedAt.current = Date.now();
       trackEvent("support_opened", { intent: "contact", source: "floating_button" });
@@ -539,9 +580,47 @@ export function SupportWidget() {
           ref={triggerRef}
           type="button"
         >
+          {/* Korábban csak egy zöld pont volt a narancs körben — telefonon a
+              felirat el is tűnik (`font-size: 0`), tehát semmi nem jelezte,
+              hogy ez egy chat. Innentől valódi ikon van benne. */}
+          <svg aria-hidden="true" className="support-trigger-icon" fill="none" viewBox="0 0 24 24">
+            <path
+              d="M20.5 11.7c0 4-3.9 7.2-8.7 7.2-1 0-2-.14-2.9-.4L4 20l1.2-3.4c-1-1.2-1.6-2.7-1.6-4.4C3.6 7.7 7.5 4.5 12.3 4.5s8.2 3.2 8.2 7.2Z"
+              stroke="currentColor"
+              strokeLinejoin="round"
+              strokeWidth="1.7"
+            />
+            <circle cx="8.9" cy="11.7" fill="currentColor" r="1.05" />
+            <circle cx="12.3" cy="11.7" fill="currentColor" r="1.05" />
+            <circle cx="15.7" cy="11.7" fill="currentColor" r="1.05" />
+          </svg>
+          <span className="support-trigger-label">Chat</span>
           <span className="support-trigger-badge" />
-          Chat
         </button>
+
+        {/* A köszöntés a húzható konténeren BELÜL van, hogy elhúzott gombnál is
+            vele maradjon. A rajta lévő koppintás a konténer pointer-eseményein
+            keresztül megnyitja a chatet — kivéve a bezáró ×-et, ami leállítja
+            az esemény terjedését, különben a bezárás is megnyitná. */}
+        {greeting && !open ? (
+          <div className="support-greeting" role="status">
+            <p>
+              <strong>Szia, Patrik vagyok.</strong>
+              Kérdésed van? Írj nyugodtan itt — nem kell telefonálnod.
+            </p>
+            <button
+              aria-label="Köszöntés bezárása"
+              className="support-greeting-close"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                setGreeting(false);
+              }}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Modern Glassmorphic / Bottom Sheet Panel */}

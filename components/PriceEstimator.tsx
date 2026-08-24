@@ -252,7 +252,13 @@ function MobileFold({ children, label }: { children: ReactNode; label: string })
         type="button"
       >
         <span>{label}</span>
-        <i aria-hidden="true">{open ? "−" : "+"}</i>
+        {/* Forduló nyíl a korábbi +/− helyett: egyetlen elem, ami elfordul —
+            nem két külön jel, ami helyet cserél. */}
+        <i aria-hidden="true">
+          <svg fill="none" viewBox="0 0 16 16">
+            <path d="M3.5 6L8 10.5L12.5 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+          </svg>
+        </i>
       </button>
       <div className="mobile-fold-body" id={id} ref={bodyRef}>
         {children}
