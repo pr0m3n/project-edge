@@ -428,17 +428,16 @@ p {
   position: absolute;
 }
 
-/* A narancs vonal a feloldó sáv FÖLÉ került: ahol korábban volt (42px-re az
-   aljától), most a halványodás nyelné el. */
-.home-hero::after {
+/* A narancs vonal a szövegoszlop UTÁN jön, a folyamban. Amíg abszolút
+   pozícióban, a szekció aljához kötve ült, addig a fölötte lévő, tartalomtól
+   függő magasságú szöveggel bizonyos képernyő-arányoknál összefutott. */
+.hero-rule {
   background: var(--ember);
-  bottom: clamp(160px, 25vh, 310px);
-  content: "";
+  display: block;
   height: 3px;
-  left: clamp(18px, 5vw, 76px);
-  position: absolute;
+  margin-top: clamp(26px, 4vh, 48px);
+  max-width: 100%;
   width: min(42vw, 520px);
-  z-index: 3;
 }
 
 .home-hero-grid {
@@ -16560,8 +16559,7 @@ details.admin-collapse summary:hover {
   background:linear-gradient(180deg,rgba(255,255,255,.21),rgba(255,255,255,.1));
   box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 34px 70px -28px rgba(255,87,34,.5)}
 .brief-gate-choice:active{transform:scale(.985)}
-.brief-gate-n{display:block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em;color:#ffb08a;margin-bottom:13px}
-.brief-gate-choice strong{display:block;font-size:clamp(19px,2.3vw,23px);line-height:1.2;letter-spacing:-.02em;margin-bottom:7px;font-weight:660;color:#fff}
+.brief-gate-choice strong{display:block;font-size:clamp(19px,2.3vw,23px);line-height:1.2;letter-spacing:-.02em;margin-bottom:8px;font-weight:660;color:#fff}
 .brief-gate-choice p{margin:0 0 clamp(16px,2.4vw,22px);color:rgba(255,255,255,.68);font-size:clamp(13.5px,1.5vw,14.5px);line-height:1.5}
 /* `margin-top:auto` — a CTA-sor a kártya aljára tapad, így a két kártya akkor
    is egyforma magas marad, ha az egyik leírása hosszabb. */
@@ -16609,34 +16607,7 @@ details.admin-collapse summary:hover {
 .brief-recommend-toggle:hover{background:#fff;border-color:rgba(255,87,34,.65)}
 .brief-recommend .public-plan-grid{margin-top:16px}
 
-/* ── Mentés emailben (fiók nélküli kimenet) ─────────────────────── */
-.public-link-gate{margin-top:16px}
-.public-link-trigger{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
-  padding:18px 20px;border-radius:15px;font-family:inherit;color:var(--ink);
-  background:rgba(255,255,255,.6);border:1px dashed var(--line);transition:border-color .2s,background .2s}
-.public-link-trigger:hover{border-color:rgba(255,87,34,.55);background:#fff}
-.public-link-trigger>span{width:38px;height:38px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
-  background:rgba(255,87,34,.13);color:#d93b08;font-size:17px}
-.public-link-trigger strong{display:block;font-size:15.5px;font-weight:620;margin-bottom:3px}
-.public-link-trigger small{display:block;font-size:13px;color:var(--muted);line-height:1.45}
-.public-link-trigger i{margin-left:auto;font-style:normal;color:var(--muted);font-size:17px}
-.public-link-form{padding:20px;border-radius:15px;background:rgba(255,255,255,.72);border:1px solid var(--line)}
-.public-link-form label span{display:block;font-size:13.5px;font-weight:560;margin-bottom:9px;color:var(--ink)}
-.public-link-form input{width:100%;padding:13px 15px;border-radius:12px;font-size:15px;font-family:inherit;color:var(--ink);
-  background:#fff;border:1px solid var(--line);outline:none;transition:border-color .2s,box-shadow .2s}
-.public-link-form input:focus{border-color:var(--ember);box-shadow:0 0 0 4px rgba(255,87,34,.16)}
-.public-link-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.public-link-form small{display:block;margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5}
-.public-link-done{display:flex;gap:14px;padding:20px;border-radius:15px;
-  background:rgba(53,192,122,.11);border:1px solid rgba(53,192,122,.36)}
-.public-link-done>span{width:34px;height:34px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
-  background:#35c07a;color:#fff;font-size:16px}
-.public-link-done strong{display:block;font-size:15.5px;margin-bottom:5px;color:var(--ink)}
-.public-link-done p{margin:0;font-size:13.6px;color:var(--muted);line-height:1.55}
-
 .public-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
-.public-save-link{background:none;border:0;padding:0;cursor:pointer;font-family:inherit;font-size:12.5px;
-  color:#d93b08;text-decoration:underline;text-underline-offset:2px}
 
 /* ── Reszponzív ─────────────────────────────────────────────────── */
 @media (max-width:900px){
@@ -16664,9 +16635,6 @@ details.admin-collapse summary:hover {
   .brief-stage{padding-left:14px;padding-right:14px}
   .brief-gate-swap{max-width:20ch}
   .brief-recommend{padding:16px}
-  .public-link-trigger{padding:15px 16px;gap:11px}
-  .public-link-trigger>span{width:32px;height:32px;font-size:15px}
-  .public-link-actions .button{flex:1 1 auto}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -17163,5 +17131,360 @@ details.admin-collapse summary:hover {
     border-radius: 0;
     font-size: 14.5px;
     padding: 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TELEFONOS TIPOGRÁFIA — sorköz- és méretpadló
+   ════════════════════════════════════════════════════════════════════
+   Az oldal címsorai 0,86–0,98 közötti sorközzel mennek. Ez egy 1440 pixeles
+   vászonra szánt display-beállítás: nagy méretben pont ettől feszes és jó.
+   375 pixelen viszont ugyanaz a cím 4–5 sorba törik, és a sorköz KISEBB lesz,
+   mint a betűméret — a sorok fizikailag összeérnek. Mérve: a főoldali H1 45px
+   betűvel és 40,5px sorközzel ment (arány 0,90), a szekciócímek 0,94–0,98
+   között. Ez az, ami telefonon összenyomottnak látszik.
+
+   A `clamp()` FELSŐ határaihoz nem nyúlunk: asztali nézetben minden marad
+   pontosan úgy, ahogy volt. Csak a telefonos ALSÓ határ megy le, és a
+   címsorok kapnak egy sorköz-padlót.
+
+   Szándékosan felsorolt szelektorok, nem `h1,h2,h3`: egy általános szabály a
+   kártyacímeket (amik már most 1,2–1,5 sorközzel mennek) össze is HÚZNÁ.
+   A demó-oldalak eleve kimaradnak — azok saját arculatú mintaprojektek, ott a
+   feszes szedés szándékos, és nincsenek `.site-shell` alatt. */
+@media (max-width: 768px) {
+  /* ── Nyitóképek ── */
+  .hero-editorial h1,
+  .hero-editorial .hero-statement {
+    font-size: clamp(30px, 8.2vw, 44px);
+    /* Csupa nagybetű, tehát nincs lelógó szár — itt elég valamivel feszesebb. */
+    line-height: 1.08;
+  }
+
+  .page-hero h1,
+  .landing-hero h1,
+  .industry-hero h1,
+  .quote-layout h1,
+  .case-detail-hero h1,
+  .not-found-header h1,
+  .public-brief-intro h2 {
+    font-size: clamp(30px, 8vw, 42px);
+    line-height: 1.12;
+  }
+
+  /* ── Szekciócímek ── */
+  .section-head h2,
+  .deliver-intro h2,
+  .orbit-copy h2,
+  .featured-copy h2,
+  .route-intro h1,
+  .route-intro h2,
+  .manifesto h2,
+  .service-slab h2,
+  .timeline h2,
+  .audit-editorial h2,
+  .case-detail-problem h2,
+  .exit-offer h2 {
+    font-size: clamp(26px, 6.8vw, 37px);
+    line-height: 1.16;
+  }
+
+  .founder-copy h2,
+  .work-deck-copy h2,
+  .no-call h2 {
+    font-size: clamp(25px, 6.4vw, 34px);
+    line-height: 1.16;
+  }
+
+  /* ── Brief varázsló lépéscímei ── */
+  .public-brief-slide h3 {
+    font-size: clamp(23px, 6vw, 31px);
+    line-height: 1.16;
+  }
+
+  /* A nagy negatív betűköz is asztali beállítás: kis méretben a betűk
+     összetapadnak tőle. */
+  .site-shell h1,
+  .site-shell h2,
+  .public-brief-slide h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TELEFONON ÖSSZECSUKHATÓ BLOKK
+   ════════════════════════════════════════════════════════════════════
+   Az árblokk telefonon 5838 pixel volt — a főoldal egyharmada. Ebből az
+   összehasonlító tábla, a részletes csomagtartalom és a vételi opció
+   másodlagos: a döntéshez a három csomagkártya elég.
+
+   A nyitva/csukva különbséget CSS dönti el, nem JavaScript. Asztali nézetben
+   ezek a szabályok meg sem szólalnak: a gomb rejtve, a tartalom nyitva — a
+   `.is-open` osztály ott semmit nem jelent. Így a szerver és a böngésző
+   ugyanazt a jelöléskódot látja, nincs hidratálási eltérés és nincs
+   összecsukódó villanás betöltéskor. A tartalom végig a DOM-ban van. */
+.mobile-fold-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-fold {
+    border-top: 1px solid var(--line);
+    margin-top: 22px;
+  }
+
+  .dark-page .mobile-fold,
+  .model-pricing .mobile-fold {
+    border-color: rgba(48, 56, 65, 0.16);
+  }
+
+  .mobile-fold-toggle {
+    align-items: center;
+    background: none;
+    border: 0;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 20px 2px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .mobile-fold-toggle i {
+    align-items: center;
+    background: rgba(255, 87, 34, 0.12);
+    border-radius: 50%;
+    color: var(--ember);
+    display: flex;
+    flex: 0 0 auto;
+    font-size: 20px;
+    font-style: normal;
+    height: 32px;
+    justify-content: center;
+    width: 32px;
+  }
+
+  /* `grid-template-rows` 0fr→1fr: a tartalom saját magasságáig nyílik ki,
+     anélkül hogy fix `max-height`-ot kellene tippelni. Egy alulbecsült
+     max-height levágná a hosszabb blokkot, egy túlbecsült pedig lomha,
+     üresen guruló animációt adna. */
+  .mobile-fold-body {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mobile-fold-body > * {
+    min-height: 0;
+  }
+
+  .mobile-fold:not(.is-open) .mobile-fold-body {
+    grid-template-rows: 0fr;
+  }
+
+  .mobile-fold:not(.is-open) .mobile-fold-body > * {
+    overflow: hidden;
+    /* Csukott állapotban a belső térközök is összeérnek, különben a „nulla
+       magasságú" doboz még mindig hagyna egy tenyérnyi rést. */
+    margin-block: 0;
+    padding-block: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-fold-body {
+    transition: none;
+  }
+}
+
+/* ── „Ezt kapod" — a rétegenként összeépülő oldal ─────────────────────
+   Négy elforgatott doboz egy `perspective` konténerben. Nincs mögötte WebGL
+   és nincs extra letöltés: a `model-viewer` könyvtár (~1 MB) így nem kerül
+   feljebb a betöltésben, ami telefonon számít a legtöbbet.
+
+   A rétegek `translateZ`-ben ülnek egymás fölött, tehát a dőlés MINDEGYIKRE
+   ugyanaz — így marad egységes az izometrikus nézet, és a beépülés csak egy
+   `opacity` + `translateZ` váltás a kompozitoron. */
+.deliver-stack {
+  height: 250px;
+  margin-top: clamp(28px, 4vw, 44px);
+  perspective: 1000px;
+  position: relative;
+}
+
+.deliver-stack-shadow {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(48, 56, 65, 0.22), rgba(48, 56, 65, 0));
+  bottom: 26px;
+  height: 46px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 74%;
+}
+
+.deliver-layer {
+  border: 1px solid rgba(48, 56, 65, 0.22);
+  border-radius: 12px;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  height: 132px;
+  left: 50%;
+  opacity: 0;
+  padding: 16px;
+  position: absolute;
+  top: 50%;
+  transform:
+    translate(-50%, -50%)
+    rotateX(58deg)
+    rotateZ(-40deg)
+    translateZ(var(--z-off, 120px));
+  transition:
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
+  width: 216px;
+}
+
+.deliver-layer.is-on {
+  opacity: 1;
+  transform:
+    translate(-50%, -50%)
+    rotateX(58deg)
+    rotateZ(-40deg)
+    translateZ(var(--z, 0px));
+}
+
+.deliver-layer i {
+  border-radius: 3px;
+  display: block;
+  height: 7px;
+}
+
+/* 01 — az alaplap: domain, tárhely, email. Rácsos, „infrastruktúra" felület. */
+.deliver-layer.base {
+  --z: -6px;
+  background:
+    linear-gradient(rgba(48, 56, 65, 0.09) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(90deg, rgba(48, 56, 65, 0.09) 1px, transparent 1px) 0 0 / 18px 18px,
+    #e7eaea;
+}
+
+.deliver-layer.base i {
+  background: rgba(48, 56, 65, 0.2);
+}
+
+.deliver-layer.base i:nth-child(1) { width: 54%; }
+.deliver-layer.base i:nth-child(2) { width: 30%; }
+.deliver-layer.base i:nth-child(3) { width: 42%; }
+
+/* 02 — az ügyfélkapu: haladást mutató sávok. */
+.deliver-layer.portal {
+  --z: 30px;
+  background: #f7f8f8;
+  box-shadow: 0 14px 26px -18px rgba(48, 56, 65, 0.7);
+}
+
+.deliver-layer.portal i {
+  background: rgba(118, 171, 174, 0.28);
+}
+
+.deliver-layer.portal i:nth-child(1) { background: var(--aqua); width: 62%; }
+.deliver-layer.portal i:nth-child(2) { width: 84%; }
+.deliver-layer.portal i:nth-child(3) { width: 44%; }
+
+/* 03 — az előnézet: böngészőkeret, felül a címsávval. */
+.deliver-layer.frame {
+  --z: 66px;
+  background: #fff;
+  box-shadow: 0 16px 30px -20px rgba(48, 56, 65, 0.75);
+}
+
+.deliver-layer.frame i:nth-child(1) {
+  background: rgba(48, 56, 65, 0.16);
+  border-radius: 999px;
+  height: 9px;
+  width: 100%;
+}
+
+.deliver-layer.frame i:nth-child(2) { background: rgba(48, 56, 65, 0.22); width: 70%; }
+.deliver-layer.frame i:nth-child(3) { background: rgba(48, 56, 65, 0.12); width: 50%; }
+
+/* 04 — a kész oldal: ez az, ami átkerül hozzád. */
+.deliver-layer.live {
+  --z: 104px;
+  background: linear-gradient(150deg, #303841, #1b2229);
+  border-color: rgba(255, 87, 34, 0.5);
+  box-shadow: 0 26px 44px -22px rgba(48, 56, 65, 0.85);
+}
+
+.deliver-layer.live i:nth-child(1) { background: var(--ember); width: 46%; }
+.deliver-layer.live i:nth-child(2) { background: rgba(245, 245, 245, 0.35); width: 76%; }
+.deliver-layer.live i:nth-child(3) { background: rgba(245, 245, 245, 0.18); width: 58%; }
+
+@media (max-width: 900px) {
+  /* Telefonon a szekció amúgy is hosszú, ezért tömörebb a jelenet — de nem
+     tűnik el: ez az egyetlen látvány ebben a szakaszban. */
+  .deliver-stack {
+    height: 180px;
+    margin: 22px 0 4px;
+  }
+
+  .deliver-layer {
+    height: 100px;
+    padding: 12px;
+    width: 168px;
+  }
+
+  .deliver-layer.portal { --z: 24px; }
+  .deliver-layer.frame { --z: 50px; }
+  .deliver-layer.live { --z: 78px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deliver-layer {
+    transition: none;
+  }
+}
+
+/* ── Telefonos térköz-fogyókúra ───────────────────────────────────────
+   A főoldal 375 pixelen 23,6 képernyő hosszú volt. Az árblokk összecsukása és
+   a tipográfia után maradt még két helyen fölösleges levegő: a heró alsó
+   feloldó sávja és az „Ezt kapod" lista térközei. Asztali nézetben mindkettő
+   marad, ott a nagyobb léptékhez kell. */
+@media (max-width: 768px) {
+  .home-hero {
+    padding-bottom: clamp(110px, 18vh, 190px);
+  }
+
+  .home-hero::before {
+    height: clamp(96px, 15vh, 160px);
+  }
+
+  .hero-rule {
+    margin-top: 22px;
+  }
+
+  .deliver-section {
+    padding-bottom: clamp(52px, 8vw, 76px);
+    padding-top: clamp(52px, 8vw, 76px);
+  }
+
+  .deliver-row {
+    padding: 20px 0;
+  }
+
+  .deliver-row > div > p {
+    font-size: 14.5px;
+    line-height: 1.55;
+    margin-bottom: 13px;
+  }
+
+  .deliver-row h3 {
+    margin-bottom: 8px;
   }
 }

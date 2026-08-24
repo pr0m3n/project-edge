@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   CHANGE_QUOTA_EXCLUDED,
   CHANGE_QUOTA_FREE,
@@ -100,6 +101,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
               </article>
             ))}
           </div>
+          <MobileFold label="Mi a különbség a csomagok között?">
           {/* Közös tengelyek. A három külön jellemzőlistából nem derült ki, mi a
               különbség — itt minden sor ugyanazt a kérdést teszi fel. */}
           <section className="plan-compare" aria-labelledby="plan-compare-title">
@@ -144,12 +146,15 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
               <p>A felhasznált keretet az ügyfélkapun bármikor látod — nem kell számolgatnod.</p>
             </details>
           </section>
+          </MobileFold>
 
+          <MobileFold label="Részletes csomagtartalom">
           <section className="plan-detail-panel" id="csomag-reszletek">
             <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
             <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><a className="button primary" href="#projektbrief" onClick={() => preselectPlan(activePlan.key)}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</a></footer>
           </section>
+          </MobileFold>
           <div className="subscription-footnotes">
             <span>Az első havidíj indítja a munkát</span>
             <span>Bármikor lemondható</span>
@@ -160,6 +165,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
           </div>
       </div>
 
+      <MobileFold label="Vételi opció — bármikor megveheted">
       {/* A vásárlás KIMENET, nem belépő: a bérlés az egyetlen belépési pont, és
           a tulajdonszerzés egy később lehívható opció. Így a hideg forgalom nem
           a nagy egyösszegű döntéssel találkozik először, az „és ha egyszer a
@@ -197,6 +203,60 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
           <small>{PRICE_TAX_NOTE}</small>
         </div>
       </section>
+      </MobileFold>
     </section>
+  );
+}
+
+/**
+ * Telefonon összecsukható blokk.
+ *
+ * Miért: a `.model-pricing` telefonon 5838 pixel magas volt — a főoldal
+ * egyharmada. Ebből az összehasonlító tábla (1158px), a részletes
+ * csomagtartalom (1061px) és a vételi opció (899px) MÁSODLAGOS tartalom:
+ * a döntéshez a három csomagkártya elég, a többit az nézi meg, akit érdekel.
+ *
+ * A nyitva/csukva állapot különbségét CSS dönti el, nem JavaScript: a szerver
+ * mindig ugyanazt a jelöléskódot adja (nincs hidratálási eltérés és nincs
+ * összecsukódó villanás), asztali nézetben a `.mobile-fold` szabályok meg sem
+ * szólalnak, a gomb is rejtve marad. A tartalom VÉGIG a DOM-ban van, tehát a
+ * kereső és a képernyőolvasó ugyanúgy látja.
+ */
+function MobileFold({ children, label }: { children: ReactNode; label: string }) {
+  const [open, setOpen] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const id = useId();
+
+  /* Ha a lap horgonya (`#veteli-opcio`, `#csomag-reszletek`) egy ITT BELÜL lévő
+     elemre mutat, a blokk kinyitja magát — különben a link egy összecsukott
+     dobozra ugrana, és a látogató nem találná, amit keres. */
+  useEffect(() => {
+    function openIfTargeted() {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+      const target = document.getElementById(hash);
+      if (target && bodyRef.current?.contains(target)) setOpen(true);
+    }
+    openIfTargeted();
+    window.addEventListener("hashchange", openIfTargeted);
+    return () => window.removeEventListener("hashchange", openIfTargeted);
+  }, []);
+
+  return (
+    <div className={`mobile-fold${open ? " is-open" : ""}`}>
+      <button
+        aria-controls={id}
+        aria-expanded={open}
+        className="mobile-fold-toggle"
+        onClick={() => setOpen((value) => !value)}
+        type="button"
+      >
+        <span>{label}</span>
+        <i aria-hidden="true">{open ? "−" : "+"}</i>
+      </button>
+      <div className="mobile-fold-body" id={id} ref={bodyRef}>
+        {children}
+      </div>
+    </div>
   );
 }

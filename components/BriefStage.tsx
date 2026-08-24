@@ -261,7 +261,6 @@ export function BriefStage() {
             <p className="brief-gate-sub">Nincs regisztráció, nincs telefonálás. Válassz, és innentől együtt rakjuk össze.</p>
             <div className="brief-gate-choices">
               <button className="brief-gate-choice" onClick={(event) => choose(event, "no")} type="button">
-                <span className="brief-gate-n">01</span>
                 <strong>Új weboldalt indítok</strong>
                 <p>Még nincs oldalam, vagy a mostanit teljesen lecserélném.</p>
                 <span className="brief-gate-cta">
@@ -272,7 +271,6 @@ export function BriefStage() {
                 </span>
               </button>
               <button className="brief-gate-choice" onClick={(event) => choose(event, "yes")} type="button">
-                <span className="brief-gate-n">02</span>
                 <strong>Meglévőt újítanék fel</strong>
                 <p>Van már oldalam és domainem, de nem hozza, amit kéne.</p>
                 <span className="brief-gate-cta">

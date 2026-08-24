@@ -5,6 +5,7 @@ import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BriefStage } from "@/components/BriefStage";
+import { DeliverStack } from "@/components/DeliverStack";
 import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
 
@@ -141,6 +142,13 @@ export default function Home() {
             <p className="hero-subhint">
               Vagy kezdd azonnal: <a href="#projektbrief">online projektbrief kitöltése →</a>
             </p>
+            {/* A narancs vonal a FOLYAMBAN van, nem a szekció aljához tapadva.
+                Korábban a `.home-hero::after` rajzolta, nézetablak-arányos
+                `bottom` értékkel — csakhogy a fölötte lévő szöveg magassága a
+                tartalomtól függ, nem a nézettől, ezért bizonyos képernyő-
+                arányoknál a vonal átment a „Vagy kezdd azonnal…" soron. Így
+                nincs az a méret, ahol ütközhetne. */}
+            <span aria-hidden="true" className="hero-rule" />
           </div>
           <div className="hero-system" aria-label="ProjectEdge projektfolyamat előnézet">
             <div className="system-glow" aria-hidden="true" />
@@ -197,6 +205,8 @@ export default function Home() {
             Nem ügynökség vagy alvállalkozói lánc: egy ember, aki a tervezéstől az üzemeltetésig
             végigviszi. Ez a négy dolog az, ami ebből neked konkrétan jár.
           </p>
+          {/* Ahogy görgetsz a négy tételen, rétegenként összeáll a kész oldal. */}
+          <DeliverStack />
         </div>
         <div className="deliver-list">
           {deliverables.map((item) => (

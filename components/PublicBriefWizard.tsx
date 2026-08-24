@@ -142,11 +142,7 @@ export function PublicBriefWizard({
    * ahol a látogató még nem járt —, és a szervernek is rossz lépésszámot
    * küldenénk, ezért a folytatás-link a brief végén nyílna meg.
    */
-  const [returnStep, setReturnStep] = useState<number | null>(null);
   /** A piszkozat-link email küldés állapota. */
-  const [linkEmail, setLinkEmail] = useState("");
-  const [linkState, setLinkState] = useState<"idle" | "open" | "sending" | "sent" | "error">("idle");
-  const [linkError, setLinkError] = useState("");
   /** Mikor nyílt meg az űrlap — a bot-szűréshez kell a szerveren.
       Renderelés közben nem hívunk `Date.now()`-ot (tisztaság), csak mount után. */
   const openedAt = useRef(0);
@@ -204,24 +200,6 @@ export function PublicBriefWizard({
     setForm((current) => ({ ...current, ...values }));
   }
 
-  /**
-   * A Vissza gomb. Ha a „küldjem emailben?" linkkel ugrottunk ide, akkor arra a
-   * lépésre visz vissza, ahol a látogató valóban tartott — nem a Mentés előtti
-   * képernyőre, amit még nem is látott.
-   */
-  function goBack() {
-    if (returnStep !== null) {
-      const target = returnStep;
-      setReturnStep(null);
-      setLinkState("idle");
-      setLinkError("");
-      setError("");
-      setStep(target);
-      return;
-    }
-    go(step - 1);
-  }
-
   function go(next: number) {
     if (next > step) {
       const message = validate(step, form);
@@ -252,44 +230,6 @@ export function PublicBriefWizard({
     trackEvent("brief_completed", { model: prepared.commercialModel, source: "homepage" });
     trackLeadConversion();
     router.push("/ugyfelkapu?brief=continue");
-  }
-
-  /**
-   * A piszkozat elküldése emailben — fiók nélkül.
-   *
-   * Ez a második kimenet a regisztráció mellett. A mérés szerint aki eddig
-   * eljutott és nem regisztrált, arról NYOMTALANUL elveszett a kitöltött brief:
-   * a localStorage az ő gépén maradt, a rendszer nem tudott róla. Innentől
-   * ticket készül belőle, ő pedig kap egy folytatás-linket.
-   */
-  async function sendDraftLink() {
-    const email = linkEmail.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setLinkError("Adj meg egy érvényes email címet.");
-      return;
-    }
-    setLinkState("sending");
-    setLinkError("");
-    try {
-      const response = await fetch("/api/briefs/public-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // A VALÓDI lépés megy el, nem az, ahova a link ugrasztott minket.
-        body: JSON.stringify({ email, form, step: returnStep ?? step, startedAt: openedAt.current, honeypot: "" })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setLinkState("error");
-        setLinkError(payload?.error || "Nem sikerült elküldeni. Próbáld újra.");
-        return;
-      }
-      setLinkState("sent");
-      trackEvent("brief_link_sent", { step: step + 1 });
-      trackLeadConversion();
-    } catch {
-      setLinkState("error");
-      setLinkError("Hálózati hiba. Próbáld újra.");
-    }
   }
 
   function continueDraft() {
@@ -510,74 +450,23 @@ export function PublicBriefWizard({
             </div> : null}
 
             {step === 4 ? <div className="public-brief-slide public-summary">
-              <header><span>05 / Mentés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. Válaszd ki, hogyan mented — fiókkal vagy anélkül.</p></header>
+              <header><span>05 / Mentés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. A mentéshez lépj be, vagy hozz létre egy fiókot — onnan indul a projekt.</p></header>
               <div className="public-summary-grid">
                 <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Egyedi projekt · egyszeri fejlesztés"}</strong></div>
                 <div><span>Márka</span><strong>{form.company}</strong></div>
                 <div><span>Elsődleges cél</span><strong>{form.primaryAction}</strong></div>
                 <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {form.palette === "custom" ? "Egyedi paletta" : selectedPalette[1]}</strong></div>
               </div>
-              <div className="public-auth-gate"><div><span>AJÁNLOTT</span><h4>Mentsd a saját ügyfélfiókodba.</h4><p>Itt tudod feltölteni a logót, a képeket és a hozzáféréseket, és innen indul a szerződés is. Ha már van fiókod, csak lépj be.</p></div><button className="button primary" onClick={continueToAccount} type="button">Belépés vagy regisztráció →</button></div>
-
-              {/* Második kimenet fiók nélkül: enélkül a nem regisztrálók
-                  kitöltött briefje nyomtalanul elveszett. */}
-              <div className="public-link-gate">
-                {linkState === "sent" ? (
-                  <div className="public-link-done" role="status">
-                    <span aria-hidden="true">✓</span>
-                    <div>
-                      <strong>Elküldtem a linket.</strong>
-                      <p>Nézd meg a(z) <b>{linkEmail.trim().toLowerCase()}</b> postafiókot — a levélben lévő gombbal bármelyik gépen folytathatod. Én is látom, hogy itt jártál, szóval ha elakadsz, tudok segíteni.</p>
-                    </div>
-                  </div>
-                ) : linkState === "open" || linkState === "sending" || linkState === "error" ? (
-                  <div className="public-link-form">
-                    <label>
-                      <span>Hova küldjem a folytatás linkjét?</span>
-                      <input
-                        autoComplete="email"
-                        inputMode="email"
-                        onChange={(event) => { setLinkEmail(event.target.value); setLinkError(""); }}
-                        placeholder="nev@ceged.hu"
-                        type="email"
-                        value={linkEmail}
-                      />
-                    </label>
-                    <div className="public-link-actions">
-                      <button className="button primary" disabled={linkState === "sending"} onClick={sendDraftLink} type="button">
-                        {linkState === "sending" ? "Küldés…" : "Küldés"}
-                      </button>
-                      <button className="button spectral" onClick={() => { setLinkState("idle"); setLinkError(""); }} type="button">Mégse</button>
-                    </div>
-                    {linkError ? <p className="public-brief-error" role="alert">{linkError}</p> : null}
-                    <small>Nem iratkozol fel semmire. Ezt az egy levelet küldöm el, a benne lévő linkkel folytathatod.</small>
-                  </div>
-                ) : (
-                  <button className="public-link-trigger" onClick={() => setLinkState("open")} type="button">
-                    <span aria-hidden="true">✉</span>
-                    <div>
-                      <strong>Vagy küldd el magadnak emailben</strong>
-                      <small>Fiók nélkül. Kapsz egy linket, amivel bármikor, bármelyik gépen folytathatod.</small>
-                    </div>
-                    <i aria-hidden="true">→</i>
-                  </button>
-                )}
-              </div>
+              <div className="public-auth-gate"><div><span>MENTÉS</span><h4>Mentsd a saját ügyfélfiókodba.</h4><p>Itt tudod feltölteni a logót, a képeket és a hozzáféréseket, és innen indul a szerződés is. Ha már van fiókod, csak lépj be.</p></div><button className="button primary" onClick={continueToAccount} type="button">Belépés vagy regisztráció →</button></div>
             </div> : null}
 
             {error ? <p className="public-brief-error" role="alert">{error}</p> : null}
             <div className="public-brief-actions">
-              <button className="button secondary" disabled={step === 0 && returnStep === null} onClick={goBack} type="button">Vissza</button>
+              <button className="button secondary" disabled={step === 0} onClick={() => go(step - 1)} type="button">Vissza</button>
               {step < steps.length - 1 ? <button className="button primary" onClick={() => go(step + 1)} type="button">Következő</button> : null}
             </div>
             <div className="public-save-row">
               <small className="public-save-state">● {savedLabel}</small>
-              {/* Bármelyik lépésről kimenthető: aki itt hagyja abba, ne vesszen el. */}
-              {step > 0 && step < steps.length - 1 && linkState !== "sent" ? (
-                <button className="public-save-link" onClick={() => { setReturnStep(step); setStep(steps.length - 1); setLinkState("open"); }} type="button">
-                  küldjem emailben?
-                </button>
-              ) : null}
             </div>
           </form>
 
