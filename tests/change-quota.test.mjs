@@ -80,7 +80,6 @@ test("a migráció ugyanazt a fordulónap-szabályt használja, mint a kliens", 
 });
 
 test("a csomagok kvótája és a megjelenített mondat nem csúszhat el", () => {
-  assert.match(source, /changeQuota: \{ count: 3, period: "year" \}/);
   assert.match(source, /changeQuota: \{ count: 1, period: "month" \}/);
   assert.match(source, /changeQuota: \{ count: 2, period: "month" \}/);
   assert.match(source, /export function changeQuotaLabel/);

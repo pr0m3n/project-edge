@@ -28,10 +28,11 @@ const GATE_TEXTS = ["Új weboldalt indítasz, vagy a meglévőt újítanád fel?
  * meg, és a fény késve „ugrott be". Így az első festéskor már ott van.
  */
 const AURORA = [
-  { key: "blue", w: "92vmin", h: "70vmin", side: "left" as const, offset: "-12%", bottom: "-14%", rgb: "43,75,255", dur: 38, dx: "26vmin", dy: "-14vmin", s0: 1, s1: 1.16 },
-  { key: "magenta", w: "76vmin", h: "66vmin", side: "left" as const, offset: "22%", bottom: "-18%", rgb: "194,59,255", dur: 46, dx: "-20vmin", dy: "-22vmin", s0: 1.08, s1: 0.9 },
-  { key: "rose", w: "84vmin", h: "64vmin", side: "right" as const, offset: "-8%", bottom: "-12%", rgb: "255,79,149", dur: 42, dx: "-30vmin", dy: "-16vmin", s0: 1, s1: 1.2 },
-  { key: "ember", w: "62vmin", h: "52vmin", side: "left" as const, offset: "50%", bottom: "-6%", rgb: "255,122,61", dur: 55, dx: "16vmin", dy: "-26vmin", s0: 0.92, s1: 1.15 }
+  { key: "blue", w: "clamp(420px, 80vw, 950px)", h: "clamp(340px, 65vw, 750px)", side: "left" as const, offset: "-10%", bottom: "-10%", rgb: "35,80,255", dur: 34, dx: "18vw", dy: "-12vh", s0: 1, s1: 1.18 },
+  { key: "magenta", w: "clamp(380px, 70vw, 820px)", h: "clamp(320px, 60vw, 700px)", side: "left" as const, offset: "25%", bottom: "-14%", rgb: "196,50,255", dur: 42, dx: "-16vw", dy: "-18vh", s0: 1.05, s1: 0.92 },
+  { key: "rose", w: "clamp(400px, 75vw, 880px)", h: "clamp(330px, 60vw, 720px)", side: "right" as const, offset: "-5%", bottom: "-8%", rgb: "255,70,140", dur: 38, dx: "-22vw", dy: "-14vh", s0: 1, s1: 1.22 },
+  { key: "ember", w: "clamp(360px, 65vw, 780px)", h: "clamp(300px, 55vw, 640px)", side: "left" as const, offset: "45%", bottom: "-4%", rgb: "255,100,45", dur: 48, dx: "14vw", dy: "-20vh", s0: 0.95, s1: 1.15 },
+  { key: "cyan", w: "clamp(350px, 60vw, 700px)", h: "clamp(280px, 50vw, 580px)", side: "right" as const, offset: "30%", bottom: "-16%", rgb: "0,210,255", dur: 44, dx: "-12vw", dy: "-15vh", s0: 0.9, s1: 1.12 }
 ];
 
 type GateChoice = "no" | "yes";
@@ -240,16 +241,28 @@ export function BriefStage() {
             <p className="brief-gate-sub">Nincs regisztráció, nincs telefonálás. Válassz, és innentől együtt rakjuk össze.</p>
             <div className="brief-gate-choices">
               <button className="brief-gate-choice" onClick={(event) => choose(event, "no")} type="button">
-                <span className="brief-gate-n">01</span>
+                <div className="brief-gate-top">
+                  <span className="brief-gate-n">01 // INDULÁS</span>
+                  <span className="brief-gate-tag">Új weboldal</span>
+                </div>
                 <strong>Új weboldalt indítok</strong>
-                <p>Még nincs oldalam, vagy a mostanit teljesen lecserélném.</p>
-                <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                <p>Még nincs oldalam, vagy a meglévőt teljesen lecserélném az alapoktól.</p>
+                <div className="brief-gate-cta">
+                  <span>Kiválasztom ezt az irányt</span>
+                  <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                </div>
               </button>
               <button className="brief-gate-choice" onClick={(event) => choose(event, "yes")} type="button">
-                <span className="brief-gate-n">02</span>
+                <div className="brief-gate-top">
+                  <span className="brief-gate-n">02 // MEGÚJÍTÁS</span>
+                  <span className="brief-gate-tag">Áttervezés</span>
+                </div>
                 <strong>Meglévőt újítanék fel</strong>
-                <p>Van már oldalam és domainem, de nem hozza, amit kéne.</p>
-                <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                <p>Van már oldalam és domainem, de lassú, elavult, vagy nem hoz érdeklődőket.</p>
+                <div className="brief-gate-cta">
+                  <span>Kiválasztom ezt az irányt</span>
+                  <span aria-hidden="true" className="brief-gate-arrow">→</span>
+                </div>
               </button>
             </div>
           </div>
