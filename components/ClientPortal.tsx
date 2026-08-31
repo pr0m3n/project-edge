@@ -41,7 +41,7 @@ import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
 import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
-import { trackLeadConversion } from "@/lib/analytics";
+import { ASSUMED_RETENTION_MONTHS, trackLeadConversion } from "@/lib/analytics";
 import type { Project, Ticket, TicketMessage, ClientChangeRequest, WebsitePurchase } from "@/components/portal/types";
 import type { WebsitePurchasePaymentMethod } from "@/lib/website-purchase";
 import Image from "next/image";
@@ -1391,8 +1391,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setBriefConfirmed(false);
     setProjectSaving(false);
     setProjectSubmitted(true);
-    // Google Ads konverzió: innen tudja a licitálás, melyik hirdetés hozott érdeklődőt
-    trackLeadConversion(isSubscription ? selectedSubscription.price : undefined);
+    /* Google Ads konverzió: innen tudja a licitálás, melyik hirdetés hozott
+       érdeklődőt. Az érték az ügyfél teljes életciklusa, nem egy havidíj —
+       különben ez a LEGMÉLYEBB konverzió küldené a legkisebb számot. */
+    trackLeadConversion(
+      "project",
+      isSubscription ? selectedSubscription.price * ASSUMED_RETENTION_MONTHS : undefined
+    );
     setSubmittedProjectTitle(isSubscription ? `${projectForm.company} · ${selectedSubscription.name}` : projectForm.title);
     setNotice(isSubscription ? "A menedzselt weboldal adatlapja elkészült. Következő lépés a szolgáltatási szerződés." : "Elmentettük és elküldtük a tervet. Hamarosan jelentkezünk a következő lépésekkel.");
     loadPortal(true);

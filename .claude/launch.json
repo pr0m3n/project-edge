@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "autoaesthetik",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/boczanpatrik/Documents/clients/site-autoaesthetik", "run", "dev", "--", "-p", "3100"],
+      "port": 3100
     }
   ]
 }

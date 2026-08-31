@@ -8,7 +8,8 @@ import { BriefStage } from "@/components/BriefStage";
 import { DeliverStack } from "@/components/DeliverStack";
 import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
-import { STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
+import { PhoneLink } from "@/components/PhoneLink";
+import { STUDIO_PHONE_LABEL } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
@@ -347,7 +348,7 @@ export default function Home() {
           {/* A szakasz eddig azzal zárult, hogy „ha telefonon egyeztetnél,
               állok rendelkezésedre" — csak épp nem volt mit hívni. */}
           <p className="nc-phone">
-            Ha mégis inkább telefonálnál: <a href={`tel:${STUDIO_PHONE_TEL}`}>{STUDIO_PHONE_LABEL}</a>
+            Ha mégis inkább telefonálnál: <PhoneLink>{STUDIO_PHONE_LABEL}</PhoneLink>
           </p>
         </div>
         <ul className="nc-list">

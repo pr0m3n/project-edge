@@ -1,6 +1,7 @@
 import { TransitionLink } from "@/components/TransitionLink";
 import { CookieSettingsButton } from "@/components/CookieSettingsButton";
-import { STUDIO_EMAIL, STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
+import { PhoneLink } from "@/components/PhoneLink";
+import { STUDIO_EMAIL, STUDIO_PHONE_LABEL } from "@/lib/contact";
 
 const navLinks = [
   { href: "/szolgaltatasok", label: "Szolgáltatások" },
@@ -28,7 +29,7 @@ export function SiteFooter() {
             Egyedi weboldalak, ügyfélkapuk és üzleti rendszerek — a tervezéstől a kódig egy kézben.
           </p>
           <a href={`mailto:${STUDIO_EMAIL}`}>{STUDIO_EMAIL}</a>
-          <a href={`tel:${STUDIO_PHONE_TEL}`}>{STUDIO_PHONE_LABEL}</a>
+          <PhoneLink>{STUDIO_PHONE_LABEL}</PhoneLink>
         </div>
 
         <nav className="footer-col" aria-label="Oldaltérkép">

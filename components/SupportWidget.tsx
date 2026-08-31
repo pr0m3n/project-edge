@@ -2,7 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackLeadConversion } from "@/lib/analytics";
 
 type ChatMessage = {
   id: string;
@@ -442,6 +442,12 @@ export function SupportWidget() {
       formStartedAt.current = Date.now();
       setStatus("idle");
       trackEvent("support_message_sent", { intent: entryIntent, first_message: true });
+      /* Ez a legalacsonyabb küszöbű VALÓDI megkeresés az oldalon: van üzenet,
+         név és email, és keletkezett ticket. A konverzió szándékosan ITT sül
+         el, nem a gyors sáv küldésénél (`BriefQuickLane`): az csak előtölti a
+         chatet, a látogató a „hogy szólíthatlak" képernyőn még elpártolhat.
+         Így egy megkeresés egyszer számít, és csak akkor, ha tényleg megvan. */
+      trackLeadConversion("chat");
     } catch {
       setStatus("error");
       setNotice("Hálózati hiba. Kérlek próbáld újra.");

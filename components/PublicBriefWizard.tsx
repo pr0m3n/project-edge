@@ -228,7 +228,7 @@ export function PublicBriefWizard({
     };
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: prepared, savedAt: new Date().toISOString(), step: 4, version: 1 }));
     trackEvent("brief_completed", { model: prepared.commercialModel, source: "homepage" });
-    trackLeadConversion();
+    trackLeadConversion("brief");
     router.push("/ugyfelkapu?brief=continue");
   }
 

@@ -3,7 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { trackEvent } from "@/lib/analytics";
-import { STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
+import { PhoneLink } from "@/components/PhoneLink";
+import { STUDIO_PHONE_LABEL } from "@/lib/contact";
 
 /**
  * A brief melletti gyors út: aki nem akar öt lépést kitölteni, ide ír egy
@@ -132,6 +133,10 @@ export function BriefQuickLane() {
       typeTimer.current = null;
       setTyping(false);
     }
+    /* Csak esemény, NEM konverzió: innen még csak a chat nyílik meg előtöltve.
+       A ticket a név és az email megadása után jön létre, és a konverziót ott
+       küldjük (`SupportWidget`, `submitDraft`) — különben az itt elpártolók is
+       beleszámítanának, ráadásul kétszer. */
     trackEvent("quick_lane_sent", { length: message.length });
     /* A mező szándékosan NEM ürül: ha a látogató mégis bezárja a chatet,
        itt marad, amit írt, és újraküldheti. Ismételt küldésnél a chat a már
@@ -199,7 +204,7 @@ export function BriefQuickLane() {
       </form>
 
       <p className="quick-lane-foot">
-        Vagy hívj: <a href={`tel:${STUDIO_PHONE_TEL}`}>{STUDIO_PHONE_LABEL}</a>
+        Vagy hívj: <PhoneLink>{STUDIO_PHONE_LABEL}</PhoneLink>
       </p>
     </div>
   );

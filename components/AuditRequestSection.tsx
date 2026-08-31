@@ -64,7 +64,7 @@ export function AuditRequestSection() {
 
       setSubmitted(true);
       trackEvent("audit_request_completed", { website: form.websiteUrl });
-      trackLeadConversion();
+      trackLeadConversion("audit");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Váratlan hiba történt. Kérlek próbáld újra.";
       setError(message);
