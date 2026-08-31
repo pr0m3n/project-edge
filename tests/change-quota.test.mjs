@@ -11,6 +11,7 @@ import test from "node:test";
  */
 const source = readFileSync(new URL("../lib/subscriptions.ts", import.meta.url), "utf8");
 const migration = readFileSync(new URL("../supabase/migrations/031_change_request_quota.sql", import.meta.url), "utf8");
+const quotaMigration = readFileSync(new URL("../supabase/migrations/037_monthly_change_quota.sql", import.meta.url), "utf8");
 
 // A `quotaPeriodKey` másolata — a teszt ezt hasonlítja a forráshoz.
 function quotaPeriodKey(anchorIso, quota, now) {
@@ -76,13 +77,20 @@ test("a period_key-t adatbázis-trigger tölti, nem a kliens", () => {
 
 test("a migráció ugyanazt a fordulónap-szabályt használja, mint a kliens", () => {
   assert.match(migration, /least\(anchor_day, days_in_month\)/);
-  assert.match(migration, /plan = 'presence'/, "a Jelenlét keret éves");
+  assert.match(quotaMigration, /least\(anchor_day, days_in_month\)/);
 });
 
-test("a csomagok kvótája és a megjelenített mondat nem csúszhat el", () => {
-  assert.match(source, /changeQuota: \{ count: 3, period: "year" \}/);
-  assert.match(source, /changeQuota: \{ count: 1, period: "month" \}/);
-  assert.match(source, /changeQuota: \{ count: 2, period: "month" \}/);
+test("a módosítási keret MINDEN csomagnál havi — a 037 megszünteti az éves ágat", () => {
+  // Az oldal mindhárom csomagnál havi keretet ígér. Ha a migráció bármelyik
+  // csomagot külön kezelné, az ügyfél mást látna, mint amit a rendszer számol.
+  assert.doesNotMatch(quotaMigration, /plan = 'presence'/, "a Jelenlét nem lehet külön ág");
+  assert.doesNotMatch(quotaMigration, /'Y' \|\|/, "a period_key nem lehet éves");
+  assert.match(quotaMigration, /new\.period_key := 'M' \|\| greatest\(0, elapsed\)::text;/);
+
+  const quotas = [...source.matchAll(/changeQuota: \{ count: (\d+), period: "(\w+)" \}/g)];
+  assert.equal(quotas.length, 3, "pontosan három csomag van");
+  assert.deepEqual(quotas.map(([, , period]) => period), ["month", "month", "month"]);
+  assert.deepEqual(quotas.map(([, count]) => count), ["1", "1", "2"]);
   assert.match(source, /export function changeQuotaLabel/);
 });
 

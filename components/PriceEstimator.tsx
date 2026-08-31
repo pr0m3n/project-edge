@@ -12,6 +12,8 @@ import {
   PLAN_DECISION_RULE,
   PRICE_TAX_NOTE,
   PURCHASE_OPTION_PRICES,
+  buyoutCreditMonths,
+  buyoutFloorPrice,
   SUBSCRIPTION_PLANS,
   SUBSCRIPTION_SHARED_INCLUDED,
   formatHuf,
@@ -178,9 +180,14 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
             Ha bármikor (akár néhány hónap, akár évek múltán) a saját tulajdonodba vennéd a weboldalt, egyetlen egyszeri díjért
             átveszed a teljes Next.js forráskódot, a domaint és a technikai fiókokat. Az előfizetés ekkor lezárul, és nincs több havidíj.
           </p>
+          <p>
+            És minél tovább bérled, annál olcsóbb: <strong>a befizetett havidíjad fele beszámít a vételárba</strong>, egészen addig, amíg a
+            vételár a felére nem csökken. Nagyjából egy-másfél év bérlés után tehát feleáron veheted meg — a havidíj addig nem
+            elvesztegetett pénz, hanem félig már a tulajdonlásra megy. Nem kell előre eldöntened, melyik utat választod.
+          </p>
           <ol>
             <li>Az ügyfélkapun elindítod a megvásárlást</li>
-            <li>Átadási összefoglalót és fizetési adatokat kapsz</li>
+            <li>Átadási összefoglalót kapsz — benne a felhalmozott beszámítással és a fizetendő összeggel</li>
             <li>A vételár beérkezése után átadom a forráskódot és a hozzáféréseket</li>
             <li>A domaint átíratom a saját fiókodra</li>
             <li>Az átadás lezárásától <strong>30 nap díjmentes hibajavítás</strong> jár</li>
@@ -197,9 +204,13 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
           {SUBSCRIPTION_PLANS.map((plan) => (
             <div key={plan.key}>
               <strong>{plan.name}</strong>
-              <b>{formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</b>
+              <span className="buyout-price-cell">
+                <b>{formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</b>
+                <em>{buyoutCreditMonths(plan.key)} hónap bérlés után {formatHuf(buyoutFloorPrice(plan.key))}</em>
+              </span>
             </div>
           ))}
+          <small>A beszámítás a befizetett havidíjak feléből gyűlik, és a vételár felénél áll meg. Felmondáskor a fel nem használt beszámítás elvész.</small>
           <small>{PRICE_TAX_NOTE}</small>
         </div>
       </section>

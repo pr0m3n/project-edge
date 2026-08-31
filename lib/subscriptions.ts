@@ -10,6 +10,23 @@ export const PURCHASE_OPTION_PRICES: Record<SubscriptionPlanKey, number> = {
 };
 
 /**
+ * Rent-to-own beszámítás: a befizetett havidíj fele levonódik a vételárból.
+ *
+ * Ez a hűségidő nélküli megtartás eszköze. Nincs szerződéses kényszer és nincs
+ * kötbér — aki felmond, egyszerűen elveszíti a felhalmozott beszámítást, tehát
+ * a maradás a saját érdeke.
+ *
+ * A plafon SZÁZALÉKBAN van megadva, nem hónapban, és ez szándékos: a vételár
+ * 12× havidíj körül van, tehát egy 24 hónapos hónap-plafon mellett a
+ * beszámítás nullába vinné az árat (14 900 / 2 × 24 = 178 800, a Jelenlét
+ * vételára 179 000). A vételár feléig gyűlő beszámítás ugyanazt az ígéretet
+ * adja, de nem tud elfogyni: a Jelenlétnél ~12 hónap alatt éri el a plafont,
+ * a többinél 13–15 hónap alatt.
+ */
+export const BUYOUT_CREDIT_RATE = 0.5;
+export const BUYOUT_CREDIT_MAX_SHARE = 0.5;
+
+/**
  * Logótervezés felár — EGY helyen, mert három felületen jelenik meg
  * (szolgáltatások, projektbrief, ajánlat). Ha változik az ár, csak ezt írd át.
  */
@@ -259,6 +276,62 @@ export function purchaseOptionPrice(key?: string | null) {
   return PURCHASE_OPTION_PRICES[plan.key];
 }
 
+/**
+ * Hány TELJES havidíjat fizetett be az ügyfél a fordulónapjához mérve.
+ *
+ * Ugyanaz a fordulónap-szabály, amit a módosítási keret is használ: aki 17-én
+ * fizetett először, annak minden 17-e egy újabb befizetett hónap. A
+ * `quotaPeriodKey` havi ága is ezt hívja, hogy a kettő ne tudjon elcsúszni.
+ */
+export function elapsedBillingMonths(anchorIso: string | null | undefined, now = new Date()) {
+  const anchor = anchorIso ? new Date(anchorIso) : null;
+  if (!anchor || Number.isNaN(anchor.getTime())) return 0;
+
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const anchorDay = Math.min(anchor.getDate(), daysInMonth);
+  let elapsed = (now.getFullYear() - anchor.getFullYear()) * 12 + (now.getMonth() - anchor.getMonth());
+  if (now.getDate() < anchorDay) elapsed -= 1;
+  return Math.max(0, elapsed);
+}
+
+/** Mennyi beszámítás gyűlhet össze legfeljebb — a vételár fele. */
+export function buyoutCreditCap(key?: string | null) {
+  return Math.round(purchaseOptionPrice(key) * BUYOUT_CREDIT_MAX_SHARE);
+}
+
+/** A felhalmozott beszámítás forintban — a plafonon megáll. */
+export function buyoutCredit(key: string | null | undefined, monthsPaid: number) {
+  const plan = subscriptionPlan(key);
+  const months = Math.max(0, Math.floor(monthsPaid));
+  return Math.min(Math.round(plan.price * BUYOUT_CREDIT_RATE) * months, buyoutCreditCap(key));
+}
+
+/** Hány hónap alatt telik be a beszámítás — ezt a számot mondjuk az ügyfélnek. */
+export function buyoutCreditMonths(key?: string | null) {
+  const plan = subscriptionPlan(key);
+  return Math.ceil(buyoutCreditCap(key) / Math.round(plan.price * BUYOUT_CREDIT_RATE));
+}
+
+/**
+ * Vételár egy adott pillanatban: listaár, felhalmozott beszámítás és a
+ * ténylegesen fizetendő összeg együtt.
+ *
+ * Azért ad vissza mindhármat, mert az ügyfélnek és az adminnak is a
+ * KÜLÖNBSÉGET kell látnia — a puszta végösszegből nem derül ki, hogy a
+ * maradással mennyit nyert.
+ */
+export function buyoutPrice(key: string | null | undefined, monthsPaid = 0) {
+  const list = purchaseOptionPrice(key);
+  const months = Math.max(0, Math.floor(monthsPaid));
+  const credit = Math.min(buyoutCredit(key, months), list);
+  return { list, credit, payable: list - credit, months };
+}
+
+/** A beszámítás plafonja — ennyire csökkenhet le a vételár. */
+export function buyoutFloorPrice(key?: string | null) {
+  return purchaseOptionPrice(key) - buyoutCreditCap(key);
+}
+
 export function formatHuf(value: number) {
   return `${new Intl.NumberFormat("hu-HU").format(value)} Ft`;
 }
@@ -352,21 +425,17 @@ export function quotaPeriodKey(anchorIso: string | null | undefined, quota: Plan
 
   // 31-i fordulónapnál a rövidebb hónapokban az utolsó nap a forduló, különben
   // a keret sosem újulna meg februárban.
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const anchorDay = Math.min(anchor.getDate(), daysInMonth);
-  let elapsed: number;
-
   if (quota.period === "year") {
-    elapsed = now.getFullYear() - anchor.getFullYear();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const anchorDay = Math.min(anchor.getDate(), daysInMonth);
+    let elapsed = now.getFullYear() - anchor.getFullYear();
     if (now.getMonth() < anchor.getMonth() || (now.getMonth() === anchor.getMonth() && now.getDate() < anchorDay)) {
       elapsed -= 1;
     }
-  } else {
-    elapsed = (now.getFullYear() - anchor.getFullYear()) * 12 + (now.getMonth() - anchor.getMonth());
-    if (now.getDate() < anchorDay) elapsed -= 1;
+    return `Y${Math.max(0, elapsed)}`;
   }
 
-  return `${quota.period === "year" ? "Y" : "M"}${Math.max(0, elapsed)}`;
+  return `M${elapsedBillingMonths(anchorIso, now)}`;
 }
 
 /** Mikor újul meg a keret — az ügyfélnek ezt a dátumot mutatjuk. */

@@ -137,7 +137,18 @@ export default function TermsPage() {
           Új funkció, teljes újratervezés vagy a vállalt keretet meghaladó munka külön ajánlat tárgya.
           Lemondáskor a weboldal, a forráskód és a kezelt technikai fiókok nem kerülnek automatikusan
           átadásra. A Megrendelő külön, az Ügyfélkapuban jelzett egyszeri vételi ajánlat alapján
-          megvásárolhatja az átadható rendszert; a már kifizetett havidíjak nem számítanak bele a vételárba.
+          megvásárolhatja az átadható rendszert.
+        </p>
+        <p>
+          <strong>Beszámítás a vételárba.</strong> A menedzselt előfizetés minden rendezett hónapja után a
+          csomag havidíjának 50%-a beszámít a vételi opció árába, mindaddig, amíg a felhalmozott beszámítás
+          el nem éri a vételár 50%-át; ezt követően a beszámítás nem növekszik tovább. A beszámítás az adott előfizetéshez kötődik: nem
+          ruházható át, készpénzre nem váltható, más szolgáltatás díjába nem számítható be, és az
+          előfizetés megszűnésével elvész. A Megrendelő az Ügyfélkapun mindenkor látja a listaárat, a
+          felhalmozott beszámítást és a ténylegesen fizetendő összeget; a vételi opció lehívásakor ez a
+          három adat kerül az átadási összefoglalóba.
+        </p>
+        <p>
           A vételi opció lehívása esetén az előfizetés a technikai átadással lezárul, a Megrendelőt pedig
           a 9. pont szerinti 30 napos díjmentes hibajavítás illeti meg.
         </p>

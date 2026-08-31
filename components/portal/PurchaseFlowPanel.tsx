@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BANK_TRANSFER_DETAILS } from "@/components/portal/format";
 import type { Project, WebsitePurchase } from "@/components/portal/types";
-import { formatHuf } from "@/lib/subscriptions";
+import { buyoutPrice, elapsedBillingMonths, formatHuf } from "@/lib/subscriptions";
 import {
   WEBSITE_PURCHASE_FLOW,
   websitePurchaseProgress,
@@ -120,6 +120,14 @@ export function PurchaseFlowPanel({
     await onReportTransfer();
   }
 
+  // A tárolt `purchase_option_price` a LISTAÁR pillanatfelvétele. A ténylegesen
+  // fizetendő ennél kevesebb: a befizetett havidíjak fele beszámít. Ugyanazt a
+  // számítást futtatjuk, amit az admin is rögzít a folyamat indításakor.
+  const billingAnchor = project.billing_cycle_started_at ?? project.created_at;
+  const buyout = buyoutPrice(project.subscription_plan, elapsedBillingMonths(billingAnchor));
+  const listPrice = project.purchase_option_price ?? buyout.list;
+  const payable = purchase?.amount ?? Math.max(0, listPrice - buyout.credit);
+
   return (
     <section className="purchase-flow-panel">
       <header className="purchase-flow-head">
@@ -135,7 +143,12 @@ export function PurchaseFlowPanel({
         </div>
         <div className="purchase-price-lockup">
           <span>Egyszeri vételár</span>
-          <strong>{formatHuf(project.purchase_option_price ?? 0)}</strong>
+          <strong>{formatHuf(payable)}</strong>
+          {buyout.credit > 0 ? (
+            <em className="purchase-price-credit">
+              {formatHuf(listPrice)} helyett — {buyout.months} befizetett hónap beszámítása −{formatHuf(buyout.credit)}
+            </em>
+          ) : null}
         </div>
       </header>
 

@@ -1,7 +1,7 @@
 import type { Project } from "@/components/portal/types";
 import { escHtml, formatPrice } from "@/components/portal/format";
 import { PROVIDER, providerContractParty } from "@/lib/legal";
-import { PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
+import { BUYOUT_CREDIT_MAX_SHARE, BUYOUT_CREDIT_RATE, PRICE_TAX_NOTE, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 
 type Props = { project: Project; contractChecked: boolean; onContractCheckedChange: (checked: boolean) => void; performanceConsent: boolean; onPerformanceConsentChange: (checked: boolean) => void; onAccept: () => void };
 
@@ -25,7 +25,7 @@ function sections(project: Project) {
       ? `Az ügyfél neve, márkája, logója, adatai és átadott tartalmai az ügyfélnél maradnak. A weboldal forráskódja, komponensei és technikai fiókjai feletti rendelkezési jog a Szolgáltatónál marad; az ügyfél a rendezett előfizetés idejére kap használati jogot.`
       : `A teljes díj megfizetésével az ügyfél időben és területileg korlátlan felhasználási jogot kap az egyedileg létrehozott, átadható munkarészekre. Harmadik fél elemeire azok saját licence irányadó.`],
     ["7", managed ? "Időtartam, szüneteltetés és felmondás" : "Átadás és hibajavítás", managed
-      ? `A szerződés határozatlan időre jön létre, hűségidő nélkül. Bármely hónapban felmondható; a felmondás a folyó, kifizetett időszak végén hatályos. Szüneteltetés a mindenkori parkolási díj mellett kérhető. A weboldal külön vételáron megvásárolható, de a korábbi havidíjak nem vételárrészletek.`
+      ? `A szerződés határozatlan időre jön létre, hűségidő nélkül. Bármely hónapban felmondható; a felmondás a folyó, kifizetett időszak végén hatályos. Szüneteltetés a mindenkori parkolási díj mellett kérhető. A weboldal külön vételáron bármikor megvásárolható: minden rendezett előfizetési hónap után a havidíj ${Math.round(BUYOUT_CREDIT_RATE * 100)}%-a beszámít a vételárba, mindaddig, amíg a beszámítás el nem éri a vételár ${Math.round(BUYOUT_CREDIT_MAX_SHARE * 100)}%-át. A beszámítás nem ruházható át, készpénzre nem váltható, és az előfizetés megszűnésével elvész.`
       : `Az átadás az Ügyfélkapu vezetett folyamatában történik. Az utolsó igazolt technikai átadási lépéstől számított 30 napig a Szolgáltató díjmentesen kijavítja az átadáskor vállalt működés igazolt hibáit; ez nem terjed ki új funkcióra, új tartalomra vagy harmadik fél módosítására.`],
     ["8", "Fogyasztói nyilatkozat", `Fogyasztó ügyfél szolgáltatási szerződésnél 14 napon belül indokolás nélkül felmondhat. Ha külön kéri a teljesítés korábbi megkezdését, felmondáskor a már teljesített szolgáltatás arányos díját köteles megfizetni. A teljes szolgáltatás befejezésével a jog csak előzetes kifejezett kérés és tudomásulvétel mellett szűnik meg.`],
     ["9", "Felelősség, panasz és záró szabályok", `A felek együttműködnek és a másikat érintő körülményről késedelem nélkül tájékoztatnak. A Szolgáltató nem felel az ügyfél jogsértő tartalmáért vagy ellenőrzési körén kívüli szolgáltatáskiesésért, a kötelező jogszabályi felelősség korlátozása nélkül. Panasz: ${PROVIDER.email}. Az egyedi szerződés, az elfogadott brief és az ÁSZF együtt alkotja a megállapodást; eltérésnél az egyedi szerződés az elsődleges. Irányadó jog: magyar jog.`]
@@ -34,7 +34,7 @@ function sections(project: Project) {
 
 export function contractPlainText(project: Project) {
   const title = project.commercial_model === "subscription" ? "MENEDZSELT WEBOLDAL-SZOLGÁLTATÁSI SZERZŐDÉS" : "EGYEDI VÁLLALKOZÁSI SZERZŐDÉS";
-  return [title, `Verzió: 2026-08-09`, `Szolgáltató: ${providerContractParty()}`, `Ügyfél: ${project.company || project.contact_name || "Megrendelő"} (${project.contact_email})`, `Projekt: ${project.title}`, ...sections(project).map(([, sectionTitle, copy]) => `${sectionTitle}\n${copy}`), `Az ÁSZF elérhetősége: https://projectedge.hu/aszf`].join("\n\n");
+  return [title, `Verzió: 2026-08-31`, `Szolgáltató: ${providerContractParty()}`, `Ügyfél: ${project.company || project.contact_name || "Megrendelő"} (${project.contact_email})`, `Projekt: ${project.title}`, ...sections(project).map(([, sectionTitle, copy]) => `${sectionTitle}\n${copy}`), `Az ÁSZF elérhetősége: https://projectedge.hu/aszf`].join("\n\n");
 }
 
 function printContract(project: Project) {

@@ -100,6 +100,10 @@ test("new pricing is centralized and tax wording is explicit", () => {
   assert.match(subscriptions, /Alanyi adómentes szolgáltatás/);
   assert.match(estimator, /PRICE_TAX_NOTE/);
   assert.match(migration, /when 'presence' then 14900/);
+  // A guard beégetve tartalmazza a vételárat: ha a kód elcsúszik tőle, MINDEN
+  // új előfizetés-beküldés elhasal. A rent-to-own beszámítás ezért nem az árat
+  // írja át, hanem a fizetendő összeget számolja belőle.
+  assert.match(migration, /when 'presence' then 179000/);
 
   // A logótervezés felára három felületen jelenik meg — csak egy helyen élhet,
   // különben a brief mást mond, mint a szolgáltatások oldal.

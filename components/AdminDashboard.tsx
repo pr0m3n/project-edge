@@ -20,7 +20,7 @@ import { WebsitePurchaseAdminPanel } from "@/components/admin/WebsitePurchaseAdm
 import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { DEFAULT_HANDOVER_SERVICES, buildHandoverPlan } from "@/lib/handover";
-import { PARKING_MONTHLY_PRICE, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan } from "@/lib/subscriptions";
+import { PARKING_MONTHLY_PRICE, buyoutPrice, elapsedBillingMonths, formatHuf, isWebsitePurchaseRequest, subscriptionPlan } from "@/lib/subscriptions";
 // Ugyanaz a formázás, mint az ügyfélkapun — korábban mindkét komponens
 // saját másolatot tartott ezekből, és külön-külön csúszhattak el.
 import { BANK_TRANSFER_DETAILS, parseBrief } from "@/components/portal/format";
@@ -1076,13 +1076,17 @@ export function AdminDashboard() {
   }
 
   async function startProjectWebsitePurchase(project: ClientProject) {
-    const price = purchaseOptionPrice(project.subscription_plan);
+    // A fizetendő összeg NEM a listaár: a befizetett havidíjak fele beszámít
+    // (`buyoutPrice`). A horgony ugyanaz, amit a számlázás is használ, hogy az
+    // ügyfélkapun látott összeg és az itt rögzített ne térhessen el.
+    const anchor = project.billing_cycle_started_at ?? project.subscription_started_at ?? project.created_at;
+    const { payable } = buyoutPrice(project.subscription_plan, elapsedBillingMonths(anchor));
     const { data, error } = await supabase
       .from("website_purchases")
       .insert({
         project_id: project.id,
         user_id: project.user_id,
-        amount: price,
+        amount: payable,
         status: "requested"
       })
       .select("*")
@@ -2840,9 +2844,17 @@ export function AdminDashboard() {
                                   <strong style={{ display: "block", color: "var(--adm-text)", fontSize: "15px", marginTop: "2px" }}>
                                     Weboldal tulajdonba vételi opció
                                   </strong>
-                                  <p style={{ margin: "4px 0 0", color: "var(--adm-ink-70)", fontSize: "12.5px" }}>
-                                    Vételár erre a csomagra: <strong>{formatHuf(purchaseOptionPrice(project.subscription_plan))}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
-                                  </p>
+                                  {(() => {
+                                    // Ugyanaz a számítás, amit a `startProjectWebsitePurchase` rögzít —
+                                    // az adminnak a bontást kell látnia, ne csak a végösszeget.
+                                    const anchor = project.billing_cycle_started_at ?? project.subscription_started_at ?? project.created_at;
+                                    const { list, credit, payable, months } = buyoutPrice(project.subscription_plan, elapsedBillingMonths(anchor));
+                                    return (
+                                      <p style={{ margin: "4px 0 0", color: "var(--adm-ink-70)", fontSize: "12.5px" }}>
+                                        Listaár: <strong>{formatHuf(list)}</strong> · {months} befizetett hónap beszámítása: <strong>−{formatHuf(credit)}</strong> · <strong>fizetendő: {formatHuf(payable)}</strong>. A folyamat indításakor az ügyfél fizetési összefoglalót kap, a fizetés után pedig leáll az előfizetés és elindul a technikai átadás.
+                                      </p>
+                                    );
+                                  })()}
                                 </div>
                                 <button
                                   type="button"
