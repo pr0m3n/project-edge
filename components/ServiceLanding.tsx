@@ -2,7 +2,6 @@ import { JsonLd } from "@/components/JsonLd";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
 import { SiteNav } from "@/components/SiteNav";
-import { TransitionLink } from "@/components/TransitionLink";
 
 export type ServiceLandingContent = {
   slug: string;
@@ -39,7 +38,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
           <p>{content.lead}</p>
           <div className="hero-command">
             <a className="button primary" href="#arak">Csomagok és árak</a>
-            <TransitionLink className="button secondary" href="/munkak/checky">Éles rendszer megtekintése</TransitionLink>
+            <a className="button secondary" href="https://checky.hu" rel="noreferrer" target="_blank">Éles rendszer megtekintése ↗</a>
           </div>
         </div>
         <aside><span>PROJECTEDGE · TELJESEN ONLINE</span><strong>{content.promise}</strong><ul>{content.audience.map((item) => <li key={item}>{item}</li>)}</ul></aside>
@@ -78,7 +77,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
             <div className="voice-author">
               <div>
                 <strong>
-                  <TransitionLink href="/munkak/checky">Checky.hu — így épült →</TransitionLink>
+                  <a href="https://checky.hu" rel="noreferrer" target="_blank">Checky.hu megnyitása ↗</a>
                 </strong>
                 <span>full-stack referencia</span>
               </div>

@@ -4,7 +4,6 @@ import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
 import { DemoPicker } from "@/components/DemoPicker";
-import { WorkStrip } from "@/components/WorkStrip";
 
 export const metadata: Metadata = {
   title: "Munkák és projektbemutatók | ProjectEdge",
@@ -109,7 +108,7 @@ export default function WorkPage() {
     <main className="site-shell light-page">
       <SiteNav />
 
-      <section className="page-hero compact with-strip">
+      <section className="page-hero compact">
         <p className="micro-label dark">Munkák</p>
         <h1>Nézd meg, mit építettem.</h1>
         <p>
@@ -117,13 +116,15 @@ export default function WorkPage() {
         </p>
       </section>
 
-      <WorkStrip />
-
       <section className="case-study">
         <div className="case-title-row">
           <div>
             <p className="micro-label dark">Éles full-stack rendszer / Checky.hu</p>
             <h2>Nem látványterv. Naponta használt rendszer.</h2>
+            <p className="case-lede">
+              Felület, adatkezelés és háttérfolyamatok — mind egy kézben épült, és élesben fut.
+              Nyisd meg, és nézd meg magad.
+            </p>
           </div>
           <a className="case-live-link" href="https://checky.hu" rel="noreferrer" target="_blank">Élő oldal megnyitása ↗</a>
         </div>
@@ -137,31 +138,6 @@ export default function WorkPage() {
             width={2940}
           />
         </a>
-        {/* Három különálló doboz helyett egy összefüggő, számozott narratíva:
-            helyzet → megoldás → eredmény, összekötve. */}
-        <div className="case-grid case-story">
-          <article className="case-block">
-            <span>A helyzet</span>
-            <p>
-              Nem bemutatkozó oldal kellett, hanem olyan felület, ahol a felhasználói folyamatok,
-              az adatok és az üzleti logika egy rendszerben működnek.
-            </p>
-          </article>
-          <article className="case-block">
-            <span>A megoldás</span>
-            <p>
-              A felhasználói felülettől az adatkezelésig és a háttérfolyamatokig teljes egészében
-              én terveztem és fejlesztettem a rendszert.
-            </p>
-          </article>
-          <article className="case-block">
-            <span>Az eredmény</span>
-            <p>
-              Egy élesben elérhető, bővíthető termék született — nem különálló oldalak, hanem
-              egymásra épülő, végigvezetett folyamatok.
-            </p>
-          </article>
-        </div>
         {/* Korábban három nagy színes tábla volt, köztük egy türkiz — kilógott
             a lap színvilágából. Most egy sáv, függőleges elválasztókkal. */}
         <div className="case-facts">
@@ -178,7 +154,6 @@ export default function WorkPage() {
             <span>tervezéstől az éles indulásig</span>
           </div>
         </div>
-        <div className="case-project-link-row"><TransitionLink className="button primary" href="/munkak/checky">Így épült a Checky</TransitionLink></div>
       </section>
 
       <DemoPicker />

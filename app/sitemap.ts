@@ -9,7 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/szolgaltatasok", priority: 0.8 },
     { path: "/folyamat", priority: 0.8 },
     { path: "/munkak", priority: 0.8 },
-    { path: "/munkak/checky", priority: 0.85 },
     { path: "/blog", priority: 0.75 },
     { path: "/weboldal-keszites", priority: 0.9 },
     { path: "/havidijas-weboldal", priority: 0.9 },
