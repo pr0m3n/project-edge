@@ -1,3 +1,438 @@
-.noma-root{--ink:#2d2522;--bone:#eee8df;--rose:#c9988b;--sage:#788473;background:#f8f5ef;color:var(--ink);font-family:Arial,Helvetica,sans-serif;min-height:100vh}.noma-root *{box-sizing:border-box}.noma-root a{color:inherit;text-decoration:none}.noma-root h1,.noma-root h2,.noma-root h3,.noma-root p{margin:0}.noma-nav{align-items:center;background:rgba(248,245,239,.9);backdrop-filter:blur(15px);display:flex;height:82px;justify-content:space-between;padding:0 clamp(20px,5vw,76px);position:sticky;top:var(--demo-bar-h,0);z-index:40}.noma-logo{display:flex;flex-direction:column;font-family:Georgia,serif;font-size:23px;letter-spacing:.16em;line-height:.8}.noma-logo span{font-family:Arial,sans-serif;font-size:8px;letter-spacing:.25em;margin-top:8px}.noma-nav nav{display:flex;gap:35px}.noma-nav nav a{font-size:12px}.noma-nav>button,.noma-hero-copy button,.noma-book>button,.noma-summary button{background:var(--ink);border:0;border-radius:99px;color:#fff;cursor:pointer;font-size:11px;font-weight:700;padding:14px 19px}.noma-hero{display:grid;grid-template-columns:1.1fr .9fr;min-height:calc(100vh - 126px);position:relative}.noma-hero-image{background:url('/demo/liget-borstudio/hero.webp') center/cover}.noma-hero-copy{align-self:center;padding:80px clamp(28px,6vw,100px)}.noma-hero-copy>p,.noma-heading>p,.noma-studio>div>p,.noma-book>div>p{color:var(--sage);font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}.noma-hero h1{font-family:Georgia,serif;font-size:clamp(58px,6.5vw,102px);font-weight:400;letter-spacing:-.065em;line-height:.9;margin:30px 0}.noma-root em{color:var(--rose);font-style:italic}.noma-hero-copy>span{color:#716761;display:block;font-family:Georgia,serif;font-size:17px;line-height:1.65;max-width:520px}.noma-hero-copy button{background:var(--rose);display:flex;gap:25px;margin-top:34px}.noma-rating{align-items:center;background:#fff;bottom:28px;display:flex;gap:14px;left:calc(55% - 60px);padding:16px 20px;position:absolute}.noma-rating strong{font-family:Georgia,serif;font-size:28px}.noma-rating span{color:#80766f;font-size:9px;line-height:1.5}.noma-manifest{background:var(--ink);color:#fff;padding:clamp(100px,13vw,180px) clamp(25px,9vw,140px);text-align:center}.noma-manifest p{color:var(--rose);font-size:10px;letter-spacing:.18em;margin-bottom:34px;text-transform:uppercase}.noma-manifest h2{font-family:Georgia,serif;font-size:clamp(40px,5vw,76px);font-weight:400;letter-spacing:-.045em;line-height:1.08}.noma-treatments{display:grid;gap:7vw;grid-template-columns:.7fr 1.3fr;padding:clamp(95px,11vw,155px) clamp(22px,7vw,110px)}.noma-heading h2,.noma-studio h2,.noma-book h2{font-family:Georgia,serif;font-size:clamp(48px,5.5vw,78px);font-weight:400;letter-spacing:-.055em;line-height:.96;margin-top:24px}.noma-list{border-top:1px solid #cfc7bd}.noma-list article{align-items:start;border-bottom:1px solid #cfc7bd;display:grid;gap:24px;grid-template-columns:35px 1fr auto;padding:30px 0}.noma-list article>span{color:var(--rose);font-size:10px}.noma-list h3{font-family:Georgia,serif;font-size:28px;font-weight:400}.noma-list p{color:#756b64;font-size:12px;line-height:1.6;margin-top:10px;max-width:400px}.noma-list article>div:last-child{display:grid;min-width:120px;text-align:right}.noma-list strong{font-size:12px}.noma-list small{color:#8c837c;font-size:9px;margin-top:5px}.noma-list button{background:none;border:0;border-bottom:1px solid var(--ink);cursor:pointer;font-size:10px;font-weight:800;justify-self:end;margin-top:24px;padding:4px 0}.noma-studio{background:var(--bone);display:grid;gap:8vw;grid-template-columns:1fr 1fr;padding:clamp(100px,12vw,170px) clamp(22px,7vw,110px)}.noma-studio ol{list-style:none;margin:0;padding:0}.noma-studio li{border-top:1px solid #c7bfb4;display:grid;gap:10px;grid-template-columns:40px 1fr;padding:24px 0}.noma-studio li span{color:var(--rose);font-size:9px}.noma-studio li strong{font-family:Georgia,serif;font-size:23px;font-weight:400}.noma-studio li p{color:#756b64;font-size:12px;grid-column:2;line-height:1.6}.noma-book{align-items:center;background:var(--sage);color:white;display:flex;gap:50px;justify-content:space-between;padding:clamp(75px,9vw,125px) clamp(22px,7vw,110px)}.noma-book>div{max-width:820px}.noma-book>div>p{color:#d9dfd4}.noma-book>div>span{color:#e3e8df;display:block;font-size:12px;line-height:1.6;margin-top:23px}.noma-book>button{background:white;color:var(--ink);flex:none}.noma-modal{background:#fcfaf6;box-shadow:0 0 0 100vmax rgba(45,37,34,.72);height:calc(100vh - var(--demo-bar-h,0));overflow:auto;padding:clamp(28px,5vw,62px);position:fixed;right:0;top:var(--demo-bar-h,0);width:min(680px,100%);z-index:200}.noma-close{background:none;border:0;cursor:pointer;font-family:Georgia,serif;font-size:36px;position:absolute;right:25px;top:18px}.noma-booking-head{margin:15px 0 18px}.noma-booking-head span{color:var(--rose);font-size:9px;letter-spacing:.18em}.noma-booking-head h2{font-family:Georgia,serif;font-size:34px;font-weight:400;margin-top:7px}.noma-treatment-pills{display:grid;gap:8px}.noma-treatment-pills button{background:#f0ebe3;border:1px solid transparent;cursor:pointer;display:flex;justify-content:space-between;padding:16px;text-align:left}.noma-treatment-pills button.active{background:var(--ink);color:white}.noma-treatment-pills strong{font-family:Georgia,serif;font-size:16px;font-weight:400}.noma-treatment-pills span{font-size:9px}.noma-days,.noma-slots{display:flex;gap:7px}.noma-days button,.noma-slots button{background:#f0ebe3;border:0;cursor:pointer;flex:1;font-size:10px;padding:14px 7px}.noma-days button.active,.noma-slots button.active{background:var(--rose);color:white}.noma-slots{margin-top:8px}.noma-summary{align-items:center;border-top:1px solid #d5cec5;display:flex;gap:20px;justify-content:space-between;margin-top:30px;padding-top:22px}.noma-summary div{display:grid;gap:4px}.noma-summary span{color:#897f78;font-size:8px}.noma-summary strong{font-size:12px}.noma-summary button{background:var(--rose)}.noma-footer{align-items:center;background:var(--ink);color:white;display:flex;justify-content:space-between;padding:50px clamp(22px,7vw,110px)}.noma-footer p,.noma-footer small{color:#a9a19b;font-size:9px}
-@media(max-width:850px){.noma-nav nav{display:none}.noma-hero{grid-template-columns:1fr}.noma-hero-image{min-height:54vh}.noma-hero-copy{padding:70px 24px 100px}.noma-rating{bottom:auto;left:20px;top:calc(54vh - 30px)}.noma-treatments,.noma-studio{grid-template-columns:1fr}.noma-list{margin-top:35px}.noma-book{align-items:flex-start;flex-direction:column}.noma-footer{align-items:flex-start;flex-direction:column;gap:25px}}@media(max-width:560px){.noma-nav>button{font-size:9px;padding:11px}.noma-list article{grid-template-columns:25px 1fr}.noma-list article>div:last-child{grid-column:2;text-align:left}.noma-list button{justify-self:start}.noma-summary{align-items:stretch;flex-direction:column}.noma-summary button{width:100%}}
-.noma-specialists{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.noma-specialists button{background:#f0ebe3;border:1px solid transparent;cursor:pointer;font-size:10px;padding:14px 8px}.noma-specialists button.active{background:var(--ink);color:white}.noma-guest-fields{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:10px}.noma-guest-fields input{background:white;border:1px solid #d5cec5;font:inherit;font-size:11px;padding:14px}.noma-summary button:disabled{cursor:not-allowed;opacity:.42}@media(max-width:560px){.noma-specialists,.noma-guest-fields{grid-template-columns:1fr}.noma-modal{padding-bottom:38px}.noma-booking-head h2{font-size:29px}}
+/* ═════════════════════════════════════════════════════════════════════════
+   Liget Bőrstúdió — csendes, magazinos mintaprojekt
+   Meleg homokszín, egyetlen agyagrózsa akcens, lágy fény, sok levegő.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.noma-root {
+  --paper: #f3ede4;
+  --paper-2: #e9e0d4;
+  --ink: #352e27;
+  --ink-soft: #7c6d5f;
+  --clay: #b0836f;
+  --deep: #2b2520;
+
+  --display: var(--noma-display), "Georgia", serif;
+  --sans: var(--noma-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.noma-root * { box-sizing: border-box; }
+.noma-root a { color: inherit; text-decoration: none; }
+.noma-root h1, .noma-root h2, .noma-root h3, .noma-root p { margin: 0; }
+
+.noma-eyebrow {
+  font: 500 10px/1 var(--sans);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.noma-eyebrow.light { color: rgba(243, 237, 228, .6); }
+
+.noma-head { display: grid; gap: 18px; max-width: 720px; }
+.noma-head.center { justify-items: center; text-align: center; margin: 0 auto; }
+.noma-head h2,
+.noma-person h2,
+.noma-where h2 {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(30px, 4.4vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -.015em;
+}
+.noma-lede { font-size: clamp(14.5px, 1.15vw, 16.5px); line-height: 1.75; color: var(--ink-soft); max-width: 52ch; }
+
+.noma-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: 500 12px/1 var(--sans);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 16px 28px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--clay);
+  color: #fff;
+  cursor: pointer;
+  transition: background .3s, transform .3s;
+}
+.noma-btn:hover { background: #9c7161; transform: translateY(-2px); }
+.noma-btn.small { padding: 12px 20px; font-size: 11px; }
+.noma-btn.ghost { background: transparent; color: var(--ink); border: 1px solid rgba(53, 46, 39, .28); }
+.noma-btn.ghost:hover { background: rgba(53, 46, 39, .06); }
+.noma-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ── fejléc ───────────────────────────────────────────────────────────── */
+.noma-nav {
+  position: sticky;
+  top: var(--demo-bar-h, 0);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px clamp(20px, 5vw, 72px);
+  background: rgba(243, 237, 228, .9);
+  backdrop-filter: blur(12px);
+}
+.noma-logo { display: grid; gap: 3px; font-family: var(--display); font-size: 21px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
+.noma-logo span { font-family: var(--sans); font-size: 9px; letter-spacing: .3em; color: var(--clay); }
+.noma-nav nav { display: flex; gap: 32px; }
+.noma-nav nav a {
+  font: 500 11px/1 var(--sans);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  transition: color .25s;
+}
+.noma-nav nav a:hover { color: var(--ink); }
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.noma-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: min(76vh, 720px);
+}
+.noma-hero-media { position: relative; overflow: hidden; }
+.noma-hero-media img { object-fit: cover; transform: scale(1.04); animation: noma-drift 24s ease-out forwards; }
+@keyframes noma-drift { to { transform: scale(1); } }
+
+.noma-hero-copy {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 22px;
+  padding: clamp(46px, 6vw, 96px) clamp(24px, 5vw, 84px);
+}
+.noma-hero h1 {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(38px, 5.2vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -.02em;
+}
+.noma-hero h1 em { display: block; font-style: italic; color: var(--clay); }
+.noma-rating { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.noma-rating strong { font-family: var(--display); font-size: 34px; font-weight: 400; }
+.noma-rating span { font: 400 11.5px/1.5 var(--sans); color: var(--ink-soft); }
+
+/* ── manifesztó ───────────────────────────────────────────────────────── */
+.noma-manifest {
+  background: var(--deep);
+  color: var(--paper);
+  padding: clamp(60px, 8vw, 128px) clamp(24px, 5vw, 84px);
+  display: grid;
+  gap: 24px;
+  justify-items: center;
+  text-align: center;
+}
+.noma-manifest h2 {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(24px, 3.4vw, 46px);
+  line-height: 1.28;
+  max-width: 20ch;
+}
+
+/* ── kezelések ────────────────────────────────────────────────────────── */
+.noma-treatments {
+  padding: clamp(60px, 7vw, 116px) clamp(24px, 5vw, 84px);
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(34px, 4vw, 56px);
+}
+.noma-picker { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 60px); align-items: center; }
+
+/* Az előnézeti képek egymáson fekszenek, az aktív úszik elő. */
+.noma-picker-stage { position: relative; aspect-ratio: 5 / 4; border-radius: 3px; overflow: hidden; background: var(--paper-2); }
+.noma-picker-shot { object-fit: cover; opacity: 0; transform: scale(1.03); transition: opacity .7s ease, transform 1.2s ease; }
+.noma-picker-shot.on { opacity: 1; transform: scale(1); }
+
+.noma-picker-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.noma-picker-list li { border-top: 1px solid rgba(53, 46, 39, .16); }
+.noma-picker-list li:last-child { border-bottom: 1px solid rgba(53, 46, 39, .16); }
+.noma-picker-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 20px;
+  padding: 26px 8px 26px 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: padding-left .35s ease, opacity .35s ease;
+}
+.noma-picker-list li.on .noma-picker-row { padding-left: 14px; }
+.noma-picker-list li:not(.on) .noma-picker-row { opacity: .48; }
+.noma-picker-num { font: 500 10px/1 var(--sans); letter-spacing: .18em; color: var(--clay); }
+.noma-picker-body { display: grid; gap: 7px; min-width: 0; }
+.noma-picker-body strong { font-family: var(--display); font-weight: 400; font-size: clamp(19px, 2vw, 26px); letter-spacing: -.01em; }
+.noma-picker-copy { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); max-width: 44ch; }
+.noma-picker-meta { display: grid; gap: 4px; justify-items: end; white-space: nowrap; }
+.noma-picker-meta b { font-family: var(--display); font-weight: 400; font-size: 17px; }
+.noma-picker-meta i { font: 400 11px/1 var(--sans); font-style: normal; color: var(--ink-soft); }
+
+/* ── stúdió galéria ───────────────────────────────────────────────────── */
+.noma-studio {
+  padding: clamp(60px, 7vw, 116px) clamp(24px, 5vw, 84px);
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(34px, 4vw, 56px);
+}
+.noma-gallery { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: clamp(200px, 22vw, 320px); gap: 16px; }
+.noma-shot { position: relative; margin: 0; overflow: hidden; border-radius: 3px; background: var(--paper-2); }
+.noma-shot img { object-fit: cover; transition: transform 1.4s ease; }
+.noma-shot:hover img { transform: scale(1.04); }
+.noma-shot.wide { grid-column: span 2; }
+.noma-shot.tall { grid-row: span 2; }
+.noma-shot:last-child { grid-column: span 2; }
+
+/* ── aki fogad ────────────────────────────────────────────────────────── */
+.noma-person {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  padding: clamp(50px, 6vw, 104px) clamp(24px, 5vw, 84px);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.noma-person-media { position: relative; aspect-ratio: 16 / 9; border-radius: 3px; overflow: hidden; background: var(--paper-2); }
+.noma-person-media img { object-fit: cover; }
+.noma-person-copy { display: grid; gap: 18px; }
+.noma-person-copy p { font-size: 15px; line-height: 1.75; color: var(--ink-soft); max-width: 46ch; }
+.noma-person-facts { display: flex; flex-wrap: wrap; gap: 28px; margin: 10px 0 0; }
+.noma-person-facts dt { font-family: var(--display); font-weight: 400; font-size: 19px; }
+.noma-person-facts dd { margin: 4px 0 0; font: 400 11px/1.4 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* ── a Liget ritmusa ──────────────────────────────────────────────────── */
+.noma-rhythm {
+  background: var(--paper-2);
+  padding: clamp(56px, 7vw, 110px) clamp(24px, 5vw, 84px);
+  display: grid;
+  gap: clamp(32px, 4vw, 54px);
+}
+.noma-rhythm .noma-head { margin: 0 auto; text-align: center; justify-items: center; }
+.noma-rhythm .noma-eyebrow.light { color: var(--clay); }
+.noma-steps-list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(24px, 3vw, 52px);
+  max-width: 1180px;
+}
+.noma-steps-list li { display: grid; gap: 10px; align-content: start; padding-top: 22px; border-top: 1px solid rgba(53, 46, 39, .2); }
+.noma-steps-list span { font: 500 10px/1 var(--sans); letter-spacing: .2em; color: var(--clay); }
+.noma-steps-list strong { font-family: var(--display); font-weight: 400; font-size: 21px; }
+.noma-steps-list p { font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+
+/* ── vélemények ───────────────────────────────────────────────────────── */
+.noma-voices {
+  padding: clamp(60px, 7vw, 116px) clamp(24px, 5vw, 84px);
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(34px, 4vw, 56px);
+}
+.noma-voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 2.5vw, 40px); }
+.noma-voice-grid blockquote { margin: 0; display: grid; gap: 18px; align-content: space-between; padding-top: 24px; border-top: 1px solid rgba(53, 46, 39, .2); }
+.noma-voice-grid p { font-family: var(--display); font-weight: 300; font-size: clamp(16px, 1.5vw, 20px); line-height: 1.5; }
+.noma-voice-grid cite { display: grid; gap: 3px; font-style: normal; }
+.noma-voice-grid cite strong { font-size: 13px; font-weight: 500; }
+.noma-voice-grid cite span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* ── hol vagyunk ──────────────────────────────────────────────────────── */
+.noma-where {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  padding: clamp(50px, 6vw, 104px) clamp(24px, 5vw, 84px);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.noma-where-media { position: relative; aspect-ratio: 3 / 2; border-radius: 3px; overflow: hidden; background: var(--paper-2); }
+.noma-where-media img { object-fit: cover; }
+.noma-where-copy { display: grid; gap: 20px; justify-items: start; }
+.noma-where-copy dl { display: grid; gap: 18px; margin: 0; }
+.noma-where-copy dt { font: 500 10px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--clay); margin-bottom: 6px; }
+.noma-where-copy dd { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--ink-soft); }
+
+/* ── lábléc ───────────────────────────────────────────────────────────── */
+.noma-footer {
+  background: var(--deep);
+  color: var(--paper);
+  padding: clamp(44px, 5vw, 72px) clamp(24px, 5vw, 84px);
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
+}
+.noma-footer .noma-logo span { color: rgba(243, 237, 228, .5); }
+.noma-footer p { font-size: 13px; color: rgba(243, 237, 228, .62); }
+.noma-footer small { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: rgba(243, 237, 228, .38); }
+
+/* ── foglalás ─────────────────────────────────────────────────────────── */
+.noma-modal-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 40px);
+  background: rgba(43, 37, 32, .55);
+  backdrop-filter: blur(6px);
+  animation: noma-fade .3s ease both;
+}
+@keyframes noma-fade { from { opacity: 0; } }
+
+.noma-modal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  width: min(920px, 100%);
+  max-height: 92vh;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--paper);
+  animation: noma-rise .4s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes noma-rise { from { opacity: 0; transform: translateY(14px); } }
+
+.noma-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(243, 237, 228, .9);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.noma-modal-aside { position: relative; overflow: hidden; }
+.noma-modal-aside img { object-fit: cover; }
+.noma-modal-aside-copy {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(43, 37, 32, .8));
+}
+.noma-modal-aside-copy p { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; opacity: .8; }
+.noma-modal-aside-copy strong { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.noma-modal-aside-copy span { font-size: 12px; opacity: .82; }
+
+.noma-modal-main { display: grid; align-content: start; gap: 24px; padding: clamp(24px, 3vw, 38px); overflow-y: auto; }
+/* Jobb oldalt hely marad a bezáró gombnak, hogy ne fedje a harmadik lépést. */
+.noma-steps { display: flex; gap: 10px; padding-right: 38px; }
+.noma-steps span {
+  flex: 1;
+  padding-top: 10px;
+  border-top: 2px solid rgba(53, 46, 39, .18);
+  font: 500 10px/1 var(--sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  transition: border-color .35s, color .35s;
+}
+.noma-steps span.on { border-top-color: var(--clay); color: var(--ink); }
+
+.noma-step { display: grid; gap: 16px; }
+.noma-step h3 { font-family: var(--display); font-weight: 400; font-size: clamp(20px, 2.2vw, 27px); }
+.noma-step-note { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); }
+
+.noma-choices { display: grid; gap: 8px; }
+.noma-choices button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 15px 18px;
+  border: 1px solid rgba(53, 46, 39, .2);
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color .25s, background .25s;
+}
+.noma-choices button strong { font-family: var(--display); font-weight: 400; font-size: 17px; }
+.noma-choices button span { font-size: 12px; color: var(--ink-soft); }
+.noma-choices button.on { border-color: var(--clay); background: rgba(176, 131, 111, .1); }
+
+.noma-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.noma-pills button {
+  font: 500 12px/1 var(--sans);
+  padding: 12px 16px;
+  border: 1px solid rgba(53, 46, 39, .2);
+  border-radius: 99px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color .25s, background .25s, color .25s;
+}
+.noma-pills button.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+.noma-fields { display: grid; gap: 12px; }
+.noma-fields label { display: grid; gap: 6px; }
+.noma-fields span { font: 500 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.noma-fields input {
+  font: 400 14px var(--sans);
+  padding: 13px 15px;
+  border: 1px solid rgba(53, 46, 39, .2);
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+}
+.noma-fields input:focus-visible { outline: 2px solid var(--clay); outline-offset: 1px; }
+
+.noma-modal-foot { display: grid; gap: 14px; padding-top: 18px; border-top: 1px solid rgba(53, 46, 39, .16); }
+.noma-modal-summary { font-size: 12.5px; color: var(--ink-soft); }
+.noma-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── keskeny kijelző ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .noma-nav nav { display: none; }
+  .noma-hero,
+  .noma-person,
+  .noma-where { grid-template-columns: 1fr; }
+  .noma-hero-media { aspect-ratio: 4 / 3; }
+  /* Hover nincs: a kép a lista fölé kerül, koppintásra vált. */
+  .noma-picker { grid-template-columns: 1fr; }
+  .noma-gallery { grid-template-columns: 1fr; grid-auto-rows: clamp(200px, 52vw, 300px); }
+  .noma-shot.wide,
+  .noma-shot.tall,
+  .noma-shot:last-child { grid-column: auto; grid-row: auto; }
+  .noma-steps-list,
+  .noma-voice-grid { grid-template-columns: 1fr; }
+  .noma-modal { grid-template-columns: 1fr; }
+  .noma-modal-aside { height: 150px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noma-hero-media img { animation: none; transform: none; }
+  .noma-picker-shot,
+  .noma-shot img,
+  .noma-modal,
+  .noma-modal-shade { transition: none; animation: none; }
+}
