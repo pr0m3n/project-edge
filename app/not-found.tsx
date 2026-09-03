@@ -11,8 +11,8 @@ const quickRoutes = [
   {
     href: "/munkak",
     eyebrow: "02 / Portfólió",
-    title: "Referenciák & 5 Élső Demó",
-    copy: "Checky.hu és végigkattintható mintaprojektek."
+    title: "Referenciák és 5 élő demó",
+    copy: "Élesben futó ügyfélmunkák és végigkattintható mintaprojektek."
   },
   {
     href: "/folyamat",
