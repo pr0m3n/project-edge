@@ -69,17 +69,25 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
           <h2>Kivel dolgozol együtt?</h2>
         </div>
         <div className="voices-grid">
+          {/* A rács három oszlopos: a kártyák száma HÁROM marad, különben a
+              negyedik egyedül lóg a második sorban. Ezért az éles ügyfélmunka
+              nem új kártyát kapott, hanem ez lett belőle — a Checky egy
+              tagmondattal, linkkel megmarad mellette. */}
           <article className="voice-card feature">
             <p className="voice-claim">
-              A Checky.hu-nál nem csak a felület készült el: frontend, backend, adatkezelés és a
-              bonyolultabb működési folyamatok is egy kézben épültek. Éles rendszer, nem portfólió-kép.
+              Az{" "}
+              <a href="https://autoaesthetik.hu" rel="noreferrer" target="_blank">autoaesthetik.hu</a>{" "}
+              fizető ügyfélnek épült, és élesben fut: a tervezéstől a kódig egy kézből. A{" "}
+              <a href="https://checky.hu" rel="noreferrer" target="_blank">Checky.hu</a>-nál ugyanez
+              a felület mellett a backendre és az adatkezelésre is igaz. Éles munkák, nem
+              portfólió-képek.
             </p>
             <div className="voice-author">
               <div>
                 <strong>
-                  <a href="https://checky.hu" rel="noreferrer" target="_blank">Checky.hu megnyitása ↗</a>
+                  <a href="https://autoaesthetik.hu" rel="noreferrer" target="_blank">autoaesthetik.hu megnyitása ↗</a>
                 </strong>
-                <span>full-stack referencia</span>
+                <span>éles ügyfélreferencia</span>
               </div>
             </div>
           </article>

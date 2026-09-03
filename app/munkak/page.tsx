@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
 import { DemoPicker } from "@/components/DemoPicker";
+import { LiveWorkBand } from "@/components/LiveWorkBand";
 
 export const metadata: Metadata = {
   title: "Munkák és projektbemutatók | ProjectEdge",
-  description: "Egyedi weboldalak és full-stack rendszerek bemutatása: probléma, megoldás és technikai megvalósítás.",
+  description: "Élesben futó ügyfélmunkák és végigkattintható mintaprojektek: mit építek, kinek, és hogyan néz ki használat közben.",
   alternates: { canonical: "/munkak" }
 };
 
@@ -112,49 +112,12 @@ export default function WorkPage() {
         <p className="micro-label dark">Munkák</p>
         <h1>Nézd meg, mit építettem.</h1>
         <p>
-          Egy éles full-stack rendszer és öt végigkattintható mintaprojekt — öt különböző üzleti célra.
+          Élesben futó oldalak valódi ügyfeleknek, és öt végigkattintható mintaprojekt — öt különböző
+          üzleti célra.
         </p>
       </section>
 
-      <section className="case-study">
-        <div className="case-title-row">
-          <div>
-            <p className="micro-label dark">Éles full-stack rendszer / Checky.hu</p>
-            <h2>Nem látványterv. Naponta használt rendszer.</h2>
-            <p className="case-lede">
-              Felület, adatkezelés és háttérfolyamatok — mind egy kézben épült, és élesben fut.
-              Nyisd meg, és nézd meg magad.
-            </p>
-          </div>
-          <a className="case-live-link" href="https://checky.hu" rel="noreferrer" target="_blank">Élő oldal megnyitása ↗</a>
-        </div>
-        <a href="https://checky.hu" rel="noreferrer" target="_blank">
-          <Image
-            alt="Checky.hu weboldal referencia"
-            className="case-shot"
-            height={1662}
-            sizes="(max-width: 1100px) calc(100vw - 36px), 1040px"
-            src="/work/checky.png"
-            width={2940}
-          />
-        </a>
-        {/* Korábban három nagy színes tábla volt, köztük egy türkiz — kilógott
-            a lap színvilágából. Most egy sáv, függőleges elválasztókkal. */}
-        <div className="case-facts">
-          <div className="case-fact">
-            <strong>Éles</strong>
-            <span>valós felhasználóknak készült rendszer</span>
-          </div>
-          <div className="case-fact">
-            <strong>Full-stack</strong>
-            <span>felület, adat és háttérfolyamat együtt</span>
-          </div>
-          <div className="case-fact">
-            <strong>End-to-end</strong>
-            <span>tervezéstől az éles indulásig</span>
-          </div>
-        </div>
-      </section>
+      <LiveWorkBand />
 
       <DemoPicker />
 
