@@ -1,38 +1,23 @@
 import Image from "next/image";
 import { TransitionLink } from "@/components/TransitionLink";
+import { WORKS } from "@/lib/works";
 
 /**
  * A főoldal referencia-szakasza.
  *
  * Korábban EGYETLEN projektet emelt ki (Checky.hu), és az volt az egyetlen
- * bizonyíték a főoldalon. A `/munkak` oldalon viszont hét munka van — két
- * élesben futó oldal (köztük egy fizető ügyfélé) és öt mintaprojekt. Ez a
- * szakasz mindet megmutatja egyszerre, perspektivikus pakliban, és a
- * gyűjtőoldalra visz: az „ért hozzá és sokfélét csinált" üzenet erősebb, mint
- * egyetlen kiragadott példa. Az élesben futók állnak elöl.
+ * bizonyíték a főoldalon. Ez a szakasz az ÖSSZESET megmutatja egyszerre,
+ * perspektivikus pakliban, és a gyűjtőoldalra visz: az „ért hozzá és sokfélét
+ * csinált" üzenet erősebb, mint egyetlen kiragadott példa.
+ *
+ * A lista a `lib/works.ts`-ből jön, a darabszámok pedig BELŐLE számolódnak —
+ * sem itt, sem a címben nincs beégetett szám, tehát új munka felvételekor ezt
+ * a fájlt nem kell hozzányúlni.
  *
  * A pakli tiszta CSS-sel legyeződik szét — nincs JS, nincs böngészőfüggő
  * szűrő. Érintőn a `:hover` nem sül el, ezért ott a nyugalmi állapot is
  * olvasható marad: minden kártya címkéje látszik.
  */
-
-type Work = {
-  name: string;
-  goal: string;
-  src: string;
-  width: number;
-  height: number;
-};
-
-const WORKS: Work[] = [
-  { name: "Auto Aesthetik", goal: "Éles ügyfélmunka", src: "/work/refs/autoaesthetik.webp", width: 1440, height: 900 },
-  { name: "Checky.hu", goal: "Full-stack rendszer", src: "/work/refs/checky.webp", width: 1440, height: 814 },
-  { name: "Veyra", goal: "SaaS + dashboard", src: "/work/demos/veyra.webp", width: 1440, height: 900 },
-  { name: "Zamat", goal: "Webshop + kosár", src: "/work/demos/zamat.webp", width: 1440, height: 900 },
-  { name: "Budai Otthonok", goal: "Ingatlan + kereső", src: "/work/demos/budai-otthonok.webp", width: 1440, height: 900 },
-  { name: "Liget Bőrstúdió", goal: "Időpontfoglalás", src: "/work/demos/liget-borstudio.webp", width: 1440, height: 900 },
-  { name: "Varga Villany", goal: "Érdeklődőszerzés", src: "/work/demos/varga-villany.webp", width: 1440, height: 900 }
-];
 
 export function WorkDeck() {
   return (
@@ -42,24 +27,23 @@ export function WorkDeck() {
       <div className="work-deck-copy">
         <p className="micro-label dark">Munkák</p>
         <h2>
-          Hét munka, <em>kettő élesben.</em>
+          Minden munka egy <em>üzleti célra.</em>
         </h2>
         <p>
-          Két oldal, ami épp most is fut — köztük egy ügyfélmunka —, és öt mintaprojekt: webshop
-          kosárral, időpontfoglalás, dashboard, ingatlankereső és érdeklődőszerző oldal.
-          Mindegyiket meg tudod nyitni.
+          Autóápolás, webshop kosárral, időpontfoglalás, dashboard, ingatlankereső és
+          érdeklődőszerző oldal — köztük élesben futó ügyfélmunka. Mindegyiket meg tudod nyitni.
         </p>
         <TransitionLink className="button primary" href="/munkak">
           Az összes munka megnézése
         </TransitionLink>
         <dl className="work-deck-stats">
           <div>
-            <dt>2</dt>
-            <dd>élesben futó oldal</dd>
+            <dt>{WORKS.length}</dt>
+            <dd>végigkattintható munka</dd>
           </div>
           <div>
-            <dt>5</dt>
-            <dd>végigkattintható minta</dd>
+            <dt>{new Set(WORKS.map((work) => work.goal)).size}</dt>
+            <dd>különböző üzleti cél</dd>
           </div>
           <div>
             <dt>1</dt>

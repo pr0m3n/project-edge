@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
 import { EffectsRail } from "@/components/EffectsRail";
-import { DemoPicker } from "@/components/DemoPicker";
-import { LiveWorkBand } from "@/components/LiveWorkBand";
+import { WorkGallery, WorkHero } from "@/components/WorkGallery";
 
 export const metadata: Metadata = {
   title: "Munkák és projektbemutatók | ProjectEdge",
@@ -108,18 +107,9 @@ export default function WorkPage() {
     <main className="site-shell light-page">
       <SiteNav />
 
-      <section className="page-hero compact">
-        <p className="micro-label dark">Munkák</p>
-        <h1>Nézd meg, mit építettem.</h1>
-        <p>
-          Élesben futó oldalak valódi ügyfeleknek, és öt végigkattintható mintaprojekt — öt különböző
-          üzleti célra.
-        </p>
-      </section>
+      <WorkHero />
 
-      <LiveWorkBand />
-
-      <DemoPicker />
+      <WorkGallery />
 
       <section className="cap-section">
         <div className="section-head">
