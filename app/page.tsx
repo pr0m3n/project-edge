@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { HeroAurora } from "@/components/HeroAurora";
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
@@ -117,6 +118,12 @@ export default function Home() {
       <SiteNav />
 
       <section className="home-hero">
+        {/* A mozgó háttér és a fölötte fekvő fátyol. A fátyol nem dísz: az
+            auróra szalagjai vándorolnak, és ha egy világos szalag a cím alá
+            ér, a szöveg olvashatatlan lesz. Balra garantálja a kontrasztot,
+            jobbra elenged, hogy a makett mögött látszódjon a shader. */}
+        <HeroAurora />
+        <div className="hero-scrim" aria-hidden="true" />
         <div className="hero-noise" aria-hidden="true" />
         <div className="home-hero-grid">
           <div className="hero-editorial">
@@ -145,13 +152,12 @@ export default function Home() {
               <span>/hó-tól</span>
               <em>nincs belépési díj</em>
             </p>
-            {/* A bekezdés rövidebb lett: a belépési díjat már a fenti sáv
-                mondja ki, kétszer nem kell. Telefonon így öt sor helyett
-                kettő. */}
-            <p className="hero-lead">
-              A domain, a tárhely és a karbantartás is benne van a havidíjban. Ha később inkább a
-              sajátod lenne, meg is veheted.
-            </p>
+            {/* Itt korábban egy bekezdés állt a domainről, a tárhelyről és a
+                karbantartásról. Kivettük: pontosan ezt mondja el lentebb a
+                „Domain, tárhely, email — nálam van" blokk, részletesebben. A
+                heróban viszont ez volt az egyetlen elem, ami a mozgó
+                háttérrel verekedett — hosszú, halvány szöveg mozgó alapon a
+                legnehezebben olvasható dolog, ami van. */}
             <div className="hero-command">
               <a className="button primary" href="#arak">Csomagok és árak</a>
               <TransitionLink className="button spectral" href="/munkak">
@@ -161,17 +167,17 @@ export default function Home() {
             <p className="hero-subhint">
               Vagy kezdd azonnal: <a href="#projektbrief">online projektbrief kitöltése →</a>
             </p>
-            {/* A narancs vonal a FOLYAMBAN van, nem a szekció aljához tapadva.
-                Korábban a `.home-hero::after` rajzolta, nézetablak-arányos
-                `bottom` értékkel — csakhogy a fölötte lévő szöveg magassága a
-                tartalomtól függ, nem a nézettől, ezért bizonyos képernyő-
-                arányoknál a vonal átment a „Vagy kezdd azonnal…" soron. Így
-                nincs az a méret, ahol ütközhetne. */}
-            <span aria-hidden="true" className="hero-rule" />
+            {/* A narancs vonal is kikerült. Az auróra fölött már volt egy
+                narancs elem túl sok: az ársáv éle, a fő gomb és a vonal
+                ugyanazt a színt vitte három helyen. Az ársáv és a gomb
+                dolgozik, a vonal csak dísz volt. */}
           </div>
           <div className="hero-system" aria-label="ProjectEdge projektfolyamat előnézet">
             <div className="system-glow" aria-hidden="true" />
             <div className="system-window">
+              {/* A körbefutó fény. A kártyán ez az egyetlen folyamatos
+                  mozgás, és a KERETEN él — a szöveg mögött semmi nem mozog. */}
+              <span aria-hidden="true" className="system-beam"><i /></span>
               <div className="system-window-bar">
                 <span /><span /><span />
                 <b>projectedge / live build</b>
@@ -192,10 +198,10 @@ export default function Home() {
               <span className="status-dot" />
               <div><small>KÖVETKEZŐ LÉPÉS</small><strong>Mobilnézet finomítása</strong></div>
             </div>
-            <div className="system-card delivery-card">
-              <small>EGY KÉZBEN</small>
-              <span>Szöveg</span><span>Design</span><span>Kód</span>
-            </div>
+            {/* A harmadik lebegő kártya („Egy kézben: szöveg, design, kód")
+                kikerült: három lebegő elem a makett körül zsúfoltnak
+                olvasódott, és ezt az állítást a „Mit kapsz" szakasz úgyis
+                kimondja. Kettő maradt, azok viszont látszanak. */}
           </div>
         </div>
       </section>

@@ -457,6 +457,48 @@ p {
   z-index: 2;
 }
 
+/* ── A heró mozgó háttere ────────────────────────────────────────────
+   A `HeroAurora` vászna. A `.home-hero` fenti színátmenetes háttere NEM
+   fölösleges: az a tartalék, ha nincs WebGL — ilyenkor a vászon üres
+   marad, és pontosan a korábbi heró látszik. Ezért ül a vászon FÖLÖTTE,
+   és ezért tűnik be, nem pattan. */
+.hero-aurora {
+  display: block;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 900ms ease;
+  width: 100%;
+  z-index: 0;
+}
+
+.hero-aurora.is-ready {
+  opacity: 1;
+}
+
+/* ── Fátyol a szövegoszlop alatt ──
+   Az auróra szalagjai vándorolnak; ha egy világos szalag a cím alá ér, a
+   szöveg olvashatatlanná válik. Ez a réteg garantálja a kontrasztot BALRA,
+   és teljesen elenged JOBBRA, ahol a makett ül — ott hadd látszódjon a
+   shader. Telefonon ez fordul függőlegesbe, lásd a 980px-es blokkot. */
+.hero-scrim {
+  background:
+    linear-gradient(
+      100deg,
+      rgba(8, 12, 16, 0.93) 0%,
+      rgba(8, 12, 16, 0.86) 26%,
+      rgba(8, 12, 16, 0.58) 46%,
+      rgba(8, 12, 16, 0.18) 62%,
+      rgba(8, 12, 16, 0) 76%
+    ),
+    linear-gradient(180deg, rgba(8, 12, 16, 0.55) 0%, transparent 26%);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
 .hero-noise {
   background-image:
     linear-gradient(rgba(245, 245, 245, 0.055) 1px, transparent 1px),
@@ -465,6 +507,7 @@ p {
   inset: 0;
   mask-image: linear-gradient(90deg, black, rgba(0, 0, 0, 0.45), black);
   position: absolute;
+  z-index: 1;
 }
 
 /* A narancs vonal a szövegoszlop UTÁN jön, a folyamban. Amíg abszolút
@@ -704,18 +747,28 @@ p {
   position: relative;
 }
 
+/* Tömör kártya mögött ez már csak glóriaként látszik a szélénél — a
+   korábbi erősség narancs ködöt tett volna az auróra elé. */
 .system-glow {
   background: radial-gradient(circle, rgba(255, 87, 34, 0.5), rgba(118, 171, 174, 0.12) 40%, transparent 70%);
-  filter: blur(18px);
+  filter: blur(30px);
   inset: 5% -10% 2%;
+  opacity: 0.5;
   position: absolute;
 }
 
+/* ── A makett-kártya ─────────────────────────────────────────────────
+   Az auróra fölött ez a kártya az a felület, ahol a szem megpihen, ezért
+   TÖMÖR: nem látszik át rajta a mozgó háttér, és nincs benne rácsminta.
+   A testet egy alig érzékelhető ferde színátmenet adja. */
 .system-window {
-  background: rgba(18, 24, 29, 0.94);
-  border: 1px solid rgba(245, 245, 245, 0.2);
-  border-radius: 30px;
-  box-shadow: 0 44px 110px rgba(0, 0, 0, 0.42);
+  background: linear-gradient(168deg, #18232d 0%, #101820 54%, #0b1116 100%);
+  border: 1px solid rgba(245, 245, 245, 0.11);
+  border-radius: 24px;
+  box-shadow:
+    0 50px 120px rgba(0, 0, 0, 0.58),
+    0 10px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
   left: 2%;
   overflow: hidden;
   position: absolute;
@@ -725,12 +778,63 @@ p {
   width: 94%;
 }
 
+/* ── Körbefutó fény a kereten ──
+   A folyamatos mozgás a PEREMEN él, sosem a szöveg mögött — ez a különbség
+   aközött, hogy a kártya „él", és aközött, hogy fárasztó.
+
+   A gyűrű-maszk a Magic UI shine-borderjének trükkje: két maszkréteg, az
+   egyik `content-box`-ra vágva, `mask-composite: exclude` — a kettő
+   különbsége pontosan a keret. Mögötte egy forgó `conic-gradient` viszi a
+   fénypontot. 9s: hatnál (a Magic UI alapértéke) egy nyugodt kártyán már
+   kapkodónak érződik. */
+.system-beam {
+  border-radius: inherit;
+  inset: 0;
+  overflow: hidden;
+  padding: 1px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+
+  /* A SORREND ITT NEM A SZOKÁSOS ÁBÉCÉ, és nem is véletlen: a `mask` és a
+     `-webkit-mask` RÖVIDÍTÉS, tehát mindkettő visszaállítja a hozzá tartozó
+     `*-composite` értéket. Ha a rövidítés a composite UTÁN áll, letörli azt
+     — a maszk `add`-re vált, és a fény nem a kereten fut körbe, hanem
+     szétterül az egész kártyán. Ezért jön előbb a két rövidítés, és csak
+     utána a két composite. */
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.system-beam i {
+  animation: system-beam-spin 9s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 74%,
+    rgba(118, 171, 174, 0.55) 85%,
+    var(--ember) 93%,
+    rgba(255, 87, 34, 0) 100%
+  );
+  display: block;
+  inset: -140%;
+  position: absolute;
+}
+
+@keyframes system-beam-spin {
+  to { transform: rotate(1turn); }
+}
+
 .system-window-bar {
   align-items: center;
-  border-bottom: 1px solid rgba(245, 245, 245, 0.1);
+  border-bottom: 1px solid rgba(245, 245, 245, 0.08);
   display: flex;
   gap: 7px;
   padding: 15px 18px;
+  /* A tartalom a körbefutó fény FÖLÖTT ül. */
+  position: relative;
+  z-index: 2;
 }
 
 .system-window-bar span {
@@ -740,26 +844,51 @@ p {
   width: 7px;
 }
 
-.system-window-bar span:first-child { background: var(--ember); }
+/* A három közlekedési lámpa generikus SaaS-jel volt. Marad egy, és az él:
+   ez az egyetlen mozgás a kártya belsejében, és lassú. */
+.system-window-bar span:nth-child(2),
+.system-window-bar span:nth-child(3) { display: none; }
 
+.system-window-bar span:first-child {
+  animation: system-live-pulse 3.6s ease-out infinite;
+  background: #27b77c;
+}
+
+@keyframes system-live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(39, 183, 124, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(39, 183, 124, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(39, 183, 124, 0); }
+}
+
+/* Csökkentett mozgás mellett a fény megáll, de a keret nem tűnik el:
+   a `conic-gradient` állva marad, tehát a kártyának lesz egy halk
+   fénysarka a semmi helyett. */
+@media (prefers-reduced-motion: reduce) {
+  .system-beam i,
+  .system-window-bar span:first-child {
+    animation: none;
+  }
+}
+
+/* Az élő-pont mellé húzva a felirat: együtt egy állapotjelzést olvasunk,
+   nem egy ablakcímet a semmiben. */
 .system-window-bar b {
   color: rgba(245, 245, 245, 0.48);
   font-size: 10px;
   letter-spacing: 0.08em;
-  margin-left: auto;
   text-transform: uppercase;
 }
 
+/* Rácsminta ki. Helyette egyetlen ÁLLÓ fénygyűjtés a sarokban — a kártyán
+   belül semmi nem mozog a szöveg mögött. */
 .system-preview {
-  background:
-    linear-gradient(rgba(245, 245, 245, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 245, 245, 0.045) 1px, transparent 1px),
-    radial-gradient(circle at 90% 12%, rgba(255, 87, 34, 0.32), transparent 34%);
-  background-size: 28px 28px, 28px 28px, auto;
+  background: radial-gradient(96% 74% at 94% -2%, rgba(255, 87, 34, 0.17), transparent 62%);
   display: flex;
   flex-direction: column;
   min-height: 380px;
   padding: clamp(34px, 5vw, 66px);
+  position: relative;
+  z-index: 2;
 }
 
 .system-kicker {
@@ -783,12 +912,19 @@ p {
   max-width: 390px;
 }
 
+/* Csupasz narancs szövegként ez elveszett a sarokból jövő fényben —
+   saját, tömör háttérrel olvasódik CTA-nak. */
 .system-preview i {
-  color: var(--ember);
-  font-size: 13px;
+  align-self: flex-start;
+  background: var(--ember);
+  border-radius: 999px;
+  box-shadow: 0 14px 32px rgba(255, 87, 34, 0.28);
+  color: var(--white);
+  font-size: 12px;
   font-style: normal;
   font-weight: 900;
   margin-top: 30px;
+  padding: 10px 17px;
 }
 
 .system-card {
@@ -7377,6 +7513,29 @@ details.admin-collapse summary:hover {
     margin: 0 auto;
     max-width: 680px;
     width: 100%;
+  }
+
+  /* ── A fátyol iránya megfordul ──
+     Asztali nézetben a fátyol BALRA sötét, mert ott van a szöveg és jobbra
+     a makett. Egyoszlopos elrendezésben viszont a szöveg FELÜL van, a makett
+     ALATTA: egy balról jobbra haladó fátyol itt a semmit takarná, a cím alól
+     meg elfogyna. Ezért függőleges lesz. */
+  .hero-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 12, 16, 0.9) 0%,
+      rgba(8, 12, 16, 0.86) 34%,
+      rgba(8, 12, 16, 0.62) 52%,
+      rgba(8, 12, 16, 0.26) 70%,
+      rgba(8, 12, 16, 0.08) 86%,
+      rgba(8, 12, 16, 0) 100%
+    );
+  }
+
+  /* Egyoszlopos nézetben a kártya szemből áll — a dőlés csak akkor olvasódik
+     térbeliségnek, ha van mellette valami, amihez képest dől. */
+  .system-window {
+    transform: none;
   }
 
   .laptop-model {
