@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { TransitionLink } from "@/components/TransitionLink";
 import { WORKS, type Work } from "@/lib/works";
 
@@ -35,6 +36,8 @@ export function WorkHero() {
 
   return (
     <section className="work-hero">
+      <ShaderBackdrop variant="waves" />
+      <div className="work-hero-scrim" aria-hidden="true" />
       <div className="work-hero-glow" aria-hidden="true" />
 
       <div className="work-hero-copy">
@@ -97,9 +100,8 @@ export function WorkGallery() {
       <div className="work-picker-body">
         {/* Csak a ≤900px-es elrendezésben látszik, ahol a lista vízszintes
             csempesorrá lapul: ott a jobb szélen elvágott csempéből nem derül
-            ki, hogy oldalra még van tartalom. Ugyanaz a fogás, mint az
-            `EffectsRail` sínje fölött. Asztali nézetben `display:none`, tehát
-            a kétoszlopos rácsban helyet sem foglal. */}
+            ki, hogy oldalra még van tartalom. Asztali nézetben `display:none`,
+            tehát a kétoszlopos rácsban helyet sem foglal. */}
         <p aria-hidden="true" className="work-picker-hint">
           ← Húzd oldalra a kártyákat →
         </p>

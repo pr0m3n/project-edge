@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { BriefQuickLane } from "@/components/BriefQuickLane";
 import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft";
 import { trackEvent } from "@/lib/analytics";
@@ -35,6 +36,7 @@ export function BriefStage() {
   const [choice, setChoice] = useState<GateChoice | null>(null);
   const [textIndex, setTextIndex] = useState(0);
   const [glitching, setGlitching] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [live, setLive] = useState(false);
   const [resumeForm, setResumeForm] = useState<Partial<BriefFormValues> | null>(null);
   const [resumeStep, setResumeStep] = useState(0);
@@ -42,6 +44,7 @@ export function BriefStage() {
   const stageRef = useRef<HTMLElement>(null);
   const cardRect = useRef<DOMRect | null>(null);
   const morphed = useRef(false);
+  const returning = useRef(false);
   const greeted = useRef(false);
 
   /* ── Csak akkor él a szakasz, amikor tényleg látszik ──────────────
@@ -162,6 +165,78 @@ export function BriefStage() {
     setChoice(value);
   }
 
+  /* ── Vissza a kapuhoz ────────────────────────────────────────────
+        A brief eddig egyirányú utca volt: aki elindította, nem tudott
+        visszalépni — pedig két teljesen jogos oka lehet rá. Vagy rossz ágat
+        választott (mégis meglévő oldalt újítana fel), vagy rájött, hogy
+        előbb csak kérdezni akar — a gyors sáv pedig KIZÁRÓLAG a kapun él.
+
+        AZ ADAT NEM VÉSZ EL: a wizard minden lépést a `localStorage`-ba ment,
+        és újranyitáskor felajánlja a folytatást. A visszalépés tehát nem
+        „mégse", hanem irányváltás.
+
+        A kifelé tartó animációt megvárjuk, mielőtt átváltunk — különben a
+        kapu még a brief eltűnése közben ugrana be a helyére. ── */
+  function goBack() {
+    if (leaving) return;
+    trackEvent("brief_gate_reopened", { from: choice === "yes" ? "existing" : "new" });
+
+    const finish = () => {
+      morphed.current = false;
+      cardRect.current = null;
+      returning.current = true;
+      setLeaving(false);
+      setChoice(null);
+    };
+
+    const shell = stageRef.current?.querySelector<HTMLElement>(".public-brief-shell");
+    if (!shell || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finish();
+      return;
+    }
+
+    setLeaving(true);
+    const exit = shell.animate(
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(18px) scale(.968)", filter: "blur(5px)" }
+      ],
+      { duration: 320, easing: "cubic-bezier(.45,0,.85,.4)", fill: "both" }
+    );
+    exit.finished.then(finish, finish);
+  }
+
+  /* A kapu visszaérkezése. Tükörképe a kifelé tartó mozgásnak: a doboz
+     fentről ereszkedik vissza, a két választókártya pedig egymás után gyúl
+     be — ugyanaz a lépcsőzés, mint amivel a brief kinyílik. */
+  useEffect(() => {
+    if (choice !== null || !returning.current) return;
+    returning.current = false;
+    const gate = stageRef.current?.querySelector<HTMLElement>(".brief-gate");
+    if (!gate) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    gate.animate(
+      [
+        { opacity: 0, transform: "translateY(-16px) scale(.985)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 460, easing: "cubic-bezier(.2,.9,.3,1)", fill: "both" }
+    );
+
+    const stagger = [...gate.querySelectorAll<HTMLElement>(".brief-gate-choice"), gate.querySelector<HTMLElement>(".quick-lane")];
+    stagger.forEach((node, index) => {
+      node?.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], {
+        duration: 380,
+        delay: 140 + index * 90,
+        easing: "cubic-bezier(.2,.9,.3,1)",
+        fill: "both"
+      });
+    });
+
+    gate.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [choice]);
+
   /* ── A brief a megnyomott gombból nő ki: lemérjük a gomb helyét és méretét,
         és a doboz ONNAN tágul a végleges helyére. ── */
   useEffect(() => {
@@ -220,6 +295,13 @@ export function BriefStage() {
       id="projektbrief"
       ref={stageRef}
     >
+      {/* A mozgó háttér. A két alatta lévő CSS-derengés MARAD: WebGL nélkül
+          (öreg gép, letiltott gyorsítás) az a tartalék, és az első festéskor
+          is az látszik, amíg a shader felépül. Amint a shader kész, a CSS-be
+          írt `:has()` szabály elhalványítja őket — különben a kék-lila foltok
+          átütnének a narancs-türkiz ködön. */}
+      <ShaderBackdrop variant="mesh" />
+
       {/* A derengés: KÉT réteg, mindkettő egyetlen elem, több nagy radiális
           gradienssel a háttérképében. A lágyságot maguk a gradiensek adják,
           nem egy `filter:blur()` — korábban négy óriási elem animálódott egy
@@ -287,13 +369,19 @@ export function BriefStage() {
             <BriefQuickLane />
           </div>
         ) : (
-          <PublicBriefWizard
+          <>
+            <button className="brief-back" disabled={leaving} onClick={goBack} type="button">
+              <span aria-hidden="true">←</span>
+              Vissza a választáshoz
+            </button>
+            <PublicBriefWizard
             bare
             initialForm={resumeForm ?? undefined}
             initialPlan={preselectedPlan ?? undefined}
             initialStep={resumeForm ? resumeStep : preselectedPlan ? 2 : 1}
             initialWebsiteStatus={choice}
-          />
+            />
+          </>
         )}
       </div>
     </section>

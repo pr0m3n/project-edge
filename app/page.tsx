@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { HeroAurora } from "@/components/HeroAurora";
+import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
@@ -340,6 +341,8 @@ export default function Home() {
       </section>
 
       <section className="no-call">
+        <ShaderBackdrop variant="halftone" />
+        <div className="no-call-scrim" aria-hidden="true" />
         <div>
           <p className="micro-label">Ügyfélkapu & Egyeztetés</p>
           <h2>Nem kötelező telefonálnod.</h2>
@@ -401,6 +404,7 @@ export default function Home() {
       </section>
 
       <section className="manifesto">
+        <ShaderBackdrop variant="shadow" />
         <div>
           <p>Design</p>
           <p>rendszer</p>

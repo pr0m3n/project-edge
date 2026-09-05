@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
-import { EffectsRail } from "@/components/EffectsRail";
 import { WorkGallery, WorkHero } from "@/components/WorkGallery";
+import { WordRoll } from "@/components/WordRoll";
+import { PledgeScroll } from "@/components/PledgeScroll";
+import { WORKS } from "@/lib/works";
 
 export const metadata: Metadata = {
   title: "Munkák és projektbemutatók | ProjectEdge",
@@ -10,91 +13,20 @@ export const metadata: Metadata = {
   alternates: { canonical: "/munkak" }
 };
 
-const capabilities = [
+const pledges = [
   {
-    dark: true,
-    fx: "fx-aurora",
-    eyebrow: "Háttér / motion",
-    title: "Aurora háttér",
-    copy: "Mozgó háttér, ami nem vonja el a figyelmet a szövegről.",
-    stage: null
-  },
-  {
-    dark: false,
-    fx: "fx-tilt",
-    eyebrow: "Interakció",
-    title: "3D mélység",
-    copy: "Vidd fölé az egered: a kártya megdől.",
-    stage: (
-      <div className="tilt-card">
-        <span className="tilt-chip" />
-        <span className="tilt-bar" />
-        <span className="tilt-bar short" />
-      </div>
-    )
-  },
-  {
-    dark: true,
-    fx: "fx-scan",
-    eyebrow: "Felület",
-    title: "Holografikus fény",
-    copy: "Fényhatás a sötét felületen.",
-    stage: null
-  },
-  {
-    dark: false,
-    fx: "fx-gtext",
-    eyebrow: "Tipográfia",
-    title: "Élő gradiens cím",
-    copy: "Színátmenet a kiemelt szavakon.",
-    stage: <span className="gword">Edge.</span>
-  },
-  {
-    dark: true,
-    fx: "fx-glow",
-    eyebrow: "Hangsúly",
-    title: "Fénygyűrűk",
-    copy: "Kiemelés, ami a gombra viszi a szemet.",
-    stage: (
-      <div className="glow-wrap">
-        <span className="glow-core" />
-        <span className="glow-ring" />
-        <span className="glow-ring" />
-        <span className="glow-ring" />
-      </div>
-    )
-  },
-  {
-    dark: true,
-    fx: "fx-border",
-    eyebrow: "Keret",
-    title: "Forgó gradiens-keret",
-    copy: "Forgó fénykeret a kártya körül.",
-    stage: (
-      <div className="bcard">
-        <span>Edge</span>
-      </div>
-    )
-  }
-];
-
-const voices = [
-  {
-    feature: true,
     quote:
       "Nem sablonból dolgozom, és nem kell írogatnod, hogy hol tart. Belépsz, és látod, mi készült el és mi jön ezután.",
     name: "Átlátható munka",
     role: "tervezéstől az indításig"
   },
   {
-    feature: false,
     quote:
       "Aki rákeres a szolgáltatásodra, megtalálja az oldalad, és két koppintással ír neked. Telefonon is.",
     name: "Eredményre tervezve",
     role: "sebesség + ügyfélszerzés"
   },
   {
-    feature: false,
     quote:
       "Kényelmes folyamat: az ügyfélkapun indítod a projektet, követed a haladást és fizetsz. Felesleges körök és kötelező értekezletek nélkül.",
     name: "Kényelmes folyamat",
@@ -111,44 +43,48 @@ export default function WorkPage() {
 
       <WorkGallery />
 
-      <section className="cap-section">
-        <div className="section-head">
-          <p className="micro-label dark">Vizuális részletek</p>
-          <h2>A működés mellé karakter is jár.</h2>
-          <p>
-            A jó felület először használható, aztán emlékezetes. Ezekből a finom, élő részletekből
-            csak annyit használok, amennyi a márkádat erősíti.
-          </p>
-        </div>
-        <EffectsRail capabilities={capabilities} />
-        <p className="cap-note">
-          Ezek példák. A tiédhez a márkádhoz illőt építek.
-        </p>
+      {/* Ez a sáv nem dísz: a munkaválasztó után hosszú világos futam
+          következett, amiben a látogató elveszítette, hogy hol tart. Egy
+          keskeny sötét csík kettévágja — és közben egy sorban elmondja,
+          amit az egész oldal állít: sokféle üzleti célra építek. */}
+      <section className="roll-band" aria-label="Üzleti célok">
+        <WordRoll prefix="Ezt építem:" words={WORKS.map((work) => work.goal)} />
       </section>
 
-      <section className="voices-section">
-        <div className="section-head">
-          <p className="micro-label dark">Így dolgozom</p>
-          <h2>Három vállalásom minden projektnél.</h2>
-        </div>
-        <div className="voices-grid">
-          {voices.map((voice) => (
-            <article className={`voice-card ${voice.feature ? "feature" : ""}`} key={voice.name}>
-              <blockquote>{voice.quote}</blockquote>
-              <div className="voice-author">
-                <div>
-                  <strong>{voice.name}</strong>
-                  <span>{voice.role}</span>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+      <PledgeScroll pledges={pledges} />
 
+      {/* A záró sávban NEM a munkák számának van helye: aki idáig ért, már
+          végignézte őket, tehát a kérdés nem az, hogy tudok-e építeni, hanem
+          hogy kinek ír és mi történik utána. Ezért az utolsó kép egy arc, a
+          szöveg pedig a következő lépésről szól. */}
       <section className="cta-band">
-        <h2>Van egy ötleted vagy egy meglévő oldalad? Abból el lehet indulni.</h2>
-        <TransitionLink className="button primary" href="/ugyfelkapu">
+        <div className="cta-band-copy">
+          <h2>Van egy ötleted vagy egy meglévő oldalad? Abból el lehet indulni.</h2>
+          <p className="cta-band-sub">
+            Írd le pár mondatban, mire lenne szükséged. Általában pár percen belül válaszolok —
+            árral, határidővel és a következő lépéssel, kötelezettség nélkül.
+          </p>
+          <span className="cta-signoff">
+            <Image
+              alt=""
+              className="cta-signoff-photo"
+              height={140}
+              sizes="52px"
+              src="/profile/patrik.png"
+              width={105}
+            />
+            <span>
+              <b>Patrik válaszol, nem egy űrlap.</b>
+              <small>alapító · fejlesztő · ProjectEdge</small>
+            </span>
+          </span>
+        </div>
+        {/* A gomb eddig az ügyfélkapura vitt, vagyis egy bejelentkező képernyőre
+            — miközben a szöveg fölötte azt ígéri, hogy „írd le pár mondatban".
+            A főoldali brief gyorssávja pontosan ez: egy mondat, regisztráció
+            nélkül. A többi oldal CTA-ja azért mutat az ügyfélkapura, mert ott a
+            felirat is adatlapot ígér („Projekt indítása"). */}
+        <TransitionLink className="button primary" href="/#projektbrief">
           Beszéljünk róla
         </TransitionLink>
       </section>

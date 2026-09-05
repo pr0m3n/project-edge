@@ -7601,14 +7601,25 @@ details.admin-collapse summary:hover {
 }
 
 @media (max-width: 640px) {
+  /* Ugyanaz a `clip` kontra `hidden` csapda, mint a `.site-shell`-nél, csak
+     eggyel feljebb: mivel a szabály a `html`-t IS eltalálja, a `body` nem adja
+     tovább az értéket a nézetnek, hanem maga válik görgetődobozzá — a benne
+     lévő `sticky` pedig ehhez a dobozhoz igazodna, ami sosem görög.
+     A `hidden` sor tartalék a `clip`-et nem ismerő régi böngészőknek. */
   html,
   body {
     max-width: 100%;
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
+  /* `clip`, NEM `hidden`. A kettő ugyanúgy levágja a kilógó tartalmat, de a
+     `hidden` görgethető dobozt csinál az elemből — és a benne lévő
+     `position: sticky` onnantól ehhez a (soha nem görgő) dobozhoz igazodik,
+     tehát egyszerűen nem ragad. Ezen bukott el telefonon a vállalás-szakasz. */
   .site-shell {
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .nav-shell {
@@ -9443,406 +9454,8 @@ details.admin-collapse summary:hover {
   }
 }
 
-/* ── Capability rail (mire vagyok képes) ── */
-.cap-section {
-  padding: clamp(60px, 8vw, 120px) 0;
-}
-
-.cap-section .section-head {
-  padding: 0 clamp(18px, 5vw, 76px);
-}
-
-.cap-rail {
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  gap: 18px;
-  margin-bottom: -84px;
-  overflow-x: auto;
-  padding-block: 24px 120px;
-  padding-inline: clamp(18px, 5vw, 76px);
-  scroll-padding-inline: clamp(18px, 5vw, 76px);
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-}
-
-.cap-rail::-webkit-scrollbar {
-  display: none;
-}
-
-.cap-card {
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 30px;
-  display: flex;
-  flex: 0 0 clamp(290px, 80vw, 430px);
-  flex-direction: column;
-  min-height: 480px;
-  overflow: hidden;
-  position: relative;
-  scroll-snap-align: start;
-  transition: transform 220ms ease, box-shadow 220ms ease;
-}
-
-.cap-card:hover {
-  box-shadow: 0 36px 90px rgba(17, 23, 28, 0.16);
-  transform: translateY(-6px);
-}
-
-.cap-card.dark {
-  background: var(--night);
-  border-color: rgba(245, 245, 245, 0.1);
-}
-
-/* az effekt színpada */
-.cap-stage {
-  display: grid;
-  flex: 1;
-  min-height: 270px;
-  overflow: hidden;
-  place-items: center;
-  position: relative;
-}
-
-/* felirat */
-.cap-caption {
-  background: var(--white);
-  display: grid;
-  gap: 8px;
-  padding: 24px 26px 28px;
-  position: relative;
-  z-index: 3;
-}
-
-.cap-card.dark .cap-caption {
-  background: var(--night);
-  color: var(--paper);
-}
-
-.cap-caption .cap-eyebrow {
-  color: var(--ember);
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-}
-
-.cap-caption h3 {
-  font-size: clamp(22px, 2.6vw, 30px);
-  line-height: 1;
-}
-
-.cap-caption p {
-  font-size: 14px;
-  line-height: 1.6;
-  opacity: 0.66;
-}
-
-/* 1 · aurora mesh */
-.fx-aurora {
-  background: var(--night);
-}
-
-.fx-aurora::before {
-  background:
-    radial-gradient(38% 38% at 25% 30%, rgba(255, 87, 34, 0.95), transparent 70%),
-    radial-gradient(42% 42% at 75% 32%, rgba(118, 171, 174, 0.9), transparent 70%),
-    radial-gradient(45% 45% at 58% 82%, rgba(255, 138, 76, 0.8), transparent 70%),
-    radial-gradient(40% 40% at 18% 78%, rgba(76, 132, 196, 0.6), transparent 70%);
-  content: "";
-  filter: blur(34px) saturate(1.25);
-  inset: -45%;
-  position: absolute;
-  animation: aurora-spin 15s ease-in-out infinite alternate;
-}
-
-@keyframes aurora-spin {
-  0% {
-    transform: rotate(0deg) scale(1.1) translate(0, 0);
-  }
-  100% {
-    transform: rotate(34deg) scale(1.4) translate(6%, -5%);
-  }
-}
-
-/* 2 · 3D mélység-kártya */
-.fx-tilt {
-  background:
-    radial-gradient(circle at 70% 20%, rgba(118, 171, 174, 0.18), transparent 55%),
-    var(--paper);
-  overflow: visible;
-  perspective: 850px;
-}
-
-.fx-tilt .tilt-card {
-  align-content: flex-end;
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(150deg, #1e2730, var(--night));
-  border-radius: 18px;
-  box-shadow: 0 34px 60px rgba(17, 23, 28, 0.4);
-  display: grid;
-  gap: 9px;
-  padding: 18px;
-  position: relative;
-  transform: rotateX(13deg) rotateY(-17deg);
-  transform-style: preserve-3d;
-  transition: transform 400ms ease;
-  width: 72%;
-}
-
-.cap-card:hover .tilt-card {
-  transform: rotateX(4deg) rotateY(-6deg);
-}
-
-.fx-tilt .tilt-chip {
-  background: var(--ember);
-  border-radius: 14px;
-  box-shadow: 0 18px 34px rgba(255, 87, 34, 0.55);
-  height: 52px;
-  left: 18px;
-  position: absolute;
-  top: -20px;
-  transform: translateZ(45px);
-  width: 52px;
-}
-
-.fx-tilt .tilt-bar {
-  background: rgba(245, 245, 245, 0.24);
-  border-radius: 4px;
-  height: 9px;
-  transform: translateZ(22px);
-}
-
-.fx-tilt .tilt-bar.short {
-  background: var(--aqua);
-  width: 56%;
-}
-
-/* 3 · holografikus pásztázás */
-.fx-scan {
-  background: var(--ink);
-}
-
-.fx-scan::before {
-  background-image: radial-gradient(rgba(245, 245, 245, 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
-  content: "";
-  inset: 0;
-  position: absolute;
-}
-
-.fx-scan::after {
-  background: linear-gradient(
-    115deg,
-    transparent 32%,
-    rgba(255, 87, 34, 0.4) 47%,
-    rgba(118, 171, 174, 0.34) 53%,
-    transparent 68%
-  );
-  background-size: 260% 100%;
-  content: "";
-  inset: 0;
-  position: absolute;
-  animation: scan-sweep 3.6s linear infinite;
-}
-
-@keyframes scan-sweep {
-  to {
-    background-position: -260% 0;
-  }
-}
-
-/* 4 · animált gradiens szöveg */
-.fx-gtext {
-  background:
-    radial-gradient(circle at 30% 80%, rgba(255, 87, 34, 0.12), transparent 55%),
-    var(--paper);
-}
-
-.fx-gtext .gword {
-  background: linear-gradient(100deg, var(--ember), var(--aqua), #ffa05c, var(--ember));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: hue-pan 5s linear infinite;
-  font-size: clamp(54px, 9vw, 96px);
-  font-weight: 950;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  padding-bottom: 0.12em;
-}
-
-/* 5 · pulzáló fénygyűrűk */
-.fx-glow {
-  background: var(--night);
-}
-
-.fx-glow .glow-wrap {
-  display: grid;
-  height: 72px;
-  place-items: center;
-  position: relative;
-  width: 72px;
-}
-
-.fx-glow .glow-core {
-  background: radial-gradient(circle at 35% 30%, #cfecee, var(--aqua) 65%);
-  border-radius: 50%;
-  box-shadow: 0 0 55px rgba(118, 171, 174, 0.9);
-  height: 64px;
-  width: 64px;
-  z-index: 2;
-}
-
-.fx-glow .glow-ring {
-  border: 2px solid rgba(118, 171, 174, 0.55);
-  border-radius: 50%;
-  height: 64px;
-  left: 50%;
-  margin: -32px 0 0 -32px;
-  position: absolute;
-  top: 50%;
-  width: 64px;
-  animation: ring-out 3s ease-out infinite;
-}
-
-.fx-glow .glow-ring:nth-child(3) {
-  animation-delay: 1s;
-}
-
-.fx-glow .glow-ring:nth-child(4) {
-  animation-delay: 2s;
-}
-
-@keyframes ring-out {
-  0% {
-    opacity: 0.65;
-    transform: scale(1);
-  }
-  65% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2.7);
-  }
-}
-
-/* 6 · forgó gradiens-keret */
-.fx-border {
-  background: var(--night);
-}
-
-.fx-border .bcard {
-  align-items: center;
-  aspect-ratio: 5 / 3;
-  border-radius: 18px;
-  display: grid;
-  justify-items: center;
-  overflow: hidden;
-  position: relative;
-  width: 74%;
-}
-
-.fx-border .bcard::before {
-  background: conic-gradient(from 0deg, var(--ember), var(--aqua), #ffa05c, var(--ember));
-  content: "";
-  height: 240%;
-  left: -70%;
-  position: absolute;
-  top: -70%;
-  width: 240%;
-  animation: spin-border 4s linear infinite;
-  z-index: 0;
-}
-
-.fx-border .bcard::after {
-  background: var(--night);
-  border-radius: 15px;
-  content: "";
-  inset: 2px;
-  position: absolute;
-  z-index: 1;
-}
-
-.fx-border .bcard span {
-  color: var(--paper);
-  font-size: clamp(22px, 3vw, 30px);
-  font-weight: 950;
-  position: relative;
-  z-index: 2;
-}
-
-@keyframes spin-border {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-.cap-hint-row {
-  align-items: center;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 0 clamp(18px, 5vw, 76px);
-}
-
-.cap-hint {
-  color: rgba(48, 56, 65, 0.5);
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.dark-page .cap-hint {
-  color: rgba(245, 245, 245, 0.5);
-}
-
-.cap-nav {
-  display: flex;
-  gap: 8px;
-}
-
-.cap-nav button {
-  align-items: center;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  color: var(--ink);
-  cursor: pointer;
-  display: flex;
-  font-size: 20px;
-  height: 44px;
-  justify-content: center;
-  transition: background 180ms ease, transform 180ms ease;
-  width: 44px;
-}
-
-.cap-nav button:hover {
-  background: var(--ember);
-  border-color: var(--ember);
-  color: var(--white);
-  transform: translateY(-2px);
-}
-
-.dark-page .cap-nav button {
-  background: rgba(245, 245, 245, 0.08);
-  border-color: rgba(245, 245, 245, 0.16);
-  color: var(--paper);
-}
-
-@media (max-width: 640px) {
-  .cap-nav {
-    display: none;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .fx-aurora::before,
-  .fx-scan::after,
-  .fx-gtext .gword,
-  .fx-glow .glow-ring,
-  .fx-border .bcard::before,
   .gradient-text,
   .proof-track {
     animation: none;
@@ -10122,29 +9735,6 @@ details.admin-collapse summary:hover {
     transform: scaleY(1);
     transition: none;
   }
-}
-
-/* ── Showcase záró-megjegyzés ── */
-.cap-note {
-  color: rgba(48, 56, 65, 0.6);
-  font-size: clamp(15px, 1.8vw, 18px);
-  line-height: 1.6;
-  margin: 18px auto 0;
-  max-width: 760px;
-  padding: 0 clamp(18px, 5vw, 76px);
-  text-align: center;
-}
-
-.cap-note b {
-  color: var(--ink);
-}
-
-.dark-page .cap-note {
-  color: rgba(245, 245, 245, 0.6);
-}
-
-.dark-page .cap-note b {
-  color: var(--paper);
 }
 
 /* ── "Hívás nélkül" értékajánlat-sáv ── */
@@ -10754,10 +10344,6 @@ details.admin-collapse summary:hover {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--paper);
-}
-
-.demos-section .cap-note {
-  margin-top: 30px;
 }
 
 @media (max-width: 900px) {
@@ -17974,8 +17560,7 @@ details.admin-collapse summary:hover {
      képernyőnyi függőleges helyet — és ez is elemszám-független. */
   .work-picker-body{grid-template-columns:1fr}
   /* A sín fölé kiírjuk, hogy oldalra van még — a jobb szélen elvágott csempe
-     magában nem elég egyértelmű jelzés. Ugyanaz a szöveg és stílus, mint az
-     `EffectsRail` sínjénél. */
+     magában nem elég egyértelmű jelzés. */
   .work-picker-hint{display:block;margin:0 0 12px;
     font-size:13px;font-weight:800;text-transform:uppercase;
     color:rgba(48,56,65,.5)}
@@ -18016,4 +17601,592 @@ details.admin-collapse summary:hover {
 .work-picker-switch:nth-of-type(14):checked~.work-picker-body .work-picker-panel:nth-of-type(14),
 .work-picker-switch:nth-of-type(15):checked~.work-picker-body .work-picker-panel:nth-of-type(15),
 .work-picker-switch:nth-of-type(16):checked~.work-picker-body .work-picker-panel:nth-of-type(16){animation:none}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Mozgó shader-hátterek (components/ShaderBackdrop.tsx)
+   ═══════════════════════════════════════════════════════════════════════
+   A vászon mindig a szekció ELSŐ gyereke és abszolút pozíciójú, tehát a
+   rácsból/flexből kiesik: az elrendezést nem érinti, üres helyet nem foglal.
+
+   AMIRE VIGYÁZNI KELL: pozicionált elem a nem pozicionáltak FÖLÉ fest, akkor
+   is, ha előbb áll a forrásban. Ezért minden szekciónál külön ki kell emelni
+   a tartalmat (`position:relative; z-index:2`) — enélkül a shader letakarja
+   a szöveget. A rétegsorrend végig: 0 = vászon, 1 = fátyol, 2 = tartalom.
+
+   A szekciók CSS-háttere MARAD a helyén. WebGL nélkül a komponens nem rajzol
+   semmit, és az a háttér a tartalék. */
+.shader-backdrop {
+  display: block;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 900ms ease;
+  width: 100%;
+  z-index: 0;
+}
+
+.shader-backdrop.is-ready {
+  opacity: 1;
+}
+
+/* A 900ms-es beúszás maga is mozgás: aki csökkentett mozgást kért, annak a
+   háttér egyszerűen ott van. */
+@media (prefers-reduced-motion: reduce) {
+  .shader-backdrop {
+    transition: none;
+  }
+}
+
+/* A raszteres teljes erőn olvashatatlanná teszi a szöveget — félig
+   áttetszően megy be, és kap egy fátylat is (`.no-call-scrim`). */
+.shader-backdrop.halftone.is-ready {
+  opacity: 0.5;
+}
+
+/* ── Záró blokk: „Design / rendszer / adat / konverzió" ──
+   A körvonalas nagybetűk eddig üres feketén ültek; a sodródó árnyék ad
+   nekik mélységet. Fátyol nem kell: ez a shader végig sötét marad. */
+.manifesto {
+  overflow: hidden;
+  position: relative;
+}
+
+.manifesto > div,
+.manifesto > article {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Ügyfélkapu-doboz: „Nem kötelező telefonálnod" ──
+   A doboz eddig is `relative` + `overflow:hidden` volt a 34px-es sarok
+   miatt, tehát a vászon a lekerekítésen belül marad.
+
+   A FÁTYOL NEM DÍSZ. Enélkül a raszterpontok pont a bekezdés alatt futnak
+   végig, és a szöveg olvashatatlan. Balra takar, jobbra elenged — ott
+   nincs folyószöveg, csak a három rövid, félkövér sor. */
+/* A `:not()` NEM óvatoskodás: a fátyol maga is `.no-call` alatti `div`, és a
+   `.no-call > div` erősebb nála, mint a saját `.no-call-scrim` szabálya —
+   nélküle a fátyol `relative` lenne, bekerülne a rácsba első elemként, és
+   egy oszloppal odébb tolná a szöveget. */
+.no-call > div:not(.no-call-scrim),
+.no-call > .nc-list {
+  position: relative;
+  z-index: 2;
+}
+
+.no-call-scrim {
+  background: linear-gradient(
+    100deg,
+    rgba(20, 26, 31, 0.94) 0%,
+    rgba(20, 26, 31, 0.86) 42%,
+    rgba(20, 26, 31, 0.34) 72%,
+    rgba(20, 26, 31, 0.08) 100%
+  );
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+/* Egy oszlopban a vízszintes fátyolnak nincs értelme: a lista is a világos
+   oldalra kerülne. Ilyenkor felülről lefelé takar, és csak a legalján enged. */
+@media (max-width: 880px) {
+  .no-call-scrim {
+    background: linear-gradient(
+      172deg,
+      rgba(20, 26, 31, 0.93) 0%,
+      rgba(20, 26, 31, 0.88) 58%,
+      rgba(20, 26, 31, 0.46) 100%
+    );
+  }
+}
+
+/* ── Munkák heró: „Minden oldal egy üzleti célra épült." ──
+   Ez a leghangosabb a háromból, ezért kap a legerősebb fátylat: a cím alatt
+   ott a bevezető és a három statisztika apró, halvány felirattal — azok a
+   hullámok világos taréján elvesznének. Lefelé enged, mert ott már a
+   képsáv úszik, ami maga is takar — a legalján viszont ÚJRA sötétedik,
+   különben a hullám világos taréja kimosná a szekció alsó élét, és a
+   következő, világos szakasz éles vágásként ütközne neki. */
+.work-hero-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 26, 31, 0.9) 0%,
+    rgba(20, 26, 31, 0.78) 40%,
+    rgba(20, 26, 31, 0.5) 70%,
+    rgba(20, 26, 31, 0.74) 100%
+  );
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+/* A narancs derengés a shader FÖLÉ kerül, de a fátyol fölé is — így marad
+   meg belőle annyi meleg fény a jobb felső sarokban, amennyi eddig volt. */
+.work-hero-glow {
+  z-index: 1;
+}
+
+.work-hero-copy,
+.work-hero-marquee {
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   A /munkak oldal tagolása + a hozzá tartozó új elemek
+   ═══════════════════════════════════════════════════════════════════════
+   A gond nem az effekthiány volt, hanem a ritmus: a nyitókép után három
+   világos szakasz futott egymás után, kb. 3000 képponton át, ugyanazon a
+   törtfehéren. Ezt két sötét betét vágja ketté — a pörgő szócsík és a
+   vállalás-szakasz. */
+
+/* ── Pörgő szócsík ─────────────────────────────────────────────────────
+   Keskeny sötét sáv a munkaválasztó után. Ez az a betét, ami fizikailag
+   kettévágja a világos futamot. */
+.roll-band {
+  background: var(--night);
+  border-bottom: 1px solid rgba(245, 245, 245, 0.08);
+  border-top: 1px solid rgba(245, 245, 245, 0.08);
+  color: var(--paper);
+  overflow: hidden;
+  padding: clamp(30px, 4vw, 54px) clamp(18px, 5vw, 76px);
+}
+
+.word-roll {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  font-size: clamp(21px, 3.4vw, 48px);
+  font-weight: 900;
+  gap: 0.4em;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0 auto;
+  max-width: 1280px;
+}
+
+.word-roll-prefix {
+  color: rgba(245, 245, 245, 0.5);
+  flex: none;
+}
+
+/* Három sor magas ablak, elhalványuló széllel: a kifutó és a beérkező szó
+   szellemként ott van a mostani körül — ettől olvasható, hogy ez egy lista,
+   nem egy véletlenszerűen cserélődő felirat. */
+.word-roll-window {
+  display: block;
+  height: 3.3em;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 34%, #000 66%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 34%, #000 66%, transparent);
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* A lista a markupban MEG VAN DUPLÁZVA, ezért a -50% pontosan egy teljes
+   listányi út: a forduló varrat nélkül záródik. */
+.word-roll-track {
+  animation-iteration-count: infinite;
+  animation-name: word-roll-slide;
+  animation-timing-function: linear;
+  display: block;
+}
+
+.word-roll-item {
+  background: linear-gradient(96deg, #ff9147, var(--ember) 46%, #ff8fb0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  display: block;
+  height: 1.1em;
+  line-height: 1.1em;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+}
+
+@keyframes word-roll-slide {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-roll-track {
+    animation: none;
+  }
+
+  .word-roll-window {
+    height: 1.1em;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* Telefonon a sor nem fér el egymás mellett, tehát tördelni kell — és ha
+   már két sor, akkor középre: balra zárva a rövidebb szavaknál csúnya,
+   egyenetlen jobb szél maradna, mert a lista elemei különböző hosszúak. */
+@media (max-width: 640px) {
+  .word-roll {
+    align-items: center;
+    flex-direction: column;
+    gap: 0.1em;
+    text-align: center;
+  }
+}
+
+/* ── Vállalások görgetésre ─────────────────────────────────────────────
+   A magasság adja a görgetési utat: minden vállalás 75vh-t kap, plusz egy
+   képernyő, amíg a panel ragad. A ragadás CSS — a JS csak azt dönti el,
+   melyik panel aktív és hány szó égjen. */
+.pledge-scroll {
+  background: linear-gradient(168deg, #1b2228, #11171c 58%, #1c242b);
+  color: var(--paper);
+  min-height: calc(var(--pledge-count, 3) * 75vh + 100vh);
+  position: relative;
+}
+
+.pledge-sticky {
+  align-content: center;
+  align-items: center;
+  display: grid;
+  gap: clamp(30px, 5vw, 80px);
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
+  margin: 0 auto;
+  max-width: 1400px;
+  min-height: 100vh;
+  padding: clamp(56px, 8vw, 110px) clamp(18px, 5vw, 76px);
+  position: sticky;
+  top: 0;
+}
+
+.pledge-head h2 {
+  font-size: clamp(30px, 4vw, 58px);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 0;
+}
+
+/* A haladásjelző a szakasz saját `--pledge-progress` változójából él, amit a
+   görgetéskezelő ír — külön elem és külön animáció nélkül. */
+.pledge-head::after {
+  background: linear-gradient(
+    90deg,
+    var(--ember) calc(var(--pledge-progress, 0) * 100%),
+    rgba(245, 245, 245, 0.14) 0
+  );
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: clamp(22px, 3vw, 34px);
+}
+
+.pledge-marks {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: clamp(22px, 3vw, 34px) 0 0;
+  padding: 0;
+}
+
+.pledge-mark {
+  align-items: baseline;
+  color: rgba(245, 245, 245, 0.38);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 30px 1fr;
+  transition: color 350ms ease;
+}
+
+.pledge-mark span {
+  font: 800 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.12em;
+}
+
+.pledge-mark b {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.pledge-mark.is-active {
+  color: var(--paper);
+}
+
+.pledge-mark.is-active span {
+  color: var(--ember);
+}
+
+/* A panelek EGYMÁSON állnak ugyanabban a rácscellában, nem egymás alatt: így
+   a váltás átúszás, és a szakasz magassága a leghosszabb vállaláshoz igazodik
+   — nem ugrál, ahogy váltasz. */
+.pledge-stage {
+  display: grid;
+  position: relative;
+}
+
+.pledge-panel {
+  grid-area: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(26px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.pledge-panel.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.pledge-n {
+  color: var(--ember);
+  display: block;
+  font: 800 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+  margin-bottom: 18px;
+}
+
+.pledge-quote {
+  font-size: clamp(23px, 3.2vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.16;
+  margin: 0 0 26px;
+  max-width: 24ch;
+}
+
+.pledge-word {
+  filter: blur(1.2px);
+  opacity: 0.16;
+  transition: opacity 350ms ease, filter 350ms ease;
+}
+
+.pledge-word.is-lit {
+  filter: none;
+  opacity: 1;
+}
+
+.pledge-meta {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.pledge-meta b {
+  font-size: 15px;
+}
+
+.pledge-meta span {
+  color: rgba(245, 245, 245, 0.5);
+  font-size: 13px;
+}
+
+/* Telefonon a szakasz UGYANÚGY ragad és görgetésre vált — csak egy oszlopban,
+   rövidebb úttal, és a jelzőből csak a sorszámok maradnak, hogy a cím, a
+   szöveg és a jelző együtt kiférjen egy képernyőre.
+
+   `svh` és nem `vh`: telefonon a `vh` a böngésző címsorával együtt változik,
+   amitől a ragadó szakasz görgetés közben ugrálna. A `svh` a legkisebb
+   (címsorral együtt látszó) magasság, tehát állandó. */
+@media (max-width: 900px) {
+  .pledge-scroll {
+    min-height: calc(var(--pledge-count, 3) * 62svh + 100svh);
+  }
+
+  /* `start`, nem `center`. Középre igazítva a tartalom egy 100svh magas
+     dobozban lebeg, és a szakasz tetején kétszáz képpont üres sötét fogadja a
+     látogatót — pont ott, ahol még nem tudja, mi következik. Felülre húzva a
+     cím rögtön a szócsík alatt megjelenik, az üres hely pedig a panel ALÁ
+     kerül, ahol levegőnek olvasódik, nem lyuknak. */
+  .pledge-sticky {
+    align-content: start;
+    gap: 18px;
+    grid-template-columns: 1fr;
+    min-height: 100svh;
+    padding: clamp(88px, 17vw, 120px) 18px clamp(40px, 8vw, 64px);
+  }
+
+  .pledge-marks {
+    display: flex;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .pledge-mark {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .pledge-mark b {
+    display: none;
+  }
+
+  .pledge-head::after {
+    margin-top: 14px;
+  }
+
+  .pledge-quote {
+    max-width: none;
+  }
+}
+
+/* Csökkentett mozgás mellett nincs ragadás: ott a görgetést elnyelő szakasz
+   azt az érzetet kelti, hogy megakadt az oldal. Ilyenkor a három vállalás
+   egyszerű, egymás alatti lista, minden szó kigyújtva. */
+.pledge-scroll.is-static {
+  min-height: 0;
+}
+
+.pledge-scroll.is-static .pledge-sticky {
+  grid-template-columns: 1fr;
+  min-height: 0;
+  padding: clamp(60px, 9vw, 100px) clamp(18px, 5vw, 76px);
+  position: static;
+}
+
+.pledge-scroll.is-static .pledge-marks {
+  display: none;
+}
+
+.pledge-scroll.is-static .pledge-stage {
+  gap: 26px;
+}
+
+.pledge-scroll.is-static .pledge-panel {
+  border-top: 1px solid rgba(245, 245, 245, 0.14);
+  grid-area: auto;
+  opacity: 1;
+  padding-top: 24px;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* ── Záró sáv: aláírás a munkaszámláló helyett ────────────────────────
+   Itt eredetileg egy „7 munka, mind megnyitható" bélyeg állt kinyíló
+   képekkel. Kikerült, két okból: aki idáig ért, MÁR végigment a hét munkán,
+   tehát a szám semmit nem tesz hozzá — és a legyező érintőn nem tudott
+   kinyílni, csak kilógott. Az utolsó kép ezért egy arc: a kérdés ezen a
+   ponton az, hogy kinek ír a látogató. */
+.cta-band-copy {
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+
+.cta-band-sub {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.cta-band.dark .cta-band-sub {
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.cta-signoff {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+/* A kép álló portré (1086×1448), tehát körbe vágva középen a törzs maradna:
+   a 22%-os függőleges igazítás teszi az arcot a kör közepére. */
+.cta-signoff-photo {
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 8px 20px rgba(17, 23, 28, 0.18);
+  flex: none;
+  height: 52px;
+  object-fit: cover;
+  object-position: 50% 22%;
+  width: 52px;
+}
+
+.cta-signoff b {
+  display: block;
+  font-size: 14px;
+}
+
+.cta-signoff small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cta-band.dark .cta-signoff small {
+  color: rgba(245, 245, 245, 0.6);
+}
+
+/* ── Brief: a mesh drift átveszi a két CSS-derengést ───────────────────
+   A foltok a markupban maradnak (WebGL nélkül ők a háttér, és az első
+   festéskor is ők látszanak), de amint a shader kész, elhalványulnak —
+   különben a kék-lila átütne a narancs-türkiz ködön. */
+.brief-stage:has(.shader-backdrop.is-ready) .brief-aurora {
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+/* ── Vissza a brief kapujához ──────────────────────────────────────────
+   A briefből eddig nem vezetett út visszafelé. Két jogos oka van rá a
+   látogatónak: rossz ágat választott, vagy mégis inkább csak kérdezne — a
+   gyors sáv pedig kizárólag a kapun él. A gomb szándékosan halk: nem
+   versenyezhet a brief „Tovább" gombjával, csak legyen ott, ha kell.
+
+   Középre zárva, mert a kapu is középre zárt: visszaérkezéskor ne ugorjon
+   a szem a bal szélre. */
+.brief-back {
+  align-items: center;
+  background: rgba(245, 245, 245, 0.07);
+  border: 1px solid rgba(245, 245, 245, 0.16);
+  border-radius: 999px;
+  color: rgba(245, 245, 245, 0.78);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12.5px;
+  font-weight: 800;
+  gap: 8px;
+  margin: 0 auto clamp(14px, 2vw, 22px);
+  padding: 10px 17px;
+  position: relative;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  z-index: 6;
+}
+
+.brief-stage-inner:has(.brief-back) {
+  display: grid;
+  justify-items: center;
+}
+
+.brief-stage-inner:has(.brief-back) > .public-brief {
+  width: 100%;
+}
+
+.brief-back:hover {
+  background: rgba(245, 245, 245, 0.13);
+  color: var(--paper);
+}
+
+.brief-back:hover span {
+  transform: translateX(-3px);
+}
+
+.brief-back span {
+  display: inline-block;
+  font-size: 14px;
+  transition: transform 180ms ease;
+}
+
+.brief-back:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brief-back,
+  .brief-back span {
+    transition: none;
+  }
 }
