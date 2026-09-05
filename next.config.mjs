@@ -85,7 +85,7 @@ const csp = [
   // űrlapbeküldés — a 'self' tehát elég, és megfogja az adatkiszivárgást.
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests"
+  ...(isDev ? [] : ["upgrade-insecure-requests"])
 ].join("; ");
 
 /** @type {import('next').NextConfig} */
@@ -101,7 +101,7 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" }
+          ...(!isDev ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" }] : [])
         ]
       }
     ];

@@ -290,7 +290,10 @@ export function ShaderBackdrop({ variant }: { variant: Variant }) {
            legkevesebb a GPU. A szemcse amúgy is elfedi a különbséget. */
         const mobile = window.matchMedia("(max-width: 980px)").matches;
         const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1 : 1.5);
-        const { width, height } = host.getBoundingClientRect();
+        const width = host.clientWidth || Math.floor(host.getBoundingClientRect().width);
+        const height = host.clientHeight || Math.floor(host.getBoundingClientRect().height);
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
         canvas.width = Math.max(1, Math.floor(width * dpr));
         canvas.height = Math.max(1, Math.floor(height * dpr));
         gl.viewport(0, 0, canvas.width, canvas.height);

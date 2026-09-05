@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { TransitionLink } from "@/components/TransitionLink";
-import { IconMessageCircle, IconPackage, IconWrench, IconLock } from "@/components/icons";
 import { ProcessTimeline, type FlowStep } from "@/components/ProcessTimeline";
+import { InteractiveFlowStage } from "@/components/InteractiveFlowStage";
 
 export const metadata: Metadata = {
   title: "A közös munka folyamata | ProjectEdge",
@@ -48,29 +48,6 @@ const steps: FlowStep[] = [
   }
 ];
 
-const extras = [
-  {
-    Icon: IconMessageCircle,
-    title: "Folyamatos kapcsolat",
-    copy: "Írsz az ügyfélkapun, és ott is marad. Nem vész el semmi emailben."
-  },
-  {
-    Icon: IconPackage,
-    title: "Kétféle befejezés",
-    copy: "Bérlésnél én üzemeltetem tovább. Vásárlásnál a forráskód és minden hozzáférés a tiéd."
-  },
-  {
-    Icon: IconWrench,
-    title: "Indulás után",
-    copy: "Bérlésnél innentől figyelem és frissítem, és elvégzem a csomagban foglalt módosításokat."
-  },
-  {
-    Icon: IconLock,
-    title: "Hogyan indul a fizetés",
-    copy: "Bérlésnél az első havidíj indítja a munkát — külön belépési díj nincs. Vásárlásnál foglaló, majd átadás."
-  }
-];
-
 export default function ProcessPage() {
   return (
     <main className="site-shell dark-page">
@@ -86,53 +63,9 @@ export default function ProcessPage() {
       <section className="proc-list">
         <ProcessTimeline steps={steps} />
       </section>
-      {/* A két konstrukció NEM ugyanazon a folyamaton megy végig: bérlésnél
-          nincs ajánlati kör, vásárlásnál viszont van, és átadás is. Korábban egy
-          leírás próbálta lefedni mindkettőt, amiből az ügyfél mást várt. */}
-      <section className="flow-split" aria-labelledby="flow-split-title">
-        <div className="flow-split-head">
-          <p className="micro-label">Két útvonal</p>
-          <h2 id="flow-split-title">Bérléssel indulsz — és bármikor a sajátod lehet.</h2>
-        </div>
-        <div className="flow-split-grid">
-          <article>
-            <span>BÉRLÉS · a leggyakoribb</span>
-            <ol>
-              <li>Kitöltöd az adatlapot és csomagot választasz</li>
-              <li>Elfogadod a szerződést az ügyfélkapun</li>
-              <li>Elindul az előfizetés — az első havidíj indítja a munkát</li>
-              <li>Megépítem az oldalt</li>
-              <li>Előnézet, módosítás, jóváhagyás</li>
-              <li>Élesítés, majd folyamatos üzemeltetés</li>
-            </ol>
-            <p>Meglévő oldal felújítása is ezen az úton megy: a régi tartalmat áthozom, és új oldal épül a helyére. Az infrastruktúrát végig én kezelem.</p>
-          </article>
-          <article>
-            <span>KIVÁSÁRLÁS · ha a sajátod lenne</span>
-            <ol>
-              <li>Az oldalad már él, bérlésben</li>
-              <li>Jelzed, hogy élnél a vételi opcióval</li>
-              <li>Megkapod a rögzített egyszeri díjat</li>
-              <li>Szerződés, majd a díj utalása</li>
-              <li>Vezetett technikai átadás lépésenként</li>
-              <li>A forráskód, a domain és a fiókok a tieid</li>
-            </ol>
-            <p>Az átadás lépésenként megy az ügyfélkapun. Néhány fiókot neked kell létrehoznod — ehhez írásos útmutatót adok. A lezárástól még 30 napig díjmentesen javítom, ami elromlik.</p>
-          </article>
-        </div>
-      </section>
 
-      <section className="process-extras">
-        {extras.map(({ Icon, title, copy }) => (
-          <article className="process-extra" key={title}>
-            <div className="extra-ico" aria-hidden="true">
-              <Icon size={24} />
-            </div>
-            <h3>{title}</h3>
-            <p>{copy}</p>
-          </article>
-        ))}
-      </section>
+      {/* Interaktív Két Útvonal Színpad Művészi WebGL Shaderrel és Élő Szimulációval */}
+      <InteractiveFlowStage />
       <section className="delivery-times" aria-labelledby="delivery-times-title">
         <div><p className="micro-label">Várható elkészítés</p><h2 id="delivery-times-title">Gyors, de nem kapkodós.</h2><p>Az idő a hiánytalan brief, a szükséges anyagok és az induló fizetés beérkezésétől számít.</p></div>
         <dl><div><dt>Jelenlét</dt><dd>2–4 munkanap</dd></div><div><dt>Üzleti</dt><dd>3–6 munkanap</dd></div><div><dt>Egyedi</dt><dd>5–14 munkanap</dd></div></dl>
