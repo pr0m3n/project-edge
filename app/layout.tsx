@@ -15,6 +15,12 @@ export const metadata: Metadata = {
   description:
     "Egyedi weboldalak, ügyfélkapuk és üzleti admin felületek egy kézben — a szövegtől az élesítésig.",
   metadataBase: new URL("https://www.projectedge.hu"),
+  // Google Search Console tulajdonjog-igazolás. A GA4-es igazolás nem működik,
+  // mert a gtag kliensoldalon töltődik be, és a Google robotja csak a nyers
+  // HTML-t látja. Ne töröld: az igazolt állapot megszűnik nélküle.
+  verification: {
+    google: "taI9jaq0TfswyO4niHHbABz6YZ1M76iIAu5DE731kOw"
+  },
   // A böngészőfülön és a mobil kezdőlapon is a weboldalon használt PE jel
   // jelenjen meg. Az app/icon.png és app/apple-icon.png ugyanez a jel sötét
   // háttéren; itt kifejezetten deklaráljuk, hogy ne a gyökér /favicon.ico
