@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { HeroAurora } from "@/components/HeroAurora";
 import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { ModelViewer } from "@/components/ModelViewer";
 import { TransitionLink } from "@/components/TransitionLink";
 import { SiteNav } from "@/components/SiteNav";
+import { PosterHero, PosterHeroFollow } from "@/components/PosterHero";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BriefStage } from "@/components/BriefStage";
 import { DeliverStack } from "@/components/DeliverStack";
@@ -118,95 +118,17 @@ export default function Home() {
     <main className="site-shell">
       <SiteNav />
 
-      <section className="home-hero">
-        {/* A mozgó háttér és a fölötte fekvő fátyol. A fátyol nem dísz: az
-            auróra szalagjai vándorolnak, és ha egy világos szalag a cím alá
-            ér, a szöveg olvashatatlan lesz. Balra garantálja a kontrasztot,
-            jobbra elenged, hogy a makett mögött látszódjon a shader. */}
-        <HeroAurora />
-        <div className="hero-scrim" aria-hidden="true" />
-        <div className="hero-noise" aria-hidden="true" />
-        <div className="home-hero-grid">
-          <div className="hero-editorial">
-            {/* Ez a sor korábban a stúdió önmeghatározása volt („Digital Build
-                Studio") — a látogatónak semmit nem mondott. A fizetett forgalom
-                viszont a `bemutatkozó weboldal`, `egyedi weboldal`,
-                `weboldal tervezés` kifejezésekre érkezik, ezért innentől ez
-                visszaigazolja neki, hogy jó helyen jár. A H1 maradhat
-                eredmény-központú, nem kell kulcsszót beletuszkolni. */}
-            <p className="micro-label">Bemutatkozó és céges weboldal készítés</p>
-            {/* A sorok külön <span>-ek, de a szöveges tartalmuk összeragadna
-                („Weboldal, amitbérelsz.Én építem…") — pont ezt olvassa ki a
-                Google és a képernyőolvasó. A sorvégi szóköz állítja helyre a
-                mondatot anélkül, hogy a tördelés változna. */}
-            <h1 className="hero-statement">
-              <span>Weboldal, ami után </span>
-              <span className="hero-accent">megkeresnek. </span>
-              <span>Bérelhető — én építem, én üzemeltetem.</span>
-            </h1>
-            {/* Az ár a heróban: a hirdetésekből érkezők harmada árat keres
-                (`weblap árak`, `weboldal árak`, `landing oldal készítés ár`),
-                és eddig a csomagokig kellett görgetnie érte. Külön sávban áll,
-                nem a bekezdésben, hogy olvasás nélkül is beugorjon. */}
-            <p className="hero-price">
-              <strong>14 900 Ft</strong>
-              <span>/hó-tól</span>
-              <em>nincs belépési díj</em>
-            </p>
-            {/* Itt korábban egy bekezdés állt a domainről, a tárhelyről és a
-                karbantartásról. Kivettük: pontosan ezt mondja el lentebb a
-                „Domain, tárhely, email — nálam van" blokk, részletesebben. A
-                heróban viszont ez volt az egyetlen elem, ami a mozgó
-                háttérrel verekedett — hosszú, halvány szöveg mozgó alapon a
-                legnehezebben olvasható dolog, ami van. */}
-            <div className="hero-command">
-              <a className="button primary" href="#arak">Csomagok és árak</a>
-              <TransitionLink className="button spectral" href="/munkak">
-                Munkáim és demók
-              </TransitionLink>
-            </div>
-            <p className="hero-subhint">
-              Vagy kezdd azonnal: <a href="#projektbrief">online projektbrief kitöltése →</a>
-            </p>
-            {/* A narancs vonal is kikerült. Az auróra fölött már volt egy
-                narancs elem túl sok: az ársáv éle, a fő gomb és a vonal
-                ugyanazt a színt vitte három helyen. Az ársáv és a gomb
-                dolgozik, a vonal csak dísz volt. */}
-          </div>
-          <div className="hero-system" aria-label="ProjectEdge projektfolyamat előnézet">
-            <div className="system-glow" aria-hidden="true" />
-            <div className="system-window">
-              {/* A körbefutó fény. A kártyán ez az egyetlen folyamatos
-                  mozgás, és a KERETEN él — a szöveg mögött semmi nem mozog. */}
-              <span aria-hidden="true" className="system-beam"><i /></span>
-              <div className="system-window-bar">
-                <span /><span /><span />
-                <b>projectedge / live build</b>
-              </div>
-              <div className="system-preview">
-                <span className="system-kicker">ÚJ PROJEKT</span>
-                <strong>Az ötlettől az éles oldalig.</strong>
-                <p>Stratégia, design és fejlesztés egyetlen átlátható folyamatban.</p>
-                <i>Projekt indítása →</i>
-              </div>
-            </div>
-            <div className="system-card progress-card">
-              <span>Fejlesztés</span>
-              <strong>72%</strong>
-              <div><i /></div>
-            </div>
-            <div className="system-card status-card">
-              <span className="status-dot" />
-              <div><small>KÖVETKEZŐ LÉPÉS</small><strong>Mobilnézet finomítása</strong></div>
-            </div>
-            {/* A harmadik lebegő kártya („Egy kézben: szöveg, design, kód")
-                kikerült: három lebegő elem a makett körül zsúfoltnak
-                olvasódott, és ezt az állítást a „Mit kapsz" szakasz úgyis
-                kimondja. Kettő maradt, azok viszont látszanak. */}
-          </div>
-        </div>
-      </section>
+      {/* A korábbi heró (auróra-shader + szerkesztői oszlop + lebegő
+          dashboard-makett) helyére került a poszter-heró. A makett volt az
+          oldal legáltalánosabb eleme — minden SaaS-sablon hozza —, a
+          kéz-ceruza viszont emberi és megjegyezhető. Az ár és a fő gomb nem
+          veszett el: a heró alsó sávjában állnak. */}
+      <PosterHero />
 
+      {/* A sötét heró feloldódik a világos szakaszba, ahelyett hogy elvágva
+          érne véget — ugyanaz az elv, amit a régi `.home-hero::before`
+          csinált, csak most a hero CSS-moduljából. */}
+      <PosterHeroFollow>
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -419,6 +341,7 @@ export default function Home() {
           </TransitionLink>
         </article>
       </section>
+      </PosterHeroFollow>
     </main>
   );
 }
