@@ -464,6 +464,28 @@ function Hand() {
       };
 
       onScroll = () => {
+        /* Telefonon NINCS görgetés-vezérelt ág. Nem szeszélyből: a tartomány a
+           hero magasságához van kötve (hero × 0.7), és a hero mobilon ~518px,
+           tehát a teljes effekt ~363px görgetésbe férne bele — egyetlen
+           hüvelykujj-mozdulatba. Ehhez jön, hogy az érintéses görgetés
+           lendületes, tehát bármilyen scroll-kötött animáció rángatósnak
+           érződik rajta. A tartomány megnyújtása sem megoldás: akkor meg alig
+           történne belőle valami olvasás közben.
+           Marad a ciklus, amit az IntersectionObserver amúgy is leállít, ha a
+           hero elhagyja a képernyőt. */
+        if (isMobile()) {
+          if (scrolling) {
+            scrolling = false;
+            visual.style.transform = "";
+            visual.style.opacity = "";
+            paint(0);
+            schedule(START_DELAY_MOBILE_MS);
+          }
+          targetS = 0;
+          currentS = 0;
+          return;
+        }
+
         targetS = rawProgress();
         if (targetS === currentS || settleFrame) return;
         lastTs = 0;
