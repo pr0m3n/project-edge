@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import {
   IconMessageCircle,
@@ -431,18 +431,21 @@ export function InteractiveFlowStage() {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastWheelTime = useRef(0);
-  const stepButtonsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
-  useEffect(() => {
-    const activeBtn = stepButtonsRef.current[activeStepIndex];
-    if (activeBtn) {
-      activeBtn.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center"
-      });
-    }
-  }, [activeStepIndex]);
+  /* Itt korábban egy `scrollIntoView` futott az aktív lépéskártyára. Két oka
+     volt, hogy ki kellett venni:
+
+     1. Már az első rendereléskor lefutott (`activeStepIndex` 0-ról indul), és
+        a `block: "nearest"` is elgörgeti az OLDALT, ha a lépéssáv a hajtás
+        alatt van — ezért ugrott le magától a /folyamat oldal betöltéskor.
+     2. Az `inline: "center"` amúgy sem csinált semmit: a `.stage-steps-list`
+        függőleges oszlop (`flex-direction: column`), nem vízszintes sáv, és
+        mobilon a `.stage-stepper-track` teljesen rejtett.
+
+     Ráadásul a görgős lépésváltással (`handleWheel`) harcolt: a kerék
+     léptetett egyet, az effekt meg visszarántotta az oldalt. A kártyák
+     desktopon amúgy is a bal oszlopban állnak, tehát nincs mit láthatóvá
+     tenni. */
 
   const currentData = activeTab === "berles" ? BERLES_DATA : KIVASARLAS_DATA;
   const currentStep = currentData[activeStepIndex] || currentData[0];
@@ -588,9 +591,6 @@ export function InteractiveFlowStage() {
                 return (
                   <button
                     key={step.number}
-                    ref={(el) => {
-                      stepButtonsRef.current[idx] = el;
-                    }}
                     type="button"
                     role="tab"
                     aria-selected={isActive}
