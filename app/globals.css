@@ -19358,3 +19358,173 @@ details.admin-collapse summary:hover {
     transition: none;
   }
 }
+
+/* --- „Amire épül" stack-sáv (/szolgaltatasok) -----------------------------
+   Statikus rács, nem csúszó logósor: a végtelen marquee a SaaS-sablonok
+   kelléke, és pont a prémium benyomást viszi el.
+
+   A hajszálvonalak nth-childdal állnak be, töréspontonként külön, mert a
+   rács 4 → 2 → 1 oszlopra vált. A szokásos grid-gap-es hajszálvonal-trükk
+   itt nem járható: a cellának tömör háttérrel kellene takarnia a
+   .light-page aqua színátmenetét, és az a folt meglátszana. */
+.stack-band {
+  margin: 72px auto 0;
+  max-width: 1280px;
+  padding: 0 6vw;
+}
+
+/* A .solutions-section már hoz max-widthöt és 6vw oldalpaddingot, ezért a sáv
+   saját burka itt csak duplázna: keskenyebb lenne, mint a fölötte álló ágak és
+   az alatta álló csomagkártyák. Nagyobb a specificitása a .stack-band alap- és
+   médialekérdezéses szabályainál, így mindegyiket felülírja. */
+.solutions-section .stack-band {
+  margin: clamp(46px, 5vw, 72px) 0 clamp(46px, 5vw, 72px);
+  max-width: none;
+  padding: 0;
+}
+
+.stack-head {
+  display: grid;
+  gap: 14px;
+  margin-bottom: clamp(28px, 3.6vw, 44px);
+  max-width: 720px;
+}
+
+.stack-head h2 {
+  font-size: clamp(28px, 3.4vw, 46px);
+  line-height: 1.04;
+  margin: 0;
+}
+
+.stack-head p:not(.micro-label) {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.stack-rail {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stack-cell {
+  /* align-content: start kell: a .stack-rail egyforma magasra nyújtja a
+     cellákat, és nélküle a maradék helyet a cella saját rácsa osztaná szét a
+     sorai között — így a rövidebb leírású oszlopokban lejjebb csúszna a név.
+     Négy különböző hosszúságú szöveg mellett ez négy különböző magasságú
+     névsor, és pont a rendezettség érzetét viszi el. */
+  align-content: start;
+  display: grid;
+  padding: clamp(28px, 3.4vw, 42px) clamp(18px, 2.4vw, 34px);
+  position: relative;
+}
+
+.stack-cell + .stack-cell {
+  border-left: 1px solid var(--line);
+}
+
+/* Ugyanaz a gesztus, mint a .ledger-row bal oldali ember-csíkja feljebb —
+   ne kelljen új nyelvet tanulnia a szemnek ugyanazon az oldalon. */
+.stack-cell::before {
+  background: var(--ember);
+  content: "";
+  height: 2px;
+  left: clamp(18px, 2.4vw, 34px);
+  position: absolute;
+  right: clamp(18px, 2.4vw, 34px);
+  top: -1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stack-cell:hover::before {
+  transform: scaleX(1);
+}
+
+.stack-mark {
+  align-items: center;
+  color: rgba(48, 56, 65, 0.38);
+  display: flex;
+  height: clamp(30px, 3.2vw, 38px);
+  margin-bottom: clamp(18px, 2.2vw, 26px);
+  transition: color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stack-cell:hover .stack-mark {
+  color: var(--ink);
+  transform: translateY(-3px);
+}
+
+/* Közös dobozmagasság, tételenként saját optikai szorzó: a jelek így ülnek
+   egy vonalon, holott a viewBox kitöltésük nagyon eltérő. */
+.stack-mark svg {
+  height: 100%;
+  transform: scale(var(--s, 1));
+  width: auto;
+}
+
+.stack-name {
+  color: var(--ink);
+  font-size: clamp(16px, 1.7vw, 19px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.stack-role {
+  color: #35696d;
+  font-size: 11.5px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  margin: 7px 0 0;
+  text-transform: uppercase;
+}
+
+.stack-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.62;
+  margin: 14px 0 0;
+}
+
+.stack-fineprint {
+  color: rgba(115, 128, 135, 0.85);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 18px 0 0;
+  max-width: 640px;
+}
+
+@media (max-width: 980px) {
+  .stack-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stack-cell + .stack-cell { border-left: 0; }
+  .stack-cell:nth-child(2n) { border-left: 1px solid var(--line); }
+  .stack-cell:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
+
+@media (max-width: 560px) {
+  .stack-band { padding: 0 18px; }
+  .stack-rail { grid-template-columns: minmax(0, 1fr); }
+  .stack-cell { padding: 24px 0; }
+  .stack-cell:nth-child(2n) { border-left: 0; }
+  .stack-cell + .stack-cell { border-top: 1px solid var(--line); }
+  .stack-cell::before { left: 0; right: 0; }
+  .stack-note { font-size: 13.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack-cell::before,
+  .stack-mark {
+    transition: none;
+  }
+  .stack-cell:hover .stack-mark {
+    transform: none;
+  }
+}

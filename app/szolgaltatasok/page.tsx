@@ -5,6 +5,7 @@ import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BuildTower } from "@/components/BuildTower";
 import { SolutionBranches, type Branch } from "@/components/SolutionBranches";
+import { StackRow } from "@/components/StackRow";
 import { LOGO_DESIGN_PRICE, formatHuf } from "@/lib/subscriptions";
 import {
   IconGlobe,
@@ -161,6 +162,11 @@ export default function ServicesPage() {
         </div>
 
         <SolutionBranches branches={branches} />
+
+        {/* A csomagárak ELŐTT áll: mire a három kártyához ér a szem, már tudja,
+            mi van az ár mögött. Utána állva ugyanez csak utólagos magyarázat
+            lenne egy számra, amit a látogató addigra elkönyvelt. */}
+        <StackRow />
 
         <PriceEstimator />
 
