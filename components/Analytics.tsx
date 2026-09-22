@@ -2,8 +2,34 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ADS_ID, CLARITY_ID, GA_ID, measurementEnabled, readConsent, trackPageView } from "@/lib/analytics";
+
+/**
+ * A süti-hozzájárulás mint külső tároló.
+ *
+ * A döntés a `localStorage`-ban él, amihez a szerver nem fér hozzá. Ha
+ * renderelés közben olvasnánk, a szerver mindig „nincs hozzájárulás"-t adna,
+ * a kliens első renderje viszont a valódi értéket — a Clarity `<Script>` emiatt
+ * hidratálási eltérést okozott, és a hibás részfa újrarenderelésekor a mérőkód
+ * betöltése el is maradhatott. Ez magyarázza, miért látott a Clarity
+ * nagyságrenddel kevesebb munkamenetet, mint amennyi kattintást az Ads mért.
+ *
+ * A `useSyncExternalStore` pont erre való: a szerver-pillanatkép mindig
+ * `false`, a kliens pedig a mount után áll rá a valódi értékre.
+ */
+function subscribeToConsent(onChange: () => void) {
+  window.addEventListener("projectedge:consent-changed", onChange);
+  return () => window.removeEventListener("projectedge:consent-changed", onChange);
+}
+
+function consentSnapshot() {
+  return readConsent() === "granted";
+}
+
+function consentServerSnapshot() {
+  return false;
+}
 
 /**
  * A mérőkódok betöltése és a Consent Mode alapállapota.
@@ -15,15 +41,7 @@ import { ADS_ID, CLARITY_ID, GA_ID, measurementEnabled, readConsent, trackPageVi
 export function Analytics() {
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
-  const [consentRevision, setConsentRevision] = useState(0);
-
-  useEffect(() => {
-    const changed = () => setConsentRevision((value) => value + 1);
-    window.addEventListener("projectedge:consent-changed", changed);
-    return () => window.removeEventListener("projectedge:consent-changed", changed);
-  }, []);
-
-  const consentGranted = readConsent() === "granted";
+  const consentGranted = useSyncExternalStore(subscribeToConsent, consentSnapshot, consentServerSnapshot);
 
   // A config szándékosan send_page_view:false, így az első és a későbbi
   // kliensoldali oldalmegtekintést is pontosan ez az egy effekt küldi.
@@ -31,7 +49,7 @@ export function Analytics() {
     if (!measurementEnabled || !pathname || !ready) return;
     if (!consentGranted) return;
     trackPageView(pathname);
-  }, [consentGranted, consentRevision, pathname, ready]);
+  }, [consentGranted, pathname, ready]);
 
   if (!measurementEnabled) return null;
 

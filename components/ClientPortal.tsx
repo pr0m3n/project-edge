@@ -41,7 +41,13 @@ import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
 import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
-import { ASSUMED_RETENTION_MONTHS, trackLeadConversion } from "@/lib/analytics";
+import {
+  ASSUMED_RETENTION_MONTHS,
+  consumeSignupLead,
+  markSignupLead,
+  trackEvent,
+  trackLeadConversion
+} from "@/lib/analytics";
 import type { Project, Ticket, TicketMessage, ClientChangeRequest, WebsitePurchase } from "@/components/portal/types";
 import type { WebsitePurchasePaymentMethod } from "@/lib/website-purchase";
 import Image from "next/image";
@@ -190,6 +196,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [publicBriefPending, setPublicBriefPending] = useState(false);
   const [publicBriefImported, setPublicBriefImported] = useState(false);
+  /** Bump, ha az `ensureClientProfile` ÚJ fiókot észlelt — ez futtatja újra a
+      regisztrációs lead jelentését akkor is, ha a jel az effekt után jött. */
+  const [signupSignal, setSignupSignal] = useState(0);
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -237,6 +246,26 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setPublicBriefImported(true);
     setNotice("A nyilvános brief válaszait betöltöttük. Egészítsd ki a privát anyagokkal, majd ellenőrzés után küldd be.");
   }, [publicBriefImported, userId, view]);
+
+  /**
+   * A regisztráció mint hirdetési lead.
+   *
+   * Korábban a `brief` konverzió a nyilvános brief záró GOMBJÁN sült el, ahol
+   * még se név, se email nem volt — aki ott elpártolt, arról a stúdió semmit
+   * nem tudott meg, az Ads viszont 30 000 Ft értékű leadet könyvelt. Most a
+   * jel a fiók tényleges létrejöttéhez tartozik, és ITT jelentjük, mert ez az
+   * első pont, ahol az oldal már nem navigál tovább.
+   *
+   * Brief nélküli regisztráció is valódi érdeklődő, de az Adsnek csak a
+   * briefes megy ki konverzióként — a többit a GA4 `sign_up` eseménye őrzi.
+   */
+  useEffect(() => {
+    if (view !== "dashboard" || !userId) return;
+    if (!consumeSignupLead()) return;
+    const withBrief = Boolean(readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY)));
+    trackEvent("sign_up", { method: "portal", with_brief: withBrief });
+    if (withBrief) trackLeadConversion("brief");
+  }, [signupSignal, userId, view]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -745,6 +774,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     // Üres tömb = a profil már létezett, tehát ez belépés, nem regisztráció.
     if (!created?.length || !sessionUser.id || !userEmail) return;
 
+    /* Ez az egyetlen megbízható „új fiók" jel a Google-belépésnél és akkor is,
+       ha a megerősítő linket másik eszközön nyitották meg — ott a `submitAuth`
+       jelölése nincs meg. Kétszeres jelölés nem baj: a `consumeSignupLead`
+       egyszer olvasható, és a `brief` amúgy is munkamenetenként egyszer számít. */
+    markSignupLead();
+    setSignupSignal((value) => value + 1);
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) return;
 
@@ -1017,6 +1053,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       setNotice(`Nem sikerült létrehozni a fiókot: ${error.message}`);
       return;
     }
+
+    /* Innentől van egy valódi, visszahívható érdeklődő: email cím és név.
+       A konverziót NEM itt küldjük — a következő sorok egy része azonnal
+       tovább navigál (`hardNavigate`), az e-mailes megerősítés pedig akár
+       másik lapon vagy eszközön történhet meg. A jelet eltesszük, és a
+       dashboardon olvassuk vissza, ahol az oldal már nem megy sehova. */
+    markSignupLead();
 
     // A profil létrehozása és az admin értesítése SZÁNDÉKOSAN nincs itt: mindkettő
     // az `ensureClientProfile`-ban történik, egyetlen helyen. Ez az upsert amúgy

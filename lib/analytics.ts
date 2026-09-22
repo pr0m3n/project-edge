@@ -173,22 +173,219 @@ export const LEAD_VALUES: Record<LeadKind, number> = {
 };
 
 /**
+ * Útvonal-előtagok, ahol NEM keletkezhet új hirdetési lead.
+ *
+ * A lábléc (benne a telefonszám) és a chat widget a `ChromeGate` miatt az
+ * adminban és az ügyfélkapuban is ott van. Aki ott kattint, az vagy a stúdió
+ * maga, vagy egy MEGLÉVŐ ügyfél — egyik sem a hirdetés hozta érdeklődő. Ezek a
+ * kattintások korábban ugyanúgy konverziót küldtek az Adsnek.
+ */
+export const CONVERSION_FREE_PATH_PREFIXES = ["/admin", "/ugyfelkapu"] as const;
+
+/**
+ * Az a két típus, ami a zárt felületen belül is VALÓDI lead.
+ *
+ * A `project` a beküldött projektindító adatlap (szerver visszaigazolta az
+ * insertet), a `brief` pedig a sikeres regisztráció — mindkettő természetes
+ * helye az `/ugyfelkapu`, ezért őket a fenti útvonalszűrő nem érintheti.
+ */
+export const PORTAL_NATIVE_KINDS: readonly LeadKind[] = ["brief", "project"];
+
+/**
+ * Munkamenetenként legfeljebb egyszer számít.
+ *
+ * A telefonszám négy helyen jelenik meg ugyanazon az oldalon (fejléc, mobil
+ * menü, gyors sáv, lábléc); egy ember több koppintása akkor is EGY érdeklődő,
+ * ha az Ads-műveletnél véletlenül „Minden konverzió" a számlálás.
+ */
+export const ONCE_PER_SESSION_KINDS: readonly LeadKind[] = ["phone", "brief"];
+
+export type LeadContext = {
+  /** `window.location.pathname` a hívás pillanatában. */
+  path: string;
+  /** Tud-e az eszköz ténylegesen hívást indítani (érintős, nem asztali). */
+  canPlaceCall: boolean;
+  /** Elsült-e már ez a típus ebben a munkamenetben. */
+  alreadySent: boolean;
+};
+
+export type LeadBlock = "cannot-place-call" | "suppressed-path" | "duplicate";
+
+export function isConversionFreePath(path: string) {
+  // Szándékosan nem puszta `startsWith`: a `/adminisztracio` nem az admin.
+  return CONVERSION_FREE_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+}
+
+/**
+ * Kimehet-e a konverzió, és ha nem, miért.
+ *
+ * Tiszta függvény, hogy teszttel rögzíthető legyen — a mérés csendben romlik
+ * el, ezért itt egyetlen ág sem maradhat ellenőrizetlenül.
+ *
+ * A sorrend számít: előbb az eszköz (asztali gépen a `tel:` link nem csinál
+ * semmit, tehát a koppintás nem bizonyít semmit), aztán az útvonal, végül az
+ * ismétlés. Így a GA4-be kerülő `lead_not_counted` mindig a LEGERŐSEBB okot
+ * mondja meg.
+ */
+export function leadConversionBlockedBy(kind: LeadKind, context: LeadContext): LeadBlock | null {
+  if (kind === "phone" && !context.canPlaceCall) return "cannot-place-call";
+  if (!PORTAL_NATIVE_KINDS.includes(kind) && isConversionFreePath(context.path)) return "suppressed-path";
+  if (context.alreadySent && ONCE_PER_SESSION_KINDS.includes(kind)) return "duplicate";
+  return null;
+}
+
+/**
+ * A konverzió értéke. A hívó felülírhatja (az elindított előfizetésnél a
+ * tényleges életciklus-érték megy), de csak értelmes számmal: a `0`, a `NaN`
+ * és a negatív érték a típus alapértékére esik vissza, nem megy ki nullás
+ * konverzióként az Adsbe.
+ */
+export function leadValue(kind: LeadKind, value?: number) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : LEAD_VALUES[kind];
+}
+
+/**
+ * A konverziós esemény `send_to` értéke, vagy `null`, ha nincs mihez küldeni.
+ *
+ * Az alapértelmezések felülírhatók, hogy teszt alól is hívható legyen — a
+ * modul szintjén a `process.env` értékek build időben fixálódnak.
+ */
+export function adsSendTo(
+  kind: LeadKind,
+  adsId: string = ADS_ID,
+  labels: Record<LeadKind, string> = ADS_LEAD_LABELS,
+  fallbackLabel: string = ADS_LEAD_LABEL
+) {
+  const label = labels[kind] || fallbackLabel;
+  if (!adsId || !label) return null;
+  return `${adsId}/${label}`;
+}
+
+/** Ugyanazon az oldalbetöltésen belüli ismétlés elleni védelem. */
+const sentOnThisPage = new Set<LeadKind>();
+const LEAD_SENT_PREFIX = "pe-lead-sent-";
+
+function wasLeadSent(kind: LeadKind) {
+  if (sentOnThisPage.has(kind)) return true;
+  try {
+    return window.sessionStorage.getItem(`${LEAD_SENT_PREFIX}${kind}`) === "1";
+  } catch {
+    // Privát böngészésben nincs tárolás — ilyenkor a memóriabeli halmaz véd.
+    return false;
+  }
+}
+
+function rememberLeadSent(kind: LeadKind) {
+  sentOnThisPage.add(kind);
+  try {
+    window.sessionStorage.setItem(`${LEAD_SENT_PREFIX}${kind}`, "1");
+  } catch {
+    /* lásd fent */
+  }
+}
+
+/**
+ * Tud-e az eszköz hívást indítani. Az asztali böngészőben a `tel:` link
+ * jellemzően nem csinál semmit, ezért az ottani kattintás nem érdeklődés.
+ */
+function deviceCanPlaceCall() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  try {
+    return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Google Ads konverzió. Akkor hívjuk, amikor tényleges érdeklődés születik —
  * ez az, amiből a Google licitálása tanulni tud.
  *
  * A `value` felülírja a típus alapértékét (az elindított előfizetésnél a
- * tényleges havidíjat küldjük).
+ * tényleges életciklus-értéket küldjük).
+ *
+ * Ami NEM megy ki, az sem tűnik el: `lead_not_counted` néven GA4 eseményt kap,
+ * okkal együtt. Enélkül a szűrés ugyanolyan vak folt lenne, mint amilyen a
+ * szűretlen mérés volt.
+ *
+ * A visszatérési érték a blokkolás oka (vagy `null`) — teszt és hibakeresés
+ * számára, a hívók nem kötelesek használni.
  */
-export function trackLeadConversion(kind: LeadKind, value?: number) {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  const amount = value ?? LEAD_VALUES[kind];
+export function trackLeadConversion(kind: LeadKind, value?: number): LeadBlock | null {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return null;
+
+  const blocked = leadConversionBlockedBy(kind, {
+    path: window.location.pathname,
+    canPlaceCall: deviceCanPlaceCall(),
+    alreadySent: wasLeadSent(kind)
+  });
+
+  if (blocked) {
+    trackEvent("lead_not_counted", { lead_kind: kind, reason: blocked });
+    return blocked;
+  }
+
+  const amount = leadValue(kind, value);
+  rememberLeadSent(kind);
   trackEvent("generate_lead", { lead_kind: kind, value: amount, currency: "HUF" });
-  const label = ADS_LEAD_LABELS[kind] || ADS_LEAD_LABEL;
-  if (ADS_ID && label) {
-    window.gtag("event", "conversion", {
-      send_to: `${ADS_ID}/${label}`,
-      value: amount,
-      currency: "HUF"
-    });
+
+  const sendTo = adsSendTo(kind);
+  if (!sendTo) return null;
+
+  window.gtag("event", "conversion", {
+    send_to: sendTo,
+    value: amount,
+    currency: "HUF",
+    // A Google ezzel szűri ki a hálózati újrapróbálkozásból eredő dupla
+    // beérkezést. Enélkül minden ismételt ping külön konverzió.
+    transaction_id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${kind}-${Date.now()}`
+  });
+
+  return null;
+}
+
+/**
+ * Jelzi, hogy ÚJ fiók született. Nem itt küldünk konverziót: a regisztráció
+ * pillanatában az oldal gyakran azonnal tovább navigál (`hardNavigate`), és az
+ * e-mailes megerősítés akár másik eszközön is megtörténhet. A jelet ezért
+ * eltesszük, és a dashboardon olvassuk vissza, ahol az oldal már stabil.
+ *
+ * `localStorage`, nem `sessionStorage`: a megerősítő linket a látogató sokszor
+ * új lapon nyitja meg.
+ */
+export const SIGNUP_LEAD_KEY = "projectedge-signup-lead-v1";
+/** Ennél régebbi jelet eldobunk — nem tartozhat a mostani munkamenethez. */
+export const SIGNUP_LEAD_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function markSignupLead(now: number = Date.now()) {
+  try {
+    window.localStorage.setItem(SIGNUP_LEAD_KEY, String(now));
+  } catch {
+    /* privát böngészés */
+  }
+}
+
+/** Tiszta párja a `consumeSignupLead`-nek, hogy tesztelhető legyen. */
+export function isFreshSignupLead(raw: string | null, now: number = Date.now()) {
+  if (!raw) return false;
+  const stamp = Number(raw);
+  if (!Number.isFinite(stamp) || stamp <= 0) return false;
+  // A jövőbeli időbélyeg elállított rendszerórát jelent, nem friss jelet.
+  if (stamp > now) return false;
+  return now - stamp <= SIGNUP_LEAD_MAX_AGE_MS;
+}
+
+/** Egyszer olvasható: visszaadja, hogy volt-e friss regisztrációs jel, és törli. */
+export function consumeSignupLead(now: number = Date.now()) {
+  try {
+    const raw = window.localStorage.getItem(SIGNUP_LEAD_KEY);
+    window.localStorage.removeItem(SIGNUP_LEAD_KEY);
+    return isFreshSignupLead(raw, now);
+  } catch {
+    return false;
   }
 }

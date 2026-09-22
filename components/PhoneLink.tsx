@@ -17,8 +17,11 @@ import { STUDIO_PHONE_LABEL, STUDIO_PHONE_TEL } from "@/lib/contact";
  * teljesítménnyel. Ha zajosnak bizonyul, egyetlen kapcsolóval kivehető a
  * licitálásból anélkül, hogy a chat vagy a brief jele sérülne.
  *
- * Az Ads-műveletnél a számlálás „Egy" legyen, ne „Minden": ugyanaz a látogató
- * a fejlécben és a láblécben is rákoppinthat, az viszont egy érdeklődő.
+ * A link asztali gépen is működőképes marad, de ott NEM számít konverziónak:
+ * a `tel:` ott jellemzően nem csinál semmit, tehát a kattintás nem érdeklődés.
+ * Ugyanígy nem számít az ismételt koppintás (a szám négy helyen látszik) és az
+ * admin/ügyfélkapu alatti kattintás sem. A szűrést a `trackLeadConversion`
+ * végzi központilag, hogy egyetlen hívóhely se maradhasson ki belőle.
  */
 export function PhoneLink({
   ariaLabel,

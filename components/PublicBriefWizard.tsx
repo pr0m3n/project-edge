@@ -19,7 +19,7 @@ import {
   SERVICE_COUNT_OPTIONS,
   VISITOR_TASK_OPTIONS
 } from "@/lib/subscriptions";
-import { trackEvent, trackLeadConversion } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * A csomagválasztás szándékosan NEM az első lépés.
@@ -227,8 +227,14 @@ export function PublicBriefWizard({
       contentSource: form.contentSource || "studio"
     };
     window.localStorage.setItem(PUBLIC_BRIEF_DRAFT_KEY, JSON.stringify({ data: prepared, savedAt: new Date().toISOString(), step: 4, version: 1 }));
+    /* CSAK tölcsér-esemény, NEM Ads-konverzió. Ez a kattintás semmit nem ad a
+       stúdiónak: nincs név, nincs email, és a brief a látogató gépén marad (a
+       `brief_drafts` csak bejelentkezettnek ír, a nyilvános lead-végpont POST
+       ága ki van vezetve). Aki itt elpártol, arról semmit nem tudunk meg — az
+       Ads viszont korábban 30 000 Ft értékű leadet látott belőle.
+       A `brief` konverzió a SIKERES REGISZTRÁCIÓKOR sül el, lásd
+       `ClientPortal` → `markSignupLead` / `consumeSignupLead`. */
     trackEvent("brief_completed", { model: prepared.commercialModel, source: "homepage" });
-    trackLeadConversion("brief");
     router.push("/ugyfelkapu?brief=continue");
   }
 
