@@ -25,6 +25,7 @@ import { ProjectSwitcher } from "@/components/portal/ProjectSwitcher";
 import { BriefPanel } from "@/components/portal/BriefPanel";
 import { OfferPanel } from "@/components/portal/OfferPanel";
 import { ContractPanel, contractPlainText } from "@/components/portal/ContractPanel";
+import { BillingTermChooser } from "@/components/portal/BillingTermChooser";
 import { DepositPaymentPanel } from "@/components/portal/DepositPaymentPanel";
 import { BuildProgressPanel } from "@/components/portal/BuildProgressPanel";
 import { ReviewFeedbackPanel } from "@/components/portal/ReviewFeedbackPanel";
@@ -40,7 +41,7 @@ import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
-import { LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { BILLING_TERMS, LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import {
   ASSUMED_RETENTION_MONTHS,
   consumeSignupLead,
@@ -48,7 +49,7 @@ import {
   trackEvent,
   trackLeadConversion
 } from "@/lib/analytics";
-import type { Project, Ticket, TicketMessage, ClientChangeRequest, WebsitePurchase } from "@/components/portal/types";
+import type { Project, Ticket, TicketMessage, ClientChangeRequest, SubscriptionPayment, WebsitePurchase } from "@/components/portal/types";
 import type { WebsitePurchasePaymentMethod } from "@/lib/website-purchase";
 import Image from "next/image";
 import type { AppNotification } from "@/components/admin/types";
@@ -127,6 +128,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [messages, setMessages] = useState<Record<string, TicketMessage[]>>({});
   const [changeRequests, setChangeRequests] = useState<ClientChangeRequest[]>([]);
+  /** A saját befizetései — a 038-as migráció óta az ügyfél is látja őket. */
+  const [payments, setPayments] = useState<SubscriptionPayment[]>([]);
   const [websitePurchases, setWebsitePurchases] = useState<WebsitePurchase[]>([]);
   const [projectForm, setProjectForm] = useState(initialProject);
   const [projectStep, setProjectStep] = useState(0);
@@ -290,7 +293,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     window.history.replaceState({}, "", `${window.location.pathname}${params.size ? `?${params}` : ""}${window.location.hash}`);
   }, []);
 
-  async function openStripe(project: Project, endpoint: "checkout" | "portal") {
+  async function openStripe(project: Project, endpoint: "checkout" | "portal", term?: string) {
     setStripeLoadingProjectId(project.id);
     setPaymentError("");
     try {
@@ -299,7 +302,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       const response = await fetch(`/api/stripe/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ projectId: project.id })
+        body: JSON.stringify({ projectId: project.id, term })
       });
       const result = await response.json() as { url?: string; error?: string };
       if (!response.ok || !result.url) throw new Error(result.error || "A Stripe felülete nem nyitható meg.");
@@ -307,6 +310,63 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "A Stripe felülete nem nyitható meg.");
       setStripeLoadingProjectId(null);
+    }
+  }
+
+  /**
+   * Előfizetés indítása banki átutalással.
+   *
+   * A várt befizetés a SZERVEREN jön létre, nem itt: az összeget és a
+   * közleményt nem szabad a böngészőre bízni. Innen csak a választott
+   * futamidő megy át.
+   */
+  async function startSubscriptionTransfer(project: Project, termKey: string) {
+    setPaymentError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("A munkamenet lejárt. Jelentkezz be újra.");
+      const response = await fetch("/api/subscription/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ projectId: project.id, action: "start", term: termKey })
+      });
+      const result = await response.json() as {
+        error?: string; paymentId?: string; amount?: number; reference?: string;
+        bank?: { name: string; accountNumber: string; iban: string };
+      };
+      if (!response.ok || !result.paymentId || !result.bank) {
+        throw new Error(result.error || "Az utalási adatok most nem érhetők el.");
+      }
+      return {
+        paymentId: result.paymentId,
+        amount: result.amount ?? 0,
+        reference: result.reference ?? "",
+        bank: result.bank
+      };
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Az utalási adatok most nem érhetők el.");
+      return null;
+    }
+  }
+
+  /** Az ügyfél jelzi, hogy elutalta. Ez nem fizetettre állít — az admin igazol. */
+  async function reportSubscriptionTransfer(paymentId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("A munkamenet lejárt. Jelentkezz be újra.");
+      const response = await fetch("/api/subscription/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ projectId: selectedProjectId, action: "reported", paymentId })
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || "A bejelentés nem sikerült.");
+      setNotice("Köszönöm, jeleztem magamnak. Amint megérkezik, visszaigazolom.");
+      await loadPortal(true);
+      return true;
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "A bejelentés nem sikerült.");
+      return false;
     }
   }
 
@@ -954,7 +1014,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       { data: profileData },
       { data: notificationData },
       { data: changeRequestData },
-      { data: websitePurchaseData }
+      { data: websitePurchaseData },
+      { data: paymentData }
     ] = await Promise.all([
       supabase.from("client_projects").select("*").order("created_at", { ascending: false }),
       supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }),
@@ -975,7 +1036,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             .limit(20)
         : Promise.resolve({ data: [], error: null }),
       supabase.from("change_requests").select("*").order("requested_at", { ascending: false }),
-      supabase.from("website_purchases").select("*").order("created_at", { ascending: false })
+      supabase.from("website_purchases").select("*").order("created_at", { ascending: false }),
+      // A saját befizetései. Az RLS a `Clients view own subscription payments`
+      // policyvel szűr, tehát külön `user_id` feltétel itt nem kell — a
+      // kapcsolat a projekten keresztül él.
+      supabase.from("subscription_payments").select("*").order("due_date", { ascending: false })
     ]);
 
     if (projectError || ticketError) {
@@ -1011,6 +1076,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
     setWebsitePurchases((websitePurchaseData ?? []) as WebsitePurchase[]);
+    setPayments((paymentData ?? []) as SubscriptionPayment[]);
     setActiveTicketId((current) => current || ticketData?.[0]?.id || "");
     setLoading(false);
   }
@@ -1714,11 +1780,11 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const amount = formatPrice(project.deposit_amount, project.offer_currency || "Ft");
     const reference = transferReference(project);
     const managed = project.commercial_model === "subscription";
-    const paymentName = managed ? "első havidíj" : "foglaló";
+    const paymentName = managed ? "első díj" : "foglaló";
 
     const { error } = await supabase.from("client_projects").update({
       deposit_transfer_reported: true,
-      next_step: `Jelezted, hogy elindítottad a(z) ${amount} összegű ${paymentName} utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom — utána indul a kivitelezés.`
+      next_step: `Jelezted, hogy elindítottad a(z) ${amount} összegű ${paymentName} utalását (közlemény: ${reference}). Ellenőrzöm a bankszámlát, és amint megérkezett, jóváhagyom — utána ${managed ? "élesítem az oldalt" : "indul a kivitelezés"}.`
     }).eq("id", project.id);
 
     setPaymentLoading(false);
@@ -1793,31 +1859,38 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     }
     setNotice("Szerződés elfogadása...");
     const managed = project.commercial_model === "subscription";
+    // A szerződés elfogadása INDÍTJA AZ ÉPÍTÉST — fizetés nélkül.
+    //
+    // Az ügyfél a kész, általa jóváhagyott weboldalért fizet, közvetlenül az
+    // élesítés előtt. A szerződés viszont elöl marad: az hitelesíti a
+    // megrendelést és rögzíti, mit rendelt, mennyiért.
     const { error } = await supabase.from("client_projects").update({
       contract_accepted: true,
       contract_accepted_at: new Date().toISOString(),
-      status: "deposit_pending",
-      ...(managed ? { subscription_status: "first_payment_pending" } : {}),
-      next_step: managed ? "Szolgáltatási szerződés elfogadva. Fizesd be az első havidíjat a weboldal elkészítésének indításához." : "Szerződés aláírva! Kérlek, fizesd be a foglalót a kivitelezés elindításához."
+      status: managed ? "in_progress" : "deposit_pending",
+      ...(managed ? { subscription_status: "agreement_pending" } : {}),
+      next_step: managed
+        ? "Szerződés elfogadva — elkezdtem dolgozni a weboldaladon. Amint elkészül, itt fogod látni előnézetben."
+        : "Szerződés aláírva! Kérlek, fizesd be a foglalót a kivitelezés elindításához."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elfogadni a szerződést.");
     } else {
       setContractChecked(false);
       setPerformanceConsent(false);
-      setNotice(managed ? "Szerződés elfogadva. Következő lépés: az első havidíj." : "Szerződés aláírva. Következő lépés: a foglaló befizetése.");
+      setNotice(managed ? "Szerződés elfogadva. Elkezdtem dolgozni az oldaladon — fizetni csak a jóváhagyás után kell." : "Szerződés aláírva. Következő lépés: a foglaló befizetése.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Szerződés aláírva",
-        `Az ügyfél (${email}) elfogadta a ${managed ? "szolgáltatási" : "vállalkozási"} szerződést a(z) "${project.title}" projekthez. ${managed ? "Első havidíj" : "Foglaló"} befizetésére vár.`,
+        `Az ügyfél (${email}) elfogadta a ${managed ? "szolgáltatási" : "vállalkozási"} szerződést a(z) "${project.title}" projekthez. ${managed ? "Indulhat az építés — a díj a jóváhagyás után esedékes." : "Foglaló befizetésére vár."}`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
         "Szerződés aláírva",
-        `Elfogadtad a szerződést a(z) "${project.title}" projekthez ${new Date().toLocaleString("hu-HU")} időpontban. Következő lépésként fizesd be ${managed ? "az első havidíjat" : "a foglalót"} a kivitelezés elindításához.\n\nAz elfogadott szerződés változatlan szövege:\n\n${contractPlainText(project)}`,
+        `Elfogadtad a szerződést a(z) "${project.title}" projekthez ${new Date().toLocaleString("hu-HU")} időpontban. ${managed ? "Elkezdtem dolgozni a weboldaladon. Amint elkészül, előnézetben megmutatom; fizetni csak akkor kell, ha jóváhagytad." : "Következő lépésként fizesd be a foglalót a kivitelezés elindításához."}\n\nAz elfogadott szerződés változatlan szövege:\n\n${contractPlainText(project)}`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -2161,17 +2234,27 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function approveReview(project: Project) {
     setNotice("Jóváhagyás mentése...");
+    // Menedzselt előfizetésnél a jóváhagyás után következik a FIZETÉS, és
+    // csak azt követi az élesítés. Egyszeri vásárlásnál marad a régi út: ott
+    // a végszámla az átadáshoz kötődik.
+    const managed = project.commercial_model === "subscription";
     const { error } = await supabase.from("client_projects").update({
       review_approved: true,
-      next_step: "Jóváhagytad az elkészült oldalt. Most az adminisztrátor végzi az élesítést; addig nincs teendőd."
+      ...(managed ? { status: "deposit_pending", subscription_status: "first_payment_pending" } : {}),
+      next_step: managed
+        ? "Jóváhagytad az elkészült oldalt. Már csak a fizetés van hátra, utána élesítem."
+        : "Jóváhagytad az elkészült oldalt. Most az adminisztrátor végzi az élesítést; addig nincs teendőd."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült menteni a jóváhagyást.");
       return;
     }
     await triggerNotification(null, "admin@projectedge.hu", "Ügyfél jóváhagyta az oldalt",
-      `Az ügyfél (${email}) jóváhagyta a(z) "${project.title}" projektet. Az oldal élesíthető.`, "/admin");
-    setNotice("Jóváhagyva. Most az adminisztrátoron a sor.");
+      managed
+        ? `Az ügyfél (${email}) jóváhagyta a(z) "${project.title}" projektet. Most fizet, utána élesíthető.`
+        : `Az ügyfél (${email}) jóváhagyta a(z) "${project.title}" projektet. Az oldal élesíthető.`,
+      "/admin");
+    setNotice(managed ? "Jóváhagyva. Már csak a fizetés van hátra." : "Jóváhagyva. Most az adminisztrátoron a sor.");
     loadPortal(true);
   }
 
@@ -2575,14 +2658,46 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
           onDecline={() => declineOffer(project)}
         />
 
-        {project.status === "deposit_pending" && (
-          <DepositPaymentPanel
-            project={project}
-            paymentStarting={stripeLoadingProjectId === project.id}
-            onStartPayment={() => project.commercial_model === "subscription"
-              ? openStripe(project, "checkout")
-              : (setPaymentMode("deposit"), setShowPaymentModalProjectId(project.id), setPaymentError(""))}
-          />
+        {/* A fizetés MEGTÖRTÉNT, de az élesítés még hátravan. A fizetési
+            panelt ilyenkor le kell venni, különben az ügyfél azt hiszi, még
+            fizetnie kell — miközben már fizetett. */}
+        {project.status === "deposit_pending" && project.payment_status === "deposit_paid" && (
+          <div className="term-chooser">
+            <div className="term-reported">
+              <strong>Megérkezett a fizetésed — köszönöm.</strong>
+              <p>
+                Most élesítem a weboldalt a saját domainjén. Ez jellemzően néhány órát vesz igénybe;
+                amint élő, itt és emailben is jelzem. Addig nincs teendőd.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {project.status === "deposit_pending" && project.payment_status !== "deposit_paid" && (
+          project.commercial_model === "subscription" ? (
+            /* Előfizetésnél nem egyetlen gomb van, hanem két döntés: meddig
+               fizet előre (itt van a kedvezmény), és hogyan. A korábbi
+               egygombos megoldásnál mindkettő láthatatlan volt. */
+            <BillingTermChooser
+              project={project}
+              /* Mindhárom futamidő választható, de a HAVI az alapértelmezett
+                 és a hangsúlyos. A megkülönböztetés lényeges: egy még el sem
+                 készült weboldalért egy évet előre KÉRNI elriaszt — felkínálni
+                 viszont nem, és aki eleve egyben akar fizetni, annak nem kell
+                 az élesítésig várnia. */
+              terms={BILLING_TERMS}
+              busy={stripeLoadingProjectId === project.id}
+              onCard={(term) => openStripe(project, "checkout", term.key)}
+              onTransfer={(term) => startSubscriptionTransfer(project, term.key)}
+              onTransferReported={reportSubscriptionTransfer}
+            />
+          ) : (
+            <DepositPaymentPanel
+              project={project}
+              paymentStarting={stripeLoadingProjectId === project.id}
+              onStartPayment={() => { setPaymentMode("deposit"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }}
+            />
+          )
         )}
 
         {project.status === "contract_pending" && (
@@ -2638,7 +2753,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
         {project.commercial_model === "subscription" && (project.status === "launched" || project.status === "paused") ? (
           <>
-            <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description))} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onQuoteCardPayment={startChangeRequestCardPayment} onThreadMessage={() => notifyThreadMessage(project)} />
+            <ManagedWebsitePanel project={project} requests={changeRequests.filter((request) => request.project_id === project.id && !isWebsitePurchaseRequest(request.description))} payments={payments.filter((payment) => payment.project_id === project.id)} onPause={() => requestSubscriptionState(project, "pause")} onResume={() => requestSubscriptionState(project, "resume")} onCancel={() => requestSubscriptionState(project, "cancel")} onManageBilling={() => openStripe(project, "portal")} onRequestChange={async (category, description) => { await createChangeRequest(project, category, description); await loadPortal(true); }} onQuoteDecision={(requestId, decision) => decideChangeQuote(project, requestId, decision)} onQuoteCardPayment={startChangeRequestCardPayment} onThreadMessage={() => notifyThreadMessage(project)} onSwitchToAnnual={() => openStripe(project, "checkout", "annual")} />
             <PurchaseFlowPanel
               key={`${project.id}-${selectedWebsitePurchase?.id ?? "new"}`}
               project={project}
@@ -2839,7 +2954,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                 <h3>{submittedProjectTitle || "A projektterv"}</h3>
                 <p>
                   {submittedCommercialModel === "subscription"
-                    ? "A választott csomagot és az új weboldalhoz szükséges adatokat rögzítettük. Nincs külön ajánlati kör: a következő lépés a szolgáltatási szerződés, majd az első havidíj."
+                    ? "A választott csomagot és az új weboldalhoz szükséges adatokat rögzítettük. Nincs külön ajánlati kör: a következő lépés a szolgáltatási szerződés, ami elindítja az építést. Fizetni csak a kész oldal jóváhagyása után kell."
                     : "Köszönöm, megkaptam az adatlapot. Átnézem a célokat, a funkciókat és a vizuális irányt, majd a következő lépéseket és az ajánlatot itt fogod látni a dashboardban."}
                 </p>
                 <div className="wizard-success-actions">
@@ -3877,7 +3992,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       : null}
                     </div>
-                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést, utána jelennek meg az első havidíj banki átutalási adatai. A kivitelezés a beérkezés visszaigazolásakor indul.</p></div> : null}
+                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést — ez indítja az építést, fizetés nélkül. Az első díjat csak akkor kell rendezni, amikor a kész oldalt jóváhagytad; utána élesítem.</p></div> : null}
                     <label className="brief-final-confirm"><input type="checkbox" checked={briefConfirmed} onChange={(event) => setBriefConfirmed(event.target.checked)} /><span><strong>Ellenőriztem az adatokat.</strong> Kifejezetten kérem az adatlap beküldését és a következő szerződéses lépés megnyitását.</span></label>
                   </div>
                 ) : null}

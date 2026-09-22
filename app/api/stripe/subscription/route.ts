@@ -15,6 +15,8 @@ import {
   subscriptionPlan,
   subscriptionProductId
 } from "@/lib/subscriptions";
+import { monthsFromStripeRecurring } from "@/lib/billing-math";
+import { agreedAmountFor, cycleAmount } from "@/lib/onboarding";
 
 export const runtime = "nodejs";
 
@@ -30,9 +32,22 @@ type ProjectRow = {
   user_id: string;
   subscription_plan: string | null;
   monthly_price: number | null;
+  billing_amount: number | null;
+  billing_period_months: number | null;
+  billing_interval: string | null;
   stripe_subscription_id: string | null;
   stripe_parked_at: string | null;
 };
+
+/**
+ * Olyan művelet, ami egy MEGSZŰNT Stripe-előfizetésen nem hajtható végre.
+ *
+ * Korábban a megszűnt előfizetést változatlanul visszaadtuk, a hívó pedig
+ * ettől függetlenül aktívra írta az adatbázist: a `resume` után az ügyfélkapu
+ * „aktív" előfizetést mutatott, miközben a Stripe-ban nem volt mit terhelni.
+ * Megszűnt előfizetést csak új Checkout indíthat újra.
+ */
+class CanceledSubscriptionError extends Error {}
 
 /**
  * Az előfizetés Stripe-oldali módosítása. MINDEN állapotváltás ide fut be,
@@ -44,8 +59,18 @@ async function applyToStripe(action: Action, project: ProjectRow) {
   const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(project.stripe_subscription_id);
 
-  // Egy már megszűnt előfizetést nem lehet és nem is kell módosítani.
-  if (subscription.status === "canceled") return subscription;
+  // Egy már megszűnt előfizetést nem lehet módosítani. A lemondás ettől még
+  // rendben van (a cél állapot ugyanaz), minden más viszont hazudna.
+  if (subscription.status === "canceled") {
+    if (action === "cancel" || action === "cancel_now") return subscription;
+    throw new CanceledSubscriptionError();
+  }
+
+  // A ciklus hossza hónapban a MEGLÉVŐ Stripe-tételből. Az árcsere ezt a
+  // ciklust tartja meg, ezért az új összegnek is erre a ciklusra kell szólnia:
+  // egy éves előfizetésnél a havidíj átadása 14 900 Ft-os ÉVES díjat jelentett
+  // volna 149 000 helyett.
+  const months = monthsFromStripeRecurring(subscription.items.data[0]?.price.recurring);
 
   switch (action) {
     case "cancel":
@@ -61,11 +86,23 @@ async function applyToStripe(action: Action, project: ProjectRow) {
         "ProjectEdge weboldal-parkolás",
         "Parkolóállapot: a domain, a tárhely és a technikai fiókok fenntartása szüneteltetés alatt."
       );
-      return swapSubscriptionPrice(subscription, productId, PARKING_MONTHLY_PRICE);
+      // A parkolási díj havi összeg; hosszabb ciklusnál a ciklusra vetítjük.
+      // A ciklus hosszát szándékosan NEM állítjuk havira: az intervallum
+      // cseréje a Stripe-ban azonnali terheléssel új fordulónapot indítana,
+      // és elveszne a már kifizetett időszak hátralévő része.
+      return swapSubscriptionPrice(subscription, productId, PARKING_MONTHLY_PRICE * months);
     }
     case "resume": {
       const plan = subscriptionPlan(project.subscription_plan);
-      const amount = Number(project.monthly_price ?? plan.price);
+      // A ciklusdíj ugyanabból a függvényből, amiből a Checkout és a fizetési
+      // emlékeztető dolgozik: alkudott ár, ha van, különben a nyilvános
+      // futamidő-ár (évesen 10 havidíj).
+      const amount = cycleAmount({
+        monthlyPrice: Number(project.monthly_price ?? plan.price),
+        interval: months,
+        // Az alkudott ár csak akkor, ha erre a ciklusra szól.
+        agreed: agreedAmountFor(project, months)
+      });
       const productId = await ensureStripeProduct(
         subscriptionProductId(plan.key),
         `ProjectEdge ${plan.name} előfizetés`,
@@ -165,7 +202,7 @@ export async function POST(request: Request) {
     }
 
     let query = admin.from("client_projects")
-      .select("id,user_id,subscription_plan,monthly_price,stripe_subscription_id,stripe_parked_at")
+      .select("id,user_id,subscription_plan,monthly_price,billing_amount,billing_period_months,billing_interval,stripe_subscription_id,stripe_parked_at")
       .eq("id", body.projectId);
     // Az ügyfél kizárólag a saját projektjét módosíthatja; az admin bármelyiket.
     if (!isAdmin) query = query.eq("user_id", user.id);
@@ -178,8 +215,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ehhez a projekthez nincs aktív Stripe-előfizetés." }, { status: 409 });
     }
 
-    const subscription = await applyToStripe(action, project);
-    const patch = projectPatch(action, subscription);
+    let subscription: Stripe.Subscription | null;
+    try {
+      subscription = await applyToStripe(action, project);
+    } catch (error) {
+      if (error instanceof CanceledSubscriptionError) {
+        return NextResponse.json({
+          error: "Ez a Stripe-előfizetés már megszűnt, ezért nem módosítható. Az újraindításhoz új fizetés kell az ügyfélkapuból."
+        }, { status: 409 });
+      }
+      throw error;
+    }
+    // Egy már megszűnt előfizetés „lemondása" nem lemondási kérelem: az
+    // adatbázisnak a tényleges, megszűnt állapotot kell rögzítenie.
+    const patch = projectPatch(action === "cancel" && subscription?.status === "canceled" ? "cancel_now" : action, subscription);
 
     const { error } = await admin.from("client_projects").update(patch).eq("id", project.id);
     if (error) throw error;

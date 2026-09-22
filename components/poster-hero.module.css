@@ -24,7 +24,16 @@
 }
 
 .hero {
+  --paper-one-x: 0px;
+  --paper-one-y: 0px;
+  --paper-two-x: 0px;
+  --paper-two-y: 0px;
+  --print-x: 0px;
+  --print-y: 0px;
+  --print-neg-x: 0px;
+  --print-neg-y: 0px;
   position: relative;
+  isolation: isolate;
   flex: 1;
   /* A `min-height` korábban fix 630px volt (1600px felett 720). Csakhogy
      110px felső padding + hero + 142px lábléc együtt így 882-972px-et kért —
@@ -39,6 +48,79 @@
   /* A kéz kilóg a hero jobb szélén; ez engedi ki, de a függőleges tengelyen
      nem enged szivárgást. */
   clip-path: inset(0 -100vw);
+}
+
+/* A nagy, tompa papírformák nem új főmotívumok: ugyanazt a mélységet adják,
+   mint a kiválasztott 21st.dev parallax példák, de a ProjectEdge poszteres
+   vizuális nyelvén. A textúra tisztán CSS, ezért éles marad minden kijelzőn. */
+.paperLayer {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  box-shadow: 0 34px 80px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition: transform 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.paperLayer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.22;
+  background:
+    repeating-linear-gradient(14deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.04), transparent 52%);
+}
+
+.paperOne {
+  width: min(44vw, 660px);
+  aspect-ratio: 1;
+  left: -15%;
+  top: 3%;
+  background: #142a30;
+  transform: translate3d(var(--paper-one-x), var(--paper-one-y), 0) rotate(-9deg);
+}
+
+.paperTwo {
+  width: min(76vw, 1140px);
+  aspect-ratio: 1.45;
+  right: -23%;
+  top: 8%;
+  background: #202328;
+  transform: translate3d(var(--paper-two-x), var(--paper-two-y), 0) rotate(8deg);
+}
+
+/* A raszter csak levágott ívként ül a széleken. Teljes felületen zajos és
+   „tech-es” lenne; így nyomdai karaktert ad, de nem versenyez a H1-gyel. */
+.printArc {
+  position: absolute;
+  z-index: 2;
+  width: clamp(190px, 22vw, 340px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.18;
+  background-size: 10px 10px;
+  -webkit-mask-image: radial-gradient(circle, transparent 0 52%, #000 53% 69%, transparent 70%);
+  mask-image: radial-gradient(circle, transparent 0 52%, #000 53% 69%, transparent 70%);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.printArcAqua {
+  left: -9%;
+  bottom: -12%;
+  background-image: radial-gradient(circle, rgba(128, 197, 202, 0.9) 0 1.4px, transparent 1.7px);
+  transform: translate3d(var(--print-x), var(--print-y), 0) rotate(11deg);
+}
+
+.printArcEmber {
+  right: -7%;
+  top: -12%;
+  background-image: radial-gradient(circle, rgba(255, 87, 34, 0.95) 0 1.4px, transparent 1.7px);
+  transform: translate3d(var(--print-neg-x), var(--print-neg-y), 0) rotate(-8deg);
 }
 
 .disc {
@@ -58,7 +140,8 @@
   top: 46%;
   transform: translate(-50%, -50%);
   animation: circle-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-  z-index: 0;
+  z-index: 1;
+  box-shadow: 0 34px 70px rgba(0, 0, 0, 0.22), 0 0 70px rgba(255, 87, 34, 0.08);
 }
 
 .eyebrow {
@@ -110,6 +193,13 @@
   width: 100%;
   height: 100%;
   display: block;
+  /* `drop-shadow`, nem `box-shadow`: a canvas átlátszó hátterét figyelmen
+     kívül hagyja, ezért pontosan a kéz, a ceruza és később az ASCII-részecskék
+     kontúrját követi. A két eltérő árnyék választja le a kezet a korongról és
+     a sötét papírrétegről anélkül, hogy fekete pacává válna. */
+  filter:
+    drop-shadow(-24px 32px 26px rgba(0, 0, 0, 0.44))
+    drop-shadow(-8px 12px 10px rgba(255, 87, 34, 0.13));
 }
 
 /* A serif dőlt sor marad: a site is használ Georgia italicot kiemelésre
@@ -165,6 +255,26 @@
 .bottom p span {
   color: rgba(245, 245, 245, 0.55);
   font-size: 11px;
+}
+
+.offer strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f5f5f5;
+}
+
+.price .promise {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--aqua);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.price .promise::before {
+  content: "✓";
+  font-size: 12px;
 }
 
 /* A site saját `.button.primary`-ját követi (min-height 52, 950-es súly,
@@ -336,6 +446,12 @@
   .visual { width: 760px; right: -210px; top: 32%; }
   .script { top: 63%; font-size: clamp(32px, 9.2vw, 54px); line-height: 1.06; }
   .sideNote { bottom: 8%; font-size: 9px; line-height: 1.7; }
+  .paperLayer { transition: none; }
+  .paperOne { width: 350px; left: -62%; top: 3%; }
+  .paperTwo { width: 610px; right: -88%; top: 20%; }
+  .printArc { width: 210px; opacity: 0.12; transition: none; }
+  .printArcAqua { left: -32%; bottom: -16%; }
+  .printArcEmber { display: none; }
   .bottom {
     display: flex;
     flex-wrap: wrap;
@@ -351,6 +467,8 @@
   .cta { font-size: 12px; padding: 0 20px; gap: 10px; box-shadow: 0 7px 18px rgba(255, 87, 34, 0.3); }
   .cta span { font-size: 15px; }
   .bottom p span { font-size: 9px; }
+  .offer strong { font-size: 13px; }
+  .price .promise { font-size: 10.5px; gap: 4px; }
   /* Mobilon a jobb oldali térköz összenyomná a „Domain · tárhely ·
      karbantartás" sort, ezért itt nem oldalra húzzuk az árat, hanem a
      lábléc alsó térközével emeljük a Chat gomb fölé. */
@@ -368,4 +486,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .page * { animation: none !important; transition: none !important; }
+  .paperLayer,
+  .printArc { transform: none; }
 }

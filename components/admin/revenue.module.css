@@ -1,0 +1,144 @@
+/*
+ * A bevétel-nézet stílusa. Az elrendezés célja, hogy a „mikor jön be a pénz"
+ * kérdés görgetés nélkül megválaszolható legyen: felül a négy szám, alatta az
+ * időrendi lista. A késésben lévő tétel a listában is kiemelve marad, mert az
+ * az egyetlen sor, ami cselekvést kíván.
+ */
+
+.tiles {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.tiles article {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+}
+
+.tiles article:first-child { border-radius: 16px 0 0 16px; }
+.tiles article:last-child { border-radius: 0 16px 16px 0; }
+
+.tiles span {
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tiles strong {
+  color: var(--adm-text, #fff);
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.tiles small {
+  color: var(--adm-ink-40, rgba(255, 255, 255, 0.4));
+  font-size: 11px;
+}
+
+.block {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+
+.blockHead {
+  align-items: baseline;
+  border-bottom: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.blockHead strong {
+  color: var(--adm-text, #fff);
+  font-size: 14px;
+}
+
+.blockHead span {
+  color: var(--adm-ink-40, rgba(255, 255, 255, 0.4));
+  font-size: 11px;
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  align-items: center;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.list li:nth-child(odd) {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+}
+
+.list b {
+  color: var(--adm-text, #fff);
+  display: block;
+  font-size: 13.5px;
+}
+
+.list small {
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+  display: block;
+  font-size: 11px;
+}
+
+.list li > span {
+  color: var(--adm-text, #fff);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* A késésben lévő tétel az egyetlen, ami cselekvést kíván. */
+.late {
+  box-shadow: inset 2px 0 0 var(--adm-danger-text, #ff6b5e);
+}
+
+.late > span {
+  color: var(--adm-danger-text, #ff6b5e);
+}
+
+.empty {
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.empty code {
+  background: var(--adm-ink-06, rgba(255, 255, 255, 0.08));
+  border-radius: 5px;
+  font-size: 11.5px;
+  padding: 2px 5px;
+}
+
+@media (max-width: 720px) {
+  .tiles article:first-child,
+  .tiles article:last-child {
+    border-radius: 0;
+  }
+
+  .tiles article:first-child { border-radius: 16px 16px 0 0; }
+  .tiles article:last-child { border-radius: 0 0 16px 16px; }
+}

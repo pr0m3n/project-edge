@@ -4,6 +4,54 @@ import type Stripe from "stripe";
 
 type BillingoDocument = { id: number; invoice_number?: string };
 
+/**
+ * A számla vevője, szolgáltatófüggetlen alakban.
+ *
+ * Korábban ez a modul közvetlenül `Stripe.Customer`-t várt, ami azt jelentette,
+ * hogy CSAK kártyás fizetéshez lehetett számlát kiállítani. Az utalásos
+ * ügyfélnek viszont nincs Stripe-vevője — az adatai a `client_profiles`
+ * számlázási mezőiben élnek. A normalizált alak mindkét forrást kiszolgálja.
+ */
+export type BillingParty = {
+  name: string;
+  email: string;
+  /** ISO 3166-1 alpha-2, nagybetűvel. */
+  country: string;
+  postalCode: string;
+  city: string;
+  address: string;
+  /** Adószám HU előtag nélkül; hiányában magánszemélyként számlázunk. */
+  taxNumber?: string | null;
+};
+
+/** Stripe-vevő átfordítása számlázási vevővé. A `tax_ids` bővítve kell legyen. */
+export function billingPartyFromStripeCustomer(customer: Stripe.Customer): BillingParty {
+  const address = customer.address;
+  const taxIds = customer.tax_ids;
+  return {
+    name: customer.name ?? "",
+    email: customer.email?.trim() ?? "",
+    country: (address?.country ?? "").toUpperCase(),
+    postalCode: address?.postal_code ?? "",
+    city: address?.city ?? "",
+    address: [address?.line1, address?.line2].filter(Boolean).join(" "),
+    taxNumber: taxIds && "data" in taxIds ? taxIds.data[0]?.value.replace(/^HU/i, "") ?? null : null
+  };
+}
+
+/** Hiányos vevőadat esetén a hiányzó mezők nevét adja vissza, különben üres tömböt. */
+export function missingBillingFields(party: BillingParty) {
+  const required: Array<[keyof BillingParty, string]> = [
+    ["name", "név"],
+    ["email", "email cím"],
+    ["country", "ország"],
+    ["postalCode", "irányítószám"],
+    ["city", "település"],
+    ["address", "utca, házszám"]
+  ];
+  return required.filter(([key]) => !String(party[key] ?? "").trim()).map(([, label]) => label);
+}
+
 function config() {
   const apiKey = process.env.BILLINGO_API_KEY;
   const blockId = Number(process.env.BILLINGO_DOCUMENT_BLOCK_ID);
@@ -22,43 +70,51 @@ async function billingoFetch<T>(path: string, apiKey: string, init?: RequestInit
 }
 
 export async function createBillingoSubscriptionInvoice(input: {
+  /** Külső azonosító. Ebből lesz a `vendor_id`, ami a duplikált számlát kizárja. */
   stripeInvoiceId: string;
-  customer: Stripe.Customer;
+  party: BillingParty;
   amount: number;
   itemName: string;
   paidAt: Date;
+  /**
+   * A tétel mennyiségi egysége. Alapértelmezésben „hó", mert a Stripe-ból
+   * érkező számlák havi díjak — egy éves díjnál viszont ez félrevezető lenne
+   * a számlán, ezért felülírható.
+   */
+  unit?: string;
+  /** Fizetési mód a Billingo felé. Az utalásos befizetésnél nem kártya. */
+  paymentMethod?: "online_bankcard" | "wire_transfer";
+  /** A számla lábjegyzete — az utalás azonosítója is ide kerülhet. */
+  comment?: string;
 }) {
   const settings = config();
   if (!settings) return { skipped: true as const, reason: "A Billingo API környezeti változói nincsenek teljesen beállítva." };
 
-  const email = input.customer.email?.trim();
-  const address = input.customer.address;
-  if (!email || !input.customer.name || !address?.country || !address.postal_code || !address.city || !address.line1) {
-    throw new Error("A Stripe-vevő neve, email címe vagy számlázási címe hiányos.");
+  const missing = missingBillingFields(input.party);
+  if (missing.length) {
+    throw new Error(`A számlázási adatok hiányosak: ${missing.join(", ")}. Töltsd ki őket az ügyfél adatlapján.`);
   }
 
+  const email = input.party.email.trim();
   const partners = await billingoFetch<{ data?: Array<{ id: number; emails?: string[] }> }>(
     `/partners?per_page=100&query=${encodeURIComponent(email)}`,
     settings.apiKey
   );
   let partnerId = partners.data?.find((partner) => partner.emails?.some((value) => value.toLowerCase() === email.toLowerCase()))?.id;
   if (!partnerId) {
-    const expandedTaxIds = input.customer.tax_ids;
-    const taxCode = expandedTaxIds && "data" in expandedTaxIds
-      ? expandedTaxIds.data[0]?.value.replace(/^HU/i, "")
-      : undefined;
+    const taxCode = input.party.taxNumber?.replace(/^HU/i, "").trim() || "";
     const partner = await billingoFetch<{ id: number }>("/partners", settings.apiKey, {
       method: "POST",
       body: JSON.stringify({
-        name: input.customer.name,
+        name: input.party.name,
         address: {
-          country_code: address.country.toUpperCase(),
-          post_code: address.postal_code,
-          city: address.city,
-          address: [address.line1, address.line2].filter(Boolean).join(" ")
+          country_code: input.party.country.toUpperCase(),
+          post_code: input.party.postalCode,
+          city: input.party.city,
+          address: input.party.address
         },
         emails: [email],
-        taxcode: taxCode || "",
+        taxcode: taxCode,
         tax_type: taxCode ? "HAS_TAX_NUMBER" : "NO_TAX_NUMBER"
       })
     });
@@ -76,7 +132,7 @@ export async function createBillingoSubscriptionInvoice(input: {
       type: "invoice",
       fulfillment_date: day,
       due_date: day,
-      payment_method: "online_bankcard",
+      payment_method: input.paymentMethod ?? "online_bankcard",
       language: "hu",
       currency: "HUF",
       electronic: false,
@@ -87,12 +143,12 @@ export async function createBillingoSubscriptionInvoice(input: {
         unit_price: input.amount,
         unit_price_type: "gross",
         quantity: 1,
-        unit: "hó",
+        unit: input.unit ?? "hó",
         vat: "AAM",
         entitlement: "AAM",
         comment: "Alanyi adómentes szolgáltatás."
       }],
-      comment: `Stripe bankkártyás fizetés: ${input.stripeInvoiceId}`
+      comment: input.comment ?? `Stripe bankkártyás fizetés: ${input.stripeInvoiceId}`
     })
   });
   await billingoFetch(`/documents/${document.id}/send`, settings.apiKey, {

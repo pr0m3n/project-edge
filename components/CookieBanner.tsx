@@ -20,10 +20,34 @@ export function CookieBanner() {
 
   useEffect(() => {
     if (!measurementEnabled) return;
-    if (readConsent() === null) setVisible(true);
     const openSettings = () => setVisible(true);
     window.addEventListener("projectedge:open-cookie-settings", openSettings);
-    return () => window.removeEventListener("projectedge:open-cookie-settings", openSettings);
+
+    // Az első döntés kérése csak GÖRGETÉS UTÁN jelenik meg. Az első
+    // képernyőn a banner pont a hero gombját és árát takarta — telefonon
+    // teljesen. Aki görget, az már látta, mit kínálunk; döntés nélkül pedig
+    // a mérés alapból ki van kapcsolva, tehát a késleltetés nem jogi kérdés.
+    let removeScroll: (() => void) | null = null;
+    if (readConsent() === null) {
+      const threshold = () => window.innerHeight * 0.35;
+      const onScroll = () => {
+        if (window.scrollY < threshold()) return;
+        setVisible(true);
+        removeScroll?.();
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      removeScroll = () => {
+        window.removeEventListener("scroll", onScroll);
+        removeScroll = null;
+      };
+      // Horgonnyal (pl. /#arak) érkezve már görgetett állapotban vagyunk.
+      onScroll();
+    }
+
+    return () => {
+      window.removeEventListener("projectedge:open-cookie-settings", openSettings);
+      removeScroll?.();
+    };
   }, []);
 
   function decide(choice: ConsentChoice) {
@@ -37,9 +61,8 @@ export function CookieBanner() {
 
   return (
     <div aria-live="polite" className="cookie-banner" role="dialog" aria-label="Süti beállítások">
-      {/* Rövid szöveg: a banner az első képernyőn jelenik meg, ott minden
-          fölösleges sor a hero CTA-t takarja. A részletek egy kattintásra
-          vannak, és a döntés bármikor módosítható a láblécből. */}
+      {/* Rövid szöveg: minden fölösleges sor a tartalmat takarja. A részletek
+          egy kattintásra vannak, és a döntés bármikor módosítható a láblécből. */}
       <div className="cookie-copy">
         <strong>Sütik a méréshez</strong>
         <p>

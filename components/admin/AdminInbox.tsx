@@ -35,6 +35,9 @@ type InboxItem = {
   detail: string;
   since: string | null;
   projectId: string | null;
+  /** Ha a tétel egy `change_requests` sorból jön, itt a sor azonosítója —
+      ez teszi lehetővé a VÉGLEGES lezárást az elrejtés helyett. */
+  changeRequestId?: string;
   subTab?: "prompt" | "brief" | "build" | "changes" | "subscription";
   action?: { label: string; run: () => void | Promise<void>; busy?: boolean };
 };
@@ -44,12 +47,12 @@ const KIND_LABELS: Record<InboxKind, string> = {
   bug: "Technikai hiba",
   transfer: "Utalás ellenőrzése",
   subscription: "Előfizetési kérelem",
-  purchase: "💎 Weboldal Kivásárlás",
+  purchase: "Weboldal kivásárlás",
   review: "Élesítésre vár",
   delete: "Törlési kérelem",
   change: "Módosítási kérés",
   ticket: "Megválaszolatlan üzenet",
-  followup: "📬 Elakadt onboarding",
+  followup: "Elakadt onboarding",
   domain: "Domain lejár"
 };
 
@@ -94,6 +97,15 @@ type AdminInboxProps = {
   billingoRetryId: string | null;
   onRetryBillingo: (paymentId: string) => void | Promise<void>;
   onOpenProject: (projectId: string, subTab?: "prompt" | "brief" | "build" | "changes" | "subscription") => void;
+  /**
+   * Egy módosítási/kivásárlási kérés VÉGLEGES lezárása az adatbázisban.
+   *
+   * Ez a különbség az elrejtéshez képest, és pont ez hiányzott: az elrejtés
+   * csak ebben a böngészőben tünteti el a sort, a rekord nyitva marad —
+   * másik gépen, másik munkamenetben újra ott van. Ami a felhasználó
+   * szemszögéből úgy néz ki, hogy „kidobtam, mégis visszajött".
+   */
+  onResolveChangeRequest: (requestId: string) => void | Promise<void>;
 };
 
 export function AdminInbox({
@@ -104,7 +116,8 @@ export function AdminInbox({
   tickets,
   billingoRetryId,
   onRetryBillingo,
-  onOpenProject
+  onOpenProject,
+  onResolveChangeRequest
 }: AdminInboxProps) {
   const [showAll, setShowAll] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -189,6 +202,7 @@ export function AdminInbox({
       if (isWebsitePurchaseRequest(request.description)) {
         list.push({
           id: `change-buyout-${request.id}`,
+          changeRequestId: request.id,
           kind: "purchase",
           priority: KIND_PRIORITY.purchase,
           label: KIND_LABELS.purchase,
@@ -203,6 +217,7 @@ export function AdminInbox({
       const kind: InboxKind = request.category === "technical" ? "bug" : "change";
       list.push({
         id: `change-${request.id}`,
+        changeRequestId: request.id,
         kind,
         priority: KIND_PRIORITY[kind],
         label: KIND_LABELS[kind],
@@ -364,7 +379,7 @@ export function AdminInbox({
               style={{ marginTop: "12px", width: "fit-content" }}
               onClick={handleResetDismissed}
             >
-              ↩️ Elrejtett teendők visszaállítása ({dismissedIds.length})
+              Elrejtettek visszaállítása ({dismissedIds.length})
             </button>
           )}
         </div>
@@ -394,7 +409,7 @@ export function AdminInbox({
               onClick={handleResetDismissed}
               title="Korábban elrejtett tételek megjelenítése"
             >
-              ↩️ Visszaállítás ({dismissedIds.length})
+              Visszaállítás ({dismissedIds.length})
             </button>
           )}
           <button
@@ -404,7 +419,7 @@ export function AdminInbox({
             onClick={() => handleDismissAll(items.map((i) => i.id))}
             title="Összes jelenlegi teendő elrejtése"
           >
-            🗑️ Inbox ürítése
+            Összes elrejtése
           </button>
         </div>
       </header>
@@ -470,26 +485,42 @@ export function AdminInbox({
                     style={{ minHeight: "auto", padding: "6px 14px", fontSize: "12px" }}
                     type="button"
                   >
-                    {isPurchase ? "💎 Kivásárlás kezelése" : "Megnyitás"}
+                    {isPurchase ? "Kivásárlás kezelése" : "Megnyitás"}
                   </button>
                 ) : null}
 
-                <button
-                  type="button"
-                  onClick={() => handleDismiss(item.id)}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid var(--adm-ink-10)",
-                    color: "var(--adm-ink-50)",
-                    borderRadius: "8px",
-                    padding: "6px 10px",
-                    cursor: "pointer",
-                    fontSize: "12px"
-                  }}
-                  title="Tétel elrejtése / elintézve"
-                >
-                  ✓ Elrejtés
-                </button>
+                {/* Két KÜLÖNBÖZŐ művelet, és a különbség számít.
+
+                    „Lezárás" ott jelenik meg, ahol van mit lezárni: a tétel
+                    egy valódi `change_requests` sorból jön, tehát az
+                    adatbázisban is elintézhető. Ilyenkor mindenhonnan eltűnik,
+                    véglegesen.
+
+                    „Elrejtés" a származtatott tételeké (projektállapot,
+                    domain lejárat, számlázási hiba). Ezeket nem lehet
+                    „elintézni" egy kattintással, mert nem rekordok, hanem
+                    egy állapot következményei — ezek akkor tűnnek el, ha az
+                    állapot megváltozik. Az elrejtés itt csak ebben a
+                    böngészőben rejt, és a cimke ezt ki is mondja. */}
+                {item.changeRequestId ? (
+                  <button
+                    type="button"
+                    className="admin-inbox-resolve"
+                    onClick={() => void onResolveChangeRequest(item.changeRequestId as string)}
+                    title="A kérés lezárása az adatbázisban — véglegesen eltűnik a listáról"
+                  >
+                    Lezárás
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-inbox-hide"
+                    onClick={() => handleDismiss(item.id)}
+                    title="Csak ezen a gépen rejti el. A tétel akkor szűnik meg, ha a mögötte lévő állapot rendeződik."
+                  >
+                    Elrejtés
+                  </button>
+                )}
               </div>
             </article>
           );

@@ -23,6 +23,10 @@ export const PURCHASE_OPTION_PRICES: Record<SubscriptionPlanKey, number> = {
  * adja, de nem tud elfogyni: a Jelenlétnél ~12 hónap alatt éri el a plafont,
  * a többinél 13–15 hónap alatt.
  */
+/** Éves fizetésnél ennyi hónapot nem számolunk fel. Ez az egyetlen hely,
+    ahol az éves kedvezmény mértéke el van döntve. */
+export const ANNUAL_FREE_MONTHS = 2;
+
 export const BUYOUT_CREDIT_RATE = 0.5;
 export const BUYOUT_CREDIT_MAX_SHARE = 0.5;
 
@@ -144,7 +148,7 @@ export const SUBSCRIPTION_SHARED_INCLUDED = [
   "Folyamatos működésfelügyelet",
   "Írásos kérésre 1 munkanapon belül visszaigazolok",
   "Technikai hibára 1 munkanapon belül reagálok — és nem fogyasztja a keretet",
-  "Nincs külön belépési díj és nincs hűségidő — az első havidíj indítja a munkát"
+  "Nincs előleg, belépési díj és hűségidő — csak a kész, jóváhagyott oldalért fizetsz"
 ];
 
 /** Mi számít bele a módosítási keretbe — a vita elkerülése a lényeg. */
@@ -266,6 +270,96 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ]
   }
 ];
+
+/* ── Fizetési ütemezés ─────────────────────────────────────────────────────
+
+   Három futamidő, három különböző célra:
+
+   · HAVI — bankkártyás, automatikus megújulással. Utalás itt SZÁNDÉKOSAN
+     nincs: évente tizenkét kézi egyeztetést jelentene, és minden egyes
+     alkalom egy lehetőség arra, hogy valami elcsússzon.
+
+   · FÉLÉVES és ÉVES — utalással is fizethető, mert egy-két egyeztetés évente
+     kezelhető, és sok kisvállalkozás kifejezetten így szeret fizetni.
+
+   A kedvezmény a futamidőhöz tartozik, nem az ügyfélhez: az éves fizetőnél
+   két hónapot nem számolunk fel (14 900 Ft-os csomagnál 178 800 helyett
+   149 000 forint). Ez a nyilvános ajánlat — az egyedileg alkudott árat a
+   projekt `billing_amount` mezője tartja, és az felülírja ezt.
+   ─────────────────────────────────────────────────────────────────────── */
+
+export type BillingTermKey = "monthly" | "biannual" | "annual";
+
+export type BillingTerm = {
+  key: BillingTermKey;
+  /** Hány hónapra szól egy ciklus. */
+  months: number;
+  label: string;
+  /** Rövid, a fizetés gyakoriságát leíró szó — a „14 900 Ft / hó" mintára. */
+  unit: string;
+  /** Hány hónapot nem számolunk fel a ciklusban. Ez maga a kedvezmény. */
+  freeMonths: number;
+  /** Fizethető-e banki átutalással. */
+  allowsTransfer: boolean;
+  note: string;
+};
+
+export const BILLING_TERMS: BillingTerm[] = [
+  {
+    key: "monthly",
+    months: 1,
+    label: "Havonta",
+    unit: "hó",
+    freeMonths: 0,
+    allowsTransfer: false,
+    note: "Bankkártyás, automatikus megújulással. Bármikor lemondható."
+  },
+  {
+    key: "biannual",
+    months: 6,
+    label: "Félévente",
+    unit: "félév",
+    freeMonths: 0,
+    allowsTransfer: true,
+    note: "Fél évre előre, bankkártyával vagy banki átutalással."
+  },
+  {
+    key: "annual",
+    months: 12,
+    label: "Évente",
+    unit: "év",
+    freeMonths: ANNUAL_FREE_MONTHS,
+    allowsTransfer: true,
+    note: `Egy évre előre — ${ANNUAL_FREE_MONTHS} hónapot nem számolunk fel. Bankkártyával vagy átutalással.`
+  }
+];
+
+export function billingTerm(key?: string | null): BillingTerm {
+  return BILLING_TERMS.find((term) => term.key === key) ?? BILLING_TERMS[0];
+}
+
+/** A futamidő hónapszámából a futamidő. Az adatbázis ezt a számot tárolja. */
+export function billingTermByMonths(months?: number | null): BillingTerm {
+  return BILLING_TERMS.find((term) => term.months === months) ?? BILLING_TERMS[0];
+}
+
+/** Amit egy ciklusban fizet: a felszámolt hónapok szorzata. */
+export function termTotal(monthlyPrice: number, term: BillingTerm) {
+  return monthlyPrice * (term.months - term.freeMonths);
+}
+
+/** A ciklusdíj havi vetülete — ezt hasonlítja össze az ügyfél a havidíjjal. */
+export function termEffectiveMonthly(monthlyPrice: number, term: BillingTerm) {
+  return Math.round(termTotal(monthlyPrice, term) / term.months);
+}
+
+/** Mennyit spórol a havi fizetéshez képest. Null, ha semennyit. */
+export function termSaving(monthlyPrice: number, term: BillingTerm) {
+  const full = monthlyPrice * term.months;
+  const saved = full - termTotal(monthlyPrice, term);
+  if (saved <= 0) return null;
+  return { full, saved, months: term.freeMonths };
+}
 
 export function subscriptionPlan(key?: string | null) {
   return SUBSCRIPTION_PLANS.find((plan) => plan.key === key) ?? SUBSCRIPTION_PLANS[1];

@@ -138,6 +138,43 @@ export type Project = {
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
   stripe_subscription_status?: string | null;
+  /** 038: havi vagy éves ciklus. A régi sorokon hiányzik, ilyenkor havi. */
+  billing_interval?: "month" | "year" | null;
+  /** A számlázási ciklus hónapban (1, 6, 12…) — ez a mérvadó, nem az intervallum. */
+  billing_period_months?: number | null;
+  /** 043: az alkudott ciklusdíj (pl. kedvezményes éves ár). NULL = listaár. */
+  billing_amount?: number | null;
+  /** 038: `stripe` = kártya, `bank_transfer` = utalás (az admin rögzíti). */
+  payment_method?: "stripe" | "bank_transfer" | null;
+  /** 038: meddig van kifizetve a szolgáltatás. */
+  prepaid_until?: string | null;
+  /** 038: honnan került be az ügyfél. */
+  origin?: string | null;
+  live_url?: string | null;
+};
+
+/**
+ * Egy befizetés az ügyfél szemszögéből.
+ *
+ * A tábla eddig is létezett (`subscription_payments`), de az ügyfélkapun SOHA
+ * nem jelent meg: az adminfelület olvasta, kizárólag számlázási hibakeresésre.
+ * Az ügyfélnek viszont pont ez a legfontosabb visszakereshető adat — mikor,
+ * mennyit fizetett, és mi lett a számla száma.
+ */
+export type SubscriptionPayment = {
+  id: string;
+  project_id: string;
+  billing_period_start: string;
+  billing_period_end: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "reported" | "paid" | "failed" | "void";
+  payment_method?: "stripe" | "bank_transfer" | null;
+  payment_reference: string | null;
+  paid_at: string | null;
+  due_date?: string | null;
+  billingo_invoice_number?: string | null;
+  created_at: string;
 };
 
 export type Ticket = {

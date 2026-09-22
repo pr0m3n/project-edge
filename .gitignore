@@ -35,3 +35,15 @@ ProjectEdge hideg email kampány/
 # helyi biztonsági mentés
 /.backup_pre_improvements
 
+
+# AI-generalt nyersanyag (nagy mp4-ek, nem tartoznak a repoba)
+refs/
+!public/work/refs/
+!public/work/refs/leadscope-cover.webp
+
+# Hideghivas-listak (ceges elerhetosegek) es nyers marketing-kepek: a repo
+# NYILVANOS, ezek nem kerulhetnek fel.
+docs/hideghivo-kb/
+public/instagram/
+public/styles/
+ref/

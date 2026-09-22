@@ -11,6 +11,7 @@ import { DeliverStack } from "@/components/DeliverStack";
 import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
 import { PhoneLink } from "@/components/PhoneLink";
+import { ContactButton } from "@/components/ContactButton";
 import { STUDIO_PHONE_LABEL } from "@/lib/contact";
 
 export const metadata: Metadata = {
@@ -85,15 +86,15 @@ const deliverables = [
 const faqs = [
   [
     "Mennyibe kerül a weboldal?",
-    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Külön belépési vagy beállítási díj nincs: az első havidíj indítja a munkát, és a domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
+    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Előleg, foglaló és belépési díj nincs: a megrendelés után elkészítem az oldalt, és csak akkor fizetsz, ha a kész oldalt jóváhagytad. A domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
   ],
   [
     "Mennyi idő alatt készül el?",
-    "A hiánytalan brief, az első havidíj és a szükséges anyagok beérkezésétől számítva a Jelenlét oldal jellemzően 2–4 munkanap, az Üzleti 3–6 munkanap, az Egyedi 5–14 munkanap. Összetett webappnál külön ütemezést adok."
+    "A szerződés elfogadásától és a szükséges anyagok beérkezésétől számítva a Jelenlét oldal jellemzően 2–4 munkanap, az Üzleti 3–6 munkanap, az Egyedi 5–14 munkanap. Összetett webappnál külön ütemezést adok."
   ],
   [
     "Mi van, ha nem tetszik az irány?",
-    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Csak a jóváhagyásod után kerül ki élesbe."
+    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Fizetni csak a jóváhagyásod után kell, és az oldal csak a fizetés után kerül ki élesbe. Ha végül nem tetszik, nem fizetsz semmit."
   ],
   [
     "Jár céges email cím a weboldalhoz?",
@@ -273,13 +274,17 @@ export default function Home() {
             neked kényelmes. A teljes folyamat zökkenőmentesen végigvihető írásban, kötelező értekezletek
             nélkül, de ha telefonon vagy online megbeszélésen egyeztetnél, természetesen állok rendelkezésedre.
           </p>
-          <TransitionLink className="button primary" href="/ugyfelkapu">
-            Indítás az ügyfélkapun
-          </TransitionLink>
+          {/* Korábban „Indítás az ügyfélkapun" volt, ami regisztrációra vitt —
+              a mérés szerint aki odáig jutott, egyikük sem regisztrált. Az
+              egyetlen eddigi hirdetési megkeresés viszont chaten jött. Ezért a
+              fő gomb a chatet nyitja; a meglévő ügyfél a belépést lent találja. */}
+          <ContactButton className="button primary">Írj nekem chaten</ContactButton>
           {/* A szakasz eddig azzal zárult, hogy „ha telefonon egyeztetnél,
               állok rendelkezésedre" — csak épp nem volt mit hívni. */}
           <p className="nc-phone">
             Ha mégis inkább telefonálnál: <PhoneLink>{STUDIO_PHONE_LABEL}</PhoneLink>
+            <br />
+            Már ügyfél vagy? <TransitionLink href="/ugyfelkapu">Belépés az ügyfélkapuba</TransitionLink>
           </p>
         </div>
         <ul className="nc-list">

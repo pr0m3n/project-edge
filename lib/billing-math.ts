@@ -68,3 +68,25 @@ export function subscriptionStatusFromStripe(
 export function isAcceptableMonthlyPrice(value: number) {
   return Number.isSafeInteger(value) && value >= 1_000 && value <= 1_000_000;
 }
+
+/**
+ * A ciklus hossza (hónap) Stripe-os ismétlődési paraméterként.
+ *
+ * A 12 többszörösei éves ciklusok (`year` × n), minden más havi (`month` × n):
+ * a féléves `month` × 6. Egyetlen helyen dől el, hogy a Checkout, az admin
+ * fizetési link és az árcsere ugyanazt a ciklust kapja.
+ */
+export function stripeRecurringForMonths(months: number) {
+  const safe = Number.isSafeInteger(months) && months >= 1 ? months : 1;
+  return safe % 12 === 0
+    ? { interval: "year" as const, interval_count: safe / 12 }
+    : { interval: "month" as const, interval_count: safe };
+}
+
+/** Egy Stripe-ár ismétlődéséből a ciklus hossza hónapban. Ismeretlenre 1. */
+export function monthsFromStripeRecurring(recurring: { interval?: string | null; interval_count?: number | null } | null | undefined) {
+  const count = recurring?.interval_count && recurring.interval_count > 0 ? recurring.interval_count : 1;
+  if (recurring?.interval === "year") return 12 * count;
+  if (recurring?.interval === "month") return count;
+  return 1;
+}

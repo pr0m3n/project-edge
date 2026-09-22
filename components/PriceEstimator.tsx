@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { IconBank, IconGuarantee, IconLock, IconWallet } from "@/components/payment-marks";
 import {
   CHANGE_QUOTA_EXCLUDED,
   CHANGE_QUOTA_FREE,
@@ -16,6 +17,11 @@ import {
   buyoutFloorPrice,
   SUBSCRIPTION_PLANS,
   SUBSCRIPTION_SHARED_INCLUDED,
+  ANNUAL_FREE_MONTHS,
+  billingTerm,
+  termEffectiveMonthly,
+  termSaving,
+  termTotal,
   formatHuf,
   type SubscriptionPlanKey
 } from "@/lib/subscriptions";
@@ -50,6 +56,15 @@ function preselectPlan(key: SubscriptionPlanKey) {
 }
 
 export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
+  /**
+   * Havi vagy éves árakat mutasson-e a táblázat.
+   *
+   * Nem két külön csomagkészlet: UGYANAZ a csomag, más fizetési ütemezéssel.
+   * A váltó azért kell, mert az éves ár önmagában nagynak látszik (149 000),
+   * a havi vetülete viszont épp az érv mellette (12 417 Ft/hó) — a kettőt
+   * egymás mellett kell látni ahhoz, hogy a kedvezmény értelmet nyerjen.
+   */
+  const [annual, setAnnual] = useState(false);
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
 
@@ -67,14 +82,88 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
       ) : null}
 
       <div className="subscription-pricing-panel" id="pricing-panel-subscription">
-          {/* Az „induló díj" megfogalmazása szándékosan konkrét: külön belépési
-              vagy beállítási díj tényleg nincs, de az első havidíjat előre kell
-              fizetni — a korábbi „0 Ft induló díj" ezt elmosta, és úgy hangzott,
-              mintha fizetés nélkül indulna a munka. */}
-          <div className="pricing-promise">
-            <span className="live-pulse" />
-            <p><strong>Nincs külön belépési vagy beállítási díj</strong> — az első havidíj indítja a munkát, és utána sincs más költséged. Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt.</p>
+          {/* A legerősebb érv a legfeltűnőbb helyen.
+              A legtöbb stúdió 50% előleget kér egy még el sem készült
+              weboldalért. Itt fordítva van, és ezt ki kell mondani — nem
+              egy apróbetűs sorban, hanem az árak FÖLÖTT. */}
+          <div className="pricing-promise pricing-promise-lead">
+            <span className="promise-icon"><IconGuarantee /></span>
+            <p>
+              <strong>Csak akkor fizetsz, ha kész — és tetszik.</strong> Megépítem a weboldalad,
+              megnézed, és a díj csak azután esedékes, hogy jóváhagytad. Nincs előleg, nincs foglaló,
+              nincs belépési díj. Ha nem tetszik, nem fizetsz.
+            </p>
           </div>
+
+          <div className="pricing-promise">
+            <span className="promise-icon is-soft"><IconWallet /></span>
+            <p><strong>Utána sincs más költséged.</strong> Én veszem meg és kezelem a domaint, biztosítom a tárhelyet, figyelem és frissítem az oldalt — mindez a havidíjban van.</p>
+          </div>
+
+          {/* Fizetési ütemezés váltó.
+              A `radiogroup` szerep nem díszítés: nyíllal is válthatóvá teszi,
+              és a képernyőolvasó két egymást kizáró lehetőségként olvassa fel,
+              nem két független gombként. */}
+          <div className="billing-switch" role="radiogroup" aria-label="Fizetési ütemezés">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!annual}
+              className={annual ? "" : "is-active"}
+              onClick={() => setAnnual(false)}
+            >
+              Havonta
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={annual}
+              className={annual ? "is-active" : ""}
+              onClick={() => setAnnual(true)}
+            >
+              Évente
+              <span className="billing-switch-badge">−{ANNUAL_FREE_MONTHS} hónap</span>
+            </button>
+          </div>
+
+          {/* Egyetlen fizetési sáv, valódi márkajelekkel.
+              A két külön doboz helyett egy sor: a logók önmagukban hordozzák
+              a felismerhetőséget, keret nélkül tisztábban ülnek. Szűk
+              képernyőn a logósor vízszintesen görgethető, és a jobb szélén
+              elhalványul — így a levágás szándékosnak látszik, nem hibának. */}
+          <div className="pay-bar">
+            <div className="pay-cards">
+              <span className="pay-label">Bankkártya</span>
+              <div className="pay-logos">
+                <img src="/logo/pay/visa.svg" alt="Visa" width="52" height="17" loading="lazy" />
+                <img src="/logo/pay/mastercard.svg" alt="Mastercard" width="30" height="23" loading="lazy" />
+                <img src="/logo/pay/amex.svg" alt="American Express" width="23" height="23" loading="lazy" />
+                <img src="/logo/pay/jcb.svg" alt="JCB" width="29" height="23" loading="lazy" />
+                <img src="/logo/pay/apple-pay.svg" alt="Apple Pay" width="46" height="19" loading="lazy" />
+              </div>
+            </div>
+
+            <div className="pay-divider" aria-hidden="true" />
+
+            <div className="pay-transfer">
+              <IconBank size={18} />
+              <div>
+                <strong>Banki átutalás</strong>
+                <small>féléves és éves fizetésnél</small>
+              </div>
+            </div>
+          </div>
+
+          {/* Egyetlen folyó mondat, a logóval egy szó helyén.
+              Korábban flex-konténer volt: az a mondatot elemekre bontotta, és
+              a tördelés a logó MELLETT vágta ketté — „A fizetést a [stripe]" /
+              „kezeli — …". Inline elemekkel a szöveg úgy folyik, ahogy kell. */}
+          <p className="pay-secure">
+            <IconLock />{" "}A fizetést a{" "}
+            <img src="/logo/pay/stripe.svg" alt="Stripe" width="46" height="19" loading="lazy" />{" "}
+            kezeli — a kártyaadataid hozzám nem jutnak el, és nem is tárolom őket.
+          </p>
+
           <div className="subscription-plan-grid">
             {SUBSCRIPTION_PLANS.map((plan) => (
               <article className={`subscription-plan ${plan.featured ? "featured" : ""}`} key={plan.key}>
@@ -84,7 +173,16 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
                 <p>{plan.short}</p>
                 <div className="plan-scope"><strong>{plan.pages}</strong><span>{plan.buildTime.replace("Jellemzően ", "elkészül ")}</span></div>
                 <div className="plan-fit"><span>Válaszd, ha…</span><p>{PLAN_DECISION_RULE[plan.key]}</p></div>
-                <div className="plan-price"><strong>{formatHuf(plan.price)}</strong><span>/ hó</span></div>
+                <div className="plan-price">
+                  <strong>{formatHuf(annual ? termEffectiveMonthly(plan.price, billingTerm("annual")) : plan.price)}</strong>
+                  <span>/ hó</span>
+                </div>
+                {annual ? (
+                  <p className="plan-annual-note">
+                    {formatHuf(termTotal(plan.price, billingTerm("annual")))} egy évre —{" "}
+                    <b>{formatHuf(termSaving(plan.price, billingTerm("annual"))?.saved ?? 0)} megtakarítás</b>
+                  </p>
+                ) : null}
                 {/* A módosítási keret és a határidő a kártya alján külön kiemelést
                     kap (.plan-meta), ezért a jellemzőlistából kihagyjuk őket —
                     korábban szó szerint kétszer szerepeltek egymás alatt. */}
@@ -152,13 +250,13 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
 
           <MobileFold label="Részletes csomagtartalom">
           <section className="plan-detail-panel" id="csomag-reszletek">
-            <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(activePlan.price)}<small>/hó</small></strong><span>{activePlan.buildTime}</span></div></header>
+            <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(annual ? termEffectiveMonthly(activePlan.price, billingTerm("annual")) : activePlan.price)}<small>/hó</small></strong><span>{annual ? `${formatHuf(termTotal(activePlan.price, billingTerm("annual")))} / év` : activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
             <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><a className="button primary" href="#projektbrief" onClick={() => preselectPlan(activePlan.key)}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</a></footer>
           </section>
           </MobileFold>
           <div className="subscription-footnotes">
-            <span>Az első havidíj indítja a munkát</span>
+            <span>Csak jóváhagyás után fizetsz</span>
             <span>Bármikor lemondható</span>
             <span>Kötelező jogi oldalak díjmentesek</span>
             <span>Díjmentes email továbbítás</span>

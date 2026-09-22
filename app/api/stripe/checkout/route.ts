@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, isUuid, rateLimitResponse } from "@/lib/api-guard";
-import { isAcceptableMonthlyPrice } from "@/lib/billing-math";
+import { isAcceptableMonthlyPrice, stripeRecurringForMonths } from "@/lib/billing-math";
 import { authenticatedUser, isAdminUser } from "@/lib/server-auth";
 import { createServerSupabaseAdminClient, createServerSupabaseUserClient } from "@/lib/supabase/server";
-import { getStripe, hufToStripeAmount, siteUrl } from "@/lib/stripe";
-import { subscriptionPlan } from "@/lib/subscriptions";
+import { getStripe, hasLiveStripeSubscription, hufToStripeAmount, siteUrl } from "@/lib/stripe";
+import { billingTerm, subscriptionPlan, termTotal } from "@/lib/subscriptions";
+import { agreedAmountFor } from "@/lib/onboarding";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     const user = await authenticatedUser(request);
     if (!user) return NextResponse.json({ error: "Érvénytelen vagy lejárt munkamenet." }, { status: 401 });
 
-    const body = await request.json().catch(() => null) as { projectId?: string } | null;
+    const body = await request.json().catch(() => null) as { projectId?: string; term?: string } | null;
     if (!body?.projectId || !isUuid(body.projectId)) {
       return NextResponse.json({ error: "Érvénytelen projektazonosító." }, { status: 400 });
     }
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     // hibás deployment service-role kulcs nem látszik többé hamisan 404-nek.
     const userClient = createServerSupabaseUserClient(accessToken);
     const { data: project, error: projectError } = await userClient.from("client_projects")
-      .select("id,user_id,title,company,commercial_model,subscription_plan,monthly_price,contract_accepted,contract_accepted_at,subscription_status,stripe_customer_id,stripe_subscription_id")
+      .select("id,user_id,title,company,commercial_model,subscription_plan,monthly_price,billing_amount,billing_period_months,billing_interval,contract_accepted,contract_accepted_at,subscription_status,stripe_customer_id,stripe_subscription_id")
       .eq("id", body.projectId).maybeSingle();
     if (projectError) {
       console.error("Stripe checkout project lookup failed", { code: projectError.code, message: projectError.message });
@@ -48,12 +49,24 @@ export async function POST(request: Request) {
     if (project.commercial_model !== "subscription" || !project.contract_accepted) {
       return NextResponse.json({ error: "Ehhez a projekthez még nincs elfogadott előfizetési szerződés." }, { status: 409 });
     }
-    if (project.stripe_subscription_id && ["active", "trialing"].includes(project.subscription_status ?? "")) {
-      return NextResponse.json({ error: "Ehhez a projekthez már aktív előfizetés tartozik." }, { status: 409 });
+    if (await hasLiveStripeSubscription(project.stripe_subscription_id)) {
+      return NextResponse.json({ error: "Ehhez a projekthez már fut előfizetés. Ha módosítanád, írj az ügyfélkapuban." }, { status: 409 });
     }
 
     const stripe = getStripe();
     const plan = subscriptionPlan(project.subscription_plan);
+
+    /**
+     * A választott futamidő. Ez határozza meg, mennyit terhelünk egyszerre,
+     * és milyen ritkán újul meg. Az éves itt kap kedvezményt — a `termTotal`
+     * két hónapot nem számol fel.
+     *
+     * A Stripe ismétlődő terhelése `interval` + `interval_count` párost vár:
+     * a 6 hónapos ciklus `month` × 6, az éves `year` × 1. Egyetlen helyen dől
+     * el, hogy melyik futamidőből mi lesz.
+     */
+    const term = billingTerm(body.term);
+    const recurring = stripeRecurringForMonths(term.months);
     // A SZERZŐDÉSBEN rögzített havidíj a mérvadó, nem a kód aktuális ára.
     //
     // Korábban `monthlyPrice !== plan.price` volt a feltétel: ettől a
@@ -69,6 +82,13 @@ export async function POST(request: Request) {
     if (monthlyPrice !== plan.price) {
       console.warn("Stripe checkout uses the contracted price", { projectId: project.id, monthlyPrice, planPrice: plan.price });
     }
+
+    // A ciklusban terhelt összeg. Az egyedileg alkudott ár (`billing_amount`)
+    // felülírja a nyilvános futamidő-árat — ugyanaz a szabály, mint az
+    // utalásos ágon, hogy a kettő ne tudjon elcsúszni egymástól.
+    // Csak akkor, ha az alkudott ár ugyanerre a futamidőre szól — egy éves
+    // alkudott ár mellett havi fizetésnél különben havonta az éves díj menne.
+    const chargeAmount = agreedAmountFor(project, term.months) ?? termTotal(monthlyPrice, term);
 
     /**
      * Éles rendszerpróba kedvezménnyel.
@@ -136,20 +156,20 @@ export async function POST(request: Request) {
         quantity: 1,
         price_data: {
           currency: "huf",
-          unit_amount: hufToStripeAmount(monthlyPrice),
-          recurring: { interval: "month" },
+          unit_amount: hufToStripeAmount(chargeAmount),
+          recurring,
           product_data: {
-            name: `ProjectEdge ${plan.name} előfizetés`,
+            name: `ProjectEdge ${plan.name} előfizetés · ${term.label.toLowerCase()}`,
             description: "Menedzselt weboldal, tárhely, technikai felügyelet és a csomag szerinti módosítások.",
             metadata: { project_id: project.id, subscription_plan: plan.key }
           }
         }
       }],
       subscription_data: {
-        description: `${project.title} · ProjectEdge ${plan.name}`,
-        metadata: { project_id: project.id, user_id: user.id, subscription_plan: plan.key }
+        description: `${project.title} · ProjectEdge ${plan.name} (${term.label.toLowerCase()})`,
+        metadata: { project_id: project.id, user_id: user.id, subscription_plan: plan.key, billing_term: term.key }
       },
-      metadata: { project_id: project.id, user_id: user.id, subscription_plan: plan.key },
+      metadata: { project_id: project.id, user_id: user.id, subscription_plan: plan.key, billing_term: term.key },
       success_url: `${siteUrl()}/ugyfelkapu/dashboard?payment=success`,
       cancel_url: `${siteUrl()}/ugyfelkapu/dashboard?payment=cancelled`
     }, {
@@ -160,12 +180,17 @@ export async function POST(request: Request) {
       // A kedvezmény része a kulcsnak: enélkül a Stripe a korábban létrehozott,
       // teljes árú munkamenetet adná vissza, és a próba a teljes havidíjjal
       // futna le.
-      idempotencyKey: `projectedge-subscription-v3-${project.id}-${monthlyPrice}-${applyTestCoupon ? testCoupon : "full"}-${project.contract_accepted_at ?? "accepted"}`
+      // A futamidő és a terhelt összeg is a kulcs része: futamidőváltás után ÚJ
+      // munkamenet kell, különben a Stripe a korábbi, más összegűt adná vissza.
+      idempotencyKey: `projectedge-subscription-v4-${project.id}-${chargeAmount}-${term.key}-${applyTestCoupon ? testCoupon : "full"}-${project.contract_accepted_at ?? "accepted"}`
     });
 
     const { error: updateError } = await admin.from("client_projects").update({
       stripe_customer_id: customerId,
-      stripe_checkout_session_id: session.id
+      stripe_checkout_session_id: session.id,
+      billing_period_months: term.months,
+      billing_interval: term.months >= 12 ? "year" : "month",
+      payment_method: "stripe"
     }).eq("id", project.id).eq("user_id", user.id);
     if (updateError) throw new Error("A Stripe munkamenet mentése nem sikerült.");
 

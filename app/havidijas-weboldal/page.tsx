@@ -3,7 +3,7 @@ import { ServiceLanding, type ServiceLandingContent } from "@/components/Service
 
 export const metadata: Metadata = {
   title: "Havidíjas weboldal belépési díj nélkül | ProjectEdge",
-  description: "Menedzselt, havidíjas weboldal domainnel, tárhellyel, SSL-lel és technikai felügyelettel. Nincs külön belépési díj és nincs hűségidő — az első havidíj indítja a munkát.",
+  description: "Menedzselt, havidíjas weboldal domainnel, tárhellyel, SSL-lel és technikai felügyelettel. Nincs előleg, belépési díj és hűségidő — csak a kész, jóváhagyott oldalért fizetsz.",
   alternates: { canonical: "/havidijas-weboldal" }
 };
 
@@ -11,7 +11,7 @@ const content: ServiceLandingContent = {
   slug: "havidijas-weboldal",
   eyebrow: "Menedzselt weboldal · 14 900 Ft/hó-tól",
   title: "A weboldalad működik. Neked nem kell üzemeltetned.",
-  lead: "Egyetlen havidíjban kapod az egyedi weboldalt, a domaint, a tárhelyet, az SSL-t és a folyamatos technikai felügyeletet. Külön belépési vagy beállítási díj nincs: az első havidíj indítja a munkát.",
+  lead: "Egyetlen havidíjban kapod az egyedi weboldalt, a domaint, a tárhelyet, az SSL-t és a folyamatos technikai felügyeletet. Előleg és belépési díj nincs: elkészítem az oldalt, és csak akkor fizetsz, ha jóváhagytad.",
   promise: "Jó választás, ha nem szeretnél több számlát, szolgáltatót és technikai fiókot kezelni.",
   audience: ["nincs belépési díj", "nincs hűségidő", "domain és tárhely egyben", "díjmentes email továbbítás", "csomag szerinti módosítások"],
   outcomes: [
@@ -21,8 +21,8 @@ const content: ServiceLandingContent = {
   ],
   process: [
     { title: "Csomagválasztás", copy: "Kiválasztod a Jelenlét, Üzleti vagy Egyedi csomagot, majd kitöltöd a hozzá igazított briefet." },
-    { title: "Szerződés és első havidíj", copy: "Elfogadod az online szerződést, majd biztonságosan elindítod a Stripe-előfizetést." },
-    { title: "Elkészítés és gondozás", copy: "Megépítem és élesítem az oldalt, utána pedig folyamatosan gondoskodom a technikai működéséről." }
+    { title: "Szerződés, fizetés nélkül", copy: "Elfogadod az online szerződést — ez indítja az építést. Ekkor még nem fizetsz semmit." },
+    { title: "Jóváhagyás, fizetés, élesítés", copy: "Privát linken átnézed a kész oldalt. Ha tetszik, kifizeted az első díjat, én élesítem, és onnantól gondoskodom a technikai működéséről." }
   ],
   faq: [
     ["Van hűségidő?", "Nincs. Az előfizetés bármikor lemondható, a már kifizetett időszak végéig használható az oldal."],

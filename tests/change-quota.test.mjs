@@ -195,8 +195,9 @@ test("az éles rendszerpróba kedvezménye kettős kapuhoz kötött", () => {
   assert.doesNotMatch(checkout, /allow_promotion_codes\s*:/);
 
   // A kedvezmény része az idempotencia-kulcsnak, különben a Stripe a korábbi,
-  // teljes árú munkamenetet adná vissza.
-  assert.match(checkout, /idempotencyKey: `projectedge-subscription-v3-.*applyTestCoupon \? testCoupon : "full"/);
+  // teljes árú munkamenetet adná vissza. A kulcs verziója változhat (a
+  // futamidő bevezetésekor v4 lett), a kupon jelenléte viszont nem.
+  assert.match(checkout, /idempotencyKey: `projectedge-subscription-v\d+-[^`]*applyTestCoupon \? testCoupon : "full"/);
 });
 
 test("az ügyfél nem írhat pénzügyi mezőt a kérésén", () => {

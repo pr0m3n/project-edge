@@ -53,9 +53,14 @@ function buildGuide(project: Project): Guide | null {
       };
     case "deposit_pending":
       if (project.commercial_model === "subscription") {
+        // A fizetés a folyamat VÉGÉN van: a kész, jóváhagyott oldalért fizet,
+        // közvetlenül az élesítés előtt.
+        if (project.payment_status === "deposit_paid") {
+          return { who: "studio", headline: "Élesítjük a weboldalad", detail: "A fizetés megérkezett. Most kerül ki a saját domainjére — nincs teendőd." };
+        }
         return project.deposit_transfer_reported
-          ? { who: "studio", headline: "Ellenőrizzük az első havidíjat", detail: "Jelezted az utalást. Amint jóváhagytuk, elindul a weboldal elkészítése." }
-          : { who: "client", headline: "Fizesd be az első havidíjat", detail: "Az első havi szolgáltatási díj indítja el a kivitelezést. Ezen felül nincs külön belépési vagy beállítási díj." };
+          ? { who: "studio", headline: "Ellenőrizzük a befizetést", detail: "Jelezted az utalást. Amint megérkezik, élesítem az oldalt." }
+          : { who: "client", headline: "Fizesd be az első díjat", detail: "A weboldalad elkészült, és jóváhagytad. Már csak a fizetés van hátra — utána élesítem." };
       }
       return project.deposit_transfer_reported
         ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }

@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { createBillingoSubscriptionInvoice } from "@/lib/billingo";
+import { billingPartyFromStripeCustomer } from "@/lib/billingo";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { getStripe, stripeAmountToHuf } from "@/lib/stripe";
+import { monthsFromStripeRecurring, subscriptionStatusFromStripe } from "@/lib/billing-math";
 import { formatHuf, subscriptionPlan } from "@/lib/subscriptions";
+import { issueSubscriptionInvoice } from "@/lib/subscription-invoice";
+import { addBillingInterval, billingIntervalLabel, cycleAmount, paymentReference, projectCycleMonths } from "@/lib/onboarding";
 import { buildHandoverPlan } from "@/lib/handover";
 
 export const runtime = "nodejs";
+
+/** Ennyi idő után egy befejezetlen foglalást elhaltnak tekintünk (a függvény időkorlátja fölött). */
+const STALE_CLAIM_MS = 10 * 60 * 1000;
 
 function iso(unixSeconds?: number | null) {
   return unixSeconds ? new Date(unixSeconds * 1000).toISOString() : null;
@@ -30,18 +36,21 @@ async function notifyPayment(userId: string, email: string | null, projectTitle:
   const admin = createServerSupabaseAdminClient();
   await admin.from("notifications").insert({
     user_id: userId,
-    title: first ? "Előfizetés elindult" : "Havidíj sikeresen rendezve",
+    title: first ? "Előfizetés elindult" : "Díj sikeresen rendezve",
+    // Az első díj a folyamat VÉGÉN jön: a kész, jóváhagyott oldalért fizet,
+    // és utána élesítünk. A régi szöveg („a kivitelezés elindult") a korábbi,
+    // előre fizetős sorrendből maradt itt.
     message: first
-      ? `A(z) „${projectTitle}” első havidíja beérkezett, a projekt kivitelezése elindult.`
-      : `A(z) „${projectTitle}” következő havi díja (${formatHuf(amount)}) sikeresen beérkezett.`,
+      ? `A(z) „${projectTitle}” első díja beérkezett. Most élesítem a weboldalt a saját domainjén.`
+      : `A(z) „${projectTitle}” következő díja (${formatHuf(amount)}) sikeresen beérkezett.`,
     link: "/ugyfelkapu/dashboard"
   });
   if (email) await sendProjectEdgeEmail({
     to: email,
-    subject: first ? "Előfizetésed aktív" : "Sikeres havi fizetés",
+    subject: first ? "Előfizetésed aktív" : "Sikeres fizetés",
     message: first
-      ? `A(z) „${projectTitle}” első havidíja sikeresen beérkezett. A weboldal elkészítése most elindul.`
-      : `A(z) „${projectTitle}” előfizetés ${formatHuf(amount)} összegű havidíja sikeresen beérkezett.`,
+      ? `A(z) „${projectTitle}” első díja sikeresen beérkezett. Most élesítem a weboldalt — amint él a saját domainjén, jelzem.`
+      : `A(z) „${projectTitle}” előfizetés ${formatHuf(amount)} összegű díja sikeresen beérkezett.`,
     link: "/ugyfelkapu/dashboard",
     details: [{ label: "Összeg", value: formatHuf(amount) }]
   });
@@ -76,7 +85,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   const admin = createServerSupabaseAdminClient();
   const { data: project, error } = await admin.from("client_projects")
-    .select("id,user_id,title,contact_email,status,commercial_model,subscription_plan,subscription_status,subscription_started_at")
+    .select("id,user_id,title,contact_email,status,commercial_model,subscription_plan,subscription_status,subscription_started_at,stripe_subscription_id,stripe_parked_at")
     .eq("id", projectId).maybeSingle();
   if (error) throw error;
   if (!project) {
@@ -98,15 +107,43 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const first = !project.subscription_started_at;
   const period = subscriptionPeriod(subscription);
 
-  const { error: projectError } = await admin.from("client_projects").update({
+  // Egy RÉGI (már lecserélt) előfizetés számlája. A pénz beérkezett, tehát a
+  // befizetést és a számlát rögzíteni kell — de a projekt állapotát nem ez az
+  // előfizetés vezeti, azt nem írhatja felül.
+  const foreignSubscription = Boolean(project.stripe_subscription_id && project.stripe_subscription_id !== subscription.id);
+  if (foreignSubscription) {
+    await admin.from("notifications").insert({
+      user_id: null,
+      title: "Befizetés egy lecserélt Stripe-előfizetésre",
+      message: `${project.title}: a ${subscription.id} előfizetés számlája (${formatHuf(amountHuf)}) fizetve lett, pedig a projekt már a ${project.stripe_subscription_id} előfizetéshez tartozik. Ellenőrizd, nem fut-e két előfizetés.`,
+      link: "/admin"
+    });
+  }
+
+  // Az állapot a FRISS Stripe-előfizetésből, nem vakon „aktív": egy késve
+  // érkező számla különben visszaaktiválná a lemondott, lemondás alatt álló
+  // vagy parkoló (szüneteltetett) előfizetést.
+  const derivedStatus = subscriptionStatusFromStripe(
+    subscription.status,
+    subscription.cancel_at_period_end,
+    Boolean(project.stripe_parked_at)
+  ) ?? "active";
+
+  const { error: projectError } = foreignSubscription ? { error: null } : await admin.from("client_projects").update({
     stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id,
     stripe_subscription_id: subscription.id,
     stripe_subscription_status: subscription.status,
     stripe_current_period_end: period.end,
-    subscription_status: "active",
+    subscription_status: derivedStatus,
     payment_status: "deposit_paid",
-    status: project.status === "deposit_pending" ? "in_progress" : project.status,
-    next_step: project.status === "deposit_pending" ? "A kivitelezés elindult. A következő állapotfrissítést itt látod." : undefined,
+    // A fizetés a folyamat VÉGÉN van: a kész, jóváhagyott oldalért fizet,
+    // közvetlenül az élesítés előtt. A státuszt ezért NEM mozdítjuk — az
+    // élesítést az admin végzi el (domain, DNS), és ő állítja `launched`-re.
+    // A korábbi kód itt `in_progress`-be tette vissza, ami a régi sorrendben
+    // volt helyes; most visszavinné a projektet az építés fázisába.
+    next_step: project.status === "deposit_pending"
+      ? "Köszönöm, a fizetés megérkezett. Most élesítem az oldalt — hamarosan élő lesz a saját domainjén."
+      : undefined,
     subscription_started_at: first ? paidAt.toISOString() : undefined,
     billing_cycle_started_at: period.start,
     next_billing_at: period.end
@@ -137,22 +174,177 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       if (!customerId) throw new Error("A Stripe-számlához nem tartozik vevő.");
       const customer = await stripe.customers.retrieve(customerId, { expand: ["tax_ids"] });
       if (customer.deleted) throw new Error("A Stripe-vevő törölve lett.");
-      const plan = subscriptionPlan(project.subscription_plan);
-      const result = await createBillingoSubscriptionInvoice({
-        stripeInvoiceId: invoice.id,
-        customer,
+      await issueSubscriptionInvoice({
+        paymentId: payment.id,
+        projectTitle: project.title,
+        planName: subscriptionPlan(project.subscription_plan).name,
         amount: amountHuf,
-        itemName: `ProjectEdge ${plan.name} menedzselt weboldal — havi díj`,
-        paidAt
+        paidAt,
+        party: billingPartyFromStripeCustomer(customer),
+        reference: invoice.id ?? subscription.id,
+        interval: monthsFromStripeRecurring(subscription.items.data[0]?.price.recurring),
+        paymentMethod: "online_bankcard"
       });
-      await admin.from("subscription_payments").update(result.skipped
-        ? { billingo_error: result.reason, updated_at: new Date().toISOString() }
-        : { billingo_document_id: result.id, billingo_invoice_number: result.invoiceNumber, billingo_error: null, updated_at: new Date().toISOString() }
-      ).eq("id", payment.id);
+    } catch (billingoError) {
+      // Ide már csak a Stripe-vevő lekérésének hibája jut el: a számlázás saját
+      // hibakezelése a közös helyen fut, és nem dob tovább.
+      const message = billingoError instanceof Error ? billingoError.message : "Ismeretlen Billingo-hiba";
+      await admin.from("subscription_payments").update({ billingo_error: message, updated_at: new Date().toISOString() }).eq("id", payment.id);
+      await admin.from("notifications").insert({ user_id: null, title: "Billingo számlázási hiba", message: `${project.title}: ${message}`, link: "/admin/dashboard" });
+    }
+  }
+}
+
+/**
+ * Az admin által generált EGYSZERI kártyás fizetés beérkezése.
+ *
+ * Ez az a fizetés, amit nem a Stripe előfizetés-motorja hajt: az ügyfél kapott
+ * egy linket emailben (éves díj előre, vagy egy elmaradt hónap), és azon
+ * fizetett. A `subscription_payments` sor már létezett `pending` állapotban,
+ * az azonosítója a munkamenet metadatájában utazott — itt csak be kell zárni
+ * a kört.
+ *
+ * Miért nem elég a `success_url`: a sikeres fizetés utáni visszairányítás
+ * elveszhet (bezárt fül, megszakadt hálózat), a webhook viszont megérkezik.
+ * A pénz és a nyilvántartás így nem tud szétcsúszni.
+ */
+async function handleManualPaymentPaid(session: Stripe.Checkout.Session) {
+  const paymentId = session.metadata?.subscription_payment_id;
+  if (!paymentId || session.payment_status !== "paid") return;
+
+  const admin = createServerSupabaseAdminClient();
+  const { data: payment, error: paymentError } = await admin.from("subscription_payments")
+    .select("id,project_id,amount,status,due_date,billingo_document_id,payment_reference")
+    .eq("id", paymentId).maybeSingle();
+  if (paymentError) throw paymentError;
+  if (!payment) {
+    await reportOrphanEvent("Az egyszeri fizetéshez tartozó befizetés-sor nem található", paymentId);
+    return;
+  }
+  if (payment.status === "paid") return;
+
+  const { data: project, error: projectError } = await admin.from("client_projects")
+    .select("id,user_id,title,contact_email,commercial_model,subscription_status,subscription_plan,billing_interval,billing_period_months,monthly_price,billing_amount,stripe_customer_id")
+    .eq("id", payment.project_id).maybeSingle();
+  if (projectError) throw projectError;
+  if (!project) {
+    await reportOrphanEvent("Az egyszeri fizetés projektje nem található", payment.project_id as string);
+    return;
+  }
+
+  const interval = projectCycleMonths(project);
+  const amountHuf = stripeAmountToHuf(session.amount_total ?? 0, session.currency) || Number(payment.amount ?? 0);
+  const paidAt = new Date();
+
+  // Egy régi, még érvényes linken történt fizetés egy azóta lemondott vagy
+  // kivásárolt projektre. A pénz megjött, tehát rögzítjük — de a projektet
+  // NEM aktiváljuk újra, és új várt befizetést sem nyitunk: ez kézi döntés
+  // (visszatérítés vagy újraindítás).
+  const reactivationBlocked = project.commercial_model !== "subscription" || project.subscription_status === "cancelled";
+  if (reactivationBlocked) {
+    await admin.from("subscription_payments").update({
+      status: "paid",
+      amount: amountHuf,
+      payment_method: "stripe",
+      paid_at: paidAt.toISOString(),
+      stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      note: "Fizetés egy lezárt előfizetésre — kézi ellenőrzés kell (visszatérítés vagy újraindítás).",
+      updated_at: paidAt.toISOString()
+    }).eq("id", payment.id).neq("status", "paid");
+    await admin.from("notifications").insert({
+      user_id: null,
+      title: "Fizetés egy lezárt előfizetésre",
+      message: `${project.title}: ${formatHuf(amountHuf)} érkezett egy régi fizetési linken, de az előfizetés már lezárult. Döntsd el: visszatérítés vagy újraindítás.`,
+      link: "/admin"
+    });
+    return;
+  }
+  // Az időszak kezdete az ESEDÉKESSÉG, nem a fizetés napja: aki három nap
+  // csúszással utal, annak sem tolódik el a fordulónapja.
+  const periodStart = payment.due_date ? new Date(payment.due_date as string) : paidAt;
+  const periodEnd = addBillingInterval(periodStart, interval, 1);
+
+  const { error: updateError } = await admin.from("subscription_payments").update({
+    status: "paid",
+    amount: amountHuf,
+    payment_method: "stripe",
+    paid_at: paidAt.toISOString(),
+    billing_period_start: periodStart.toISOString(),
+    billing_period_end: periodEnd.toISOString(),
+    stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+    updated_at: paidAt.toISOString()
+  }).eq("id", payment.id).neq("status", "paid");
+  if (updateError) throw updateError;
+
+  await admin.from("client_projects").update({
+    subscription_status: "active",
+    payment_status: "deposit_paid",
+    prepaid_until: periodEnd.toISOString(),
+    next_billing_at: periodEnd.toISOString(),
+    stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id
+  }).eq("id", project.id);
+
+  // A következő várt befizetés — ebből dolgozik a fizetési emlékeztető.
+  await admin.from("subscription_payments").insert({
+    project_id: project.id,
+    billing_period_start: periodEnd.toISOString(),
+    billing_period_end: addBillingInterval(periodEnd, interval, 1).toISOString(),
+    amount: cycleAmount({
+      monthlyPrice: Number(project.monthly_price ?? 0),
+      interval,
+      agreed: project.billing_amount as number | null
+    }),
+    currency: "HUF",
+    status: "pending",
+    payment_method: "stripe",
+    payment_reference: paymentReference(project.id, periodEnd),
+    due_date: periodEnd.toISOString(),
+    note: "Várt befizetés — a fizetési emlékeztető ebből dolgozik."
+  });
+
+  const plan = subscriptionPlan(project.subscription_plan);
+  await admin.from("notifications").insert({
+    user_id: project.user_id,
+    title: "Megérkezett a fizetésed",
+    message: `A(z) „${project.title}” ${billingIntervalLabel(interval)} díja (${formatHuf(amountHuf)}) beérkezett. A következő esedékesség: ${periodEnd.toLocaleDateString("hu-HU")}.`,
+    link: "/ugyfelkapu/dashboard"
+  });
+
+  if (project.contact_email) {
+    await sendProjectEdgeEmail({
+      to: project.contact_email,
+      subject: "Megérkezett a fizetésed",
+      message: `A(z) „${project.title}” weboldalad ${billingIntervalLabel(interval)} szolgáltatási díja beérkezett. Köszönöm!`,
+      link: "/ugyfelkapu/dashboard",
+      details: [
+        { label: "Összeg", value: formatHuf(amountHuf) },
+        { label: "Fizetési mód", value: "Bankkártya" },
+        { label: "Következő esedékesség", value: periodEnd.toLocaleDateString("hu-HU") }
+      ]
+    });
+  }
+
+  if (!payment.billingo_document_id) {
+    try {
+      const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+      if (!customerId) throw new Error("Az egyszeri fizetéshez nem tartozik Stripe-vevő.");
+      const customer = await getStripe().customers.retrieve(customerId, { expand: ["tax_ids"] });
+      if (customer.deleted) throw new Error("A Stripe-vevő törölve lett.");
+      await issueSubscriptionInvoice({
+        paymentId: payment.id,
+        projectTitle: project.title,
+        planName: plan.name,
+        amount: amountHuf,
+        paidAt,
+        party: billingPartyFromStripeCustomer(customer),
+        reference: typeof session.payment_intent === "string" ? session.payment_intent : session.id,
+        interval,
+        paymentMethod: "online_bankcard"
+      });
     } catch (billingoError) {
       const message = billingoError instanceof Error ? billingoError.message : "Ismeretlen Billingo-hiba";
       await admin.from("subscription_payments").update({ billingo_error: message, updated_at: new Date().toISOString() }).eq("id", payment.id);
-      await admin.from("notifications").insert({ user_id: null, title: "Billingo számlázási hiba", message: `${project.title}: ${message}`, link: "/admin" });
+      await admin.from("notifications").insert({ user_id: null, title: "Billingo számlázási hiba", message: `${project.title}: ${message}`, link: "/admin/dashboard" });
     }
   }
 }
@@ -173,18 +365,46 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
   if (project) await admin.from("notifications").insert({ user_id: project.user_id, title: "Sikertelen előfizetési terhelés", message: `A(z) „${project.title}” havidíját nem sikerült levonni. Nyisd meg a számlázási felületet és ellenőrizd a kártyát.`, link: "/ugyfelkapu/dashboard" });
 }
 
-async function handleSubscription(subscription: Stripe.Subscription, deleted = false) {
-  const projectId = subscription.metadata.project_id;
+async function handleSubscription(eventSubscription: Stripe.Subscription, deleted = false) {
+  const projectId = eventSubscription.metadata.project_id;
   if (!projectId) return;
+
+  const admin = createServerSupabaseAdminClient();
+  const { data: project, error } = await admin.from("client_projects")
+    .select("id,stripe_subscription_id,stripe_parked_at")
+    .eq("id", projectId).maybeSingle();
+  if (error) throw error;
+  if (!project) return;
+
+  // Egy lecserélt, régi előfizetés eseménye nem írhatja felül az aktuálisat.
+  if (project.stripe_subscription_id && project.stripe_subscription_id !== eventSubscription.id) {
+    console.warn("Stripe webhook: event for a replaced subscription ignored", {
+      projectId, eventSubscription: eventSubscription.id, current: project.stripe_subscription_id
+    });
+    return;
+  }
+
+  // Az esemény pillanatképe helyett a JELENLEGI állapot. A Stripe nem
+  // garantálja a kézbesítési sorrendet: egy késve érkező régi `updated`
+  // esemény különben visszaírná a már lemondott előfizetést aktívra.
+  const subscription = deleted
+    ? eventSubscription
+    : await getStripe().subscriptions.retrieve(eventSubscription.id);
+
   const period = subscriptionPeriod(subscription);
-  const active = ["active", "trialing"].includes(subscription.status);
   const cancelled = deleted || subscription.status === "canceled";
-  await createServerSupabaseAdminClient().from("client_projects").update({
+  // A parkolás (szüneteltetés) árcsere, a Stripe szerint közben „active".
+  // A korábbi leképezés a szüneteltetés SAJÁT `updated` eseményére azonnal
+  // visszaírta az állapotot aktívra — a szüneteltetés így el sem indult.
+  const status = cancelled
+    ? "cancelled"
+    : subscriptionStatusFromStripe(subscription.status, subscription.cancel_at_period_end, Boolean(project.stripe_parked_at)) ?? "past_due";
+  await admin.from("client_projects").update({
     stripe_subscription_id: subscription.id,
     stripe_subscription_status: subscription.status,
     stripe_current_period_end: period.end,
     next_billing_at: period.end,
-    subscription_status: cancelled ? "cancelled" : subscription.cancel_at_period_end ? "cancel_requested" : active ? "active" : "past_due",
+    subscription_status: status,
     cancel_effective_at: subscription.cancel_at_period_end ? period.end : null,
     cancelled_at: cancelled ? new Date().toISOString() : null,
     site_health_status: cancelled ? "offline" : undefined,
@@ -316,12 +536,40 @@ export async function POST(request: Request) {
   // újabb Billingo-kísérlet. Az egyedi kulcsra épülő insert atomi módon dönti
   // el, melyik példány dolgozhat. Hiba esetén a foglalást felszabadítjuk, hogy
   // a Stripe újrapróbálkozása tényleg le tudjon futni.
+  //
+  // A foglalás és a BEFEJEZÉS külön állapot (`processed_at` = foglalás ideje,
+  // `completed_at` = sikeres feldolgozás). Duplikátumra csak akkor adunk
+  // 2xx-et, ha az első példány már végzett: amíg fut, 409-cel kérjük a
+  // Stripe-ot, hogy próbálja újra később. Korábban a párhuzamos másodpéldány
+  // azonnal „kész"-t kapott, és ha az első utána elhasalt, az esemény
+  // véglegesen feldolgozatlan maradt. A beragadt (időtúllépéssel elhalt)
+  // foglalást STALE_CLAIM_MS után egy újabb kézbesítés átveheti.
+  // A `completed_at` alapértéke `now()` (a régi kód soraiért, lásd 046) —
+  // a foglalás ezért kifejezetten `null`-t ír bele: még nincs kész.
   const { error: claimError } = await admin.from("stripe_webhook_events")
-    .insert({ event_id: event.id, event_type: event.type });
+    .insert({ event_id: event.id, event_type: event.type, completed_at: null });
   if (claimError) {
-    if (claimError.code === "23505") return NextResponse.json({ received: true, duplicate: true });
-    console.error(`Stripe webhook ${event.id} claim failed`, claimError);
-    return NextResponse.json({ error: "A webhook feldolgozása sikertelen." }, { status: 500 });
+    if (claimError.code !== "23505") {
+      console.error(`Stripe webhook ${event.id} claim failed`, claimError);
+      return NextResponse.json({ error: "A webhook feldolgozása sikertelen." }, { status: 500 });
+    }
+    const { data: claim } = await admin.from("stripe_webhook_events")
+      .select("processed_at,completed_at").eq("event_id", event.id).maybeSingle();
+    // A sor közben eltűnhetett: az első példány elhasalt és felszabadította a
+    // foglalást. Ez NEM „kész" — 409, és a Stripe újraküldése tisztán foglal.
+    if (!claim) return NextResponse.json({ error: "Az esemény újrapróbálható." }, { status: 409 });
+    if (claim.completed_at) return NextResponse.json({ received: true, duplicate: true });
+
+    const staleBefore = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+    const { data: takenOver } = await admin.from("stripe_webhook_events")
+      .update({ processed_at: new Date().toISOString() })
+      .eq("event_id", event.id)
+      .is("completed_at", null)
+      .lt("processed_at", staleBefore)
+      .select("event_id").maybeSingle();
+    if (!takenOver) {
+      return NextResponse.json({ error: "Az esemény feldolgozása folyamatban van." }, { status: 409 });
+    }
   }
 
   try {
@@ -340,6 +588,10 @@ export async function POST(request: Request) {
           await handleChangeRequestPaid(session);
           break;
         }
+        if (session.mode === "payment" && session.metadata?.subscription_payment_id) {
+          await handleManualPaymentPaid(session);
+          break;
+        }
         const projectId = session.metadata?.project_id;
         if (projectId) await admin.from("client_projects").update({
           stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id,
@@ -349,6 +601,9 @@ export async function POST(request: Request) {
         break;
       }
     }
+    await admin.from("stripe_webhook_events")
+      .update({ completed_at: new Date().toISOString() })
+      .eq("event_id", event.id);
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error(`Stripe webhook ${event.id} failed`, error);

@@ -57,12 +57,17 @@ export default function TermsPage() {
 
         <h2>4. Díjazás és fizetés</h2>
         <p>
-          Menedzselt weboldalnál nincs külön induló díj: a munka megkezdésének feltétele az első
-          havidíj előre történő megfizetése. Az ezt követő havidíjak minden szolgáltatási időszak
-          elején esedékesek. Egyszeri vásárlásnál a vállalási díj az egyedi ajánlatban szerepel, a
+          Menedzselt weboldalnál nincs induló, belépési vagy beállítási díj, és előleg sincs: a munkát
+          a szerződés elfogadása indítja, fizetés nélkül. Az első díj akkor esedékes, amikor a Megrendelő
+          az elkészült weboldalt az Ügyfélkapun jóváhagyta; a weboldal a saját domainjén az első díj
+          beérkezése után kerül élesítésre. Az élesítésig a weboldal a Szolgáltató infrastruktúráján
+          marad, és ha a Megrendelő nem fizet, nem kerül átadásra. Az ezt követő díjak minden
+          szolgáltatási időszak elején, a választott fizetési ütemezés (havi, féléves vagy éves) szerint
+          előre esedékesek. Egyszeri vásárlásnál a vállalási díj az egyedi ajánlatban szerepel, a
           munka megkezdésének feltétele pedig 10 000 Ft foglaló, amely a végösszegbe beleszámít. A
           menedzselt előfizetés díjának megfizetése bankkártyával, a Stripe biztonságos fizetési
-          felületén történik; a kártyát a Stripe a későbbi ismétlődő díjakhoz elmenti. Az egyszeri
+          felületén történik (a kártyát a Stripe a későbbi ismétlődő díjakhoz elmenti), féléves és éves
+          ütemezésnél banki átutalással is. Az egyszeri
           vásárlás foglalója, végösszege és a weboldal vételára banki átutalással fizetendő, az
           Ügyfélkapun megjelenő adatok alapján; a beérkezést a Szolgáltató ellenőrzi és igazolja vissza.
           {PRICE_TAX_NOTE} A Szolgáltató a fizetésről számlát állít ki.
@@ -212,7 +217,7 @@ export default function TermsPage() {
 
         <p className="legal-note">
           Lásd még az <a href="/impresszum">Impresszumot</a> és az{" "}
-          <a href="/adatkezeles">Adatkezelési tájékoztatót</a>. Hatályos: 2026. augusztus 9.
+          <a href="/adatkezeles">Adatkezelési tájékoztatót</a>. Hatályos: 2026. szeptember 22.
         </p>
       </section>
     </main>

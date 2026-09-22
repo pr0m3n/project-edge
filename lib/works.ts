@@ -89,19 +89,6 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
-    id: "varga",
-    name: "Varga Villany",
-    goal: "Helyi érdeklődőszerzés",
-    industry: "Szakipar",
-    copy:
-      "Árkalkulátor, körzetellenőrzés és gyors ajánlatkérés — annak, aki holnapra keres szakembert.",
-    href: "/demo/varga-villany",
-    external: false,
-    src: "/work/demos/varga-villany.webp",
-    width: 1440,
-    height: 900
-  },
-  {
     id: "budai",
     name: "Budai Otthonok",
     goal: "Ingatlankereső",
@@ -126,5 +113,18 @@ export const WORKS: Work[] = [
     src: "/work/demos/veyra.webp",
     width: 1440,
     height: 900
+  },
+  {
+    id: "leadscope",
+    name: "LeadScope.hu",
+    goal: "B2B lead generálás",
+    industry: "Értékesítés · SaaS",
+    copy:
+      "Célzott cégkutatás, személyre szabott megkeresések és mérhető kampányok egyetlen, letisztult rendszerben — több releváns beszélgetésért.",
+    href: "https://leadscope.hu",
+    external: true,
+    src: "/work/refs/leadscope-cover.webp",
+    width: 1600,
+    height: 908
   }
 ];

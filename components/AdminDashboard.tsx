@@ -15,7 +15,12 @@ import { AdminHandoverPanel } from "@/components/AdminHandoverPanel";
 import { BillingoIssuesCard } from "@/components/admin/BillingoIssuesCard";
 import { AiBuildPromptPanel } from "@/components/admin/AiBuildPromptPanel";
 import type { AiPromptProject } from "@/lib/ai-build-prompt";
+import { AddClientPanel } from "@/components/admin/AddClientPanel";
 import { AdminInbox } from "@/components/admin/AdminInbox";
+import { PaymentActionsPanel } from "@/components/admin/PaymentActionsPanel";
+import { NavDrafts, NavInbox, NavLeads, NavManaged, NavMessages, NavProjects, NavRevenue, NavToday, NavUsers } from "@/components/admin/nav-icons";
+import { RevenuePanel } from "@/components/admin/RevenuePanel";
+import { TodayPanel } from "@/components/admin/TodayPanel";
 import { WebsitePurchaseAdminPanel } from "@/components/admin/WebsitePurchaseAdminPanel";
 import { ChangeThread } from "@/components/portal/ChangeThread";
 import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
@@ -39,6 +44,20 @@ import type {
   AppNotification
 } from "@/components/admin/types";
 import { hardNavigate } from "@/lib/auth-navigation";
+
+/** Egy nyitott, még be nem érkezett befizetés. */
+type PendingPayment = {
+  id: string;
+  project_id: string;
+  amount: number;
+  due_date: string | null;
+  payment_reference: string | null;
+  reminder_stage: number;
+  status: "pending" | "reported";
+  /** Az ügyfél jelezte, hogy elutalta. Ellenőrizni kell a bankszámlán. */
+  transfer_reported_at: string | null;
+};
+import { useRealtime } from "@/lib/use-realtime";
 
 /** A választott admin téma tárolókulcsa — egy helyen, hogy ne csússzon el. */
 const ADMIN_THEME_KEY = "projectedge-admin-theme";
@@ -96,7 +115,7 @@ const projectStatuses = [
   ["request_received", "Igény beérkezett"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat elküldve"],
-  ["deposit_pending", "Foglaló fizetésre vár"],
+  ["deposit_pending", "Fizetésre vár (élesítés előtt)"],
   ["contract_pending", "Szerződés aláírásra vár"],
   ["in_progress", "Kivitelezés"],
   ["review", "Ügyfél-visszajelzés"],
@@ -108,14 +127,15 @@ const projectStatuses = [
 
 const projectStatusLabel = Object.fromEntries(projectStatuses);
 
+/** Az ügyfélkapuval AZONOS sorrend — a fizetés a jóváhagyás után van. */
 const projectFlow = [
   ["request_received", "Igény"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
   ["contract_pending", "Szerződés"],
-  ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
   ["review", "Jóváhagyás"],
+  ["deposit_pending", "Fizetés"],
   ["launched", "Éles"]
 ];
 
@@ -200,6 +220,8 @@ export function AdminDashboard() {
   const [websitePurchases, setWebsitePurchases] = useState<WebsitePurchase[]>([]);
   const [websitePurchaseBusyId, setWebsitePurchaseBusyId] = useState<string | null>(null);
   const [billingoIssues, setBillingoIssues] = useState<BillingoIssue[]>([]);
+  /** Nyitott, várt befizetések projektenként — ebből él a „mikor esedékes" nézet. */
+  const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
   const [billingoRetryId, setBillingoRetryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -222,6 +244,8 @@ export function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [wizardProjectId, setWizardProjectId] = useState<string | null>(null);
+  /** Nyitva van-e a kézi ügyfélfelvétel. A projektek fül fölé ül be. */
+  const [addingClient, setAddingClient] = useState(false);
 
   /** Félbehagyott projektindító adatlapok — beküldetlen `brief_drafts` sorok. */
   const [briefDrafts, setBriefDrafts] = useState<BriefDraftRow[]>([]);
@@ -240,7 +264,9 @@ export function AdminDashboard() {
   const [adminTheme, setAdminTheme] = useState<"dark" | "light">("dark");
 
   // Navigation & Master-Detail state
-  const [activeTab, setActiveTab] = useState<"inbox" | "projects" | "tickets" | "managed" | "drafts" | "users" | "leads">("inbox");
+  // A „ma" az alapértelmezett nézet: a felület első képernyője a teendőlista
+  // legyen, ne egy fül, amiről nem derül ki, mi vár rád a többin.
+  const [activeTab, setActiveTab] = useState<"today" | "revenue" | "inbox" | "projects" | "tickets" | "managed" | "drafts" | "users" | "leads">("today");
   const [ticketScope, setTicketScope] = useState<"all" | "public" | "portal">("all");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [, setSelectedTicketType] = useState<"public" | "portal">("public");
@@ -646,6 +672,24 @@ export function AdminDashboard() {
     });
   }
 
+  /**
+   * Az admin felület adatainak betöltése.
+   *
+   * MIÉRT ÍRTUK ÁT: korábban tizenegy lekérdezés futott EGYMÁS UTÁN, mindegyik
+   * megvárva az előzőt. A felület tehát nem azért volt lassú, mert sok adat
+   * van — hanem mert tizenegyszer várt meg egy teljes hálózati kört, mielőtt
+   * bármit megjelenített. Egy 80 ms-os körrel is ~1 másodperc üres képernyő,
+   * rosszabb hálózaton több.
+   *
+   * Most két hullám van:
+   *   1. minden fő lista párhuzamosan (egyetlen kör),
+   *   2. a ticketekhez tartozó üzenetek, szintén párhuzamosan.
+   *
+   * A második hullám azért marad külön, mert a ticket-azonosítók csak az első
+   * eredményéből derülnek ki. A listák felső korlátot kaptak: az admin úgysem
+   * görget át 200 elemnél többet, a korlát nélküli lekérdezés viszont az
+   * ügyfélszám növekedésével egyre lassult volna.
+   */
   async function loadLeads(silent = false) {
     if (!silent) {
       setLoading(true);
@@ -669,40 +713,54 @@ export function AdminDashboard() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("quote_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: ticketData, error: ticketError } = await supabase
-      .from("support_tickets")
-      .select("*")
-      .order("last_message_at", { ascending: false });
-
-    const { data: clientProjectData, error: clientProjectError } = await supabase
-      .from("client_projects")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: clientTicketData, error: clientTicketError } = await supabase
-      .from("client_tickets")
-      .select("*")
-      .order("last_message_at", { ascending: false });
-
-    const { data: notificationData } = await supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: changeRequestData } = await supabase
-      .from("change_requests")
-      .select("*")
-      .order("requested_at", { ascending: false });
-
-    const { data: websitePurchaseData } = await supabase
-      .from("website_purchases")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [
+      { data, error },
+      { data: ticketData, error: ticketError },
+      { data: clientProjectData, error: clientProjectError },
+      { data: clientTicketData, error: clientTicketError },
+      { data: notificationData },
+      { data: changeRequestData },
+      { data: websitePurchaseData },
+      { data: billingoData },
+      { data: pendingPaymentData },
+      { data: briefDraftData, error: briefDraftError }
+    ] = await Promise.all([
+      supabase.from("quote_requests").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("support_tickets").select("*").order("last_message_at", { ascending: false }).limit(200),
+      supabase.from("client_projects").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("client_tickets").select("*").order("last_message_at", { ascending: false }).limit(200),
+      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("change_requests").select("*").order("requested_at", { ascending: false }).limit(200),
+      supabase.from("website_purchases").select("*").order("created_at", { ascending: false }).limit(100),
+      // Kiszámlázatlan befizetések: a pénz beérkezett, a számla viszont nem
+      // készült el. Ezek eddig csendben ültek az adatbázisban.
+      supabase
+        .from("subscription_payments")
+        .select("id,project_id,amount,paid_at,stripe_invoice_id,billingo_error")
+        .is("billingo_document_id", null)
+        .eq("status", "paid")
+        .order("paid_at", { ascending: false }),
+      // Nyitott, várt befizetések. Ebből tudja az admin felület, kinél mikor
+      // esedékes a következő díj — és ebből dolgozik a napi emlékeztető cron is.
+      supabase
+        .from("subscription_payments")
+        .select("id,project_id,amount,due_date,payment_reference,reminder_stage,status,transfer_reported_at")
+        // A `reported` is kell: az ügyfél bejelentette az utalást, a pénz
+        // viszont még nincs rögzítve — ez a legfontosabb teendő a listán.
+        .in("status", ["pending", "reported"])
+        .order("due_date", { ascending: true })
+        .returns<PendingPayment[]>(),
+      // Félbehagyott projektindító adatlapok (035). Szándékosan KÜLÖN listában,
+      // nem a projektek között: ezek még nem megbízások, csak nyomok arról, hol
+      // állt meg valaki — a projektek közé keveredve elvinnék a figyelmet a
+      // valódi teendőkről.
+      supabase
+        .from("brief_drafts")
+        .select("*")
+        .is("submitted_at", null)
+        .order("updated_at", { ascending: false })
+        .returns<BriefDraftRow[]>()
+    ]);
 
     if (error || ticketError) {
       setMessage("Nem sikerült betölteni a leadeket. Ellenőrizd az admin jogosultságot és az RLS szabályokat.");
@@ -714,76 +772,50 @@ export function AdminDashboard() {
       setMessage("Az ügyfélkapu táblái még nem elérhetők. Futtasd le a 003_client_portal.sql migrációt.");
     }
 
+    // ── Második hullám: a ticketekhez tartozó üzenetek ────────────────────
     const ticketIds = (ticketData ?? []).map((ticket) => ticket.id);
-    const { data: messagesData, error: messagesError } = ticketIds.length
-      ? await supabase
-          .from("support_ticket_messages")
-          .select("*")
-          .in("ticket_id", ticketIds)
-          .order("created_at", { ascending: true })
-      : { data: [], error: null };
+    const clientTicketIds = clientTicketError ? [] : (clientTicketData ?? []).map((ticket) => ticket.id);
+
+    const [
+      { data: messagesData, error: messagesError },
+      { data: clientMessagesData, error: clientMessagesError }
+    ] = await Promise.all([
+      ticketIds.length
+        ? supabase.from("support_ticket_messages").select("*").in("ticket_id", ticketIds).order("created_at", { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+      clientTicketIds.length
+        ? supabase.from("client_ticket_messages").select("*").in("ticket_id", clientTicketIds).order("created_at", { ascending: true })
+        : Promise.resolve({ data: [], error: null })
+    ]);
 
     if (messagesError) {
       setMessage("A ticket üzeneteket nem sikerült betölteni.");
       setLoading(false);
       return;
     }
-
-    const groupedMessages = (messagesData ?? []).reduce<Record<string, TicketMessage[]>>((groups, item) => {
-      groups[item.ticket_id] = [...(groups[item.ticket_id] ?? []), item];
-      return groups;
-    }, {});
-
-    const clientTicketIds = clientTicketError ? [] : (clientTicketData ?? []).map((ticket) => ticket.id);
-    const { data: clientMessagesData, error: clientMessagesError } = clientTicketIds.length
-      ? await supabase
-          .from("client_ticket_messages")
-          .select("*")
-          .in("ticket_id", clientTicketIds)
-          .order("created_at", { ascending: true })
-      : { data: [], error: null };
-
     if (clientMessagesError) {
       setMessage("Az ügyfélkapus ticket üzeneteket nem sikerült betölteni.");
       setLoading(false);
       return;
     }
 
-    const groupedClientMessages = (clientMessagesData ?? []).reduce<Record<string, TicketMessage[]>>((groups, item) => {
-      groups[item.ticket_id] = [...(groups[item.ticket_id] ?? []), item];
-      return groups;
-    }, {});
+    const groupBy = (rows: TicketMessage[] | null) =>
+      (rows ?? []).reduce<Record<string, TicketMessage[]>>((groups, item) => {
+        groups[item.ticket_id] = [...(groups[item.ticket_id] ?? []), item];
+        return groups;
+      }, {});
 
     setLeads(data ?? []);
     setTickets(ticketData ?? []);
-    setTicketMessages(groupedMessages);
+    setTicketMessages(groupBy(messagesData));
     setClientProjects(clientProjectError ? [] : clientProjectData ?? []);
     setClientTickets(clientTicketError ? [] : clientTicketData ?? []);
-    setClientTicketMessages(groupedClientMessages);
+    setClientTicketMessages(groupBy(clientMessagesData));
     setNotifications(notificationData ?? []);
     setChangeRequests(changeRequestData ?? []);
     setWebsitePurchases((websitePurchaseData ?? []) as WebsitePurchase[]);
-
-    // Kiszámlázatlan befizetések: a pénz beérkezett, a Billingo-számla viszont
-    // nem készült el. Ezek eddig csendben ültek az adatbázisban.
-    const { data: billingoData } = await supabase
-      .from("subscription_payments")
-      .select("id,project_id,amount,paid_at,stripe_invoice_id,billingo_error")
-      .is("billingo_document_id", null)
-      .eq("status", "paid")
-      .order("paid_at", { ascending: false });
     setBillingoIssues((billingoData ?? []) as BillingoIssue[]);
-
-    // Félbehagyott projektindító adatlapok (035-ös migráció). Szándékosan KÜLÖN
-    // listában, nem a projektek között: ezek még nem megbízások, csak nyomok
-    // arról, hol állt meg valaki — ha a projektek közé keverednének, elvinnék a
-    // figyelmet a valódi teendőkről.
-    const { data: briefDraftData, error: briefDraftError } = await supabase
-      .from("brief_drafts")
-      .select("*")
-      .is("submitted_at", null)
-      .order("updated_at", { ascending: false })
-      .returns<BriefDraftRow[]>();
+    setPendingPayments(pendingPaymentData ?? []);
     // A tábla hiánya nem hiba: a migráció kézzel fut, addig a fül csak üres.
     setBriefDrafts(briefDraftError ? [] : briefDraftData ?? []);
 
@@ -819,6 +851,39 @@ export function AdminDashboard() {
    * mindenképp szerveren keresztül jönnek. Csak akkor kérjük le, amikor az
    * admin tényleg megnyitja a fület.
    */
+  /**
+   * Egy módosítási vagy kivásárlási kérés VÉGLEGES lezárása.
+   *
+   * A teendőlistán eddig csak „elrejtés" volt, ami a böngésző tárolójába
+   * mentett — a rekord nyitva maradt, tehát másik gépen (vagy a tároló
+   * törlése után) újra megjelent. Ez az, ami úgy nézett ki, mintha a
+   * kidobott tétel visszajönne. Ez a függvény az adatbázisban zárja le, így
+   * mindenhonnan eltűnik, és a realtime a többi nyitott fület is frissíti.
+   */
+  async function resolveChangeRequest(requestId: string) {
+    const confirmed = await confirm({
+      title: "Lezárod ezt a kérést?",
+      message: "A kérés elintézettre vált, és eltűnik a teendőlistáról. Az ügyfél a saját felületén lezártként látja majd.",
+      confirmLabel: "Lezárás",
+      cancelLabel: "Mégsem"
+    });
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("change_requests").update({
+      status: "completed",
+      completed_at: new Date().toISOString()
+    }).eq("id", requestId);
+
+    if (error) {
+      setMessage("A kérés lezárása nem sikerült.");
+      return;
+    }
+    setMessage("A kérés lezárva.");
+    setChangeRequests((current) => current.map((request) =>
+      request.id === requestId ? { ...request, status: "completed" } : request
+    ));
+  }
+
   async function loadAdminUsers() {
     setUsersLoading(true);
     setUsersError("");
@@ -1388,109 +1453,80 @@ export function AdminDashboard() {
     hardNavigate("/admin");
   }
 
+  // Az első betöltés. A realtime feliratkozás külön hookban él, mert a
+  // csatorna életciklusa (szakadás, újracsatlakozás, újratöltés) önmagában is
+  // elég bonyolult ahhoz, hogy ne keveredjen ide.
   useEffect(() => {
-    loadLeads();
-
-    const channel = supabase
-      .channel("projectedge-admin-support")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "support_tickets"
-        },
-        (payload) => {
-          const nextTicket = payload.new as Ticket;
-          setTickets((current) =>
-            current.some((ticket) => ticket.id === nextTicket.id) ? current : [nextTicket, ...current]
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "support_tickets"
-        },
-        (payload) => {
-          const nextTicket = payload.new as Ticket;
-          setTickets((current) =>
-            current.map((ticket) => (ticket.id === nextTicket.id ? { ...ticket, ...nextTicket } : ticket))
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "support_ticket_messages"
-        },
-        (payload) => {
-          addTicketMessage(payload.new as TicketMessage);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "client_projects"
-        },
-        (payload) => mergeClientProject(payload as unknown as RealtimePayload<ClientProject>)
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "client_tickets"
-        },
-        (payload) => mergeClientTicket(payload as unknown as RealtimePayload<ClientTicket>)
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "client_ticket_messages"
-        },
-        (payload) => {
-          addClientTicketMessage(payload.new as TicketMessage);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications"
-        },
-        (payload) => mergeNotification(payload as unknown as RealtimePayload<AppNotification>)
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "change_requests"
-        },
-        (payload) => {
-          const row = payload.new as ChangeRequest;
-          if (!row?.id) return;
-          setChangeRequests((current) => current.some((request) => request.id === row.id)
-            ? current.map((request) => request.id === row.id ? { ...request, ...row } : request)
-            : [row, ...current]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Szándékosan csak egyszer fut, induláskor. A további frissítéseket a
+    // realtime csatorna és az újracsatlakozási újratöltés hozza.
+    void loadLeads();
   }, []);
+
+  /**
+   * Élő frissítés.
+   *
+   * Amit a korábbi felállás NEM tudott, és emiatt látszott a felület
+   * statikusnak:
+   *
+   *  - A `quote_requests` (az ajánlatkérések!), a `website_purchases` és a
+   *    `brief_drafts` egyáltalán nem volt feliratkozva, tehát egy új
+   *    érdeklődő soha nem jelent meg magától — csak kézi frissítésre.
+   *  - A csatorna hibáját semmi nem kezelte: egy laptop-alvás után a felület
+   *    csendben elavult, és semmi nem jelezte.
+   *
+   * A `useRealtime` mindkettőt megoldja, és ad egy állapotot, amit ki lehet
+   * tenni a fejlécbe — hogy ránézésre látszódjon, friss-e, amit nézel.
+   */
+  const realtimeStatus = useRealtime(
+    "projectedge-admin",
+    [
+      { table: "support_tickets", event: "INSERT", handler: (p) => setTickets((current) => {
+        const row = p.new as Ticket;
+        return current.some((ticket) => ticket.id === row.id) ? current : [row, ...current];
+      }) },
+      { table: "support_tickets", event: "UPDATE", handler: (p) => setTickets((current) => {
+        const row = p.new as Ticket;
+        return current.map((ticket) => (ticket.id === row.id ? { ...ticket, ...row } : ticket));
+      }) },
+      { table: "support_ticket_messages", event: "INSERT", handler: (p) => addTicketMessage(p.new as TicketMessage) },
+      { table: "client_projects", handler: (p) => mergeClientProject(p as unknown as RealtimePayload<ClientProject>) },
+      { table: "client_tickets", handler: (p) => mergeClientTicket(p as unknown as RealtimePayload<ClientTicket>) },
+      { table: "client_ticket_messages", event: "INSERT", handler: (p) => addClientTicketMessage(p.new as TicketMessage) },
+      { table: "notifications", handler: (p) => mergeNotification(p as unknown as RealtimePayload<AppNotification>) },
+      { table: "change_requests", handler: (p) => {
+        const row = p.new as ChangeRequest;
+        if (!row?.id) return;
+        setChangeRequests((current) => current.some((request) => request.id === row.id)
+          ? current.map((request) => (request.id === row.id ? { ...request, ...row } : request))
+          : [row, ...current]);
+      } },
+      // ── 038 óta feliratkozva: eddig ezek soha nem frissültek élőben ──
+      { table: "quote_requests", handler: (p) => {
+        const row = p.new as Lead;
+        if (!row?.id) return;
+        setLeads((current) => current.some((lead) => lead.id === row.id)
+          ? current.map((lead) => (lead.id === row.id ? { ...lead, ...row } : lead))
+          : [row, ...current]);
+      } },
+      { table: "website_purchases", handler: (p) => {
+        const row = p.new as WebsitePurchase;
+        if (!row?.id) return;
+        setWebsitePurchases((current) => current.some((purchase) => purchase.id === row.id)
+          ? current.map((purchase) => (purchase.id === row.id ? { ...purchase, ...row } : purchase))
+          : [row, ...current]);
+      } },
+      { table: "brief_drafts", handler: (p) => {
+        const row = p.new as BriefDraftRow;
+        if (!row?.user_id) return;
+        // A beküldött piszkozat már nem piszkozat: kikerül a listából.
+        setBriefDrafts((current) => {
+          const without = current.filter((draft) => draft.user_id !== row.user_id);
+          return row.submitted_at ? without : [row, ...without];
+        });
+      } }
+    ],
+    () => { void loadLeads(true); }
+  );
 
   function renderClosedProjectCard(project: ClientProject) {
     const rating = project.client_rating;
@@ -1600,6 +1636,21 @@ export function AdminDashboard() {
     review: "Élesítés"
   };
 
+  /**
+   * Menedzselt oldal élesítése. Két helyről hívódik: a régi sorrendben a
+   * jóváhagyás után (`review`), az újban a FIZETÉS után (`deposit_pending` +
+   * `deposit_paid`) — a fizetés ugyanis a jóváhagyás és az élesítés között van.
+   */
+  function launchManagedProject(project: ClientProject) {
+    updateClientProject(project.id, {
+      status: "launched",
+      next_step: "Az oldal éles és felügyelet alatt van. A módosításokat és az előfizetést innen kezelheted.",
+      site_health_status: "healthy",
+      last_health_check_at: new Date().toISOString(),
+      handover_steps: []
+    });
+  }
+
   function wizardNext(project: ClientProject) {
     switch (project.status) {
       case "request_received":
@@ -1612,8 +1663,16 @@ export function AdminDashboard() {
         // Menedzselt előfizetésnél az első havidíj a Stripe-on érkezik, és a
         // webhook írja az előfizetési mezőket — kézzel nem szabad "aktívra"
         // állítani, mert az valós terhelés nélkül indítaná el a szolgáltatást.
+        //
+        // Az ÚJ sorrendben ez a lépés a jóváhagyás UTÁN van: ha a díj már
+        // beérkezett (kártyán a webhook, utalásnál a befizetés rögzítése
+        // állítja `deposit_paid`-re), innen élesítünk.
         if (project.commercial_model === "subscription") {
-          setMessage("A menedzselt előfizetés az első Stripe-terhelés beérkezésekor indul el automatikusan.");
+          if (project.payment_status === "deposit_paid") {
+            launchManagedProject(project);
+          } else {
+            setMessage("Az első díj még nem érkezett be. Kártyánál a Stripe-terhelés, utalásnál a befizetés rögzítése után élesíthetsz.");
+          }
           break;
         }
         if (project.deposit_transfer_reported) {
@@ -1678,10 +1737,25 @@ export function AdminDashboard() {
       contract_pending: {
         who: "client",
         headline: "Szerződés aláírására vár",
-        detail: managed ? "A választott havi csomag rögzítve van. A szolgáltatási szerződés elfogadása után az első havidíj következik." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik.",
+        detail: managed ? "A választott havi csomag rögzítve van. A szerződés elfogadása indítja az építést; a díj a kész oldal jóváhagyása után esedékes." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik.",
         actions: [{ label: "📧 Onboarding emlékeztető email küldése", onClick: () => sendFollowupReminder(project), variant: "secondary" }]
       },
-      deposit_pending: {
+      deposit_pending: managed ? (
+        project.payment_status === "deposit_paid"
+          ? {
+              who: "admin",
+              headline: "Kifizetve — élesítsd az oldalt",
+              detail: "Az ügyfél jóváhagyta a kész oldalt, és az első díj beérkezett. Állítsd be a domaint és a DNS-t, majd élesíts.",
+              actions: [{ label: "Oldal élesítése", onClick: () => launchManagedProject(project) }]
+            }
+          : {
+              who: project.deposit_transfer_reported ? "admin" : "client",
+              headline: project.deposit_transfer_reported ? "Ellenőrizd az első díj beérkezését" : "Jóváhagyva — fizetésre vár",
+              detail: project.deposit_transfer_reported
+                ? "Az ügyfél jelezte az utalást. Ha megérkezett, rögzítsd a befizetést a Fizetések panelen — utána élesíthetsz."
+                : "Az ügyfél jóváhagyta a kész oldalt. Most fizet: kártyánál a Stripe-terhelés, utalásnál a befizetés rögzítése után élesíthetsz. Addig az oldal nem kerül ki."
+            }
+      ) : {
         who: project.deposit_transfer_reported ? "admin" : "client",
         headline: project.deposit_transfer_reported ? `Ellenőrizd ${managed ? "az első havidíj" : "a foglaló"} beérkezését` : `${managed ? "Első havidíj" : "Foglaló"} utalására vár`,
         detail: project.deposit_transfer_reported
@@ -1814,6 +1888,24 @@ export function AdminDashboard() {
           </div>
 
           <div className="admin-header-actions">
+            {/* Élő kapcsolat állapota.
+                Eddig semmi nem mutatta, hogy amit nézel, az friss-e. Ha a
+                WebSocket elszakadt (laptop alvás, wifi váltás), a felület
+                csendben elavult, és a hiányzó adat úgy nézett ki, mintha nem
+                is létezne. Ez a pont a különbség „nincs új" és „nem tudom,
+                van-e új" között. */}
+            <span
+              className={`admin-live-dot is-${realtimeStatus}`}
+              title={realtimeStatus === "live"
+                ? "Élő kapcsolat — a változások azonnal megjelennek."
+                : realtimeStatus === "connecting"
+                  ? "Kapcsolódás folyamatban…"
+                  : "Megszakadt a kapcsolat. Újracsatlakozás után magától frissül."}
+            >
+              <b aria-hidden="true" />
+              {realtimeStatus === "live" ? "Élő" : realtimeStatus === "connecting" ? "Kapcsolódás" : "Offline"}
+            </span>
+
             <button
               aria-pressed={adminTheme === "light"}
               className="admin-theme-toggle"
@@ -1821,7 +1913,7 @@ export function AdminDashboard() {
               title={adminTheme === "light" ? "Váltás sötét módra" : "Váltás világos módra"}
               type="button"
             >
-              {adminTheme === "light" ? "🌙 Sötét mód" : "☀️ Világos mód"}
+              {adminTheme === "light" ? "Sötét mód" : "Világos mód"}
             </button>
 
             <button
@@ -1831,7 +1923,7 @@ export function AdminDashboard() {
               title="Csak Stripe sandbox környezetben érhető el"
               type="button"
             >
-              {paymentTestLoading ? "Indítás…" : "⚡ 200 Ft sandbox teszt"}
+              {paymentTestLoading ? "Indítás…" : "200 Ft sandbox teszt"}
             </button>
 
             <div style={{ position: "relative" }}>
@@ -1964,11 +2056,29 @@ export function AdminDashboard() {
         {/* ── Fő Menü Navigációs Sáv ── */}
         <nav className="admin-main-nav">
           <button
+            className={`admin-nav-item ${activeTab === "today" ? "active" : ""}`}
+            onClick={() => setActiveTab("today")}
+            type="button"
+          >
+            <span className="admin-nav-icon"><NavToday /></span>
+            <span>Ma</span>
+          </button>
+
+          <button
+            className={`admin-nav-item ${activeTab === "revenue" ? "active" : ""}`}
+            onClick={() => setActiveTab("revenue")}
+            type="button"
+          >
+            <span className="admin-nav-icon"><NavRevenue /></span>
+            <span>Bevétel</span>
+          </button>
+
+          <button
             className={`admin-nav-item ${activeTab === "inbox" ? "active" : ""}`}
             onClick={() => setActiveTab("inbox")}
             type="button"
           >
-            <span className="admin-nav-icon">⚡</span>
+            <span className="admin-nav-icon"><NavInbox /></span>
             <span>Teendők & Inbox</span>
             {totalUrgentCount > 0 && <span className="admin-nav-badge urgent">{totalUrgentCount}</span>}
           </button>
@@ -1978,7 +2088,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("projects")}
             type="button"
           >
-            <span className="admin-nav-icon">🚀</span>
+            <span className="admin-nav-icon"><NavProjects /></span>
             <span>Projektek</span>
             <span className="admin-nav-badge">{activeProjects.length}</span>
           </button>
@@ -1988,7 +2098,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("tickets")}
             type="button"
           >
-            <span className="admin-nav-icon">💬</span>
+            <span className="admin-nav-icon"><NavMessages /></span>
             <span>Üzenetek & Ticketek</span>
             {totalOpenTickets > 0 && <span className="admin-nav-badge highlight">{totalOpenTickets}</span>}
           </button>
@@ -1998,7 +2108,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("managed")}
             type="button"
           >
-            <span className="admin-nav-icon">🌐</span>
+            <span className="admin-nav-icon"><NavManaged /></span>
             <span>Menedzselt Oldalak</span>
             <span className="admin-nav-badge">{managedProjects.length}</span>
           </button>
@@ -2010,7 +2120,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("drafts")}
             type="button"
           >
-            <span className="admin-nav-icon">📝</span>
+            <span className="admin-nav-icon"><NavDrafts /></span>
             <span>Félbehagyott adatlapok</span>
             <span className="admin-nav-badge">{briefDrafts.length}</span>
           </button>
@@ -2025,7 +2135,7 @@ export function AdminDashboard() {
             }}
             type="button"
           >
-            <span className="admin-nav-icon">👥</span>
+            <span className="admin-nav-icon"><NavUsers /></span>
             <span>Felhasználók</span>
             {adminUsers.length > 0 ? <span className="admin-nav-badge">{adminUsers.length}</span> : null}
           </button>
@@ -2035,7 +2145,7 @@ export function AdminDashboard() {
             onClick={() => setActiveTab("leads")}
             type="button"
           >
-            <span className="admin-nav-icon">📇</span>
+            <span className="admin-nav-icon"><NavLeads /></span>
             <span>Érdeklődők (Leadek)</span>
             {freshLeadsCount > 0 ? (
               <span className="admin-nav-badge fresh">{freshLeadsCount} új</span>
@@ -2053,6 +2163,30 @@ export function AdminDashboard() {
       {/* ════════════════════════════════════════════════════════════════════════
           FÜL 1: TEENDŐK & INBOX
       ════════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "today" && (
+        <div className="admin-tab-pane">
+          <TodayPanel
+            projects={clientProjects}
+            tickets={tickets}
+            clientTickets={clientTickets}
+            leads={leads}
+            changeRequests={changeRequests}
+            websitePurchases={websitePurchases}
+            billingoIssues={billingoIssues}
+            pendingPayments={pendingPayments}
+            briefDraftCount={briefDrafts.length}
+            onOpenTab={(tab) => setActiveTab(tab)}
+            onOpenProject={(projectId) => { setWizardProjectId(projectId); setActiveTab("projects"); }}
+          />
+        </div>
+      )}
+
+      {activeTab === "revenue" && (
+        <div className="admin-tab-pane">
+          <RevenuePanel projects={clientProjects} leads={leads} pendingPayments={pendingPayments} />
+        </div>
+      )}
+
       {activeTab === "inbox" && (
         <div className="admin-tab-pane">
           <AdminInbox
@@ -2061,6 +2195,7 @@ export function AdminDashboard() {
             websitePurchases={websitePurchases}
             billingoIssues={billingoIssues}
             tickets={clientTickets}
+            onResolveChangeRequest={resolveChangeRequest}
             billingoRetryId={billingoRetryId}
             onRetryBillingo={retryBillingoInvoice}
             onOpenProject={(projectId, subTab) => {
@@ -2124,7 +2259,21 @@ export function AdminDashboard() {
                 {showArchive ? "Archív elrejtése" : `Archív (${archivedProjects.length})`}
               </button>
             )}
+
+            {/* Az egyetlen hely, ahonnan ügyfél KELETKEZHET a rendszerben.
+                Eddig ilyen nem volt: minden művelet meglévő soron dolgozott. */}
+            <button type="button" className="admin-btn-primary" onClick={() => setAddingClient(true)}>
+              + Ügyfél hozzáadása
+            </button>
           </div>
+
+          {addingClient ? (
+            <AddClientPanel
+              onClose={() => setAddingClient(false)}
+              onNotice={(text) => setMessage(text)}
+              onCreated={() => loadLeads(true)}
+            />
+          ) : null}
 
           {!loading && activeProjects.length > 0 && (
             <div className="admin-project-switcher">
@@ -2326,7 +2475,7 @@ export function AdminDashboard() {
                         marginTop: "10px"
                       }}>
                         <div>
-                          <span style={{ fontSize: "11px", fontWeight: "900", textTransform: "uppercase", color: "var(--adm-accent-text)", letterSpacing: "0.05em" }}>💎 FONTOS TEENDŐ</span>
+                          <span style={{ fontSize: "11px", fontWeight: "900", textTransform: "uppercase", color: "var(--adm-accent-text)", letterSpacing: "0.05em" }}>Fontos teendő</span>
                           <strong style={{ display: "block", color: "var(--adm-text)", fontSize: "15px", marginTop: "2px" }}>
                             Az ügyfél kérte a weboldal tulajdonba vételét / végleges megvásárlását!
                           </strong>
@@ -2340,7 +2489,7 @@ export function AdminDashboard() {
                           style={{ minHeight: "auto", padding: "8px 16px", fontSize: "12.5px" }}
                           onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "subscription" }))}
                         >
-                          💎 Kivásárlás kezelése itt →
+                          Kivásárlás kezelése →
                         </button>
                       </div>
                     );
@@ -2362,7 +2511,7 @@ export function AdminDashboard() {
                             className={`admin-studio-tab ${activeSub === "prompt" ? "active" : ""}`}
                             onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "prompt" }))}
                           >
-                            <span>⚡</span> AI Prompt Stúdió
+                            AI Prompt Stúdió
                           </button>
                           <button
                             type="button"
@@ -2391,7 +2540,7 @@ export function AdminDashboard() {
                               className={`admin-studio-tab ${activeSub === "subscription" ? "active" : ""}`}
                               onClick={() => setProjectSubTab((prev) => ({ ...prev, [project.id]: "subscription" }))}
                             >
-                              <span>{hasPurchases ? "💎" : "⚙️"}</span> {hasPurchases ? "Kivásárlás & Átadás" : "Előfizetés Vezérlés"}
+                              {hasPurchases ? "Kivásárlás és átadás" : "Előfizetés"}
                             </button>
                           )}
                         </div>
@@ -2840,7 +2989,7 @@ export function AdminDashboard() {
                                 gap: "14px"
                               }}>
                                 <div>
-                                  <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>💎 Végleges Megvásárlás (Kivásárlás)</span>
+                                  <span style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", color: "var(--adm-accent-text)" }}>Végleges megvásárlás</span>
                                   <strong style={{ display: "block", color: "var(--adm-text)", fontSize: "15px", marginTop: "2px" }}>
                                     Weboldal tulajdonba vételi opció
                                   </strong>
@@ -3097,28 +3246,19 @@ export function AdminDashboard() {
                       </div>
                     ) : (
                       msgs.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`admin-chat-message ${item.sender}`}
-                          style={{
-                            maxWidth: "80%",
-                            background: item.sender === "admin" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-05)",
-                            border: item.sender === "admin" ? "1px solid rgba(118, 171, 174, 0.25)" : "1px solid var(--adm-ink-08)",
-                            borderRadius: "16px",
-                            padding: "12px 16px",
-                            justifySelf: item.sender === "admin" ? "end" : "start",
-                            color: "var(--adm-text)"
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", fontSize: "11px", marginBottom: "4px" }}>
-                            <span style={{ color: item.sender === "admin" ? "var(--adm-accent-text)" : "var(--adm-ink-60)", fontWeight: "bold" }}>
-                              {item.sender === "admin" ? "Te (Admin)" : activeT.title}
-                            </span>
-                            <small style={{ color: "var(--adm-ink-30)" }}>
+                        /* A buborék megjelenése CSS-ben él (`.admin-chat-message`),
+                           nem inline stílusban: a korábbi inline `maxWidth`/`justifySelf`
+                           nem tudta megakadályozni, hogy a grid FÜGGŐLEGESEN
+                           széthúzza a buborékot — egy háromszavas üzenet fél
+                           képernyő magas dobozt kapott. */
+                        <div key={item.id} className={`admin-chat-message ${item.sender}`}>
+                          <div className="admin-chat-meta">
+                            <span>{item.sender === "admin" ? "Te" : activeT.title}</span>
+                            <small>
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" }) : ""}
                             </small>
                           </div>
-                          <p style={{ margin: 0, fontSize: "13.5px", lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{item.body}</p>
+                          <p>{item.body}</p>
                         </div>
                       ))
                     )}
@@ -3271,6 +3411,19 @@ export function AdminDashboard() {
                       >
                         Projekt megnyitása →
                       </button>
+                    </div>
+
+                    {/* Fizetési teendők. Eddig nem volt hol rögzíteni egy
+                        beérkezett utalást, és nem volt miből fizetési linket
+                        adni — a kézzel felvett ügyfél nyilvántartása emiatt
+                        az első fordulónapnál megállt volna. */}
+                    <div style={{ flexBasis: "100%" }}>
+                      <PaymentActionsPanel
+                        project={p}
+                        nextDue={pendingPayments.find((payment) => payment.project_id === p.id) ?? null}
+                        onDone={() => loadLeads(true)}
+                        onNotice={(text) => setMessage(text)}
+                      />
                     </div>
                   </div>
                 ))
@@ -3443,6 +3596,7 @@ export function AdminDashboard() {
                         </p>
                       </div>
                       <div>
+                        <span className="lead-cell-label">Utoljára fent</span>
                         <strong
                           className="admin-user-strong"
                           title={account.lastSignInAt ? formatDateTime(account.lastSignInAt) : "Még sosem lépett be"}
@@ -3454,6 +3608,7 @@ export function AdminDashboard() {
                         </p>
                       </div>
                       <div>
+                        <span className="lead-cell-label">Mit csinált</span>
                         <strong className="admin-user-strong">{account.lastActivityLabel ?? "Még semmit"}</strong>
                         <p className="admin-user-meta">
                           {account.lastActivityAt ? relativeTime(account.lastActivityAt) : "—"}
@@ -3466,6 +3621,7 @@ export function AdminDashboard() {
                         ) : null}
                       </div>
                       <div>
+                        <span className="lead-cell-label">Aktivitás</span>
                         <p className="admin-user-meta">
                           {account.projectCount} projekt{account.activeProjectCount ? ` (${account.activeProjectCount} aktív)` : ""}
                         </p>
@@ -3475,6 +3631,7 @@ export function AdminDashboard() {
                         <p className="admin-user-meta">{account.changeRequestCount} módosítási kérés</p>
                       </div>
                       <div>
+                        <span className="lead-cell-label">Állapot</span>
                         {account.monthlyRevenue > 0 ? (
                           <span className="status-pill live">{formatHuf(account.monthlyRevenue)} / hó</span>
                         ) : account.projectCount > 0 ? (

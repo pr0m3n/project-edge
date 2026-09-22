@@ -304,7 +304,7 @@ export function PublicBriefWizard({
                   (`/ugyfelkapu?model=purchase`) — ide szándékosan nem kerül be.
                   A `purchase` ágak lentebb megmaradnak a régi, még be nem
                   küldött piszkozatok miatt. */}
-              <header><span>01 / Rólad</span><h3>Kezdjük veled.</h3><p>Csomagot most nem kell választanod — azt a következő lépés válaszaiból ajánlom majd. Külön belépési díj nincs: az első havidíj indítja a munkát.</p></header>
+              <header><span>01 / Rólad</span><h3>Kezdjük veled.</h3><p>Csomagot most nem kell választanod — azt a következő lépés válaszaiból ajánlom majd. Előleg nincs: csak a kész, általad jóváhagyott oldalért fizetsz.</p></header>
               {form.commercialModel === "purchase" ? <div className="public-chip-grid">
                 {projectTypes.map(([value, label]) => <button className={form.projectType === value ? "selected" : ""} key={value} onClick={() => update({ projectType: value })} type="button">{label}</button>)}
               </div> : null}

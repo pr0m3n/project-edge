@@ -23,14 +23,22 @@ export const statusLabels: Record<string, string> = {
   answered: "Megválaszolva"
 };
 
+/**
+ * A projekt útja, ahogy az ügyfél látja.
+ *
+ * A FIZETÉS a jóváhagyás UTÁN van, közvetlenül az élesítés előtt. Ez nem
+ * kozmetikai sorrend: azt jelenti, hogy az ügyfél a kész, általa jóváhagyott
+ * weboldalért fizet — nem egy ígéretért. A szerződés viszont elöl marad, mert
+ * az hitelesíti a megrendelést és rögzíti a terjedelmet.
+ */
 export const projectFlow = [
   ["request_received", "Adatlap"],
   ["planning", "Tervezés"],
   ["offer_sent", "Ajánlat"],
   ["contract_pending", "Szerződés"],
-  ["deposit_pending", "Foglaló"],
   ["in_progress", "Építés"],
   ["review", "Jóváhagyás"],
+  ["deposit_pending", "Fizetés"],
   ["launched", "Élesítés"]
 ];
 

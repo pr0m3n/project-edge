@@ -131,8 +131,8 @@ export default function ServicesPage() {
           <p className="micro-label dark">Szolgáltatások</p>
           <h1>Annyit építek, amennyi kell.</h1>
           <p>
-            A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem. Külön belépési
-            díj nincs — az első havidíj indítja a munkát.
+            A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem. Előleg és
+            belépési díj nincs — csak a kész, általad jóváhagyott oldalért fizetsz.
           </p>
         </div>
         <BuildTower level={3} />
@@ -171,8 +171,8 @@ export default function ServicesPage() {
         <PriceEstimator />
 
         <p className="solutions-note">
-          A bérlés első hónapja előre fizetendő. Hűségidő nincs, bármikor lemondható vagy
-          szüneteltethető.
+          Az első díj a kész oldal jóváhagyása után esedékes, utána élesítem. Hűségidő nincs,
+          bármikor lemondható vagy szüneteltethető.
         </p>
       </section>
 

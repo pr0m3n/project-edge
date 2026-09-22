@@ -50,15 +50,14 @@ const ASCII_BAND = 470;
 const ERASE_MAX = 0.82;
 const ERASE_MAX_SCROLL = 1;
 
-/* Görgetésnél a feloldódás már 62%-nál mindent elér, hogy az utoljára
-   elszabaduló részecskéknek maradjon útjuk kirepülni és elfogyni. */
-const SCROLL_DISSOLVE_SPAN = 0.62;
-
-/* Mennyire tartson az effekt a görgetés után. Rövid értékek: 120ms már
-   érezhetően kisimítja a gyors görgetést, de még nem hat késésnek. Telefonon
-   rövidebb, mert ott az ujj alatt a késés azonnal „nem reagál"-nak érződik. */
-const SMOOTH_TAU_DESKTOP_MS = 120;
-const SMOOTH_TAU_MOBILE_MS = 85;
+/* A görgetés most csak TRIGGER, nem lejátszófej. Ha a hero 17%-kal elindult
+   felfelé, a befejezés saját idővonalon fut végig; visszafelé csak 4% alatt
+   áll alaphelyzetbe. Ez a két külön küszöb a hiszterézis: a trackpad gyors
+   oda-vissza mozdulatai nem tudják rángatni az animációt. */
+const SCROLL_TRIGGER = 0.17;
+const SCROLL_RESET = 0.04;
+const SCROLL_FINISH_MS = 2400;
+const SCROLL_RETURN_MS = 1100;
 const TAIL_FADE = 0.22;
 
 /* A ceruzahegytől a legtávolabbi sarok ~1263px; ennyi + a sáv, hogy a gyűrű
@@ -405,62 +404,77 @@ function Hand() {
         return clamp01(-r.top / Math.max(1, r.height * 0.7));
       };
 
-      /* ── Csillapítás ────────────────────────────────────────────────────
-         Az effekt nem a nyers görgetést követi, hanem egy utána tartó értéket.
-         Exponenciális simítás: képkockánként a hátralévő különbség egy részét
-         tesszük meg, `dt`-vel súlyozva — így 30 és 120 Hz-en is ugyanolyan
-         gyorsan ér célba, nem a képkockaszámtól függ.
+      /* ── Triggerelt befejezés ───────────────────────────────────────────
+         A haladás a trigger után csak nőhet, mert az időből számolódik, nem
+         a scrollY-ból. A scroll így elindítja a jelenetet, de nem tudja
+         előre-hátra tekerni. */
+      let finishStarted = 0;
+      let finishFrom = 0;
+      let finishProgress = 0;
+      let returnStarted = 0;
+      let returnFrom = 0;
 
-         Ettől lesz gyors görgetésnél folyamatos, és ezért nem lehet
-         rángatni: oda-vissza tekerve a mozgás kisimul ahelyett, hogy
-         képkockánként ugrálna. A `tau` szándékosan rövid — hosszabbal már nem
-         simának érződne, hanem késve reagálónak. */
-      let targetS = rawProgress();
-      let currentS = targetS;
-      let lastTs = 0;
-
-      const settle = (now: number) => {
-        settleFrame = 0;
-        if (disposed) return;
-
-        const dt = lastTs ? Math.min(64, now - lastTs) : 16;
-        lastTs = now;
-        const tau = isMobile() ? SMOOTH_TAU_MOBILE_MS : SMOOTH_TAU_DESKTOP_MS;
-        currentS += (targetS - currentS) * (1 - Math.exp(-dt / tau));
-        if (Math.abs(targetS - currentS) < 0.0015) currentS = targetS;
-
-        render(currentS);
-        if (currentS !== targetS) settleFrame = requestAnimationFrame(settle);
+      const renderFinish = (s: number) => {
+        finishProgress = s;
+        visual.style.transform = `translateY(${s * 170}px)`;
+        paint(smoothstep(s), true, clamp01((1 - s) / TAIL_FADE));
       };
 
-      const render = (s: number) => {
-        const wasScrolling = scrolling;
-        scrolling = s > 0.02;
+      const finish = (now: number) => {
+        settleFrame = 0;
+        if (disposed || !scrolling) return;
+        if (!finishStarted) finishStarted = now;
+        const duration = Math.max(1, SCROLL_FINISH_MS * (1 - finishFrom));
+        const t = clamp01((now - finishStarted) / duration);
+        renderFinish(finishFrom + (1 - finishFrom) * smoothstep(t));
+        if (t < 1) settleFrame = requestAnimationFrame(finish);
+      };
 
-        if (scrolling) {
-          if (!wasScrolling) halt();
-          visual.style.transform = `translateY(${s * 210}px)`;
-          /* A vászon EGÉSZÉNEK halványítása kikerült: az egyenletes fade
-             pont azt csinálta, amit nem akartunk — az egész kép egyszerre
-             fakult, ahelyett hogy az effekt sorrendjében tűnt volna el.
-             Most a fotót a törlőkorong viszi el (a ceruzahegytől kifelé,
-             vagyis balról jobbra), a karaktereket pedig a saját fade-jük.
-             A `tail` csak a legvégén söpri le a jobb szélen még repülő
-             utolsó részecskéket. */
-          paint(
-            smoothstep(clamp01(s / SCROLL_DISSOLVE_SPAN)),
-            true,
-            clamp01((1 - s) / TAIL_FADE)
-          );
-          return;
-        }
+      const hardResetFinish = () => {
+        cancelAnimationFrame(settleFrame);
+        settleFrame = 0;
+        finishStarted = 0;
+        finishFrom = 0;
+        finishProgress = 0;
+        returnStarted = 0;
+        returnFrom = 0;
+        scrolling = false;
+        visual.style.transform = "";
+        visual.style.opacity = "";
+        paint(0);
+        schedule(isMobile() ? START_DELAY_MOBILE_MS : START_DELAY_DESKTOP_MS);
+      };
 
-        if (wasScrolling) {
-          visual.style.transform = "";
-          visual.style.opacity = "";
-          paint(0);
-          schedule(isMobile() ? START_DELAY_MOBILE_MS : START_DELAY_DESKTOP_MS);
+      /* A tetejére visszaérve nem pattintjuk vissza a teljes fotót. Az aktuális
+         állapotból egy rövid, ease-elt ellenanimáció építi vissza a kezet. */
+      const returnFinish = (now: number) => {
+        settleFrame = 0;
+        if (disposed || !scrolling) return;
+        if (!returnStarted) returnStarted = now;
+        const duration = Math.max(1, SCROLL_RETURN_MS * returnFrom);
+        const t = clamp01((now - returnStarted) / duration);
+        renderFinish(returnFrom * (1 - smoothstep(t)));
+        if (t < 1) {
+          settleFrame = requestAnimationFrame(returnFinish);
+        } else {
+          hardResetFinish();
         }
+      };
+
+      const startFinish = () => {
+        cancelAnimationFrame(settleFrame);
+        finishFrom = finishProgress;
+        finishStarted = 0;
+        returnStarted = 0;
+        settleFrame = requestAnimationFrame(finish);
+      };
+
+      const startReturn = () => {
+        cancelAnimationFrame(settleFrame);
+        returnFrom = finishProgress;
+        returnStarted = 0;
+        finishStarted = 0;
+        settleFrame = requestAnimationFrame(returnFinish);
       };
 
       onScroll = () => {
@@ -474,22 +488,20 @@ function Hand() {
            Marad a ciklus, amit az IntersectionObserver amúgy is leállít, ha a
            hero elhagyja a képernyőt. */
         if (isMobile()) {
-          if (scrolling) {
-            scrolling = false;
-            visual.style.transform = "";
-            visual.style.opacity = "";
-            paint(0);
-            schedule(START_DELAY_MOBILE_MS);
-          }
-          targetS = 0;
-          currentS = 0;
+          if (scrolling) hardResetFinish();
           return;
         }
 
-        targetS = rawProgress();
-        if (targetS === currentS || settleFrame) return;
-        lastTs = 0;
-        settleFrame = requestAnimationFrame(settle);
+        const progress = rawProgress();
+        if (!scrolling && progress >= SCROLL_TRIGGER) {
+          scrolling = true;
+          halt();
+          startFinish();
+          return;
+        }
+
+        if (scrolling && progress <= SCROLL_RESET && !returnStarted) startReturn();
+        else if (scrolling && progress >= SCROLL_TRIGGER && returnStarted) startFinish();
       };
       window.addEventListener("scroll", onScroll, { passive: true });
 
@@ -539,9 +551,52 @@ function Hand() {
 // Based on the solid circle / monochrome subject composition of
 // ravikatiyar162's Minimalist Hero, retrieved from 21st.dev.
 export function PosterHero() {
+  const heroRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const rect = hero.getBoundingClientRect();
+      const x = event.clientX / rect.width - rect.left / rect.width - 0.5;
+      const y = event.clientY / rect.height - rect.top / rect.height - 0.5;
+      hero.style.setProperty("--paper-one-x", `${x * 20}px`);
+      hero.style.setProperty("--paper-one-y", `${y * 14}px`);
+      hero.style.setProperty("--paper-two-x", `${x * -13}px`);
+      hero.style.setProperty("--paper-two-y", `${y * -9}px`);
+      hero.style.setProperty("--print-x", `${x * 9}px`);
+      hero.style.setProperty("--print-y", `${y * 7}px`);
+      hero.style.setProperty("--print-neg-x", `${x * -9}px`);
+      hero.style.setProperty("--print-neg-y", `${y * -7}px`);
+    };
+    const reset = () => {
+      hero.style.setProperty("--paper-one-x", "0px");
+      hero.style.setProperty("--paper-one-y", "0px");
+      hero.style.setProperty("--paper-two-x", "0px");
+      hero.style.setProperty("--paper-two-y", "0px");
+      hero.style.setProperty("--print-x", "0px");
+      hero.style.setProperty("--print-y", "0px");
+      hero.style.setProperty("--print-neg-x", "0px");
+      hero.style.setProperty("--print-neg-y", "0px");
+    };
+
+    hero.addEventListener("pointermove", move, { passive: true });
+    hero.addEventListener("pointerleave", reset);
+    return () => {
+      hero.removeEventListener("pointermove", move);
+      hero.removeEventListener("pointerleave", reset);
+    };
+  }, []);
+
   return (
     <div className={styles.page}>
-      <section className={styles.hero} aria-labelledby="hero-title">
+      <section ref={heroRef} className={styles.hero} aria-labelledby="hero-title">
+        <div className={`${styles.paperLayer} ${styles.paperOne}`} aria-hidden="true" />
+        <div className={`${styles.paperLayer} ${styles.paperTwo}`} aria-hidden="true" />
+        <div className={`${styles.printArc} ${styles.printArcAqua}`} aria-hidden="true" />
+        <div className={`${styles.printArc} ${styles.printArcEmber}`} aria-hidden="true" />
         <div className={styles.disc} aria-hidden="true" />
         {/* Ugyanaz a döntés, mint a korábbi heróban (app/page.tsx): ez a sor
             önmeghatározás volt, ami a látogatónak semmit nem mondott. A
@@ -563,10 +618,13 @@ export function PosterHero() {
         </span>
       </section>
       <footer className={styles.bottom}>
-        <p>
-          Megtervezem, megépítem és működtetem.
+        {/* A poszter (cím + kéz) hangulatot ad, de nem mondja meg, MIT árulunk
+            és kinek. Ez a sor mondja ki konkrétan — a H1 ettől maradhat
+            eredmény-központú. */}
+        <p className={styles.offer}>
+          <strong>Egyedi céges weboldal, már 2–4 munkanap alatt.</strong>
           <br />
-          <span>Neked egy emberrel kell egyeztetned.</span>
+          <span>Domain, tárhely és karbantartás a havidíjban — végig egy emberrel egyeztetsz.</span>
         </p>
         {/* „Nézzük a lehetőségeket" nem mondta meg, hova visz — a cél viszont a
             csomagok és az árak. A hirdetésekből érkezők jelentős része
@@ -574,10 +632,13 @@ export function PosterHero() {
         <Link href="#arak" className={styles.cta}>
           Csomagok és árak <span aria-hidden="true">↗</span>
         </Link>
+        {/* A legerősebb érv az ár MELLETT: egy ismeretlen szolgáltatónál a
+            vevő fő félelme, hogy előre fizet és rosszat kap. Itt nem fizet
+            előre — ennek a hajtás fölött kell látszania, nem az 5. képernyőn. */}
         <p className={styles.price}>
           <strong>14 900 Ft</strong> / hó-tól
           <br />
-          <span>Domain · tárhely · karbantartás</span>
+          <span className={styles.promise}>Csak akkor fizetsz, ha tetszik</span>
         </p>
       </footer>
     </div>

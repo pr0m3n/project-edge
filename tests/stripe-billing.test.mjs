@@ -8,10 +8,18 @@ test("subscription checkout is server-priced and webhook verified", () => {
   const checkout = read("app/api/stripe/checkout/route.ts");
   const webhook = read("app/api/stripe/webhook/route.ts");
   assert.match(checkout, /subscriptionPlan\(project\.subscription_plan\)/);
-  assert.match(checkout, /unit_amount: hufToStripeAmount\(monthlyPrice\)/);
+  // Az árat a SZERVER képezi. A konkrét változó neve változhat (a futamidő
+  // bevezetésével `chargeAmount` lett), az a lényeg, hogy szerveroldali
+  // értékből számoljon, és SOHA ne a kérés törzséből.
+  assert.match(checkout, /unit_amount: hufToStripeAmount\(chargeAmount\)/);
+  assert.match(checkout, /const chargeAmount = [\s\S]*?termTotal\(monthlyPrice, term\)/);
   assert.match(checkout, /adaptive_pricing: \{ enabled: false \}/);
-  assert.match(checkout, /projectedge-subscription-v3-/);
+  assert.match(checkout, /projectedge-subscription-v\d+-/);
+  // A kérés törzséből CSAK a projekt és a futamidő kulcsa jöhet — összeg soha.
   assert.doesNotMatch(checkout, /body\.(amount|price)/);
+  // A futamidő a saját, zárt listánkból oldódik fel, nem nyers bemenetként
+  // kerül a Stripe-ra: egy kitalált érték így a havi ütemezésre esik vissza.
+  assert.match(checkout, /billingTerm\(body\.term\)/);
   assert.match(checkout, /createServerSupabaseUserClient\(accessToken\)/);
   assert.match(checkout, /Stripe checkout admin connection failed/);
   assert.doesNotMatch(checkout, /if \(error \|\| !project\).*A projekt nem található/);

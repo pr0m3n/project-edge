@@ -187,7 +187,7 @@ const posts: BlogPost[] = [
           {
             label: "Induló kiadás",
             bad: "Egyszeri: több százezer forint egy összegben, jellemzően foglalóval",
-            good: "Havidíj: nincs külön belépési díj, az első havidíj indítja a munkát"
+            good: "Havidíj: nincs belépési díj és előleg, az első díj a kész oldal jóváhagyása után esedékes"
           },
           {
             label: "Technikai teendő",

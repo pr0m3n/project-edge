@@ -66,7 +66,7 @@ const BERLES_DATA: StepDetail[] = [
   {
     number: "02",
     title: "Digitális szerződés",
-    shortDesc: "Elfogadod a szerződést az ügyfélkapun — 0 Ft rejtett költség.",
+    shortDesc: "Elfogadod a szerződést az ügyfélkapun — ez indítja az építést, fizetés nélkül.",
     badge: "Ügyfélkapu",
     scene: (
       <div className="stage-hud-card">
@@ -97,38 +97,6 @@ const BERLES_DATA: StepDetail[] = [
   },
   {
     number: "03",
-    title: "Első havidíj indít",
-    shortDesc: "Az első havidíj azonnal indítja a munkát — nincs külön belépési díj.",
-    badge: "0 Ft belépő",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconLock size={18} /></span>
-          <span className="hud-title">Induló Finanszírozás</span>
-          <span className="hud-badge">0 Ft belépési díj</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-price-breakdown">
-            <div className="hud-price-row">
-              <span>Egyszeri fejlesztési díj:</span>
-              <strong className="hud-strike">350.000 Ft</strong>
-              <span className="hud-free-pill">0 Ft</span>
-            </div>
-            <div className="hud-price-row is-highlight">
-              <span>Első havidíj rendezése:</span>
-              <span className="hud-highlight-text">Azonnal elindul a tervezés és fejlesztés</span>
-            </div>
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Kezdő tőkekockázat</span>
-          <span className="hud-metric-val">0 Ft</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "04",
     title: "Oldal egyedi építése",
     shortDesc: "Megépítem a modern oldalt mobilra, sebességre és konverzióra optimalizálva.",
     badge: "Next.js 16",
@@ -155,7 +123,7 @@ const BERLES_DATA: StepDetail[] = [
     )
   },
   {
-    number: "05",
+    number: "04",
     title: "Előnézet & jóváhagyás",
     shortDesc: "Privát linken megnézed a működő oldalt, elvégzem a kért módosításokat.",
     badge: "Te döntesz",
@@ -186,6 +154,37 @@ const BERLES_DATA: StepDetail[] = [
     )
   },
   {
+    number: "05",
+    title: "Fizetés, ha tetszik",
+    shortDesc: "Csak a kész, általad jóváhagyott oldalért fizetsz — előtte egy forintot sem.",
+    badge: "0 Ft előleg",
+    scene: (
+      <div className="stage-hud-card">
+        <div className="hud-header">
+          <span className="hud-header-icon"><IconLock size={18} /></span>
+          <span className="hud-title">Fizetés a végén</span>
+          <span className="hud-badge">0 Ft előleg</span>
+        </div>
+        <div className="hud-body">
+          <div className="hud-price-breakdown">
+            <div className="hud-price-row">
+              <span>Előleg, foglaló, belépési díj:</span>
+              <span className="hud-free-pill">0 Ft</span>
+            </div>
+            <div className="hud-price-row is-highlight">
+              <span>Első díj:</span>
+              <span className="hud-highlight-text">Csak a jóváhagyásod után — utána élesítem</span>
+            </div>
+          </div>
+        </div>
+        <div className="hud-footer">
+          <span className="hud-metric-label">Ha nem tetszik</span>
+          <span className="hud-metric-val">Nem fizetsz</span>
+        </div>
+      </div>
+    )
+  },
+  {
     number: "06",
     title: "Élesítés & üzemeltetés",
     shortDesc: "Élesbe állítom a domaineden, és a havidíjért folyamatosan felügyelem és frissítem.",
@@ -200,8 +199,8 @@ const BERLES_DATA: StepDetail[] = [
         <div className="hud-body">
           <div className="hud-live-metrics">
             <div className="hud-live-metric">
-              <span className="hud-lm-val">99.9%</span>
-              <span className="hud-lm-lbl">Szerver Uptime</span>
+              <span className="hud-lm-val">Napi</span>
+              <span className="hud-lm-lbl">Elérhetőség-mérés</span>
             </div>
             <div className="hud-live-metric">
               <span className="hud-lm-val">0 gond</span>
@@ -413,15 +412,15 @@ const GUARANTEES = [
     icon: IconPackage,
   },
   {
-    badge: "99.9% Uptime",
+    badge: "Felügyelet",
     title: "Indulás után is",
     desc: "Folyamatos szerverfelügyelet, mentések és rendszeres frissítések.",
     icon: IconWrench,
   },
   {
-    badge: "0 Ft Belépő",
-    title: "Transzparens díjak",
-    desc: "Az első havidíj azonnal indítja a munkát — nincsenek rejtett költségek.",
+    badge: "0 Ft előleg",
+    title: "Fizetés a végén",
+    desc: "Csak a kész, jóváhagyott oldalért fizetsz — ha nem tetszik, nem fizetsz.",
     icon: IconLock,
   },
 ];

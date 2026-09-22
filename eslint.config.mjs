@@ -13,7 +13,10 @@ const config = [
       // Helyi, gitignore-olt biztonsagi mentes a forras egy regebbi allapotarol.
       // Nem epul be semmibe, a lint viszont vegigment rajta, es a duplikalt
       // regi kod figyelmeztetesei osszekeveredtek az elo kodeivel.
-      ".backup_pre_improvements/**"
+      ".backup_pre_improvements/**",
+      // A Claude Code munkafák (worktree-k) teljes repómásolatok: a lint
+      // különben >1000 hamis hibát jelentett belőlük.
+      ".claude/**"
     ]
   },
   ...nextCoreWebVitals,

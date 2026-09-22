@@ -156,11 +156,17 @@ test("the Stripe webhook claims an event before processing it", () => {
   // Foglalás-először: a duplikátumszűrés az egyedi kulcsra épülő insertből
   // jön, nem egy előzetes select-ből, különben két párhuzamos kézbesítés
   // kétszer küldene emailt és számlázna.
-  const claimIndex = webhook.indexOf('.insert({ event_id: event.id, event_type: event.type })');
+  const claimIndex = webhook.indexOf('.insert({ event_id: event.id, event_type: event.type, completed_at: null })');
   const switchIndex = webhook.indexOf("switch (event.type)");
   assert.ok(claimIndex > -1, "hiányzik a webhook-esemény foglalása");
   assert.ok(claimIndex < switchIndex, "a foglalásnak a feldolgozás ELŐTT kell történnie");
-  assert.match(webhook, /claimError\.code === "23505"/);
+  assert.match(webhook, /claimError\.code !== "23505"/);
+  // Duplikátumra csak BEFEJEZETT feldolgozás után jár 2xx; amíg az első
+  // példány fut, 409 — különben egy utána elhasaló első futás az eseményt
+  // véglegesen feldolgozatlanul hagyná.
+  assert.match(webhook, /claim\.completed_at\) return NextResponse\.json\(\{ received: true, duplicate: true \}\)/);
+  assert.match(webhook, /status: 409/);
+  assert.match(webhook, /update\(\{ completed_at: new Date\(\)\.toISOString\(\) \}\)/);
   // Hiba esetén a foglalás felszabadul, hogy a Stripe újraküldése lefusson.
   assert.match(webhook, /stripe_webhook_events"\)\.delete\(\)\.eq\("event_id", event\.id\)/);
   // Törölt projekt nem okozhat végtelen webhook-újrapróbálkozást.

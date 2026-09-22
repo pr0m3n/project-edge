@@ -1,0 +1,153 @@
+/*
+ * A „Ma" nézet stílusa.
+ *
+ * A fontossági sorrend VIZUÁLISAN is látszik: a bal szegély színe adja a
+ * rangsort, hogy görgetés közben ne kelljen minden sort elolvasni ahhoz, hogy
+ * eldöntsd, mi sürgős. Ez az egyetlen dolog, amit a szín itt csinál — a
+ * besorolás a szöveges címkéből is kiolvasható, tehát színlátás nélkül sem
+ * vész el információ.
+ */
+
+.panel {
+  display: grid;
+  gap: 18px;
+}
+
+.head {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.head h3 {
+  color: var(--adm-text, #fff);
+  font-size: 22px;
+  font-weight: 850;
+  margin: 4px 0 0;
+}
+
+.eyebrow {
+  color: var(--adm-accent-text, #76abae);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  align-items: center;
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  border-left-width: 3px;
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.itemBody {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemBody strong {
+  color: var(--adm-text, #fff);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.itemBody p {
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+  font-size: 12.5px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 76ch;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* 1 = sürgős · 2 = rád vár · 3 = lehetőség · 4 = jó tudni */
+.p1 {
+  border-left-color: var(--adm-danger-text, #ff6b5e);
+}
+
+.p1 .badge {
+  color: var(--adm-danger-text, #ff6b5e);
+}
+
+.p2 {
+  border-left-color: var(--adm-warn-text, #ffb34d);
+}
+
+.p2 .badge {
+  color: var(--adm-warn-text, #ffb34d);
+}
+
+.p3 {
+  border-left-color: var(--adm-accent-text, #76abae);
+}
+
+.p3 .badge {
+  color: var(--adm-accent-text, #76abae);
+}
+
+.p4 {
+  border-left-color: var(--adm-ink-24, rgba(255, 255, 255, 0.24));
+}
+
+.p4 .badge {
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+}
+
+.empty {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  border-radius: 20px;
+  display: grid;
+  gap: 8px;
+  padding: 36px 28px;
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--adm-text, #fff);
+  font-size: 18px;
+}
+
+.empty p {
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 54ch;
+}
+
+@media (max-width: 720px) {
+  .item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .item button {
+    justify-content: center;
+    width: 100%;
+  }
+}

@@ -1,0 +1,293 @@
+/*
+ * Az ügyfélfelvételi űrlap stílusa.
+ *
+ * Szándékosan CSS modul, nem újabb blokk a 8000 soros `globals.css`-ben és nem
+ * inline `style={{…}}`: az admin felület átláthatatlanságának pont az volt az
+ * egyik oka, hogy a megjelenés a komponensek belsejében, ezer sorra szétszórva
+ * élt. Ami ide kerül, az ehhez a panelhez tartozik, és sehol máshol nem hat.
+ *
+ * A színek a meglévő admin design system változóiból jönnek (`--adm-*`), hogy
+ * a világos/sötét témaváltás ezen a panelen is működjön.
+ */
+
+.panel {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  border-radius: 24px;
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+}
+
+.head {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  padding-bottom: 18px;
+}
+
+.head h3 {
+  color: var(--adm-text, #fff);
+  font-size: 20px;
+  font-weight: 850;
+  margin: 4px 0 0;
+}
+
+.head p {
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 8px 0 0;
+  max-width: 62ch;
+}
+
+.eyebrow {
+  color: var(--adm-accent-text, #76abae);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* A kétoszlopos elrendezés: űrlap és élő előnézet egymás mellett. */
+.layout {
+  align-items: start;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+}
+
+.group {
+  display: grid;
+  gap: 12px;
+}
+
+.groupTitle {
+  align-items: baseline;
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+  display: flex;
+  font-size: 11px;
+  font-weight: 850;
+  gap: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.groupTitle::after {
+  background: var(--adm-ink-06, rgba(255, 255, 255, 0.08));
+  content: "";
+  flex: 1;
+  height: 1px;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field span {
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: var(--adm-ink-04, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--adm-ink-12, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  color: var(--adm-text, #fff);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.field textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--adm-accent-text, #76abae);
+  outline: 2px solid color-mix(in srgb, var(--adm-accent-text, #76abae) 35%, transparent);
+  outline-offset: 1px;
+}
+
+/* A hibás mező jelölése a mezőnél marad, nem egy távoli összefoglalóban. */
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] {
+  border-color: var(--adm-danger-text, #ff6b5e);
+}
+
+.hint {
+  color: var(--adm-ink-40, rgba(255, 255, 255, 0.4));
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.checkRow {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+}
+
+.checkRow input {
+  height: 18px;
+  margin-top: 2px;
+  width: 18px;
+}
+
+.checkRow div {
+  display: grid;
+  gap: 2px;
+}
+
+.checkRow strong {
+  color: var(--adm-text, #fff);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkRow small {
+  color: var(--adm-ink-40, rgba(255, 255, 255, 0.4));
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ── Előnézet ─────────────────────────────────────────────────────────── */
+
+.preview {
+  background: var(--adm-ink-04, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--adm-ink-12, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+@media (max-width: 1080px) {
+  .preview {
+    position: static;
+  }
+}
+
+.previewHead {
+  border-bottom: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.08));
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+}
+
+.previewHead strong {
+  color: var(--adm-text, #fff);
+  font-size: 15px;
+}
+
+.previewHead small {
+  color: var(--adm-ink-40, rgba(255, 255, 255, 0.4));
+  font-size: 11px;
+}
+
+.previewRows {
+  display: grid;
+  gap: 10px;
+}
+
+.previewRow {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.previewRow span {
+  color: var(--adm-ink-50, rgba(255, 255, 255, 0.5));
+  font-size: 12px;
+}
+
+.previewRow b {
+  color: var(--adm-text, #fff);
+  font-size: 13px;
+  text-align: right;
+}
+
+.previewNote {
+  background: var(--adm-ink-02, rgba(255, 255, 255, 0.03));
+  border-left: 2px solid var(--adm-accent-text, #76abae);
+  border-radius: 0 10px 10px 0;
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 12px;
+}
+
+.warn {
+  border-left-color: var(--adm-warn-text, #ffb020);
+}
+
+/* ── Lábléc ───────────────────────────────────────────────────────────── */
+
+.footer {
+  align-items: center;
+  border-top: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 18px;
+}
+
+.error {
+  background: color-mix(in srgb, var(--adm-danger-text, #ff6b5e) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--adm-danger-text, #ff6b5e) 35%, transparent);
+  border-radius: 12px;
+  color: var(--adm-danger-text, #ff6b5e);
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 12px 14px;
+}
+
+.success {
+  background: color-mix(in srgb, var(--adm-accent-text, #76abae) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--adm-accent-text, #76abae) 35%, transparent);
+  border-radius: 12px;
+  color: var(--adm-text, #fff);
+  display: grid;
+  font-size: 13px;
+  gap: 6px;
+  line-height: 1.55;
+  padding: 14px 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

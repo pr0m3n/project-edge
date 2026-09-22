@@ -23,6 +23,8 @@ export type Lead = {
   goals: string;
   status: string;
   notes: string | null;
+  /** Honnan érkezett: `projectedge.hu`, `gyorssav` vagy `cold_email`. */
+  source: string | null;
 };
 
 export type Ticket = {
@@ -150,6 +152,23 @@ export type ClientProject = {
   purchase_option_price: number | null;
   site_health_status: string | null;
   last_health_check_at: string | null;
+  /** 038: kézi felvétel és számlázási ciklus. Régi sorokon hiányzik. */
+  origin?: string | null;
+  billing_interval?: "month" | "year" | null;
+  /** A számlázási ciklus hónapban (1, 6, 12…) — ez a mérvadó, nem az intervallum. */
+  billing_period_months?: number | null;
+  /** 043: az ügyfelenként alkudott ciklusdíj. NULL = listaár. */
+  billing_amount?: number | null;
+  payment_method?: "stripe" | "bank_transfer" | null;
+  prepaid_until?: string | null;
+  live_url?: string | null;
+  /** 039: valódi mérésből származó állapot. */
+  ssl_expires_at?: string | null;
+  domain_expires_at?: string | null;
+  psi_performance?: number | null;
+  psi_accessibility?: number | null;
+  psi_seo?: number | null;
+  psi_checked_at?: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   stripe_subscription_status: string | null;

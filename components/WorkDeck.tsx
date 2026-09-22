@@ -36,20 +36,6 @@ export function WorkDeck() {
         <TransitionLink className="button primary" href="/munkak">
           Az összes munka megnézése
         </TransitionLink>
-        <dl className="work-deck-stats">
-          <div>
-            <dt>{WORKS.length}</dt>
-            <dd>végigkattintható munka</dd>
-          </div>
-          <div>
-            <dt>{new Set(WORKS.map((work) => work.goal)).size}</dt>
-            <dd>különböző üzleti cél</dd>
-          </div>
-          <div>
-            <dt>1</dt>
-            <dd>ember, a tervtől a kódig</dd>
-          </div>
-        </dl>
       </div>
 
       <TransitionLink aria-label="Munkák és projektbemutatók megnyitása" className="work-deck-stack" href="/munkak">
