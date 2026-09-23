@@ -107,10 +107,10 @@ export const WORKS: Work[] = [
     goal: "SaaS és dashboard",
     industry: "Szoftver",
     copy:
-      "Termékbemutatás, dashboard felület, interaktív árazás és mozgás — szoftvertermék teljes bemutató oldala.",
+      "Egy szalon hete 3D-ben: görgetésre beesnek a foglalások, a lemondott időpontot a várólista tölti be — SaaS landing, ami megmutatja a terméket.",
     href: "/demo/veyra",
     external: false,
-    src: "/work/demos/veyra.webp",
+    src: "/work/demos/veyra-het.webp",
     width: 1440,
     height: 900
   },
