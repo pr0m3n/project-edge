@@ -116,6 +116,31 @@ export function WorkCarousel({ works }: Props) {
                   src={work.src}
                 />
               </div>
+
+              {work.quote ? (
+                <figure className="work-carousel-quote">
+                  <span aria-hidden="true" className="work-carousel-quote-icon">
+                    <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+                      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5v-8Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <blockquote>„{work.quote.text}”</blockquote>
+                  <figcaption>
+                    {work.quote.name}
+                    {work.quote.role && <span> · {work.quote.role}</span>}
+                  </figcaption>
+                </figure>
+              ) : work.fact ? (
+                <div className="work-carousel-quote is-fact">
+                  <span aria-hidden="true" className="work-carousel-quote-icon">
+                    <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+                      <path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.6" />
+                    </svg>
+                  </span>
+                  <p>{work.fact.text}</p>
+                  <small>{work.fact.caption}</small>
+                </div>
+              ) : null}
             </article>
           );
         })}

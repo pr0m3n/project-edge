@@ -33,6 +33,17 @@ export type Work = {
   src: string;
   width: number;
   height: number;
+  /**
+   * Rövid vélemény a kártya aljára. CSAK valódi, az adott ügyféltől kapott
+   * mondat kerülhet ide, a nevével és hozzájárulásával — kitalált vélemény
+   * nem (fogyasztóvédelmi tilalom, és lebukáskor az összes referenciát viszi).
+   */
+  quote?: { text: string; name: string; role?: string };
+  /**
+   * Ugyanabban a címkében egy ellenőrizhető tény, ha nincs ügyfélvélemény.
+   * Idézőjel és személynév nélkül jelenik meg, hogy ne lehessen véleménynek nézni.
+   */
+  fact?: { text: string; caption: string };
 };
 
 export const WORKS: Work[] = [
@@ -47,7 +58,11 @@ export const WORKS: Work[] = [
     external: true,
     src: "/work/refs/leadscope-cover.webp",
     width: 1600,
-    height: 908
+    height: 908,
+    fact: {
+      text: "Előfizetéses termék: AI-cégkeresés, e-mail-ellenőrzés és automatikus kiküldés.",
+      caption: "Élesben · leadscope.hu"
+    }
   },
   {
     id: "checky",
@@ -60,7 +75,11 @@ export const WORKS: Work[] = [
     external: true,
     src: "/work/refs/checky.webp",
     width: 1440,
-    height: 814
+    height: 814,
+    fact: {
+      text: "Kétoldalú piactér: chat, foglalás és átvizsgálási jelentés egy rendszerben.",
+      caption: "Élesben · checky.hu"
+    }
   },
   {
     id: "autoaesthetik",
@@ -73,7 +92,8 @@ export const WORKS: Work[] = [
     external: true,
     src: "/work/refs/autoaesthetik.webp",
     width: 1440,
-    height: 900
+    height: 900,
+    quote: { text: "Nagyon gyors szolgáltatás, szép eredmény.", name: "Ferenc", role: "tulajdonos" }
   },
   {
     id: "zamat",
