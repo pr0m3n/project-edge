@@ -1,32 +1,66 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TransitionLink } from "@/components/TransitionLink";
 import type { Work } from "@/lib/works";
 
 type Props = { works: Work[] };
 
+/** A karusszel horgonya: a demók „Vissza a munkákhoz" linkje ide görget. */
+export const WORK_CAROUSEL_ANCHOR = "munka-valaszto";
+const PARAM = "munka";
+
 export function WorkCarousel({ works }: Props) {
   // Az első elemmel indul: az a valódi, élesben futó ügyfélmunka (Auto
   // Aesthetik) — ugyanaz a sorrend, amivel a főoldali pakli is kezd.
   const [active, setActive] = useState(0);
+  /** Visszatéréskor az első képkockán kikapcsoljuk az átmenetet, különben a
+   *  kártyák az 1. munkától „végiggurulnának" a visszaállítottig. */
+  const [restoring, setRestoring] = useState(false);
   const tabsRef = useRef<HTMLElement | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  // A `scrollIntoView()` Safariban a belső fülsor mellett a teljes oldalt is
+  // vízszintesen eltolhatja. Csak a ténylegesen túlcsorduló fülsort mozgatjuk.
+  const revealTab = useCallback((index: number, behavior: ScrollBehavior) => {
+    const tabs = tabsRef.current;
+    const tab = tabRefs.current[index];
+    if (!tabs || !tab || tabs.scrollWidth <= tabs.clientWidth) return;
+
+    const left = tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth) / 2;
+    tabs.scrollTo({ left: Math.max(0, left), behavior });
+  }, []);
 
   const select = useCallback((index: number) => {
     const next = (index + works.length) % works.length;
     setActive(next);
 
-    // A `scrollIntoView()` Safariban a belső fülsor mellett a teljes oldalt is
-    // vízszintesen eltolhatja. Csak a ténylegesen túlcsorduló fülsort mozgatjuk.
-    const tabs = tabsRef.current;
-    const tab = tabRefs.current[next];
-    if (!tabs || !tab || tabs.scrollWidth <= tabs.clientWidth) return;
+    // A választás az URL-be kerül (újratöltés nélkül). Így ha a látogató
+    // megnyit egy bemutatót, és visszalép — a böngésző gombjával vagy a
+    // demósáv linkjével —, ugyanitt folytatja, nem az 1. munkánál.
+    const url = new URL(window.location.href);
+    url.searchParams.set(PARAM, works[next].id);
+    window.history.replaceState(window.history.state, "", url);
 
-    const left = tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth) / 2;
-    tabs.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
-  }, [works.length]);
+    revealTab(next, "smooth");
+  }, [works, revealTab]);
+
+  // `useSearchParams` helyett a `location`: az oldal statikusan renderelt, és
+  // a paraméter csak a kiinduló kártyát dönti el — ehhez nem kell Suspense.
+  useLayoutEffect(() => {
+    const id = new URLSearchParams(window.location.search).get(PARAM);
+    const index = works.findIndex((work) => work.id === id);
+    if (index <= 0) return;
+    // Szándékos: az URL külső állapot, csak a csatolás után olvasható ki
+    // (a szerver nem látja), és festés ELŐTT kell átállni rá.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRestoring(true);
+    setActive(index);
+    revealTab(index, "instant");
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setRestoring(false)));
+    return () => cancelAnimationFrame(frame);
+  }, [works, revealTab]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -38,7 +72,7 @@ export function WorkCarousel({ works }: Props) {
   }, [active, select]);
 
   return (
-    <div className="work-carousel">
+    <div className={`work-carousel${restoring ? " is-restoring" : ""}`} id={WORK_CAROUSEL_ANCHOR}>
       <div aria-live="polite" className="work-carousel-viewport">
         {works.map((work, index) => {
           const offset = index - active;

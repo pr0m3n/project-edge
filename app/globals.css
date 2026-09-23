@@ -17718,7 +17718,12 @@ details.admin-collapse summary:hover {
   line-height: 1.65;
 }
 
-.work-carousel { position: relative; }
+.work-carousel {
+  position: relative;
+  /* A demókból visszatérve ide görget a horgony; a lebegő fejléc ne takarja. */
+  scroll-margin-top: 104px;
+}
+.work-carousel.is-restoring .work-carousel-card { transition: none; }
 .work-carousel-viewport {
   position: relative;
   height: clamp(430px, 48vw, 650px);

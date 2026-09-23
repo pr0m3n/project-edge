@@ -94,10 +94,10 @@ export const WORKS: Work[] = [
     goal: "Ingatlankereső",
     industry: "Ingatlan",
     copy:
-      "Szűrés, mentés, részletes adatlap, hitelbecslés és érdeklődés — katalógus, amiben tényleg lehet keresni.",
+      "Görgetésre szétnyíló 3D makett, forgatható alaprajz és napfény-számítás minden hirdetéshez.",
     href: "/demo/budai-otthonok",
     external: false,
-    src: "/work/demos/budai-otthonok.webp",
+    src: "/work/demos/budai-otthonok-makett.webp",
     width: 1440,
     height: 900
   },

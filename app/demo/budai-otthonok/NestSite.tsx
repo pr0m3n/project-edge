@@ -4,95 +4,29 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
 import { useDemoNotice } from "@/components/demo/DemoNotice";
+import { homes, type Home } from "./data";
+import { MaquetteHero } from "./MaquetteHero";
+import { compassLabel, formatDuration, livingIndex, sunMinutes, windowDirections } from "./plan";
+import { PlanSketch } from "./PlanSketch";
+import { PlanViewer } from "./PlanViewer";
 
-type Home = {
-  id: number;
-  district: string;
-  type: string;
-  title: string;
-  price: number;
-  size: number;
-  rooms: number;
-  image: string;
-  address: string;
-  floor: string;
-  terrace: string;
-  parking: string;
-  energy: string;
-  description: string;
-  features: string[];
+const DISTRICTS = ["Mindegyik", "I. kerület", "II. kerület", "V. kerület", "XII. kerület"];
+
+const sunOf = (home: Home) => {
+  const directions = windowDirections(home.plan, livingIndex(home.plan));
+  return { directions, minutes: sunMinutes(directions) };
 };
 
-const homes: Home[] = [
-  {
-    id: 1,
-    district: "I. kerület",
-    type: "Penthouse",
-    title: "Dunára nyíló csend",
-    price: 329,
-    size: 148,
-    rooms: 4,
-    image: "/demo/budai-otthonok/hero.webp",
-    address: "Várkert rakpart",
-    floor: "5. emelet / liftes",
-    terrace: "46 m² panorámás terasz",
-    parking: "2 teremgarázs-hely",
-    energy: "A+",
-    description: "A lakás teljes szélességében a Dunára fordul. A nappali és a konyha egyetlen, világos tér, a hálók pedig egy csendesebb, külön szárnyban kaptak helyet. Egyedi asztalosbútorok, természetes kő és árnyékolt üvegfelületek teszik nyugodttá az összhatást.",
-    features: ["Dunai panoráma", "Saját lift", "Mennyezethűtés", "Okosotthon", "Borhűtő", "Portaszolgálat"]
-  },
-  {
-    id: 2,
-    district: "XII. kerület",
-    type: "Villa",
-    title: "Fenyők felett",
-    price: 485,
-    size: 236,
-    rooms: 6,
-    image: "/demo/budai-otthonok/villa.webp",
-    address: "Mártonhegyi út",
-    floor: "2 szint",
-    terrace: "82 m² kert és terasz",
-    parking: "2 állásos garázs",
-    energy: "A++",
-    description: "Önálló, kortárs villa egy védett, fás telken. A közösségi terek közvetlenül a kertre nyílnak, az emeleti hálókhoz pedig saját erkély tartozik. Hőszivattyú, napelem és rejtett árnyékolás gondoskodik az alacsony fenntartásról.",
-    features: ["Önálló telek", "Panorámás kert", "Hőszivattyú", "Napelem", "Kandalló", "Szauna-előkészítés"]
-  },
-  {
-    id: 3,
-    district: "V. kerület",
-    type: "Polgári lakás",
-    title: "Kortárs klasszikus",
-    price: 219,
-    size: 112,
-    rooms: 3,
-    image: "/demo/budai-otthonok/polgari.webp",
-    address: "Sas utca",
-    floor: "3. emelet / liftes",
-    terrace: "Franciaerkély",
-    parking: "Utcai parkolás",
-    energy: "B",
-    description: "Felújított, századfordulós lakás eredeti parkettával, kétszárnyú ajtókkal és 3,8 méteres belmagassággal. A műszaki rendszer teljesen új, miközben minden menthető építészeti részlet megmaradt.",
-    features: ["3,8 m belmagasság", "Eredeti parketta", "Központi lokáció", "Klíma", "Prémium gépek", "Tehermentes"]
-  },
-  {
-    id: 4,
-    district: "II. kerület",
-    type: "Új építésű",
-    title: "Reggeli fény",
-    price: 178,
-    size: 89,
-    rooms: 3,
-    image: "/demo/budai-otthonok/kert.webp",
-    address: "Hűvösvölgyi út",
-    floor: "Földszint",
-    terrace: "31 m² saját kert",
-    parking: "1 teremgarázs-hely",
-    energy: "A++",
-    description: "Kertkapcsolatos otthon egy alacsony lakásszámú, új budai társasházban. Keleti tájolású nappali, fedett terasz és jól használható saját kert. Azonnal költözhető, beépített konyhával és gardróbokkal.",
-    features: ["Saját kert", "Új építés", "Hőszivattyú", "Elektromos töltő", "Tároló", "Akadálymentes"]
-  }
-];
+const pricePerSqm = (home: Home) => Math.round((home.price * 1000) / home.size).toLocaleString("hu-HU");
+
+function Mark() {
+  return (
+    <svg aria-hidden="true" className="bo-mark" viewBox="0 0 24 24">
+      <path d="M3 21V9l9-6 9 6v12" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3 15h18M9 21v-6M15 15V9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
 
 function PropertyModal({ home, saved, onClose, onSave }: { home: Home; saved: boolean; onClose: () => void; onSave: () => void }) {
   const notice = useDemoNotice();
@@ -114,52 +48,109 @@ function PropertyModal({ home, saved, onClose, onSave }: { home: Home; saved: bo
   }, [onClose]);
 
   return (
-    <div className="property-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section aria-label={`${home.title} részletes adatlap`} aria-modal="true" className="property-modal" role="dialog">
-        <button aria-label="Részletek bezárása" className="property-close" onClick={onClose} type="button">×</button>
-        <div className="property-gallery">
-          {/* A galéria cellája CSS-ből kap méretet (object-fit: cover), ezért
-              `fill` — így a next/image is a viewporthoz illő változatot adja. */}
-          <div className="property-gallery-main">
-            <Image alt={`${home.title} ingatlan`} src={home.image} fill sizes="(max-width: 900px) 100vw, 60vw" style={{ objectFit: "cover" }} />
+    <div className="bo-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section aria-label={`${home.title} részletes adatlap`} aria-modal="true" className="bo-modal" role="dialog">
+        <header className="bo-modal-head">
+          <div>
+            <p className="bo-meta">
+              {home.code} · {home.district}, {home.address} · frissítve {home.updated}
+            </p>
+            <h2>{home.title}</h2>
           </div>
-          <div className="property-gallery-side">
-            <div className="property-plan"><span>ALAPRAJZ</span><i /><i /><i /><i /></div>
-            <div className="property-map"><span>KÖRNYÉK</span><b>●</b><i /><i /><i /></div>
+          <div className="bo-modal-head-actions">
+            <button className={`bo-button ghost${saved ? " is-saved" : ""}`} onClick={onSave} type="button">
+              {saved ? "Mentve" : "Mentés"}
+            </button>
+            <button aria-label="Adatlap bezárása" className="bo-close" onClick={onClose} type="button">
+              ×
+            </button>
           </div>
-          <span className="property-photo-count">1 fotó · alaprajz · környék</span>
-        </div>
+        </header>
 
-        <div className="property-modal-body">
-          <div className="property-main">
-            <div className="property-title-row">
-              <div><span>{home.district} · {home.address}</span><h2>{home.title}</h2></div>
-              <button className={saved ? "saved" : ""} onClick={onSave} type="button">{saved ? "♥ Mentve" : "♡ Mentés"}</button>
+        <dl className="bo-facts">
+          <div><dt>Irányár</dt><dd>{home.price} M Ft</dd></div>
+          <div><dt>Alapterület</dt><dd>{home.size} m²</dd></div>
+          <div><dt>Szobák</dt><dd>{home.rooms}</dd></div>
+          <div><dt>Négyzetméterár</dt><dd>{pricePerSqm(home)} e Ft</dd></div>
+          <div><dt>Belmagasság</dt><dd>{home.ceiling}</dd></div>
+          <div><dt>Energia</dt><dd>{home.energy}</dd></div>
+        </dl>
+
+        <div className="bo-modal-body">
+          <div className="bo-modal-main">
+            <div className="bo-modal-photo">
+              <Image alt={`${home.title} — fotó`} fill sizes="(max-width: 980px) 100vw, 62vw" src={home.image} style={{ objectFit: "cover" }} />
             </div>
-            <div className="property-facts"><strong>{home.price} M Ft</strong><span>{home.size} m²</span><span>{home.rooms} szoba</span><span>{home.energy} energia</span></div>
-            <p className="property-description">{home.description}</p>
 
-            <section className="property-details"><h3>A legfontosabb részletek</h3><div><span><small>Épületen belül</small>{home.floor}</span><span><small>Kültér</small>{home.terrace}</span><span><small>Parkolás</small>{home.parking}</span><span><small>Energetika</small>{home.energy}</span></div></section>
-            <section className="property-features"><h3>Felszereltség</h3><div>{home.features.map((feature) => <span key={feature}>✓ {feature}</span>)}</div></section>
+            <section className="bo-block">
+              <div className="bo-block-head">
+                <h3>Alaprajz és napfény</h3>
+                <p>{home.plan.level} · méretarányos makett, a valós tájolással</p>
+              </div>
+              <PlanViewer plan={home.plan} />
+            </section>
 
-            <section className="property-finance">
-              <div><span>FINANSZÍROZÁSI BECSLŐ</span><h3>Milyen havi összeggel számolhatsz?</h3><p>Tájékoztató kalkuláció 6,9%-os kamattal. Nem banki ajánlat.</p></div>
-              <div className="finance-controls">
-                <label><span>Önerő <strong>{downPayment}%</strong></span><input min="20" max="70" step="5" type="range" value={downPayment} onChange={(event) => setDownPayment(Number(event.target.value))} /></label>
-                <div className="finance-years">{[10, 20, 30].map((value) => <button className={years === value ? "active" : ""} key={value} onClick={() => setYears(value)} type="button">{value} év</button>)}</div>
-                <div className="finance-result"><span>Becsült havi törlesztő</span><strong>{monthly.toLocaleString("hu-HU")} Ft</strong><small>Hitelösszeg: {Math.round(principal / 1_000_000)} M Ft</small></div>
+            <section className="bo-block">
+              <h3>Leírás</h3>
+              <p className="bo-description">{home.description}</p>
+              <dl className="bo-table">
+                <div><dt>Emelet</dt><dd>{home.floor}</dd></div>
+                <div><dt>Kültér</dt><dd>{home.terrace}</dd></div>
+                <div><dt>Parkolás</dt><dd>{home.parking}</dd></div>
+                <div><dt>Építés éve</dt><dd>{home.built}</dd></div>
+              </dl>
+              <ul className="bo-tags">
+                {home.features.map((feature) => <li key={feature}>{feature}</li>)}
+              </ul>
+            </section>
+
+            <section className="bo-block">
+              <h3>Környék, gyalog</h3>
+              <dl className="bo-table">
+                {home.nearby.map(([place, time]) => <div key={place}><dt>{place}</dt><dd>{time}</dd></div>)}
+              </dl>
+            </section>
+
+            <section className="bo-block bo-finance">
+              <div>
+                <h3>Havi törlesztő</h3>
+                <p>Tájékoztató kalkuláció 6,9%-os kamattal. Nem banki ajánlat.</p>
+              </div>
+              <div className="bo-finance-controls">
+                <label>
+                  <span>Önerő <b>{downPayment}%</b></span>
+                  <input max="70" min="20" onChange={(event) => setDownPayment(Number(event.target.value))} step="5" type="range" value={downPayment} />
+                </label>
+                <div className="bo-segment" role="group" aria-label="Futamidő">
+                  {[10, 20, 30].map((value) => (
+                    <button className={years === value ? "is-active" : ""} key={value} onClick={() => setYears(value)} type="button">
+                      {value} év
+                    </button>
+                  ))}
+                </div>
+                <p className="bo-finance-result">
+                  <b>{monthly.toLocaleString("hu-HU")} Ft</b>
+                  <span>havonta · hitelösszeg {Math.round(principal / 1_000_000)} M Ft</span>
+                </p>
               </div>
             </section>
           </div>
 
-          <aside className="property-contact">
-            <span className="agent-avatar">KB</span><div><small>Az ingatlan szakértője</small><strong>Kovács Borbála</strong><span>+36 30 555 0148</span></div>
-            <p>Kérj privát megtekintést vagy részletes dokumentációt.</p>
-            <label>Név<input placeholder="Teljes név" /></label>
-            <label>Email<input placeholder="nev@email.hu" type="email" /></label>
-            <label>Üzenet<textarea defaultValue={`Érdekel a(z) „${home.title}” ingatlan.`} /></label>
-            <button onClick={() => notice("Az érdeklődés nem került elküldésre — ez egy interaktív mintaprojekt.")} type="button">Megtekintést kérek →</button>
-            <small>Általában 2 órán belül visszajelzünk.</small>
+          <aside className="bo-contact">
+            <div className="bo-agent">
+              <span aria-hidden="true">KB</span>
+              <div>
+                <b>Kovács Borbála</b>
+                <small>az ingatlan referense · +36 30 555 0148</small>
+              </div>
+            </div>
+            <label>Név<input autoComplete="name" placeholder="Teljes név" /></label>
+            <label>Email<input autoComplete="email" placeholder="nev@email.hu" type="email" /></label>
+            <label>Üzenet<textarea defaultValue={`Érdekel a(z) „${home.title}” (${home.code}).`} /></label>
+            <button className="bo-button" onClick={() => notice("Az érdeklődés nem került elküldésre — ez egy interaktív mintaprojekt.")} type="button">
+              Megtekintést kérek
+            </button>
+            <small>Munkanapokon 2 órán belül visszahívunk.</small>
           </aside>
         </div>
       </section>
@@ -178,34 +169,206 @@ export function NestSite() {
   const [selected, setSelected] = useState<Home | null>(null);
 
   const visible = useMemo(() => {
-    const filtered = homes.filter((home) =>
-      (district === "Mindegyik" || home.district === district) &&
-      home.price <= max && home.rooms >= minRooms && (!savedOnly || saved.includes(home.id))
+    const filtered = homes.filter(
+      (home) =>
+        (district === "Mindegyik" || home.district === district) &&
+        home.price <= max &&
+        home.rooms >= minRooms &&
+        (!savedOnly || saved.includes(home.id))
     );
-    return [...filtered].sort((a, b) => sort === "price-asc" ? a.price - b.price : sort === "size-desc" ? b.size - a.size : a.id - b.id);
+    return [...filtered].sort((a, b) =>
+      sort === "price-asc" ? a.price - b.price : sort === "size-desc" ? b.size - a.size : sort === "sun" ? sunOf(b).minutes - sunOf(a).minutes : a.id - b.id
+    );
   }, [district, max, minRooms, savedOnly, saved, sort]);
 
-  const toggle = (id: number) => setSaved((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const toggle = (id: number) => setSaved((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   const toggleSavedView = () => {
-    if (!saved.length) return notice("Még nincs mentett ingatlanod. A szív ikonra kattintva tudsz elmenteni egyet.");
+    if (!saved.length) return notice("Még nincs mentett ingatlanod. A „Mentés” gombbal tudsz elmenteni egyet.");
     setSavedOnly((current) => !current);
+  };
+  const reset = () => {
+    setDistrict("Mindegyik");
+    setMax(500);
+    setMinRooms(0);
+    setSavedOnly(false);
   };
 
   return (
-    <div className="nest-root" id="top">
+    <div className="bo-root" id="top">
       <DemoBar project="Budai Otthonok" />
-      <header className="nest-nav"><a className="nest-logo" href="#top">BUDAI OTTHONOK<span>ingatlan</span></a><nav><a href="#ingatlanok">Ingatlanok</a><a href="#szolgaltatas">Eladóknak</a><a href="#rolunk">Rólunk</a></nav><button className={savedOnly ? "active" : ""} onClick={toggleSavedView} type="button">Mentett <span>{saved.length}</span></button></header>
+      <header className="bo-nav">
+        <a className="bo-logo" href="#top">
+          <Mark />
+          Budai Otthonok
+        </a>
+        <nav aria-label="Fő navigáció">
+          <a href="#ingatlanok">Ingatlanok</a>
+          <a href="#makett">Makett</a>
+          <a href="#eladoknak">Eladóknak</a>
+          <a href="#iroda">Iroda</a>
+        </nav>
+        <button className={`bo-saved${savedOnly ? " is-active" : ""}`} onClick={toggleSavedView} type="button">
+          Mentett <span>{saved.length}</span>
+        </button>
+      </header>
+
       <main>
-        <section className="nest-hero"><div className="nest-overlay"/><div className="nest-copy"><p>Válogatott budapesti otthonok</p><h1>Nem négyzetmétert.<br /><em>Életet választasz.</em></h1><span>Olyan ingatlanokat mutatunk, amelyeknek van aránya, fénye és története — és minden fontos részletet még a megtekintés előtt megismerhetsz.</span></div><div className="nest-search"><label><span>Hol keresel?</span><select value={district} onChange={(event) => setDistrict(event.target.value)}><option>Mindegyik</option><option>I. kerület</option><option>II. kerület</option><option>V. kerület</option><option>XII. kerület</option></select></label><label><span>Maximum ár</span><select value={max} onChange={(event) => setMax(Number(event.target.value))}><option value="200">200 M Ft</option><option value="350">350 M Ft</option><option value="500">500 M Ft</option></select></label><label><span>Minimum szobaszám</span><select value={minRooms} onChange={(event) => setMinRooms(Number(event.target.value))}><option value="0">Mindegy</option><option value="3">3 szoba</option><option value="4">4 szoba</option><option value="5">5+ szoba</option></select></label><a href="#ingatlanok">{visible.length} otthon mutatása →</a></div><div className="nest-featured"><span>KIEMELT</span><strong>Budai penthouse · 148 m²</strong><small>329 M Ft</small></div></section>
+        <MaquetteHero homeCount={homes.length} onOpenFeatured={() => setSelected(homes[0])} plan={homes[0].plan} />
 
-        <section className="nest-listings" id="ingatlanok"><div className="nest-heading"><div><p>{savedOnly ? "MENTETT OTTHONOK" : "AKTUÁLIS KÍNÁLAT"}</p><h2>Otthonok, amiket érdemes személyesen is látni.</h2></div><div className="listing-tools"><span>{visible.length} találat</span><select aria-label="Ingatlanok rendezése" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">Ajánlott sorrend</option><option value="price-asc">Ár szerint növekvő</option><option value="size-desc">Méret szerint csökkenő</option></select></div></div><div className="nest-grid">{visible.map((home) => <article key={home.id}><button className="nest-photo" onClick={() => setSelected(home)} style={{ backgroundImage: `url(${home.image})` }} type="button"><span>{home.type}</span><i>{home.district}</i></button><button className={`nest-save ${saved.includes(home.id) ? "saved" : ""}`} onClick={() => toggle(home.id)} aria-label={`${home.title} mentése`} type="button">♡</button><div className="nest-card-body"><small>{home.district} · {home.address}</small><h3>{home.title}</h3><p>{home.size} m² · {home.rooms} szoba · {home.energy}</p><strong>{home.price} M Ft</strong><button onClick={() => setSelected(home)} type="button">Részletek →</button></div></article>)}</div>{visible.length === 0 && <div className="nest-empty"><h3>Nincs ilyen találat.</h3><button onClick={() => { setDistrict("Mindegyik"); setMax(500); setMinRooms(0); setSavedOnly(false); }} type="button">Szűrők törlése</button></div>}</section>
+        <section className="bo-listings" id="ingatlanok">
+          <div className="bo-section-head">
+            <h2>{savedOnly ? "Mentett otthonok" : "Aktuális kínálat"}</h2>
+            <p>
+              Minden hirdetésünkhöz tartozik alaprajz, makett és napfény-számítás. Az adatokat a helyszínen mértük fel, nem az
+              eladó becslése.
+            </p>
+          </div>
 
-        <section className="nest-service" id="szolgaltatas"><div><p>ELADÓKNAK</p><h2>Egy jó ingatlanhoz jó történet is kell.</h2><span>Fotózás, alaprajz, pozicionálás és előszűrt érdeklődők. Nem több megtekintést ígérünk, hanem jobbakat.</span></div><div className="nest-numbers"><article><strong>21</strong><span>napos átlagos értékesítési idő</span></article><article><strong>96%</strong><span>az irányárhoz viszonyított záróár</span></article><article><strong>1</strong><span>kapcsolattartó az egész folyamatban</span></article></div></section>
+          <div className="bo-filters">
+            <label>
+              <span>Kerület</span>
+              <select onChange={(event) => setDistrict(event.target.value)} value={district}>
+                {DISTRICTS.map((item) => <option key={item}>{item}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Maximum ár</span>
+              <select onChange={(event) => setMax(Number(event.target.value))} value={max}>
+                <option value="200">200 M Ft</option>
+                <option value="350">350 M Ft</option>
+                <option value="500">500 M Ft</option>
+              </select>
+            </label>
+            <label>
+              <span>Szobák</span>
+              <select onChange={(event) => setMinRooms(Number(event.target.value))} value={minRooms}>
+                <option value="0">Mindegy</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5+</option>
+              </select>
+            </label>
+            <label>
+              <span>Rendezés</span>
+              <select aria-label="Ingatlanok rendezése" onChange={(event) => setSort(event.target.value)} value={sort}>
+                <option value="recommended">Ajánlott</option>
+                <option value="price-asc">Ár szerint növekvő</option>
+                <option value="size-desc">Méret szerint csökkenő</option>
+                <option value="sun">Legtöbb napfény</option>
+              </select>
+            </label>
+            <p className="bo-count">
+              <b>{visible.length}</b> találat
+            </p>
+          </div>
 
-        <section className="nest-about" id="rolunk"><p>„Az otthonkeresés nem keresési feladat. Döntési helyzet — ezért minden információt úgy rendezünk el, hogy magabiztosan tudj választani.”</p><span>BUDAI OTTHONOK / Budapest</span><button onClick={() => notice("A konzultációkérés ezen a mintaprojekten nincs élesítve.")} type="button">Kérek egy személyes konzultációt →</button></section>
+          <ol className="bo-list">
+            {visible.map((home) => {
+              const sun = sunOf(home);
+              const isSaved = saved.includes(home.id);
+              return (
+                <li className="bo-row" key={home.id}>
+                  <button className="bo-row-photo" onClick={() => setSelected(home)} type="button" aria-label={`${home.title} adatlapja`}>
+                    <Image alt="" fill sizes="(max-width: 860px) 100vw, 40vw" src={home.image} style={{ objectFit: "cover" }} />
+                    <span>{home.type}</span>
+                  </button>
+
+                  <div className="bo-row-body">
+                    <p className="bo-meta">
+                      {home.code} · frissítve {home.updated}
+                    </p>
+                    <h3>
+                      <button onClick={() => setSelected(home)} type="button">{home.title}</button>
+                    </h3>
+                    <p className="bo-row-place">{home.district}, {home.address}</p>
+                    <p className="bo-row-desc">{home.description}</p>
+                    <dl className="bo-row-facts">
+                      <div><dt>Ár</dt><dd>{home.price} M Ft</dd></div>
+                      <div><dt>Terület</dt><dd>{home.size} m²</dd></div>
+                      <div><dt>Szoba</dt><dd>{home.rooms}</dd></div>
+                      <div><dt>m²-ár</dt><dd>{pricePerSqm(home)} e Ft</dd></div>
+                    </dl>
+                    <p className="bo-row-sun">
+                      <i aria-hidden="true" />
+                      Nappali: {sun.directions.map(compassLabel).join(", ")} · {formatDuration(sun.minutes)} napsütés
+                    </p>
+                    <div className="bo-row-actions">
+                      <button className="bo-button" onClick={() => setSelected(home)} type="button">Adatlap és 3D alaprajz</button>
+                      <button
+                        aria-pressed={isSaved}
+                        className={`bo-button ghost${isSaved ? " is-saved" : ""}`}
+                        onClick={() => toggle(home.id)}
+                        type="button"
+                      >
+                        {isSaved ? "Mentve" : "Mentés"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <figure className="bo-row-plan">
+                    <PlanSketch plan={home.plan} />
+                    <figcaption>{home.plan.level} · {home.terrace}</figcaption>
+                  </figure>
+                </li>
+              );
+            })}
+          </ol>
+
+          {visible.length === 0 && (
+            <div className="bo-empty">
+              <h3>Ezekkel a szűrőkkel nincs találat.</h3>
+              <button className="bo-button" onClick={reset} type="button">Szűrők törlése</button>
+            </div>
+          )}
+        </section>
+
+        <section className="bo-sellers" id="eladoknak">
+          <div className="bo-section-head">
+            <h2>Eladnád az otthonod?</h2>
+            <p>
+              Ugyanígy dolgozunk az eladó oldalon is. A vevő a makettből már tudja, mit néz meg, ezért kevesebb, de komolyabb
+              megtekintés lesz.
+            </p>
+          </div>
+          <ol className="bo-process">
+            <li><b>01</b><h3>Felmérés</h3><p>Lézeres felmérés egy délelőtt alatt. A meglévő tervekből dolgozunk, ha vannak.</p></li>
+            <li><b>02</b><h3>Makett</h3><p>3D modell valós méretekkel, tájolással és bútorozással, két munkanapon belül.</p></li>
+            <li><b>03</b><h3>Fotó a jó fényben</h3><p>A napfény-számításból tudjuk, melyik órában a legszebb a nappali. Akkor fotózunk.</p></li>
+            <li><b>04</b><h3>Előszűrt megtekintés</h3><p>Csak az jön el, aki már látta az alaprajzot és a törlesztőt.</p></li>
+          </ol>
+          <dl className="bo-stats">
+            <div><dt>Átlagos értékesítési idő, 2025</dt><dd>34 nap</dd></div>
+            <div><dt>Záróár az irányárhoz képest</dt><dd>97,2%</dd></div>
+            <div><dt>Megtekintés eladásonként</dt><dd>4,1</dd></div>
+          </dl>
+          <button className="bo-button light" onClick={() => notice("Az értékbecslés-kérés ezen a mintaprojekten nincs élesítve.")} type="button">
+            Ingyenes értékbecslést kérek
+          </button>
+        </section>
+
+        <section className="bo-office" id="iroda">
+          <div>
+            <h2>Iroda</h2>
+            <p>Krisztina körút 27., 1013 Budapest</p>
+            <p>Hétfő–péntek 9–18, szombaton előre egyeztetve</p>
+          </div>
+          <dl className="bo-table">
+            <div><dt>Telefon</dt><dd>+36 1 555 0140</dd></div>
+            <div><dt>Email</dt><dd>iroda@budaiotthonok.hu</dd></div>
+            <div><dt>Referensek</dt><dd>6 fő, mind budai lakos</dd></div>
+          </dl>
+        </section>
       </main>
-      <footer className="nest-footer"><a className="nest-logo" href="#top">BUDAI OTTHONOK<span>ingatlan</span></a><p>Válogatott ingatlanok · Értékesítési tanácsadás</p><small>Mintaprojekt · ProjectEdge</small></footer>
-      {selected && <PropertyModal home={selected} saved={saved.includes(selected.id)} onClose={() => setSelected(null)} onSave={() => toggle(selected.id)} />}
+
+      <footer className="bo-footer">
+        <a className="bo-logo" href="#top">
+          <Mark />
+          Budai Otthonok
+        </a>
+        <p>Kitalált márka · ProjectEdge mintaprojekt · a makettek és a napfény-számítás működő funkciók</p>
+      </footer>
+
+      {selected && <PropertyModal home={selected} onClose={() => setSelected(null)} onSave={() => toggle(selected.id)} saved={saved.includes(selected.id)} />}
     </div>
   );
 }
