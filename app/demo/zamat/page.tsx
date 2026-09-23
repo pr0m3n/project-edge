@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Newsletter } from "./Newsletter";
 import { ProductGrid } from "./ProductGrid";
-import { RoastHero } from "./RoastHero";
+import { ZamatHero } from "./ZamatHero";
 import { RoastLog } from "./RoastLog";
 import { COMMODITY_PRICE, formatFt, products } from "./data";
 
@@ -30,7 +30,7 @@ const maxPaid = Math.max(...producers.map((product) => product.paid ?? 0));
 export default function ZamatHome() {
   return (
     <main>
-      <RoastHero />
+      <ZamatHero />
 
       <section className="zm-section" id="kavek">
         <div className="zm-section-head">

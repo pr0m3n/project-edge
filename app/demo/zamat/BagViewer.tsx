@@ -4,13 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import { BagArt } from "./BagArt";
 import type { Product } from "./data";
 
+type Viewer = {
+  setRotation: (yaw: number, pitch: number) => void;
+  setProduct: (product: Product) => void;
+  resize: (width: number, height: number) => void;
+  render: () => void;
+  dispose: () => void;
+};
+
 /**
- * A termékoldal 3D zacskója. Amíg a three.js betölt (és ha nincs WebGL),
- * az SVG-rajz áll a helyén — ugyanaz a címke, így az átváltás nem ugrik.
- * Lassan forog; húzással körbe lehet nézni, a hátoldalon a pörkölés napja.
+ * 3D zacskó. Amíg a three.js betölt (és ha nincs WebGL), az SVG-rajz áll a
+ * helyén — ugyanaz a címke, így az átváltás nem ugrik. Lassan forog; húzással
+ * körbe lehet nézni, a hátoldalon a pörkölés napja.
+ *
+ * Termékváltáskor nem épül újra: egy gyors pördülés közben, amikor a zacskó
+ * éppen élével áll a néző felé, kicseréli a címkét. `scrollSpin` mellett a
+ * görgetés is forgatja (a főoldali herón).
  */
-export function BagViewer({ product }: { product: Product }) {
+export function BagViewer({ product, scrollSpin = false, zoom = 1 }: { product: Product; scrollSpin?: boolean; zoom?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const viewerRef = useRef<Viewer | null>(null);
+  const spinRef = useRef<{ start: number; swapped: boolean; product: Product } | null>(null);
+  const shownRef = useRef(product);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -37,12 +52,13 @@ export function BagViewer({ product }: { product: Product }) {
     ])
       .then(([, , , { createBagViewer }]) => {
         if (disposed) return;
-        let viewer: ReturnType<typeof createBagViewer>;
+        let viewer: Viewer;
         try {
-          viewer = createBagViewer(canvas, product, fonts);
+          viewer = createBagViewer(canvas, shownRef.current, fonts, zoom);
         } catch {
           return;
         }
+        viewerRef.current = viewer;
 
         let yaw = -0.35;
         let pitch = 0;
@@ -65,25 +81,40 @@ export function BagViewer({ product }: { product: Product }) {
           if (disposed || !visible) return;
           const delta = Math.min(0.05, (now - last) / 1000);
           last = now;
-          if (!dragging && !reduced && now > idleFrom) yaw += delta * 0.22;
+          if (!dragging && !reduced && now > idleFrom) yaw += delta * 0.3;
           if (!dragging) pitch *= 0.92;
-          viewer.setRotation(yaw, pitch);
+
+          // termékváltás: egy teljes fordulat 0,9 mp alatt, a címke negyedfordulatnál cserél
+          let spin = 0;
+          const pending = spinRef.current;
+          if (pending) {
+            const t = Math.min(1, (now - pending.start) / 900);
+            const eased = 1 - (1 - t) ** 3;
+            spin = eased * Math.PI * 2;
+            if (!pending.swapped && eased >= 0.25) {
+              viewer.setProduct(pending.product);
+              pending.swapped = true;
+            }
+            if (t >= 1) {
+              spinRef.current = null;
+              spin = 0;
+            }
+          }
+
+          const scroll = scrollSpin && !reduced ? window.scrollY * 0.0035 : 0;
+          viewer.setRotation(yaw + spin + scroll, pitch);
           viewer.render();
           frame = requestAnimationFrame(tick);
         };
 
         const down = (event: PointerEvent) => {
           canvas.setPointerCapture(event.pointerId);
-          dragging = { x: event.clientX, y: event.clientY, yaw, pitch };
+          dragging = { pitch, x: event.clientX, y: event.clientY, yaw };
         };
         const move = (event: PointerEvent) => {
           if (!dragging) return;
           yaw = dragging.yaw + (event.clientX - dragging.x) * 0.012;
           if (event.pointerType !== "touch") pitch = Math.max(-0.3, Math.min(0.3, dragging.pitch + (event.clientY - dragging.y) * 0.004));
-          if (reduced) {
-            viewer.setRotation(yaw, pitch);
-            viewer.render();
-          }
         };
         const up = () => {
           dragging = null;
@@ -117,6 +148,7 @@ export function BagViewer({ product }: { product: Product }) {
           canvas.removeEventListener("pointerup", up);
           canvas.removeEventListener("pointercancel", up);
           viewer.dispose();
+          viewerRef.current = null;
         };
       })
       .catch(() => {});
@@ -125,6 +157,19 @@ export function BagViewer({ product }: { product: Product }) {
       disposed = true;
       cleanup();
     };
+  }, [scrollSpin, zoom]);
+
+  // termékváltás: pördülés + címkecsere (vagy azonnali csere, ha még nincs 3D)
+  useEffect(() => {
+    if (shownRef.current === product) return;
+    shownRef.current = product;
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      viewer.setProduct(product);
+      return;
+    }
+    spinRef.current = { product, start: performance.now(), swapped: false };
   }, [product]);
 
   return (

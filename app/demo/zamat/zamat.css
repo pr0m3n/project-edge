@@ -1516,17 +1516,6 @@
   text-transform: uppercase;
 }
 
-.zm-btn.ghost-light {
-  background: transparent;
-  border-color: rgba(241, 235, 226, 0.5);
-  color: #f1ebe2;
-}
-
-.zm-btn.ghost-light:hover {
-  background: #f1ebe2;
-  color: var(--espresso);
-}
-
 .zm-section-head h2 {
   font-size: clamp(40px, 5.4vw, 76px);
   text-transform: uppercase;
@@ -1536,338 +1525,6 @@
   font-size: 17px;
   line-height: 1.6;
   max-width: 60ch;
-}
-
-/* ── pörkölés (hero) ── */
-
-.zm-roast {
-  background: var(--cream);
-  height: 600vh;
-  position: relative;
-}
-
-.zm-roast-stage {
-  background: radial-gradient(90% 80% at 68% 58%, #f7f4ee 0%, var(--cream) 62%, #e4dfd6 100%);
-  color: var(--ink);
-  height: calc(100svh - var(--demo-bar-h, 0px));
-  overflow: hidden;
-  position: sticky;
-  top: var(--demo-bar-h, 0px);
-}
-
-.zm-roast-canvas {
-  display: block;
-  height: 100%;
-  inset: 0;
-  opacity: 0;
-  position: absolute;
-  transition: opacity 0.9s ease;
-  width: 100%;
-}
-
-.zm-roast-canvas.is-ready {
-  opacity: 1;
-}
-
-.zm-roast-stage::before {
-  /* a babok ne keveredjenek a szöveg alá: bal oldalt a háttérbe sötétül */
-  background: linear-gradient(90deg, rgba(236, 232, 225, 0.94) 0%, rgba(236, 232, 225, 0.72) 30%, rgba(236, 232, 225, 0) 52%);
-  content: "";
-  inset: 0;
-  pointer-events: none;
-  position: absolute;
-  z-index: 1;
-}
-
-.zm-roast-copy,
-.zm-chart,
-.zm-scroll-hint {
-  z-index: 2;
-}
-
-.zm-roast-copy {
-  left: clamp(20px, 5vw, 76px);
-  position: absolute;
-  top: clamp(104px, 15vh, 150px);
-  width: min(540px, 40vw);
-}
-
-.zm-roast-step {
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  transform: translateY(18px);
-  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-  width: 100%;
-}
-
-.zm-roast-step.is-active {
-  opacity: 1;
-  pointer-events: auto;
-  transform: none;
-}
-
-.zm-roast .zm-roast-step h1,
-.zm-roast .zm-roast-step h2 {
-  color: var(--espresso);
-  text-transform: uppercase;
-}
-
-.zm-roast .zm-roast-step h1 {
-  font-size: clamp(48px, 5.3vw, 86px);
-}
-
-.zm-roast .zm-roast-step h2 {
-  font-size: clamp(40px, 4.4vw, 68px);
-}
-
-.zm-roast-step > p:not(.zm-kicker) {
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.6;
-  margin-top: 18px;
-  max-width: 44ch;
-}
-
-.zm-roast .zm-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 26px;
-}
-
-.zm-roast .zm-btn:not(.ghost-light):not(.ghost):not(.is-added) {
-  background: var(--terra);
-  border-color: var(--terra);
-  color: #fff;
-}
-
-.zm-roast .zm-btn:not(.ghost-light):not(.ghost):not(.is-added):hover {
-  background: var(--espresso);
-  border-color: var(--espresso);
-  color: #fff;
-}
-
-/* „Itt vesszük ki" kártya */
-.zm-drop {
-  align-items: stretch;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 253, 250, 0.86);
-  border: 1px solid var(--line);
-  box-shadow: 0 14px 34px rgba(23, 18, 14, 0.08);
-  display: grid;
-  gap: 14px;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
-  margin-top: 24px;
-  max-width: 470px;
-  padding: 12px 12px 12px 0;
-}
-
-.zm-drop-swatch {
-  display: block;
-}
-
-.zm-drop-body {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.zm-drop-body small {
-  color: var(--terra);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.zm-drop-body a {
-  color: var(--espresso);
-  font-family: var(--serif);
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.zm-drop-body a:hover {
-  color: var(--terra);
-}
-
-.zm-drop-body span {
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.zm-drop .zm-btn {
-  align-self: center;
-  white-space: nowrap;
-}
-
-/* pörkölési görbe + mérőértékek */
-.zm-chart {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 253, 250, 0.82);
-  border: 1px solid var(--line);
-  bottom: 22px;
-  margin: 0;
-  padding: 12px 14px 8px;
-  position: absolute;
-  right: clamp(20px, 5vw, 76px);
-  width: min(430px, 36vw);
-}
-
-.zm-readouts {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: auto auto auto minmax(0, 1fr);
-  margin: 0 0 6px;
-}
-
-.zm-readouts div {
-  display: grid;
-  gap: 1px;
-}
-
-.zm-readouts dt {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.zm-readouts dd {
-  color: var(--espresso);
-  font-family: var(--mono);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  margin: 0;
-  min-width: 5.6ch;
-  white-space: nowrap;
-}
-
-.zm-readouts .is-phase dd {
-  align-items: center;
-  display: flex;
-  gap: 7px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.zm-readouts .is-phase i {
-  border: 1px solid rgba(23, 18, 14, 0.25);
-  display: inline-block;
-  flex: none;
-  height: 12px;
-  width: 12px;
-}
-
-.zm-chart svg {
-  display: block;
-  height: auto;
-  overflow: visible;
-  width: 100%;
-}
-
-.zm-chart-grid {
-  stroke: rgba(23, 18, 14, 0.08);
-  stroke-width: 1;
-}
-
-.zm-chart-mark {
-  stroke: rgba(23, 18, 14, 0.2);
-  stroke-dasharray: 2 3;
-}
-
-.zm-chart-axis,
-.zm-chart-label {
-  fill: var(--muted);
-  font-family: var(--mono);
-  font-size: 10px;
-}
-
-.zm-chart-label {
-  fill: var(--ink);
-}
-
-.zm-chart-curve {
-  fill: none;
-  stroke: var(--terra);
-  stroke-linecap: round;
-  stroke-width: 2.4;
-}
-
-.zm-chart-curve.is-ghost {
-  stroke: rgba(23, 18, 14, 0.14);
-  stroke-width: 1.4;
-}
-
-.zm-chart-drop {
-  fill: var(--paper);
-  stroke: var(--espresso);
-  stroke-width: 1.4;
-}
-
-.zm-chart-dot {
-  fill: #fff;
-  stroke: var(--terra);
-  stroke-width: 3;
-}
-
-.zm-scroll-hint {
-  bottom: 30px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12px;
-  left: clamp(20px, 5vw, 76px);
-  position: absolute;
-  text-transform: uppercase;
-}
-
-.zm-scroll-hint::after {
-  animation: zm-hint 1.8s ease-in-out infinite;
-  background: currentColor;
-  content: "";
-  display: block;
-  height: 1px;
-  margin-top: 8px;
-  transform-origin: left;
-}
-
-@keyframes zm-hint {
-  0% { transform: scaleX(0); }
-  60% { transform: scaleX(1); }
-  100% { transform: scaleX(1); opacity: 0; }
-}
-
-/* csökkentett mozgás: álló kép, a szöveg alatta */
-.zm-roast.is-still {
-  height: auto;
-}
-
-.zm-roast.is-still .zm-roast-stage {
-  height: min(80vh, 760px);
-  position: relative;
-  top: 0;
-}
-
-.zm-roast-static {
-  color: var(--ink);
-  display: grid;
-  gap: 40px 56px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin: 0 auto;
-  max-width: 1220px;
-  padding: 64px clamp(20px, 5vw, 32px) 80px;
-}
-
-.zm-roast-static .zm-roast-step {
-  opacity: 1;
-  pointer-events: auto;
-  position: static;
-  transform: none;
 }
 
 /* ── terméklista kiegészítések ── */
@@ -2152,84 +1809,177 @@
   }
 }
 
-@media (max-width: 860px) {
-  .zm-roast-stage::before {
-    display: none;
-  }
 
-  .zm-roast-copy {
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    top: auto;
-    width: auto;
-  }
-
-  .zm-roast-step {
-    backdrop-filter: blur(10px);
-    background: rgba(250, 248, 244, 0.92);
-    border: 1px solid var(--line);
-    bottom: 0;
-    padding: 18px;
-    top: auto;
-  }
-
-  .zm-roast .zm-roast-step h1 {
-    font-size: clamp(40px, 11vw, 56px);
-  }
-
-  .zm-roast .zm-roast-step h2 {
-    font-size: 34px;
-  }
-
-  .zm-roast-step > p:not(.zm-kicker) {
-    font-size: 15px;
-    margin-top: 10px;
-  }
-
-  .zm-drop {
-    margin-top: 14px;
-  }
-
-  .zm-chart {
-    bottom: auto;
-    left: 16px;
-    right: 16px;
-    top: 84px;
-    width: auto;
-  }
-
-  .zm-chart svg {
-    display: none;
-  }
-
-  .zm-readouts {
-    grid-template-columns: repeat(3, auto) minmax(0, 1fr);
-    margin: 0;
-  }
-
-  .zm-readouts dd {
-    font-size: 14px;
-  }
-
-  .zm-scroll-hint {
-    display: none;
-  }
-
-  .zm-roast-static {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .zm-roast-step,
-  .zm-roast-canvas,
   .zm-bag-viewer canvas,
   .zm-bag-fallback {
     transition: none;
   }
+}
 
-  .zm-scroll-hint::after {
-    animation: none;
+/* ── hero: nagy, forgó 3D zacskó ── */
+
+.zm-hero {
+  align-content: center;
+  display: grid;
+  gap: 0 clamp(20px, 4vw, 56px);
+  grid-template-areas: "head bag" "controls bag";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  margin: 0 auto;
+  max-width: 1220px;
+  min-height: min(calc(100svh - 150px), 760px);
+  padding: clamp(28px, 4vw, 48px) clamp(16px, 4vw, 32px);
+}
+
+.zm-hero-head {
+  align-self: end;
+  grid-area: head;
+}
+
+.zm-hero-controls {
+  align-self: start;
+  grid-area: controls;
+}
+
+.zm-hero-head h1 {
+  font-size: clamp(52px, 6.4vw, 104px);
+  text-transform: uppercase;
+}
+
+.zm-root .zm-hero-lead {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+  margin-top: 22px;
+}
+
+.zm-hero-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.zm-hero-picks button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  gap: 9px;
+  min-height: 46px;
+  padding: 0 18px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.zm-hero-picks button i {
+  border-radius: 2px;
+  display: inline-block;
+  height: 14px;
+  width: 14px;
+}
+
+.zm-hero-picks button:hover {
+  border-color: var(--espresso);
+}
+
+.zm-hero-picks button.is-active {
+  background: var(--espresso);
+  border-color: var(--espresso);
+  color: #fff;
+}
+
+.zm-hero-product {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 22px;
+}
+
+.zm-hero-product > div {
+  display: grid;
+  gap: 4px;
+}
+
+.zm-hero-product a {
+  color: var(--espresso);
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.zm-hero-product a:hover {
+  color: var(--terra);
+}
+
+.zm-hero-product span {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.zm-hero-product small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.zm-hero-bag {
+  grid-area: bag;
+  position: relative;
+}
+
+.zm-hero-bag .zm-bag-viewer {
+  height: min(calc(100svh - 190px), 680px);
+}
+
+@media (max-width: 1000px) {
+  /* Telefonon a zacskó a cím és a gombok közé kerül: aki koppint, lássa a pördülést. */
+  .zm-hero {
+    grid-template-areas: "head" "bag" "controls";
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
   }
+
+  .zm-hero-bag .zm-bag-viewer {
+    height: min(44vh, 380px);
+  }
+
+  .zm-hero-head h1 {
+    font-size: clamp(38px, 10.5vw, 64px);
+  }
+
+  .zm-root .zm-hero-lead {
+    font-size: 16px;
+    margin-top: 14px;
+  }
+
+  .zm-hero-picks button {
+    flex: 1;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .zm-hero-product .zm-btn {
+    width: 100%;
+  }
+}
+
+.zm-hero-bag .zm-bag-viewer {
+  margin-bottom: 22px;
+}
+
+.zm-hero-bag .zm-bag-hint {
+  bottom: -20px;
 }

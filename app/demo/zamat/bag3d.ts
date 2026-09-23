@@ -192,7 +192,7 @@ function contactShadow() {
   return new THREE.CanvasTexture(canvas);
 }
 
-export function createBagViewer(canvas: HTMLCanvasElement, product: Product, fonts: Fonts) {
+export function createBagViewer(canvas: HTMLCanvasElement, product: Product, fonts: Fonts, zoom = 1) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, canvas });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -219,14 +219,9 @@ export function createBagViewer(canvas: HTMLCanvasElement, product: Product, fon
     return map;
   };
   const side = new THREE.MeshStandardMaterial({ color: "#1b1714", roughness: 0.78 });
-  const materials = [
-    side,
-    side,
-    side,
-    side,
-    new THREE.MeshStandardMaterial({ map: texture(frontLabel(product, fonts)), roughness: 0.72 }),
-    new THREE.MeshStandardMaterial({ map: texture(backLabel(product, fonts)), roughness: 0.72 })
-  ];
+  const front = new THREE.MeshStandardMaterial({ map: texture(frontLabel(product, fonts)), roughness: 0.72 });
+  const back = new THREE.MeshStandardMaterial({ map: texture(backLabel(product, fonts)), roughness: 0.72 });
+  const materials = [side, side, side, side, front, back];
   const bag = new THREE.Mesh(bagGeometry(), materials);
   const pivot = new THREE.Group();
   pivot.add(bag);
@@ -241,10 +236,21 @@ export function createBagViewer(canvas: HTMLCanvasElement, product: Product, fon
     setRotation(yaw: number, pitch: number) {
       pivot.rotation.set(pitch, yaw, 0);
     },
+    /** Címke csere újraépítés nélkül (a hero termékváltójához). */
+    setProduct(next: Product) {
+      for (const [material, draw] of [
+        [front, frontLabel],
+        [back, backLabel]
+      ] as const) {
+        material.map?.dispose();
+        material.map = texture(draw(next, fonts));
+        material.needsUpdate = true;
+      }
+    },
     resize(width: number, height: number) {
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(1, height);
-      camera.position.z = camera.aspect < 0.8 ? 13.5 : 11.2;
+      camera.position.z = (camera.aspect < 0.8 ? 13.5 : 11.2) / zoom;
       camera.updateProjectionMatrix();
     },
     render() {

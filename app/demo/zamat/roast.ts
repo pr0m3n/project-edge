@@ -7,9 +7,8 @@
  * lassuló ütemben emelkedik. Első pattanás ~196 °C, második ~224 °C.
  */
 
-/** A görgetés teljes hossza percben: pörkölés + hűtés. */
+/** A pörkölés hossza percben (a második pattanás után). */
 export const ROAST_END = 12.4;
-export const COOL_END = 13.4;
 
 /** [perc, babhőmérséklet °C] — Catmull–Rom-mal simítva. */
 const CURVE: [number, number][] = [
@@ -28,12 +27,7 @@ const CURVE: [number, number][] = [
 ];
 
 export function beanTemp(minute: number): number {
-  // Kiöntés után a hűtőtálcán gyorsan hűl (~40 °C-ig), a keverőkar alatt.
-  if (minute > ROAST_END) {
-    const u = Math.min(1, (minute - ROAST_END) / (COOL_END - ROAST_END));
-    return 40 + (beanTemp(ROAST_END) - 40) * Math.exp(-3.2 * u);
-  }
-  const t = Math.max(0, minute);
+  const t = Math.min(ROAST_END, Math.max(0, minute));
   let i = 0;
   while (i < CURVE.length - 2 && t > CURVE[i + 1][0]) i++;
   const p0 = CURVE[Math.max(0, i - 1)];
@@ -53,12 +47,6 @@ export function beanTemp(minute: number): number {
     (-2 * u3 + 3 * u2) * p2[1] +
     (u3 - u2) * h * m2
   );
-}
-
-/** Emelkedési ráta (Rate of Rise), °C/perc. */
-export function rateOfRise(minute: number) {
-  const dt = 0.25;
-  return (beanTemp(minute) - beanTemp(minute - dt)) / dt;
 }
 
 /* ── színek ─────────────────────────────────────────────────────────── */
@@ -93,31 +81,6 @@ export function beanColor(minute: number): [number, number, number] {
 
 export const toHex = ([r, g, b]: [number, number, number]) =>
   `#${[r, g, b].map((value) => Math.round(value * 255).toString(16).padStart(2, "0")).join("")}`;
-
-/* ── fázisok és kivételek ───────────────────────────────────────────── */
-
-export type Phase = { from: number; name: string };
-
-export const PHASES: Phase[] = [
-  { from: 0, name: "Betöltés" },
-  { from: 1.5, name: "Szárítás" },
-  { from: 5, name: "Sárgulás" },
-  { from: 6.6, name: "Maillard-szakasz" },
-  { from: 8, name: "Első pattanás" },
-  { from: 9, name: "Fejlesztés" },
-  { from: 11.8, name: "Második pattanás" },
-  { from: ROAST_END, name: "Hűtés" }
-];
-
-export const phaseAt = (minute: number) => PHASES.reduce((found, phase) => (minute >= phase.from ? phase : found), PHASES[0]);
-
-/** Jelölések a görbén. */
-export const MARKS = [
-  { at: 1.5, label: "fordulópont" },
-  { at: 5, label: "sárgulás" },
-  { at: 8, label: "1. pattanás" },
-  { at: 11.8, label: "2. pattanás" }
-];
 
 export function formatMinute(minute: number) {
   const total = Math.max(0, Math.round(minute * 60));

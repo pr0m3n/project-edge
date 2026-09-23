@@ -11,7 +11,6 @@ const SHIPPING_FEE = 1490;
 
 const navLinks = [
   { href: "/demo/zamat#kavek", label: "Kávék" },
-  { href: "/demo/zamat#porkoles", label: "Pörkölés" },
   { href: "/demo/zamat#elofizetes", label: "Előfizetés" },
   { href: "/demo/zamat#termelok", label: "Termelők" },
   { href: "/demo/zamat#naplo", label: "Napló" }
@@ -275,7 +274,6 @@ export function ZamatFooter() {
           </div>
           <div>
             <span>Rólunk</span>
-            <Link href="/demo/zamat#porkoles">A pörkölés</Link>
             <Link href="/demo/zamat#termelok">Termelők</Link>
             <Link href="/demo/zamat#naplo">Pörkölési napló</Link>
           </div>
