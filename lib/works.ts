@@ -81,10 +81,10 @@ export const WORKS: Work[] = [
     goal: "Időpontfoglalás",
     industry: "Szépségipar",
     copy:
-      "Prémium márka és teljes, több lépéses foglalási folyamat: szolgáltatás, időpont, adatok, visszaigazolás.",
+      "Görgetésre szétnyíló 3D bőrmetszet, ami megmutatja, melyik kezelés meddig hat — és onnan egy kattintással foglalás.",
     href: "/demo/liget-borstudio",
     external: false,
-    src: "/work/demos/liget-borstudio.webp",
+    src: "/work/demos/liget-borretegek.webp",
     width: 1440,
     height: 900
   },

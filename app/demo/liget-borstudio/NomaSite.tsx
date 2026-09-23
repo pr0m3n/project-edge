@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
 import { useDemoNotice } from "@/components/demo/DemoNotice";
 import { BookingFlow } from "./BookingFlow";
+import { SkinSection } from "./SkinSection";
 import { TreatmentPicker } from "./TreatmentPicker";
 import type { Treatment } from "./TreatmentPicker";
 
@@ -132,47 +133,39 @@ export function NomaSite({ fontClass = "" }: { fontClass?: string }) {
           </div>
           <div className="noma-hero-copy">
             <p className="noma-eyebrow">Budapest · II. kerület</p>
-            <h1>
-              A bőröd nem trend.
-              <em>Történet.</em>
-            </h1>
+            <h1>Arckezelés Budán, egyszerre egy vendéggel.</h1>
             <p className="noma-lede">
-              Személyre szabott kezelések csendes, figyelmes térben. Kevesebb ígéret, több megértés
-              — és egy rutin, amit valóban tudsz követni.
+              Három kezelés, mindegyik más mélységben dolgozik a bőrödben. Az első alkalommal
+              megnézzük, melyikre van szükséged, és hazavihető rutint is kapsz hozzá.
             </p>
             <button className="noma-btn" onClick={() => openBooking(0)} type="button">
               Kezdjük egy konzultációval
             </button>
-            <p className="noma-rating">
-              <strong>4,9</strong>
-              <span>
-                98 vendégvélemény
-                <br />
-                Google értékelések
-              </span>
-            </p>
+            <dl className="noma-hero-facts">
+              <div>
+                <dt>Nyitva</dt>
+                <dd>kedd–szombat</dd>
+              </div>
+              <div>
+                <dt>Széll Kálmán tér</dt>
+                <dd>6 perc gyalog</dd>
+              </div>
+              <div>
+                <dt>Kezelés</dt>
+                <dd>55–90 perc</dd>
+              </div>
+            </dl>
           </div>
         </section>
 
-        {/* ── manifesztó ───────────────────────────────────────────────── */}
-        <section className="noma-manifest">
-          <p className="noma-eyebrow light">Nem ugyanazt adjuk mindenkinek</p>
-          <h2>
-            Megnézzük. Meghallgatjuk.
-            <br />
-            Aztán csak azt tesszük, amire a bőrödnek szüksége van.
-          </h2>
-        </section>
+        {/* ── melyik kezelés meddig hat (3D bőrmetszet) ─────────────────── */}
+        <SkinSection onBook={openBooking} treatments={TREATMENTS} />
 
         {/* ── kezelések ────────────────────────────────────────────────── */}
         <section className="noma-treatments" id="kezelesek">
           <div className="noma-head">
             <p className="noma-eyebrow">Kezelések</p>
-            <h2>
-              Három út.
-              <br />
-              Egy nyugodtabb bőr.
-            </h2>
+            <h2>Kezelések és árak</h2>
           </div>
           <TreatmentPicker onBook={openBooking} treatments={TREATMENTS} />
         </section>
@@ -181,10 +174,10 @@ export function NomaSite({ fontClass = "" }: { fontClass?: string }) {
         <section className="noma-studio" id="studio">
           <div className="noma-head">
             <p className="noma-eyebrow">A stúdió</p>
-            <h2>Egy lakás, nem egy rendelő.</h2>
+            <h2>Egy budai villa földszintjén.</h2>
             <p className="noma-lede">
-              Egy budai villa földszintjén, meszelt falak és nappali fény között. Egyszerre egy
-              vendég van bent — nincs várakozás és nincs átfedés.
+              Meszelt falak, nappali fény, egy kezelőszoba. Egyszerre egy vendég van bent, így
+              nincs várakozás és nincs átfedés.
             </p>
           </div>
           <div className="noma-gallery">
@@ -238,7 +231,7 @@ export function NomaSite({ fontClass = "" }: { fontClass?: string }) {
         <section className="noma-rhythm">
           <div className="noma-head">
             <p className="noma-eyebrow light">A Liget ritmusa</p>
-            <h2>90 perc, amikor nem kell sietned.</h2>
+            <h2>Így telik egy kezelés.</h2>
           </div>
           <ol className="noma-steps-list">
             {RHYTHM.map((item, index) => (
@@ -255,7 +248,7 @@ export function NomaSite({ fontClass = "" }: { fontClass?: string }) {
         <section className="noma-voices">
           <div className="noma-head center">
             <p className="noma-eyebrow">Vendégeink</p>
-            <h2>98 értékelés, 4,9 átlag.</h2>
+            <h2>Akik visszajárnak</h2>
           </div>
           <div className="noma-voice-grid">
             {VOICES.map((voice) => (
