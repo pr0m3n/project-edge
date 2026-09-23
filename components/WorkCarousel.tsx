@@ -12,8 +12,8 @@ export const WORK_CAROUSEL_ANCHOR = "munka-valaszto";
 const PARAM = "munka";
 
 export function WorkCarousel({ works }: Props) {
-  // Az első elemmel indul: az a valódi, élesben futó ügyfélmunka (Auto
-  // Aesthetik) — ugyanaz a sorrend, amivel a főoldali pakli is kezd.
+  // Az első elemmel indul (lib/works.ts sorrendje) — ugyanaz a sorrend,
+  // amivel a főoldali pakli is kezd.
   const [active, setActive] = useState(0);
   /** Visszatéréskor az első képkockán kikapcsoljuk az átmenetet, különben a
    *  kártyák az 1. munkától „végiggurulnának" a visszaállítottig. */

@@ -37,17 +37,17 @@ export type Work = {
 
 export const WORKS: Work[] = [
   {
-    id: "autoaesthetik",
-    name: "Auto Aesthetik",
-    goal: "Telefonhívás a keresőből",
-    industry: "Autóápolás · Sopron",
+    id: "leadscope",
+    name: "LeadScope.hu",
+    goal: "B2B lead generálás",
+    industry: "Értékesítés · SaaS",
     copy:
-      "Kézi autómosó a Sopron Pláza mélygarázsában. Kétnyelvű oldal, végig kéznél lévő telefonszámmal — egyetlen dolgot csinál: hívássá alakítja a keresőből érkezőt.",
-    href: "https://autoaesthetik.hu",
+      "Célzott cégkutatás, személyre szabott megkeresések és mérhető kampányok egyetlen, letisztult rendszerben — több releváns beszélgetésért.",
+    href: "https://leadscope.hu",
     external: true,
-    src: "/work/refs/autoaesthetik.webp",
-    width: 1440,
-    height: 900
+    src: "/work/refs/leadscope-cover.webp",
+    width: 1600,
+    height: 908
   },
   {
     id: "checky",
@@ -61,6 +61,19 @@ export const WORKS: Work[] = [
     src: "/work/refs/checky.webp",
     width: 1440,
     height: 814
+  },
+  {
+    id: "autoaesthetik",
+    name: "Auto Aesthetik",
+    goal: "Telefonhívás a keresőből",
+    industry: "Autóápolás · Sopron",
+    copy:
+      "Kézi autómosó a Sopron Pláza mélygarázsában. Kétnyelvű oldal, végig kéznél lévő telefonszámmal — egyetlen dolgot csinál: hívássá alakítja a keresőből érkezőt.",
+    href: "https://autoaesthetik.hu",
+    external: true,
+    src: "/work/refs/autoaesthetik.webp",
+    width: 1440,
+    height: 900
   },
   {
     id: "zamat",
@@ -113,18 +126,5 @@ export const WORKS: Work[] = [
     src: "/work/demos/veyra-het.webp",
     width: 1440,
     height: 900
-  },
-  {
-    id: "leadscope",
-    name: "LeadScope.hu",
-    goal: "B2B lead generálás",
-    industry: "Értékesítés · SaaS",
-    copy:
-      "Célzott cégkutatás, személyre szabott megkeresések és mérhető kampányok egyetlen, letisztult rendszerben — több releváns beszélgetésért.",
-    href: "https://leadscope.hu",
-    external: true,
-    src: "/work/refs/leadscope-cover.webp",
-    width: 1600,
-    height: 908
   }
 ];
