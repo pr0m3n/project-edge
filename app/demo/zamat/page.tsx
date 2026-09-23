@@ -1,36 +1,9 @@
 import Link from "next/link";
-import { BagArt } from "./BagArt";
 import { Newsletter } from "./Newsletter";
-import { ProductGrid, Stars } from "./ProductGrid";
-import { findProduct } from "./data";
-
-const usps = [
-  { title: "Heti kétszeri pörkölés", copy: "Kedd és péntek. Amit rendelsz, napokon belül készült." },
-  { title: "Ingyenes szállítás", copy: "15 000 Ft felett, országosan, 1–2 munkanap alatt." },
-  { title: "Előfizetés −15%", copy: "Válaszd ki a ritmust, mi küldjük. Bármikor szüneteltethető." },
-  { title: "Direct trade", copy: "Nyolc termelővel dolgozunk közvetlenül, tisztán fizetett áron." }
-];
-
-const reviews = [
-  {
-    name: "Bálint",
-    city: "Szeged",
-    rating: 5,
-    text: "Két éve rendelek máshonnan, de itt éreztem először, hogy tényleg számít a pörkölési dátum. A Guji egyszerűen más liga."
-  },
-  {
-    name: "Dóra",
-    city: "Budapest",
-    rating: 5,
-    text: "Az előfizetést azért szeretem, mert nem kell gondolkodnom rajta. Jön, amikor kell, és mindig friss."
-  },
-  {
-    name: "Ákos",
-    city: "Győr",
-    rating: 4,
-    text: "A Cerrado a kedvencem espressóba. Egyedül azt hiányolom, hogy a nagyobb kiszerelés néha elfogy."
-  }
-];
+import { ProductGrid } from "./ProductGrid";
+import { RoastHero } from "./RoastHero";
+import { RoastLog } from "./RoastLog";
+import { COMMODITY_PRICE, formatFt, products } from "./data";
 
 const faqs = [
   {
@@ -43,110 +16,54 @@ const faqs = [
   },
   {
     q: "Meddig friss a kávé?",
-    a: "Pörkölés után 2–4 héten belül a legjobb. Bontatlanul, hűvös helyen 3 hónapig tartja a karakterét."
+    a: "A pörkölés utáni 4–20. napon a legjobb. Bontatlanul, hűvös helyen 3 hónapig tartja a karakterét."
+  },
+  {
+    q: "Mit jelent a „kivétel” a zacskón?",
+    a: "Azt, hogy a pörkölés hányadik percében és milyen babhőmérsékletnél öntöttük ki a kávét a dobból. Minél később, annál sötétebb és testesebb."
   }
 ];
 
-export default function ZamatHome() {
-  const hero = findProduct("etiopia-guji");
-  const second = findProduct("kenya-nyeri");
+const producers = products.filter((product) => product.paid);
+const maxPaid = Math.max(...producers.map((product) => product.paid ?? 0));
 
+export default function ZamatHome() {
   return (
     <main>
-      {/* ── hero ── */}
-      <section className="zm-hero">
-        <div className="zm-hero-copy">
-          <span className="zm-eyebrow">Budapesti kis tételes pörkölő</span>
-          <h1>
-            A kávé, amit <em>megjegyzel.</em>
-          </h1>
-          <p>
-            Nyolc termelő, öt származási hely, heti kétszeri pörkölés. Nem tömegárut árulunk, hanem
-            konkrét tételeket, konkrét ízekkel — és megmondjuk, mit fogsz érezni a csészében.
-          </p>
-          <div className="zm-hero-actions">
-            <Link className="zm-btn lg" href="#kavek">
-              Kávék megnézése
-            </Link>
-            <Link className="zm-btn ghost lg" href="#elofizetes">
-              Előfizetés −15%
-            </Link>
-          </div>
-          <div className="zm-hero-meta">
-            <div>
-              <Stars value={4.9} />
-              <span>4,9 · 638 értékelés</span>
-            </div>
-            <span className="zm-hero-sep" aria-hidden="true" />
-            <span>Ingyenes szállítás 15 000 Ft felett</span>
-          </div>
-        </div>
+      <RoastHero />
 
-        <div className="zm-hero-art">
-          <span className="zm-hero-disc" aria-hidden="true" />
-          {hero && (
-            <Link className="zm-hero-bag main" href={`/demo/zamat/termek/${hero.slug}`}>
-              <BagArt product={hero} />
-            </Link>
-          )}
-          {second && (
-            <Link className="zm-hero-bag side" href={`/demo/zamat/termek/${second.slug}`}>
-              <BagArt product={second} />
-            </Link>
-          )}
-          <div className="zm-hero-tag">
-            <strong>Pörkölve</strong>
-            <span>2 napja</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── USP sáv ── */}
-      <section className="zm-usps">
-        {usps.map((u) => (
-          <div className="zm-usp" key={u.title}>
-            <strong>{u.title}</strong>
-            <span>{u.copy}</span>
-          </div>
-        ))}
-      </section>
-
-      {/* ── termékek ── */}
       <section className="zm-section" id="kavek">
         <div className="zm-section-head">
-          <span className="zm-eyebrow">A kínálat</span>
-          <h2>Aktuális tételek</h2>
+          <h2>Most kapható</h2>
           <p>
-            Minden csomagon ott a pörkölési dátum, a származási hely és a főzési ajánlás. Ha
-            bizonytalan vagy, kezdd a kóstoló csomaggal.
+            Hat tétel, mind az elmúlt két hétben pörkölve. A kivétel ideje és hőmérséklete ott van minden zacskón, ahogy a
+            termelő neve is.
           </p>
         </div>
         <ProductGrid />
       </section>
 
-      {/* ── előfizetés ── */}
       <section className="zm-subscribe" id="elofizetes">
         <div className="zm-subscribe-inner">
           <div>
-            <span className="zm-eyebrow light">Előfizetés</span>
-            <h2>Sose fogyj ki a jóból.</h2>
+            <h2>Két hetente friss zacskó, 15%-kal olcsóbban.</h2>
             <p>
-              Megmondod, milyen gyakran és milyen karaktert szeretsz — a többit ránk bízod. Minden
-              szállítmány 15%-kal olcsóbb, a szállítás ingyenes, és bármikor szüneteltetheted.
+              Megmondod, milyen sűrűn és milyen pörkölésűt kérsz, mi pedig a pörkölés napján feladjuk. A szállítás
+              ingyenes, és bármikor kihagyhatsz egy kört.
             </p>
             <ul>
               <li>2, 4 vagy 6 hetente</li>
-              <li>Meglepetés tétel vagy fix kedvenc</li>
+              <li>Fix kedvenc, vagy mindig az aktuális tétel</li>
               <li>Kihagyás és lemondás egy kattintással</li>
             </ul>
             <Link className="zm-btn light lg" href="#kavek">
-              Előfizetés indítása
+              Előfizetést indítok
             </Link>
           </div>
           <div className="zm-subscribe-card">
             <div className="zm-sub-row">
               <span>Havi csomag · 2 × 250 g</span>
-              <strong>8990 Ft</strong>
+              <strong>8 990 Ft</strong>
             </div>
             <div className="zm-sub-row muted">
               <span>Előfizetői kedvezmény</span>
@@ -158,85 +75,68 @@ export default function ZamatHome() {
             </div>
             <div className="zm-sub-row total">
               <span>Havonta</span>
-              <strong>7640 Ft</strong>
+              <strong>7 640 Ft</strong>
             </div>
-            <p className="zm-sub-note">Kötelező futamidő nincs. Bármikor szüneteltethető.</p>
+            <p className="zm-sub-note">Nincs kötelező futamidő.</p>
           </div>
         </div>
       </section>
 
-      {/* ── történet ── */}
-      <section className="zm-story" id="tortenet">
-        <div className="zm-story-copy">
-          <span className="zm-eyebrow">A pörkölő</span>
-          <h2>Egy 12 kilós dobpörkölő és nagyon sok jegyzetfüzet.</h2>
-          <p>
-            2019-ben egy garázsban kezdtük, egy használt pörkölővel és azzal a makacs meggyőződéssel,
-            hogy a jó kávéhoz nem kell misztikum — csak tiszta alapanyag és következetes munka.
-          </p>
-          <p>
-            Ma nyolc termelővel dolgozunk közvetlenül. Minden tételről leírjuk, kitől érkezett, mit
-            fizettünk érte, és hogyan pörköltük. Nem mindenki kíváncsi rá — de aki igen, annak ott
-            van.
-          </p>
-        </div>
-        <div className="zm-story-stats">
-          <div>
-            <strong>2019</strong>
-            <span>az első pörkölés</span>
-          </div>
-          <div>
-            <strong>8</strong>
-            <span>közvetlen termelő partner</span>
-          </div>
-          <div>
-            <strong>2×</strong>
-            <span>pörkölés hetente</span>
-          </div>
-          <div>
-            <strong>14 t</strong>
-            <span>kávé tavaly</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── vélemények ── */}
-      <section className="zm-section" id="velemenyek">
+      <section className="zm-section" id="termelok">
         <div className="zm-section-head">
-          <span className="zm-eyebrow">Vélemények</span>
-          <h2>Mit mondanak a vendégeink</h2>
+          <h2>Kitől vesszük, és mennyit fizetünk érte.</h2>
+          <p>
+            A zöld kávé tőzsdei ára ma nagyjából {formatFt(COMMODITY_PRICE)} kilónként. Mi közvetlenül a termelőtől
+            vásárolunk, és ennek két-háromszorosát fizetjük. Ez a különbség a csészében is érződik.
+          </p>
         </div>
-        <div className="zm-reviews">
-          {reviews.map((r) => (
-            <article className="zm-review" key={r.name}>
-              <Stars value={r.rating} />
-              <p>{r.text}</p>
-              <footer>
-                <strong>{r.name}</strong>
-                <span>{r.city}</span>
-              </footer>
-            </article>
+        <ol className="zm-producers">
+          {producers.map((product) => (
+            <li key={product.slug}>
+              <div className="zm-producer-name">
+                <strong>{product.producer}</strong>
+                <span>
+                  {product.farm} · {product.origin.split("·")[0].trim()}
+                </span>
+              </div>
+              <div className="zm-producer-bar" aria-hidden="true">
+                <span style={{ width: `${((product.paid ?? 0) / maxPaid) * 100}%` }} />
+                <i style={{ left: `${(COMMODITY_PRICE / maxPaid) * 100}%` }} />
+              </div>
+              <div className="zm-producer-price">
+                <strong>{formatFt(product.paid ?? 0)}/kg</strong>
+                <span>{((product.paid ?? 0) / COMMODITY_PRICE).toFixed(1).replace(".", ",")}× tőzsdei ár</span>
+              </div>
+            </li>
           ))}
-        </div>
+        </ol>
+        <p className="zm-producers-note">
+          A függőleges vonal a tőzsdei ár. Kapcsolatban vagyunk minden termelővel, és évente legalább egyiküket
+          meglátogatjuk.
+        </p>
       </section>
 
-      {/* ── GYIK + hírlevél ── */}
+      <section className="zm-section zm-log-section" id="naplo">
+        <div className="zm-section-head">
+          <h2>Pörkölési napló</h2>
+          <p>Az utolsó három pörkölési nap, adagonként. Ha egy tétel elfogy, a következő keddig várni kell rá.</p>
+        </div>
+        <RoastLog />
+      </section>
+
       <section className="zm-bottom" id="gyik">
         <div className="zm-faq">
           <h2>Gyakori kérdések</h2>
-          {faqs.map((f) => (
-            <details key={f.q}>
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
+          {faqs.map((faq) => (
+            <details key={faq.q}>
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
             </details>
           ))}
         </div>
         <div className="zm-newsletter">
-          <h2>10% az első rendelésre</h2>
-          <p>
-            Iratkozz fel, és szólunk, ha új tétel érkezik. Havonta legfeljebb kétszer írunk, spam
-            nélkül.
-          </p>
+          <h2>Szólunk, ha új tétel jön.</h2>
+          <p>Havonta legfeljebb kétszer írunk. Az első rendelésből 10% jár érte.</p>
           <Newsletter />
         </div>
       </section>

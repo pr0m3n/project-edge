@@ -17,7 +17,17 @@ export type Product = {
   /* az ajándékcsomagnál nincs értelme kiszerelést és őrlést választani */
   variants?: boolean;
   palette: { body: string; fold: string; label: string; accent: string };
+  /** A pörkölés melyik percében vesszük ki a dobból (lásd roast.ts). */
+  drop?: number;
+  lot: string;
+  /** Kitől vesszük, és mennyit fizettünk a zöld kávéért (Ft/kg). */
+  producer: string;
+  farm: string;
+  paid?: number;
 };
+
+/** Tőzsdei (C-ár) referencia zöld kávéra, Ft/kg — ehhez képest mutatjuk, mit fizetünk. */
+export const COMMODITY_PRICE = 3050;
 
 export const FREE_SHIPPING_LIMIT = 15000;
 
@@ -50,6 +60,11 @@ export const products: Product[] = [
     short: "Virágos, teás filterkávé — a legtisztább etióp profil, amit idén találtunk.",
     long: "Ez a tétel a Guji régió magasan fekvő teraszairól érkezik, ahol a lassú érés miatt a szemek sűrűbbek és aromásabbak. Kézzel szedett, mosott feldolgozású kávé, amit kifejezetten világosra pörkölünk, hogy a bergamottos-jázminos jelleg ne égjen ki belőle.",
     brew: ["V60", "Aeropress", "Chemex"],
+    drop: 8.7,
+    lot: "ET-24-117",
+    producer: "Tesfaye Bekele",
+    farm: "Hambela Wamena feldolgozó",
+    paid: 7900,
     palette: { body: "#c8543a", fold: "#a33f2b", label: "#f7efe3", accent: "#8f2f1f" }
   },
   {
@@ -66,6 +81,11 @@ export const products: Product[] = [
     short: "A mindennapi kedvenc: kerek, karamelles, tejjel is működik.",
     long: "Ha egyetlen kávét vinnél magaddal, valószínűleg ez lenne az. Kiegyensúlyozott savtartalom, vastag test és tiszta karamell-édesség. Filterben gyümölcsösebb, espressóban csokoládésabb arcát mutatja.",
     brew: ["Espresso", "V60", "Moka"],
+    drop: 10,
+    lot: "CO-24-092",
+    producer: "Ordoñez család",
+    farm: "Finca El Mirador",
+    paid: 6300,
     palette: { body: "#c9922f", fold: "#a5751f", label: "#fdf6e7", accent: "#8a6013" }
   },
   {
@@ -84,6 +104,11 @@ export const products: Product[] = [
     short: "Sűrű, csokoládés espresso alap, amiből gyönyörű crema lesz.",
     long: "A klasszikus olaszos élményhez tervezve, de modern pörköléssel: sötét, mégsem kesernyés. Tejes italokban átüt a diós-csokoládés karakter, magában sűrű és hosszan tartó.",
     brew: ["Espresso", "Moka", "French press"],
+    drop: 11.95,
+    lot: "BR-24-140",
+    producer: "Silva család",
+    farm: "Fazenda Santa Inês",
+    paid: 5200,
     palette: { body: "#4a3226", fold: "#33211a", label: "#efe3d2", accent: "#241611" }
   },
   {
@@ -101,6 +126,11 @@ export const products: Product[] = [
     short: "Robbanó gyümölcsösség azoknak, akik szeretik, ha egy kávé emlékezetes.",
     long: "A kenyai AA szemméret és a kettős fermentáció adja azt az intenzív fekete ribizlis savat, amiről ez a származási hely híres. Nem szelíd kávé — de ha egyszer eltaláltad a receptet, nehéz visszatérni bármi máshoz.",
     brew: ["V60", "Chemex", "Aeropress"],
+    drop: 8.9,
+    lot: "KE-24-061",
+    producer: "Gatomboya szövetkezet",
+    farm: "Karatina feldolgozó",
+    paid: 9400,
     palette: { body: "#2f5d50", fold: "#1f463c", label: "#f0f5f0", accent: "#153229" }
   },
   {
@@ -117,6 +147,11 @@ export const products: Product[] = [
     short: "Vulkanikus talaj, kakaós mélység, finom narancsos csillanással.",
     long: "Az Antigua völgy vulkanikus talaja mineralitást és sűrű testet ad. Közepes pörköléssel a kakaós alap mellé narancshéjas frissesség kerül — az a fajta kávé, amit a vendégeid megjegyeznek.",
     brew: ["Espresso", "V60", "Moka"],
+    drop: 9.8,
+    lot: "GT-24-085",
+    producer: "Zelaya család",
+    farm: "Finca La Soledad",
+    paid: 6800,
     palette: { body: "#7a4b8c", fold: "#5d3670", label: "#f6eefa", accent: "#452553" }
   },
   {
@@ -135,6 +170,9 @@ export const products: Product[] = [
     long: "Négy különböző származási hely, egyenként 100 grammban, kóstolási jegyzettel és brew guide-dal. Ajándéknak is tökéletes: díszdobozban, saját üzenettel küldjük.",
     brew: ["Bármelyik"],
     variants: false,
+    lot: "MIX-24",
+    producer: "Négy termelő",
+    farm: "a fenti tételekből",
     palette: { body: "#25406b", fold: "#182c4c", label: "#eef2f8", accent: "#101f38" }
   }
 ];

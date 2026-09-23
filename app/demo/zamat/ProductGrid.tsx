@@ -5,12 +5,17 @@ import { useMemo, useState } from "react";
 import { BagArt } from "./BagArt";
 import { useCart } from "./CartContext";
 import { formatFt, products } from "./data";
+import { beanColor, beanTemp, formatMinute, formatTemp, toHex } from "./roast";
+
+/** A szűrőgomb mellett a bab valódi színe az adott pörkölési fokon. */
+const FILTER_SWATCH: Record<string, number | undefined> = { Világos: 8.7, Közepes: 10, Sötét: 11.95 };
 
 const filters = ["Mind", "Világos", "Közepes", "Sötét"] as const;
 const sorts = [
   { id: "ajanlott", label: "Ajánlott" },
   { id: "olcso", label: "Ár szerint növekvő" },
   { id: "draga", label: "Ár szerint csökkenő" },
+  { id: "porkoles", label: "Világostól a sötétig" },
   { id: "ertekeles", label: "Legjobb értékelés" }
 ];
 
@@ -37,6 +42,7 @@ export function ProductGrid() {
     if (sort === "olcso") sorted.sort((a, b) => a.price - b.price);
     if (sort === "draga") sorted.sort((a, b) => b.price - a.price);
     if (sort === "ertekeles") sorted.sort((a, b) => b.rating - a.rating);
+    if (sort === "porkoles") sorted.sort((a, b) => (a.drop ?? 99) - (b.drop ?? 99));
     return sorted;
   }, [filter, sort]);
 
@@ -51,6 +57,7 @@ export function ProductGrid() {
               onClick={() => setFilter(f)}
               type="button"
             >
+              {FILTER_SWATCH[f] && <i aria-hidden="true" style={{ background: toHex(beanColor(FILTER_SWATCH[f] ?? 0)) }} />}
               {f}
             </button>
           ))}
@@ -86,6 +93,12 @@ export function ProductGrid() {
                   <span>({p.reviews})</span>
                 </div>
                 <p>{p.short}</p>
+                {p.drop && (
+                  <p className="zm-product-drop">
+                    <i aria-hidden="true" style={{ background: toHex(beanColor(p.drop)) }} />
+                    Kivétel {formatMinute(p.drop)} · {formatTemp(beanTemp(p.drop))} · {p.producer}
+                  </p>
+                )}
                 <div className="zm-notes">
                   {p.notes.map((n) => (
                     <span key={n}>{n}</span>

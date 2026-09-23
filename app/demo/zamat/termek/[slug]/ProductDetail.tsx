@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BagArt } from "../../BagArt";
+import { BagViewer } from "../../BagViewer";
 import { useCart } from "../../CartContext";
 import { Stars } from "../../ProductGrid";
 import { type Product, formatFt, grinds, products, sizes } from "../../data";
+import { beanColor, beanTemp, formatMinute, formatTemp, toHex } from "../../roast";
 
 export function ProductDetail({ product }: { product: Product }) {
   const { add } = useCart();
@@ -29,9 +31,9 @@ export function ProductDetail({ product }: { product: Product }) {
       </nav>
 
       <div className="zm-detail-top">
-        <div className="zm-detail-art" style={{ background: `${product.palette.label}` }}>
+        <div className="zm-detail-art">
           {product.badge && <span className="zm-badge">{product.badge}</span>}
-          <BagArt product={product} />
+          <BagViewer product={product} />
           <div className="zm-detail-notes">
             {product.notes.map((n) => (
               <span key={n}>{n}</span>
@@ -65,7 +67,21 @@ export function ProductDetail({ product }: { product: Product }) {
                 <strong>{product.altitude}</strong>
               </div>
             )}
+            {product.drop && (
+              <div>
+                <span>Kivétel</span>
+                <strong className="zm-spec-drop">
+                  <i aria-hidden="true" style={{ background: toHex(beanColor(product.drop)) }} />
+                  {formatMinute(product.drop)} · {formatTemp(beanTemp(product.drop))}
+                </strong>
+              </div>
+            )}
           </div>
+
+          <p className="zm-detail-producer">
+            {product.producer}, {product.farm} · tétel {product.lot}
+            {product.paid ? ` · a zöld kávéért ${formatFt(product.paid)}/kg-ot fizettünk` : ""}
+          </p>
 
           {hasVariants && (
             <>

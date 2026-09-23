@@ -4,20 +4,25 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 .zm-root {
-  --cream: #faf5ee;
-  --paper: #fffdfa;
-  --espresso: #241708;
-  --ink: #3b2a1a;
-  --muted: #8c7660;
-  --line: rgba(59, 42, 26, 0.13);
-  --line-soft: rgba(59, 42, 26, 0.07);
-  --terra: #c0553a;
-  --terra-dark: #a1442d;
-  --gold: #b9862f;
+  /* Pörkölde: semleges meleg szürke papír (nem krém), koromfekete, és egyetlen
+     jelzőszín — a dob lángjának vöröse. A régi tokennevek megmaradtak, hogy a
+     kosár, a termékoldal és a lábléc szabályai változtatás nélkül átvegyék. */
+  --cream: #ece8e1;
+  --paper: #f6f3ee;
+  --espresso: #17120e;
+  --ink: #2a221c;
+  --muted: #6f655c;
+  --line: rgba(23, 18, 14, 0.14);
+  --line-soft: rgba(23, 18, 14, 0.07);
+  --terra: #d9442a;
+  --terra-dark: #b8361f;
+  --gold: #c58a2e;
   --green: #4b7a52;
+  --char: #140f0b;
 
-  --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --sans: var(--zm-sans), ui-sans-serif, system-ui, sans-serif;
+  --serif: var(--zm-display), Impact, sans-serif;
+  --mono: var(--zm-mono), ui-monospace, monospace;
 
   background: var(--cream);
   color: var(--ink);
@@ -32,9 +37,9 @@
 .zm-root h3 {
   color: var(--espresso);
   font-family: var(--serif);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.95;
   margin: 0;
 }
 
@@ -43,8 +48,7 @@
 }
 
 .zm-root em {
-  color: var(--terra);
-  font-style: italic;
+  font-style: normal;
 }
 
 .zm-root ::selection {
@@ -55,10 +59,10 @@
 .zm-eyebrow {
   color: var(--terra);
   display: inline-block;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.2em;
-  margin-bottom: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
   text-transform: uppercase;
 }
 
@@ -72,7 +76,7 @@
   align-items: center;
   background: var(--espresso);
   border: 1px solid var(--espresso);
-  border-radius: 999px;
+  border-radius: 3px;
   color: var(--cream);
   display: inline-flex;
   font-family: var(--sans);
@@ -170,7 +174,7 @@
 }
 
 .zm-header {
-  background: rgba(250, 245, 238, 0.9);
+  background: rgba(236, 232, 225, 0.92);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   position: sticky;
@@ -356,7 +360,9 @@
   background: var(--paper);
   bottom: 0;
   top: var(--demo-bar-h, 0px);
-  box-shadow: -20px 0 60px rgba(36, 23, 8, 0.22);
+  /* Az árnyék csak nyitva: zárva a képernyőn kívül áll, de a 60px-es
+     elmosás így is belógott a jobb szélen, minden oldalon. */
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   max-width: 92vw;
@@ -369,6 +375,7 @@
 }
 
 .zm-drawer.is-open {
+  box-shadow: -20px 0 60px rgba(23, 18, 14, 0.24);
   transform: none;
 }
 
@@ -421,14 +428,14 @@
 
 .zm-ship-track {
   background: rgba(59, 42, 26, 0.12);
-  border-radius: 999px;
+  border-radius: 3px;
   height: 5px;
   overflow: hidden;
 }
 
 .zm-ship-track span {
   background: linear-gradient(90deg, var(--gold), var(--terra));
-  border-radius: 999px;
+  border-radius: 3px;
   display: block;
   height: 100%;
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -454,7 +461,7 @@
 .zm-empty-art {
   background: rgba(59, 42, 26, 0.06);
   border: 2px dashed var(--line);
-  border-radius: 16px;
+  border-radius: 3px;
   display: block;
   height: 74px;
   width: 60px;
@@ -476,7 +483,7 @@
 .zm-line-art {
   align-items: center;
   background: var(--cream);
-  border-radius: 10px;
+  border-radius: 3px;
   display: flex;
   flex: none;
   height: 76px;
@@ -505,7 +512,7 @@
 .zm-stepper {
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 3px;
   display: inline-flex;
   overflow: hidden;
 }
@@ -603,7 +610,7 @@
 
 .zm-checkout-note {
   background: rgba(185, 134, 47, 0.12);
-  border-radius: 10px;
+  border-radius: 3px;
   color: var(--ink);
   font-size: 12px;
   line-height: 1.55;
@@ -614,167 +621,6 @@
   color: var(--muted);
   font-size: 11.5px;
   text-align: center;
-}
-
-/* ── hero ── */
-
-.zm-hero {
-  align-items: center;
-  display: grid;
-  gap: clamp(32px, 5vw, 56px);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
-  margin: 0 auto;
-  max-width: 1220px;
-  padding: clamp(44px, 7vw, 84px) clamp(16px, 4vw, 32px);
-}
-
-.zm-hero-copy h1 {
-  font-size: clamp(44px, 6.6vw, 82px);
-  line-height: 0.98;
-}
-
-.zm-hero-copy > p {
-  color: var(--muted);
-  font-size: clamp(15.5px, 1.5vw, 17.5px);
-  line-height: 1.65;
-  margin-top: 22px;
-  max-width: 46ch;
-}
-
-.zm-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 30px;
-}
-
-.zm-hero-meta {
-  align-items: center;
-  color: var(--muted);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: 13px;
-  gap: 14px;
-  margin-top: 28px;
-}
-
-.zm-hero-meta > div {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-}
-
-.zm-hero-sep {
-  background: var(--line);
-  height: 14px;
-  width: 1px;
-}
-
-.zm-hero-art {
-  aspect-ratio: 1 / 0.94;
-  position: relative;
-}
-
-.zm-hero-disc {
-  background: radial-gradient(circle at 40% 35%, #f0e2cf, #e4d1b6);
-  border-radius: 50%;
-  inset: 6% 4%;
-  position: absolute;
-}
-
-.zm-hero-bag {
-  display: block;
-  position: absolute;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.zm-hero-bag.main {
-  filter: drop-shadow(0 26px 40px rgba(59, 42, 26, 0.28));
-  left: 14%;
-  top: 6%;
-  width: 50%;
-  z-index: 2;
-}
-
-.zm-hero-bag.side {
-  bottom: 8%;
-  filter: drop-shadow(0 20px 30px rgba(59, 42, 26, 0.22));
-  right: 6%;
-  transform: rotate(6deg);
-  width: 34%;
-  z-index: 1;
-}
-
-.zm-hero-bag.main:hover {
-  transform: translateY(-10px);
-}
-
-.zm-hero-bag.side:hover {
-  transform: rotate(6deg) translateY(-8px);
-}
-
-.zm-hero-bag svg {
-  height: auto;
-  width: 100%;
-}
-
-.zm-hero-tag {
-  background: var(--paper);
-  border-radius: 14px;
-  box-shadow: 0 14px 34px rgba(59, 42, 26, 0.15);
-  left: 0;
-  padding: 11px 16px;
-  position: absolute;
-  top: 14%;
-  z-index: 3;
-}
-
-.zm-hero-tag strong {
-  color: var(--muted);
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.zm-hero-tag span {
-  color: var(--espresso);
-  font-family: var(--serif);
-  font-size: 17px;
-}
-
-/* ── USP sáv ── */
-
-.zm-usps {
-  border-block: 1px solid var(--line);
-  display: grid;
-  gap: 0;
-  grid-template-columns: repeat(4, 1fr);
-  margin: 0 auto;
-  max-width: 1220px;
-}
-
-.zm-usp {
-  border-left: 1px solid var(--line);
-  padding: 26px clamp(16px, 2.4vw, 28px);
-}
-
-.zm-usp:first-child {
-  border-left: 0;
-}
-
-.zm-usp strong {
-  display: block;
-  font-size: 14.5px;
-  font-weight: 640;
-  margin-bottom: 7px;
-}
-
-.zm-usp span {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
 }
 
 /* ── szekciók ── */
@@ -823,7 +669,7 @@
 .zm-filters button {
   background: none;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 3px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 550;
@@ -853,7 +699,7 @@
 .zm-sort select {
   background: transparent;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 3px;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 13px;
@@ -871,7 +717,7 @@
 .zm-product {
   background: var(--paper);
   border: 1px solid var(--line-soft);
-  border-radius: 18px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -905,7 +751,7 @@
 
 .zm-badge {
   background: var(--terra);
-  border-radius: 999px;
+  border-radius: 3px;
   color: #fff;
   font-size: 10.5px;
   font-weight: 700;
@@ -982,7 +828,7 @@
 
 .zm-notes span {
   background: rgba(185, 134, 47, 0.11);
-  border-radius: 999px;
+  border-radius: 3px;
   color: #8a6420;
   font-size: 11.5px;
   padding: 4px 10px;
@@ -1075,7 +921,7 @@
 .zm-subscribe-card {
   background: rgba(250, 245, 238, 0.07);
   border: 1px solid rgba(250, 245, 238, 0.16);
-  border-radius: 18px;
+  border-radius: 3px;
   display: grid;
   gap: 12px;
   padding: 28px;
@@ -1114,100 +960,6 @@
   color: rgba(250, 245, 238, 0.5);
   font-size: 12px !important;
   margin-top: 4px !important;
-}
-
-/* ── történet ── */
-
-.zm-story {
-  align-items: center;
-  display: grid;
-  gap: clamp(30px, 5vw, 64px);
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.9fr);
-  margin: 0 auto;
-  max-width: 1220px;
-  padding: clamp(52px, 7vw, 92px) clamp(16px, 4vw, 32px);
-}
-
-.zm-story-copy h2 {
-  font-size: clamp(28px, 3.6vw, 42px);
-}
-
-.zm-story-copy p {
-  color: var(--muted);
-  font-size: 15.5px;
-  line-height: 1.7;
-  margin-top: 18px;
-}
-
-.zm-story-stats {
-  display: grid;
-  gap: 1px;
-  grid-template-columns: repeat(2, 1fr);
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.zm-story-stats > div {
-  background: var(--cream);
-  padding: 30px 24px;
-  text-align: center;
-}
-
-.zm-story-stats strong {
-  color: var(--terra);
-  display: block;
-  font-family: var(--serif);
-  font-size: 38px;
-  line-height: 1;
-}
-
-.zm-story-stats span {
-  color: var(--muted);
-  display: block;
-  font-size: 12.5px;
-  margin-top: 9px;
-}
-
-/* ── vélemények ── */
-
-.zm-reviews {
-  display: grid;
-  gap: 22px;
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.zm-review {
-  background: var(--paper);
-  border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 28px;
-}
-
-.zm-review p {
-  color: var(--ink);
-  font-family: var(--serif);
-  font-size: 17px;
-  line-height: 1.55;
-}
-
-.zm-review footer {
-  border-top: 1px solid var(--line-soft);
-  color: var(--muted);
-  display: flex;
-  font-size: 13px;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 14px;
-}
-
-.zm-review footer strong {
-  color: var(--espresso);
-  font-weight: 620;
 }
 
 /* ── GYIK + hírlevél ── */
@@ -1272,7 +1024,7 @@
 .zm-newsletter {
   background: var(--paper);
   border: 1px solid var(--line-soft);
-  border-radius: 20px;
+  border-radius: 3px;
   padding: 32px;
 }
 
@@ -1292,7 +1044,7 @@
 .zm-newsletter-form input {
   background: var(--cream);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 3px;
   flex: 1;
   font-family: var(--sans);
   font-size: 14px;
@@ -1307,7 +1059,7 @@
 
 .zm-newsletter-done {
   background: rgba(75, 122, 82, 0.12);
-  border-radius: 12px;
+  border-radius: 3px;
   color: var(--green);
   font-size: 14px;
   padding: 14px 16px;
@@ -1343,7 +1095,7 @@
 
 .zm-detail-art {
   align-items: center;
-  border-radius: 22px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1367,7 +1119,7 @@
 
 .zm-detail-notes span {
   background: rgba(255, 255, 255, 0.66);
-  border-radius: 999px;
+  border-radius: 3px;
   color: var(--espresso);
   font-size: 12.5px;
   padding: 6px 14px;
@@ -1378,7 +1130,7 @@
   margin-top: 8px;
 }
 
-.zm-detail-lead {
+.zm-root .zm-detail-lead {
   color: var(--muted);
   font-size: 16px;
   line-height: 1.65;
@@ -1432,7 +1184,7 @@
 .zm-option-row button {
   background: none;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 3px;
   color: var(--ink);
   font-size: 13.5px;
   font-weight: 550;
@@ -1534,7 +1286,7 @@
   align-items: center;
   background: var(--paper);
   border: 1px solid var(--line-soft);
-  border-radius: 16px;
+  border-radius: 3px;
   display: flex;
   gap: 16px;
   padding: 18px;
@@ -1659,7 +1411,7 @@
   .zm-nav {
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 3px;
     box-shadow: 0 20px 40px rgba(59, 42, 26, 0.12);
     display: none;
     flex-direction: column;
@@ -1694,9 +1446,7 @@
   /* `minmax(0, 1fr)` és nem `1fr`: az utóbbinál a rácselem min-content mérete
      (a hírlevél-űrlap inputja + a nem törhető gombja) kifeszítette az oszlopot,
      és a GYIK + hírlevél blokk kilógott a képernyőről telefonon. */
-  .zm-hero,
   .zm-subscribe-inner,
-  .zm-story,
   .zm-bottom,
   .zm-detail-top,
   .zm-footer-top {
@@ -1704,27 +1454,8 @@
   }
 
   .zm-grid,
-  .zm-reviews,
   .zm-related {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .zm-usps {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .zm-usp:nth-child(3) {
-    border-left: 0;
-  }
-
-  .zm-usp:nth-child(n + 3) {
-    border-top: 1px solid var(--line);
-  }
-
-  .zm-hero-art {
-    max-width: 460px;
-    order: -1;
-    width: 100%;
   }
 }
 
@@ -1735,21 +1466,9 @@
   }
 
   .zm-grid,
-  .zm-reviews,
   .zm-related,
-  .zm-usps,
-  .zm-story-stats,
   .zm-spec-row {
     grid-template-columns: 1fr;
-  }
-
-  .zm-usp {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .zm-usp:first-child {
-    border-top: 0;
   }
 
   .zm-hero-actions .zm-btn {
@@ -1778,5 +1497,731 @@
   .zm-newsletter-form input,
   .zm-newsletter-form .zm-btn {
     flex: 1 1 100%;
+  }
+}
+
+/* ════ 2026-09 újratervezés: pörkölés görgetésre, 3D zacskó ═══════════════ */
+
+.zm-root .zm-kicker {
+  color: var(--terra);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  margin: 0 0 22px;
+  text-transform: uppercase;
+}
+
+.zm-btn.ghost-light {
+  background: transparent;
+  border-color: rgba(241, 235, 226, 0.5);
+  color: #f1ebe2;
+}
+
+.zm-btn.ghost-light:hover {
+  background: #f1ebe2;
+  color: var(--espresso);
+}
+
+.zm-section-head h2 {
+  font-size: clamp(40px, 5.4vw, 76px);
+  text-transform: uppercase;
+}
+
+.zm-section-head > p {
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+/* ── pörkölés (hero) ── */
+
+.zm-roast {
+  background: var(--char);
+  height: 600vh;
+  position: relative;
+}
+
+.zm-roast-stage {
+  background: var(--char);
+  color: #f1ebe2;
+  height: calc(100svh - var(--demo-bar-h, 0px));
+  overflow: hidden;
+  position: sticky;
+  top: var(--demo-bar-h, 0px);
+}
+
+.zm-roast-canvas {
+  display: block;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.9s ease;
+  width: 100%;
+}
+
+.zm-roast-canvas.is-ready {
+  opacity: 1;
+}
+
+.zm-roast-stage::before {
+  /* a babok ne keveredjenek a szöveg alá: bal oldalt a háttérbe sötétül */
+  background: linear-gradient(90deg, rgba(20, 15, 11, 0.92) 0%, rgba(20, 15, 11, 0.7) 30%, rgba(20, 15, 11, 0) 52%);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.zm-roast-copy,
+.zm-chart,
+.zm-scroll-hint {
+  z-index: 2;
+}
+
+.zm-roast-copy {
+  left: clamp(20px, 5vw, 76px);
+  position: absolute;
+  top: clamp(104px, 15vh, 150px);
+  width: min(540px, 40vw);
+}
+
+.zm-roast-step {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  width: 100%;
+}
+
+.zm-roast-step.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.zm-roast .zm-roast-step h1,
+.zm-roast .zm-roast-step h2 {
+  color: #f6f0e6;
+  text-transform: uppercase;
+}
+
+.zm-roast .zm-roast-step h1 {
+  font-size: clamp(48px, 5.3vw, 86px);
+}
+
+.zm-roast .zm-roast-step h2 {
+  font-size: clamp(40px, 4.4vw, 68px);
+}
+
+.zm-roast-step > p:not(.zm-kicker) {
+  color: #cdbfb1;
+  font-size: 17px;
+  line-height: 1.6;
+  margin-top: 18px;
+  max-width: 44ch;
+}
+
+.zm-roast .zm-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.zm-roast .zm-btn:not(.ghost-light):not(.is-added) {
+  background: var(--terra);
+  border-color: var(--terra);
+  color: #fff;
+}
+
+.zm-roast .zm-btn:not(.ghost-light):not(.is-added):hover {
+  background: #f1ebe2;
+  border-color: #f1ebe2;
+  color: var(--espresso);
+}
+
+/* „Itt vesszük ki" kártya */
+.zm-drop {
+  align-items: stretch;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 244, 230, 0.07);
+  border: 1px solid rgba(255, 244, 230, 0.16);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  margin-top: 24px;
+  max-width: 470px;
+  padding: 12px 12px 12px 0;
+}
+
+.zm-drop-swatch {
+  display: block;
+}
+
+.zm-drop-body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.zm-drop-body small {
+  color: #e7a489;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.zm-drop-body a {
+  color: #f6f0e6;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.zm-drop-body a:hover {
+  color: #ffb49c;
+}
+
+.zm-drop-body span {
+  color: #b9ab9d;
+  font-size: 14px;
+}
+
+.zm-drop .zm-btn {
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* pörkölési görbe + mérőértékek */
+.zm-chart {
+  backdrop-filter: blur(10px);
+  background: rgba(20, 15, 11, 0.72);
+  border: 1px solid rgba(255, 244, 230, 0.14);
+  bottom: 22px;
+  margin: 0;
+  padding: 12px 14px 8px;
+  position: absolute;
+  right: clamp(20px, 5vw, 76px);
+  width: min(430px, 36vw);
+}
+
+.zm-readouts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  margin: 0 0 6px;
+}
+
+.zm-readouts div {
+  display: grid;
+  gap: 1px;
+}
+
+.zm-readouts dt {
+  color: #9d8f82;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.zm-readouts dd {
+  color: #f6f0e6;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  margin: 0;
+  min-width: 5.6ch;
+  white-space: nowrap;
+}
+
+.zm-readouts .is-phase dd {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zm-readouts .is-phase i {
+  border: 1px solid rgba(255, 244, 230, 0.4);
+  display: inline-block;
+  flex: none;
+  height: 12px;
+  width: 12px;
+}
+
+.zm-chart svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+  width: 100%;
+}
+
+.zm-chart-grid {
+  stroke: rgba(255, 244, 230, 0.09);
+  stroke-width: 1;
+}
+
+.zm-chart-mark {
+  stroke: rgba(255, 244, 230, 0.18);
+  stroke-dasharray: 2 3;
+}
+
+.zm-chart-axis,
+.zm-chart-label {
+  fill: #8c7f73;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.zm-chart-label {
+  fill: #a89a8c;
+}
+
+.zm-chart-curve {
+  fill: none;
+  stroke: var(--terra);
+  stroke-linecap: round;
+  stroke-width: 2.4;
+}
+
+.zm-chart-curve.is-ghost {
+  stroke: rgba(255, 244, 230, 0.16);
+  stroke-width: 1.4;
+}
+
+.zm-chart-drop {
+  fill: var(--char);
+  stroke: #f1ebe2;
+  stroke-width: 1.4;
+}
+
+.zm-chart-dot {
+  fill: #fff;
+  stroke: var(--terra);
+  stroke-width: 3;
+}
+
+.zm-scroll-hint {
+  bottom: 30px;
+  color: #cdbfb1;
+  font-family: var(--mono);
+  font-size: 12px;
+  left: clamp(20px, 5vw, 76px);
+  position: absolute;
+  text-transform: uppercase;
+}
+
+.zm-scroll-hint::after {
+  animation: zm-hint 1.8s ease-in-out infinite;
+  background: currentColor;
+  content: "";
+  display: block;
+  height: 1px;
+  margin-top: 8px;
+  transform-origin: left;
+}
+
+@keyframes zm-hint {
+  0% { transform: scaleX(0); }
+  60% { transform: scaleX(1); }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* csökkentett mozgás: álló kép, a szöveg alatta */
+.zm-roast.is-still {
+  height: auto;
+}
+
+.zm-roast.is-still .zm-roast-stage {
+  height: min(80vh, 760px);
+  position: relative;
+  top: 0;
+}
+
+.zm-roast-static {
+  color: #f1ebe2;
+  display: grid;
+  gap: 40px 56px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1220px;
+  padding: 64px clamp(20px, 5vw, 32px) 80px;
+}
+
+.zm-roast-static .zm-roast-step {
+  opacity: 1;
+  pointer-events: auto;
+  position: static;
+  transform: none;
+}
+
+/* ── terméklista kiegészítések ── */
+
+.zm-filters button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.zm-filters button i {
+  border: 1px solid rgba(23, 18, 14, 0.2);
+  display: inline-block;
+  height: 11px;
+  width: 11px;
+}
+
+.zm-product-art {
+  background: #e3ded6;
+}
+
+.zm-product-body h3 {
+  font-size: 30px;
+  text-transform: uppercase;
+}
+
+.zm-root .zm-product-drop {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 12px;
+  gap: 8px;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+
+.zm-product-drop i {
+  flex: none;
+  height: 10px;
+  width: 10px;
+}
+
+/* ── előfizetés ── */
+
+.zm-subscribe {
+  background: var(--char);
+}
+
+.zm-subscribe h2 {
+  font-size: clamp(40px, 4.6vw, 68px);
+  text-transform: uppercase;
+}
+
+/* ── termelők ── */
+
+.zm-producers {
+  border-top: 1px solid var(--espresso);
+  list-style: none;
+  margin: 36px 0 0;
+  padding: 0;
+}
+
+.zm-producers li {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px 32px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) 170px;
+  padding: 18px 0;
+}
+
+.zm-producer-name strong {
+  color: var(--espresso);
+  display: block;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.zm-producer-name span {
+  color: var(--muted);
+  display: block;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.zm-producer-bar {
+  background: rgba(23, 18, 14, 0.07);
+  height: 12px;
+  position: relative;
+}
+
+.zm-producer-bar span {
+  background: var(--espresso);
+  display: block;
+  height: 100%;
+}
+
+.zm-producer-bar i {
+  background: var(--terra);
+  bottom: -6px;
+  position: absolute;
+  top: -6px;
+  width: 2px;
+}
+
+.zm-producer-price {
+  text-align: right;
+}
+
+.zm-producer-price strong {
+  color: var(--espresso);
+  display: block;
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.zm-producer-price span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.zm-root .zm-producers-note {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 14px;
+}
+
+/* ── pörkölési napló ── */
+
+.zm-log-wrap {
+  margin-top: 36px;
+  overflow-x: auto;
+}
+
+.zm-log {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 14px;
+  min-width: 760px;
+  width: 100%;
+}
+
+.zm-log th {
+  border-bottom: 1px solid var(--espresso);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 12px 10px 0;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.zm-log td {
+  border-bottom: 1px solid var(--line);
+  color: var(--espresso);
+  padding: 13px 12px 13px 0;
+  white-space: nowrap;
+}
+
+.zm-log td a {
+  font-family: var(--sans);
+  font-weight: 600;
+}
+
+.zm-log td a:hover {
+  color: var(--terra);
+}
+
+.zm-log tr.is-out td {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(23, 18, 14, 0.3);
+}
+
+/* ── termékoldal: 3D zacskó ── */
+
+.zm-detail-art {
+  background: #e3ded6;
+  border-radius: 3px;
+  min-height: 0;
+  padding: 28px 20px 36px;
+}
+
+.zm-bag-viewer {
+  height: min(520px, 90vw);
+  position: relative;
+  width: 100%;
+}
+
+.zm-bag-viewer canvas {
+  cursor: grab;
+  display: block;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  touch-action: pan-y;
+  transition: opacity 0.6s ease;
+  width: 100%;
+}
+
+.zm-bag-viewer canvas:active {
+  cursor: grabbing;
+}
+
+.zm-bag-fallback {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  transition: opacity 0.6s ease;
+}
+
+.zm-bag-fallback .zm-bag {
+  height: 88%;
+  width: auto;
+}
+
+.zm-bag-viewer.is-ready canvas {
+  opacity: 1;
+}
+
+.zm-bag-viewer.is-ready .zm-bag-fallback {
+  opacity: 0;
+}
+
+.zm-bag-hint {
+  bottom: 4px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.zm-detail-buy h1 {
+  font-size: clamp(48px, 5.6vw, 84px);
+  text-transform: uppercase;
+}
+
+.zm-root .zm-detail-lead {
+  margin-top: 14px;
+}
+
+.zm-spec-row .zm-spec-drop {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.zm-spec-drop i {
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+}
+
+.zm-root .zm-detail-producer {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 26px;
+}
+
+/* ── töréspontok ── */
+
+@media (max-width: 1000px) {
+  .zm-producers li {
+    grid-template-columns: minmax(0, 1fr) 150px;
+  }
+
+  .zm-producer-bar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 860px) {
+  .zm-roast-copy {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    top: auto;
+    width: auto;
+  }
+
+  .zm-roast-step {
+    backdrop-filter: blur(10px);
+    background: rgba(20, 15, 11, 0.78);
+    border: 1px solid rgba(255, 244, 230, 0.14);
+    bottom: 0;
+    padding: 18px;
+    top: auto;
+  }
+
+  .zm-roast .zm-roast-step h1 {
+    font-size: clamp(40px, 11vw, 56px);
+  }
+
+  .zm-roast .zm-roast-step h2 {
+    font-size: 34px;
+  }
+
+  .zm-roast-step > p:not(.zm-kicker) {
+    font-size: 15px;
+    margin-top: 10px;
+  }
+
+  .zm-drop {
+    margin-top: 14px;
+  }
+
+  .zm-chart {
+    bottom: auto;
+    left: 16px;
+    right: 16px;
+    top: 84px;
+    width: auto;
+  }
+
+  .zm-chart svg {
+    display: none;
+  }
+
+  .zm-readouts {
+    grid-template-columns: repeat(3, auto) minmax(0, 1fr);
+    margin: 0;
+  }
+
+  .zm-readouts dd {
+    font-size: 14px;
+  }
+
+  .zm-scroll-hint {
+    display: none;
+  }
+
+  .zm-roast-static {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zm-roast-step,
+  .zm-roast-canvas,
+  .zm-bag-viewer canvas,
+  .zm-bag-fallback {
+    transition: none;
+  }
+
+  .zm-scroll-hint::after {
+    animation: none;
   }
 }

@@ -11,9 +11,10 @@ const SHIPPING_FEE = 1490;
 
 const navLinks = [
   { href: "/demo/zamat#kavek", label: "Kávék" },
+  { href: "/demo/zamat#porkoles", label: "Pörkölés" },
   { href: "/demo/zamat#elofizetes", label: "Előfizetés" },
-  { href: "/demo/zamat#tortenet", label: "A pörkölő" },
-  { href: "/demo/zamat#velemenyek", label: "Vélemények" }
+  { href: "/demo/zamat#termelok", label: "Termelők" },
+  { href: "/demo/zamat#naplo", label: "Napló" }
 ];
 
 export function ZamatHeader() {
@@ -34,7 +35,7 @@ export function ZamatHeader() {
       <div className="zm-announce">
         <span>Ingyenes szállítás {formatFt(FREE_SHIPPING_LIMIT)} felett</span>
         <span className="zm-announce-sep" aria-hidden="true" />
-        <span>Kedden és pénteken pörkölünk — friss szemek, mindig</span>
+        <span>Pörkölés kedden és pénteken, feladás másnap</span>
       </div>
 
       <header className={`zm-header ${stuck ? "is-stuck" : ""}`}>
@@ -255,8 +256,8 @@ export function ZamatFooter() {
             </span>
           </Link>
           <p>
-            Kis tételben pörkölünk Budapesten, hetente kétszer. Amit rendelsz, néhány napja még
-            zöld szem volt.
+            Kőbányai út 31., Budapest. Kedden és pénteken pörkölünk egy 12 kilós dobban; az üzlet
+            ilyenkor zárva, de a kávé másnap már úton van.
           </p>
         </div>
         <div className="zm-footer-cols">
@@ -274,9 +275,9 @@ export function ZamatFooter() {
           </div>
           <div>
             <span>Rólunk</span>
-            <Link href="/demo/zamat#tortenet">A pörkölő</Link>
-            <Link href="/demo/zamat#tortenet">Termelők</Link>
-            <Link href="/demo/zamat#velemenyek">Vélemények</Link>
+            <Link href="/demo/zamat#porkoles">A pörkölés</Link>
+            <Link href="/demo/zamat#termelok">Termelők</Link>
+            <Link href="/demo/zamat#naplo">Pörkölési napló</Link>
           </div>
         </div>
       </div>
