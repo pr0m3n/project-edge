@@ -67,7 +67,7 @@ export default function ProcessPage() {
       {/* Interaktív Két Útvonal Színpad Művészi WebGL Shaderrel és Élő Szimulációval */}
       <InteractiveFlowStage />
       <section className="delivery-times" aria-labelledby="delivery-times-title">
-        <div><p className="micro-label">Várható elkészítés</p><h2 id="delivery-times-title">Gyors, de nem kapkodós.</h2><p>Az idő a hiánytalan brief, a szükséges anyagok és az induló fizetés beérkezésétől számít.</p></div>
+        <div><p className="micro-label">Várható elkészítés</p><h2 id="delivery-times-title">Gyors, de nem kapkodós.</h2><p>Az idő a hiánytalan brief és a szükséges anyagok beérkezésétől számít. Fizetni csak a kész, jóváhagyott oldalért kell.</p></div>
         <dl><div><dt>Jelenlét</dt><dd>2–4 munkanap</dd></div><div><dt>Üzleti</dt><dd>3–6 munkanap</dd></div><div><dt>Egyedi</dt><dd>5–14 munkanap</dd></div></dl>
       </section>
       <section className="cta-band dark">

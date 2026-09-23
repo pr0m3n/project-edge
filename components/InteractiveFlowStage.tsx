@@ -18,6 +18,13 @@ import {
   IconChevronLeft,
   IconChevronRight
 } from "@/components/icons";
+import {
+  buyoutCreditMonths,
+  buyoutFloorPrice,
+  formatHuf,
+  PURCHASE_OPTION_PRICES,
+  SUBSCRIPTION_PLANS
+} from "@/lib/subscriptions";
 
 interface StepDetail {
   number: string;
@@ -37,18 +44,18 @@ const BERLES_DATA: StepDetail[] = [
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconFileText size={18} /></span>
-          <span className="hud-title">Projektbrief & Csomag</span>
+          <span className="hud-title">Adatlap és csomag</span>
           <span className="hud-badge">Online</span>
         </div>
         <div className="hud-body">
           <div className="hud-checklist">
             <div className="hud-check-row is-done">
               <span className="hud-check-box"><IconCheck size={13} /></span>
-              <span>Weboldal célja: Új megkeresések és ügyfélszerzés</span>
+              <span>Weboldal célja: új megkeresések és ügyfélszerzés</span>
             </div>
             <div className="hud-check-row is-done">
               <span className="hud-check-box"><IconCheck size={13} /></span>
-              <span>Választott forma: Havidíjas konstrukció</span>
+              <span>Választott forma: havidíjas bérlés</span>
             </div>
             <div className="hud-check-row">
               <span className="hud-check-box is-muted"><IconCheck size={13} /></span>
@@ -72,20 +79,20 @@ const BERLES_DATA: StepDetail[] = [
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconShield size={18} /></span>
-          <span className="hud-title">Digitális Szerződés</span>
-          <span className="hud-badge">Hitelesített</span>
+          <span className="hud-title">Digitális szerződés</span>
+          <span className="hud-badge">Online elfogadás</span>
         </div>
         <div className="hud-body">
           <div className="hud-seal-box">
             <div className="hud-seal-icon"><IconFileText size={24} /></div>
             <div className="hud-seal-text">
-              <strong>ProjektEdge Szolgáltatási Megállapodás</strong>
-              <small>Átlátható havidíj, előre rögzített kivásárlási opció, nincs rejtett apróbetű.</small>
+              <strong>ProjectEdge szolgáltatási szerződés</strong>
+              <small>Átlátható havidíj és rögzített vételár. Ha megveszed, a befizetett havidíjad fele beszámít.</small>
             </div>
           </div>
           <div className="hud-tag-group">
             <span className="hud-pill hud-pill-ember">Nincs hűségidő</span>
-            <span className="hud-pill hud-pill-aqua">Rögzített kivásárlási ár</span>
+            <span className="hud-pill hud-pill-aqua">Nincs előleg</span>
           </div>
         </div>
         <div className="hud-footer">
@@ -97,47 +104,47 @@ const BERLES_DATA: StepDetail[] = [
   },
   {
     number: "03",
-    title: "Oldal egyedi építése",
-    shortDesc: "Megépítem a modern oldalt mobilra, sebességre és konverzióra optimalizálva.",
-    badge: "Next.js 16",
+    title: "Az oldal egyedi építése",
+    shortDesc: "Megépítem mobilra tervezve, gyorsnak, és úgy, hogy könnyű legyen megkeresni téged.",
+    badge: "Nem sablon",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconCode size={18} /></span>
-          <span className="hud-title">Fejlesztés & Optimalizálás</span>
-          <span className="hud-badge">Next.js 16</span>
+          <span className="hud-title">Építés</span>
+          <span className="hud-badge">Ügyfélkapun követhető</span>
         </div>
         <div className="hud-body">
           <div className="hud-code-box">
-            <div className="hud-code-line"><IconCheck size={14} /> Reszponzív felépítés minden kijelzőméretre</div>
-            <div className="hud-code-line"><IconCheck size={14} /> Szerveroldali renderelés (Next.js SSR + React 19)</div>
-            <div className="hud-code-line"><IconCheck size={14} /> SEO strukturált adatok és OpenGraph címkék</div>
-            <div className="hud-code-line"><IconCheck size={14} /> Google PageSpeed mobil pontszám: <strong className="text-emerald-400">99 / 100</strong></div>
+            <div className="hud-code-line"><IconCheck size={14} /> Egyedi, mobilra tervezett megjelenés, nem sablon</div>
+            <div className="hud-code-line"><IconCheck size={14} /> Gyors betöltés és Google-barát felépítés</div>
+            <div className="hud-code-line"><IconCheck size={14} /> Hívás- és ajánlatkérő gomb ott, ahol keresik</div>
+            <div className="hud-code-line"><IconCheck size={14} /> Az ügyfélkapun végig látod, hol tartok</div>
           </div>
         </div>
         <div className="hud-footer">
-          <span className="hud-metric-label">Teljesítmény</span>
-          <span className="hud-metric-val">99+ PageSpeed</span>
+          <span className="hud-metric-label">Időigény</span>
+          <span className="hud-metric-val">2–14 munkanap, csomagtól függően</span>
         </div>
       </div>
     )
   },
   {
     number: "04",
-    title: "Előnézet & jóváhagyás",
+    title: "Előnézet és jóváhagyás",
     shortDesc: "Privát linken megnézed a működő oldalt, elvégzem a kért módosításokat.",
     badge: "Te döntesz",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconGlobe size={18} /></span>
-          <span className="hud-title">Privát Előnézet</span>
-          <span className="hud-badge">Tesztelés</span>
+          <span className="hud-title">Privát előnézet</span>
+          <span className="hud-badge">Csak neked</span>
         </div>
         <div className="hud-body">
           <div className="hud-preview-mockup">
             <div className="hud-browser-bar">
-              <span className="hud-browser-badge"><IconShield size={13} /> SSL Hitelesített</span>
+              <span className="hud-browser-badge"><IconShield size={13} /> Privát link</span>
               <span className="hud-browser-url">preview.projectedge.hu/demo</span>
             </div>
             <div className="hud-preview-content">
@@ -186,35 +193,35 @@ const BERLES_DATA: StepDetail[] = [
   },
   {
     number: "06",
-    title: "Élesítés & üzemeltetés",
-    shortDesc: "Élesbe állítom a domaineden, és a havidíjért folyamatosan felügyelem és frissítem.",
+    title: "Élesítés és üzemeltetés",
+    shortDesc: "Élesbe állítom a domaineden. A havidíjban benne van a domain, a tárhely, a frissítések és a folyamatos felügyelet.",
     badge: "Élesben fut",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconServer size={18} /></span>
-          <span className="hud-title">Élesített Rendszer</span>
+          <span className="hud-title">Élő oldal</span>
           <span className="hud-badge hud-badge-green">Aktív</span>
         </div>
         <div className="hud-body">
           <div className="hud-live-metrics">
             <div className="hud-live-metric">
               <span className="hud-lm-val">Napi</span>
-              <span className="hud-lm-lbl">Elérhetőség-mérés</span>
+              <span className="hud-lm-lbl">Működésfigyelés</span>
             </div>
             <div className="hud-live-metric">
-              <span className="hud-lm-val">0 gond</span>
-              <span className="hud-lm-lbl">Üzemeltetés</span>
+              <span className="hud-lm-val">1 munkanap</span>
+              <span className="hud-lm-lbl">Hibára reagálok</span>
             </div>
             <div className="hud-live-metric">
-              <span className="hud-lm-val">Havi</span>
-              <span className="hud-lm-lbl">Frissítés</span>
+              <span className="hud-lm-val">Benne van</span>
+              <span className="hud-lm-lbl">Domain, tárhely, SSL</span>
             </div>
           </div>
         </div>
         <div className="hud-footer">
-          <span className="hud-metric-label">Üzemeltetés</span>
-          <span className="hud-metric-val">Folyamatos felügyelet</span>
+          <span className="hud-metric-label">Hűségidő</span>
+          <span className="hud-metric-val">Nincs, bármikor lemondható</span>
         </div>
       </div>
     )
@@ -231,7 +238,7 @@ const KIVASARLAS_DATA: StepDetail[] = [
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconGlobe size={18} /></span>
-          <span className="hud-title">Bizonyított Működés</span>
+          <span className="hud-title">Bizonyított működés</span>
           <span className="hud-badge hud-badge-aqua">Éles oldal</span>
         </div>
         <div className="hud-body">
@@ -242,27 +249,27 @@ const KIVASARLAS_DATA: StepDetail[] = [
         </div>
         <div className="hud-footer">
           <span className="hud-metric-label">Előny</span>
-          <span className="hud-metric-val">0 kockázat</span>
+          <span className="hud-metric-val">Kipróbáltad, mielőtt megveszed</span>
         </div>
       </div>
     )
   },
   {
     number: "02",
-    title: "Vételi opció jelzése",
-    shortDesc: "Bármikor jelzed az ügyfélkapun egy gombnyomással, hogy élnél a megvásárlással.",
+    title: "Megvásárlás indítása",
+    shortDesc: "Bármelyik hónapban elindítod az ügyfélkapun, egy gombnyomással.",
     badge: "Bármikor",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconKey size={18} /></span>
-          <span className="hud-title">Kivásárlás Kezdeményezése</span>
+          <span className="hud-title">Kivásárlás indítása</span>
           <span className="hud-badge">Ügyfélkapu</span>
         </div>
         <div className="hud-body">
           <div className="hud-trigger-preview">
-            <span className="hud-tp-btn"><IconKey size={16} /> Vételi szándék jelzése</span>
-            <small>Nincs kötelező várakozási idő — bármikor élhetsz a szerződéses opcióval.</small>
+            <span className="hud-tp-btn"><IconKey size={16} /> Megvásárlás indítása</span>
+            <small>Nincs kötelező várakozási idő: bármelyik hónapban élhetsz vele.</small>
           </div>
         </div>
         <div className="hud-footer">
@@ -274,49 +281,52 @@ const KIVASARLAS_DATA: StepDetail[] = [
   },
   {
     number: "03",
-    title: "Előre rögzített fix díj",
-    shortDesc: "Nincs alku: pontosan azt a fix egyszeri összeget fizeted, ami a szerződésedben szerepel.",
-    badge: "Fix ár",
+    title: "Rögzített ár, beszámítással",
+    shortDesc: "A vételár a szerződésben rögzített, és minden befizetett hónap után a havidíjad fele levonódik belőle, a vételár feléig.",
+    badge: "Beszámítás",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconLock size={18} /></span>
-          <span className="hud-title">Rögzített Kivásárlási Díj</span>
-          <span className="hud-badge">Garantált</span>
+          <span className="hud-title">Vételár csomagonként</span>
+          <span className="hud-badge">Alku nélkül</span>
         </div>
         <div className="hud-body">
-          <div className="hud-guarantee-seal">
-            <div className="hud-gs-icon"><IconShield size={24} /></div>
-            <div>
-              <strong>Kötött Szerződéses Összeg</strong>
-              <p>A weboldal piaci értékének növekedése mellett is a fixen rögzített összeget fizeted.</p>
-            </div>
+          <div className="hud-price-breakdown">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <div className="hud-price-row" key={plan.key}>
+                <span>{plan.name}: {formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</span>
+                <span className="hud-highlight-text">
+                  {buyoutCreditMonths(plan.key)}. hónaptól {formatHuf(buyoutFloorPrice(plan.key))}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
         <div className="hud-footer">
-          <span className="hud-metric-label">Átláthatóság</span>
-          <span className="hud-metric-val">100% transzparens</span>
+          <span className="hud-metric-label">Beszámítás</span>
+          <span className="hud-metric-val">A havidíj fele, a vételár feléig</span>
         </div>
       </div>
     )
   },
   {
     number: "04",
-    title: "Kiegészítő szerződés & számla",
-    shortDesc: "Gyors digitális kiegészítés a tulajdonjog átruházásáról, majd indul az átadás.",
-    badge: "Jogtiszta",
+    title: "Összefoglaló és számla",
+    shortDesc: "Átadási összefoglalót kapsz a felhalmozott beszámítással és a fizetendő összeggel. A vételár beérkezése után indul az átadás.",
+    badge: "Írásban",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconFileText size={18} /></span>
-          <span className="hud-title">Tulajdonjog Átruházás</span>
-          <span className="hud-badge">Hivatalos</span>
+          <span className="hud-title">Tulajdonjog átruházása</span>
+          <span className="hud-badge">Írásban</span>
         </div>
         <div className="hud-body">
           <div className="hud-legal-checklist">
-            <div className="hud-code-line"><IconCheck size={14} /> Végleges forráskód-felhasználási és tulajdonjog</div>
-            <div className="hud-code-line"><IconCheck size={14} /> Szellemi alkotások és design anyagok átadása</div>
-            <div className="hud-code-line"><IconCheck size={14} /> Domain és szerverfiókok átruházása a te nevedre</div>
+            <div className="hud-code-line"><IconCheck size={14} /> A forráskód teljes felhasználási joga</div>
+            <div className="hud-code-line"><IconCheck size={14} /> A design- és tartalmi anyagok átadása</div>
+            <div className="hud-code-line"><IconCheck size={14} /> A domain és a fiókok átruházása a te nevedre</div>
           </div>
         </div>
         <div className="hud-footer">
@@ -335,28 +345,28 @@ const KIVASARLAS_DATA: StepDetail[] = [
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconCode size={18} /></span>
-          <span className="hud-title">Infrastruktúra Átadás</span>
+          <span className="hud-title">Technikai átadás</span>
           <span className="hud-badge">Vezetett</span>
         </div>
         <div className="hud-body">
           <div className="hud-migration-steps">
             <div className="hud-mig-item">
               <span className="hud-mig-step">1</span>
-              <span>Saját GitHub repository átadás (forráskód hozzáférés)</span>
+              <span>A forráskód átkerül a saját GitHub-fiókodba</span>
             </div>
             <div className="hud-mig-item">
               <span className="hud-mig-step">2</span>
-              <span>Saját Vercel / Cloudflare hosting fiók bekötése</span>
+              <span>A tárhely a saját fiókodba kerül</span>
             </div>
             <div className="hud-mig-item">
               <span className="hud-mig-step">3</span>
-              <span>Domain DNS zónák átadása a te regisztrátorodhoz</span>
+              <span>A domaint átíratom a te nevedre</span>
             </div>
           </div>
         </div>
         <div className="hud-footer">
-          <span className="hud-metric-label">Technikai támogatás</span>
-          <span className="hud-metric-val">Lépésről lépésre segítek</span>
+          <span className="hud-metric-label">Biztonság</span>
+          <span className="hud-metric-val">Jelszót egyikünk sem küld</span>
         </div>
       </div>
     )
@@ -364,23 +374,23 @@ const KIVASARLAS_DATA: StepDetail[] = [
   {
     number: "06",
     title: "A kód, domain és fiókok a tieid",
-    shortDesc: "100% forráskód és függetlenség. A lezárás után 30 napig díjmentesen javítom a hibákat.",
-    badge: "100% Saját",
+    shortDesc: "Nincs több havidíj. Az átadás lezárásától 30 napig díjmentesen javítom a hibákat.",
+    badge: "Nincs havidíj",
     scene: (
       <div className="stage-hud-card">
         <div className="hud-header">
           <span className="hud-header-icon"><IconKey size={18} /></span>
-          <span className="hud-title">Teljes Tulajdon & Szabadság</span>
+          <span className="hud-title">Teljes tulajdon</span>
           <span className="hud-badge hud-badge-aqua">100% a tiéd</span>
         </div>
         <div className="hud-body">
           <div className="hud-ownership-cert">
             <div className="hud-cert-row">
               <span>Forráskód:</span>
-              <strong>Teljes Git repó a neveden</strong>
+              <strong>Teljes Git-repó a neveden</strong>
             </div>
             <div className="hud-cert-row">
-              <span>Domain & DNS:</span>
+              <span>Domain és DNS:</span>
               <strong>Kizárólagos tulajdonod</strong>
             </div>
             <div className="hud-cert-row">
@@ -390,8 +400,8 @@ const KIVASARLAS_DATA: StepDetail[] = [
           </div>
         </div>
         <div className="hud-footer">
-          <span className="hud-metric-label">Eredmény</span>
-          <span className="hud-metric-val">Teljes függetlenség</span>
+          <span className="hud-metric-label">Utána</span>
+          <span className="hud-metric-val">Nincs több havidíj</span>
         </div>
       </div>
     )
@@ -406,7 +416,7 @@ const GUARANTEES = [
     icon: IconMessageCircle,
   },
   {
-    badge: "100% Forráskód",
+    badge: "Forráskód",
     title: "Kétféle befejezés",
     desc: "Bérlésnél én kezelem tovább, vételkor a teljes forráskód és domain a tiéd.",
     icon: IconPackage,
@@ -414,13 +424,13 @@ const GUARANTEES = [
   {
     badge: "Felügyelet",
     title: "Indulás után is",
-    desc: "Folyamatos szerverfelügyelet, mentések és rendszeres frissítések.",
+    desc: "Folyamatos működésfigyelés és technikai frissítések, hibára 1 munkanapon belül reagálok.",
     icon: IconWrench,
   },
   {
     badge: "0 Ft előleg",
     title: "Fizetés a végén",
-    desc: "Csak a kész, jóváhagyott oldalért fizetsz — ha nem tetszik, nem fizetsz.",
+    desc: "Csak a kész, jóváhagyott oldalért fizetsz. Ha nem tetszik, nem fizetsz.",
     icon: IconLock,
   },
 ];
@@ -543,8 +553,8 @@ export function InteractiveFlowStage() {
             Bérléssel indulsz — és bármikor a sajátod lehet.
           </h2>
           <p className="stage-lead">
-            Nem kényszerítelek hatalmas egyszeri költségbe a nulladik napon. Válassz a havidíjas,
-            gondtalan indulás és a teljes forráskód-kivásárlás között.
+            Nem kell a nulladik napon nagy összeget kifizetned. Havidíjjal indulsz, és ha egyszer
+            megtartanád, a befizetett havidíjad fele beszámít a vételárba.
           </p>
 
           {/* Útvonal Kapcsoló Lucide ikonokkal */}
@@ -558,8 +568,8 @@ export function InteractiveFlowStage() {
             >
               <span className="switch-icon"><IconZap size={18} /></span>
               <div className="switch-text">
-                <strong>01. Havidíjas Bérlés</strong>
-                <small>0 Ft belépő · Folyamatos üzemeltetés</small>
+                <strong>01. Havidíjas bérlés</strong>
+                <small>0 Ft előleg · folyamatos üzemeltetés</small>
               </div>
             </button>
 
@@ -572,8 +582,8 @@ export function InteractiveFlowStage() {
             >
               <span className="switch-icon"><IconKey size={18} /></span>
               <div className="switch-text">
-                <strong>02. Kivásárlási Opció</strong>
-                <small>Bármikor megveheted · 100% kód a tiéd</small>
+                <strong>02. Kivásárlás</strong>
+                <small>Bármikor megveheted · a havidíj fele beszámít</small>
               </div>
             </button>
           </div>
@@ -633,7 +643,7 @@ export function InteractiveFlowStage() {
                 />
               </div>
               <div className="stage-canvas-meta-row">
-                <span>{activeTab === "berles" ? "Havidíjas modell" : "Kivásárlási modell"}</span>
+                <span>{activeTab === "berles" ? "Bérlés" : "Kivásárlás"}</span>
                 <span className="stage-swipe-hint">Ujjal húzva is lapozható</span>
                 <span className="stage-canvas-counter">
                   {currentStep.number} / 0{currentData.length}
