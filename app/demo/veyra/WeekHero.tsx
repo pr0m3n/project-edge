@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { CANCELLED, DAY_SHORT, DAYS, formatFt, formatHour, stats, WAITLIST } from "./week";
 
 /**
- * A Veyra hero-ja: egy hét, görgetésre. A görgetés = a hét telése.
+ * „Hogyan működik": egy hét, görgetésre. A görgetés = a hét telése.
+ * Szándékosan a nyitókép (IntroHero) után jön, nem helyette.
  * A számlálók (foglalás, kihasználtság, bevétel) ugyanabból a modellből
  * számolnak, mint a 3D zsetonok (week.ts).
  */
@@ -14,9 +15,9 @@ type Step = { from: number; kicker: string; title: string; copy: string };
 const STEPS: Step[] = [
   {
     from: 0,
-    kicker: "Online foglalás szalonoknak",
-    title: "Hétfő reggel még üres a naptárad.",
-    copy: "Görgess, és nézd meg, hogyan telik meg egy fodrászszalon hete úgy, hogy közben senki nem vette fel a telefont."
+    kicker: "Hogyan működik · egy hét egy perc alatt",
+    title: "Hétfő reggel még üres a naptár.",
+    copy: "Görgess tovább, és nézd meg, hogyan telik meg egy fodrászszalon hete úgy, hogy közben senki nem vette fel a telefont."
   },
   {
     from: 0.13,
@@ -172,25 +173,20 @@ export function WeekHero({ onStart }: { onStart: () => void }) {
   const body = (item: Step, index: number) => (
     <>
       <p className="vy-kicker">{item.kicker}</p>
-      {index === 0 ? <h1>{item.title}</h1> : <h2>{item.title}</h2>}
+      <h2>{item.title}</h2>
       <p className="vy-hw-lead">{item.copy}</p>
-      {(index === 0 || index === STEPS.length - 1) && (
+      {index === STEPS.length - 1 && (
         <div className="vy-hero-actions">
           <button className="vy-primary" onClick={onStart} type="button">
             14 napig ingyen <span aria-hidden="true">↗</span>
           </button>
-          {index === 0 && (
-            <a className="vy-text-link" href="#funkciok">
-              Funkciók <span>↓</span>
-            </a>
-          )}
         </div>
       )}
     </>
   );
 
   return (
-    <section aria-label="Egy hét a Veyrával" className={`vy-hw${still ? " is-still" : ""}`} ref={sectionRef}>
+    <section aria-label="Hogyan működik: egy hét a Veyrával" className={`vy-hw${still ? " is-still" : ""}`} id="egy-het" ref={sectionRef}>
       <div className="vy-hw-stage">
         <canvas aria-hidden="true" className={`vy-hw-canvas${ready ? " is-ready" : ""}`} ref={canvasRef} />
 

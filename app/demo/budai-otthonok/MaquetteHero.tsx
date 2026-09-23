@@ -163,7 +163,7 @@ export function MaquetteHero({ plan, homeCount, onOpenFeatured }: Props) {
     window.scrollTo({ behavior: "smooth", top: top + total * (STEP_STARTS[index] + (index ? 0.08 : 0)) });
   };
 
-  const steps = [
+  const intro = (
     <>
       <h1>Minden lakást megépítünk kicsiben.</h1>
       <p>
@@ -174,7 +174,11 @@ export function MaquetteHero({ plan, homeCount, onOpenFeatured }: Props) {
         <a className="bo-button" href="#ingatlanok">{homeCount} aktuális otthon</a>
         <button className="bo-button ghost" onClick={onOpenFeatured} type="button">A penthouse adatlapja</button>
       </div>
-    </>,
+    </>
+  );
+
+  const steps = [
+    intro,
     <>
       <h2>Szintenként felmérjük a házat.</h2>
       <p>
@@ -198,39 +202,92 @@ export function MaquetteHero({ plan, homeCount, onOpenFeatured }: Props) {
   ];
 
   return (
-    <section aria-label="A penthouse makettje" className={`bo-hero${still ? " is-still" : ""}`} id="makett" ref={sectionRef}>
-      <div className="bo-stage">
-        <canvas aria-hidden="true" className={`bo-canvas${status === "ready" ? " is-ready" : ""}`} ref={canvasRef} />
+    <>
+      {/* Telefonon a nyitószöveg a makett elé kerül, a színpadra nem jut szövegkártya. */}
+      {!still && (
+        <div className="bo-intro">
+          <p className="bo-kicker">Budai ingatlaniroda · 3D makettel</p>
+          {intro}
+          <a className="bo-intro-hint" href="#makett">Görgess, és szétszedjük a házat <span aria-hidden="true">↓</span></a>
+        </div>
+      )}
+      <section aria-label="A penthouse makettje" className={`bo-hero${still ? " is-still" : ""}`} id="makett" ref={sectionRef}>
+        <div className="bo-stage">
+          <canvas aria-hidden="true" className={`bo-canvas${status === "ready" ? " is-ready" : ""}`} ref={canvasRef} />
 
-        {status === "failed" && (
-          <div className="bo-fallback">
-            <Image alt="A penthouse terasza a Dunára" fill priority sizes="100vw" src="/demo/budai-otthonok/hero.webp" style={{ objectFit: "cover" }} />
-          </div>
-        )}
-
-        <div aria-hidden="true" className={`bo-scrim${step === 0 && !still ? " is-on" : ""}`} />
-
-        <div aria-hidden="true" className="bo-labels">
-          {labels.map((label) => (
-            <div
-              className={`bo-label${label.id.startsWith("level") ? " is-level" : ""}${label.accent ? " is-accent" : ""}`}
-              key={label.id}
-              ref={(element) => {
-                if (element) labelRefs.current.set(label.id, element);
-                else labelRefs.current.delete(label.id);
-              }}
-              style={{ opacity: 0 }}
-            >
-              <b>{label.text}</b>
-              {label.sub && <span>{label.sub}</span>}
+          {status === "failed" && (
+            <div className="bo-fallback">
+              <Image alt="A penthouse terasza a Dunára" fill priority sizes="100vw" src="/demo/budai-otthonok/hero.webp" style={{ objectFit: "cover" }} />
             </div>
-          ))}
+          )}
+
+          <div aria-hidden="true" className={`bo-scrim${step === 0 && !still ? " is-on" : ""}`} />
+
+          <div aria-hidden="true" className="bo-labels">
+            {labels.map((label) => (
+              <div
+                className={`bo-label${label.id.startsWith("level") ? " is-level" : ""}${label.accent ? " is-accent" : ""}`}
+                key={label.id}
+                ref={(element) => {
+                  if (element) labelRefs.current.set(label.id, element);
+                  else labelRefs.current.delete(label.id);
+                }}
+                style={{ opacity: 0 }}
+              >
+                <b>{label.text}</b>
+                {label.sub && <span>{label.sub}</span>}
+              </div>
+            ))}
+          </div>
+
+          {!still && (
+            <div className="bo-copy" aria-live="polite">
+              {steps.map((content, index) => (
+                <div className={`bo-copy-step${index === step ? " is-active" : ""}`} key={index} aria-hidden={index !== step}>
+                  <p className="bo-kicker">
+                    {String(index + 1).padStart(2, "0")} / 04 · {STEP_NAMES[index]}
+                  </p>
+                  {content}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <nav aria-label="Makett lépései" className="bo-steps">
+            {STEP_NAMES.map((name, index) => (
+              <button className={index === step ? "is-active" : ""} key={name} onClick={() => jumpTo(index)} type="button">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                {name}
+              </button>
+            ))}
+          </nav>
+
+          <dl className={`bo-hud${step === 3 ? " is-sun-step" : ""}`}>
+            <div>
+              <dt>Makett</dt>
+              <dd>1:200 · Várkert rakpart, I. ker.</dd>
+            </div>
+            <div>
+              <dt>Időpont</dt>
+              <dd>
+                szept. 23. <b ref={clockRef}>10:30</b>
+              </dd>
+            </div>
+            <div className="is-sun">
+              <dt>Napsütés a nappaliban</dt>
+              <dd>
+                <b ref={sunRef}>0 p</b>
+              </dd>
+            </div>
+          </dl>
+
+          {!still && step === 0 && <span className="bo-scroll-hint">Görgess — szétszedjük a házat</span>}
         </div>
 
-        {!still && (
-          <div className="bo-copy" aria-live="polite">
+        {still && (
+          <div className="bo-copy-static">
             {steps.map((content, index) => (
-              <div className={`bo-copy-step${index === step ? " is-active" : ""}`} key={index} aria-hidden={index !== step}>
+              <div className="bo-copy-step is-active" key={index}>
                 <p className="bo-kicker">
                   {String(index + 1).padStart(2, "0")} / 04 · {STEP_NAMES[index]}
                 </p>
@@ -239,50 +296,7 @@ export function MaquetteHero({ plan, homeCount, onOpenFeatured }: Props) {
             ))}
           </div>
         )}
-
-        <nav aria-label="Makett lépései" className="bo-steps">
-          {STEP_NAMES.map((name, index) => (
-            <button className={index === step ? "is-active" : ""} key={name} onClick={() => jumpTo(index)} type="button">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              {name}
-            </button>
-          ))}
-        </nav>
-
-        <dl className="bo-hud">
-          <div>
-            <dt>Makett</dt>
-            <dd>1:200 · Várkert rakpart, I. ker.</dd>
-          </div>
-          <div>
-            <dt>Időpont</dt>
-            <dd>
-              szept. 23. <b ref={clockRef}>10:30</b>
-            </dd>
-          </div>
-          <div className="is-sun">
-            <dt>Napsütés a nappaliban</dt>
-            <dd>
-              <b ref={sunRef}>0 p</b>
-            </dd>
-          </div>
-        </dl>
-
-        {!still && step === 0 && <span className="bo-scroll-hint">Görgess — szétszedjük a házat</span>}
-      </div>
-
-      {still && (
-        <div className="bo-copy-static">
-          {steps.map((content, index) => (
-            <div className="bo-copy-step is-active" key={index}>
-              <p className="bo-kicker">
-                {String(index + 1).padStart(2, "0")} / 04 · {STEP_NAMES[index]}
-              </p>
-              {content}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+      </section>
+    </>
   );
 }

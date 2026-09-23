@@ -502,10 +502,20 @@
   transform-origin: left;
 }
 
+@keyframes bo-nudge {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(4px); }
+}
+
 @keyframes bo-hint {
   0% { transform: scaleX(0); }
   60% { transform: scaleX(1); }
   100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* Telefonos nyitószöveg a makett előtt; asztalon a színpadon van helyette. */
+.bo-intro {
+  display: none;
 }
 
 /* Csökkentett mozgás: nincs rögzített görgetés, egy álló kép + a szöveg alatta. */
@@ -1399,11 +1409,48 @@
     top: auto;
   }
 
+  .bo-intro {
+    display: block;
+    padding: 32px 16px 36px;
+  }
+
+  .bo-intro h1 {
+    font-size: clamp(36px, 10vw, 50px);
+    margin-top: 14px;
+  }
+
+  .bo-intro > p:not(.bo-kicker) {
+    color: #2e3237;
+    font-size: 16px;
+    margin-top: 14px;
+  }
+
+  .bo-intro .bo-hero-actions {
+    margin-top: 22px;
+  }
+
+  .bo-intro-hint {
+    align-items: center;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    display: flex;
+    font-family: var(--bo-mono), monospace;
+    font-size: 12px;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 14px;
+    text-transform: uppercase;
+  }
+
+  .bo-intro-hint span {
+    animation: bo-nudge 1.8s ease-in-out infinite;
+    color: var(--blue);
+    font-size: 16px;
+  }
+
+  /* A nyitószöveg fent már elhangzott: a színpadon a ház szabadon áll. */
   .bo-copy-step:first-child {
-    backdrop-filter: blur(10px);
-    background: rgba(243, 242, 238, 0.88);
-    border: 1px solid var(--line);
-    padding: 20px 20px 22px;
+    display: none;
   }
 
   .bo-copy-step:not(:first-child) {
@@ -1446,10 +1493,16 @@
     display: none;
   }
 
+  /* Az időpont és a napsütés csak a napfény-lépésnél mond valamit. */
   .bo-hud {
     bottom: auto;
+    display: none;
     left: 16px;
     top: 58px;
+  }
+
+  .bo-hud.is-sun-step {
+    display: flex;
   }
 
   .bo-hud > div:first-child {
@@ -1569,7 +1622,8 @@
     transition: none;
   }
 
-  .bo-scroll-hint::after {
+  .bo-scroll-hint::after,
+  .bo-intro-hint span {
     animation: none;
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DemoBar } from "@/components/demo/DemoBar";
 import { useDemoNotice } from "@/components/demo/DemoNotice";
+import { IntroHero } from "./IntroHero";
 import { WeekHero } from "./WeekHero";
 
 const noticeText =
@@ -43,7 +44,7 @@ export function VeyraSite() {
       <header className="vy-nav">
         <a className="vy-logo" href="#top"><Mark /> <span>veyra</span></a>
         <nav className={menu ? "is-open" : ""} aria-label="Fő navigáció">
-          <a href="#top" onClick={() => setMenu(false)}>Egy hét</a>
+          <a href="#egy-het" onClick={() => setMenu(false)}>Hogyan működik</a>
           <a href="#funkciok" onClick={() => setMenu(false)}>Funkciók</a>
           <a href="#arak" onClick={() => setMenu(false)}>Árak</a>
           <a href="#gyik" onClick={() => setMenu(false)}>GYIK</a>
@@ -56,6 +57,7 @@ export function VeyraSite() {
       </header>
 
       <main>
+        <IntroHero onStart={act} />
         <WeekHero onStart={act} />
 
         <section className="vy-features" id="funkciok">
