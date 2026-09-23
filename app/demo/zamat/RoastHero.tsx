@@ -20,6 +20,7 @@ type Step = { from: number; kicker: string; product?: string };
 const STEPS: Step[] = [
   { from: 0, kicker: "Egy pörkölés, percről percre" },
   { from: 1.2, kicker: "Szárítás · 1:30–5:00" },
+  { from: 5, kicker: "Maillard-szakasz · 150–196 °C" },
   { from: 7.8, kicker: "Első pattanás · 196 °C", product: "etiopia-guji" },
   { from: 9.5, kicker: "Fejlesztés · 211 °C", product: "kolumbia-huila" },
   { from: 11.4, kicker: "Második pattanás · 224 °C", product: "brazil-cerrado" },
@@ -110,7 +111,7 @@ export function RoastHero() {
         if (disposed) return;
         let scene: ReturnType<typeof createRoastScene>;
         try {
-          scene = createRoastScene(canvas, { count: window.innerWidth < 700 ? 110 : 170 });
+          scene = createRoastScene(canvas, { detail: window.innerWidth < 700 ? 22 : 34 });
         } catch {
           setStatus("failed");
           return;
@@ -206,6 +207,13 @@ export function RoastHero() {
       </p>
     </>,
     <>
+      <h2>Sárgul, aztán barnul.</h2>
+      <p>
+        Itt alakulnak ki az ízek: a cukrok karamellizálnak, a savak átrendeződnek. A dob hőjét most óvatosan csökkentjük,
+        különben kiégne a gyümölcsösség.
+      </p>
+    </>,
+    <>
       <h2>Pattan. Most vesszük ki az etiópot.</h2>
       <p>Az első pattanás után 42 másodperccel. Így marad benne a bergamott és a jázmin.</p>
       {dropCard("etiopia-guji")}
@@ -225,7 +233,7 @@ export function RoastHero() {
       <p>A csomagon ott a pörkölés napja és a tételszám. A pörkölés utáni 4–20. napon a legjobb.</p>
       <div className="zm-hero-actions">
         <Link className="zm-btn lg" href="#kavek">Kávét választok</Link>
-        <Link className="zm-btn ghost-light lg" href="#naplo">Pörkölési napló</Link>
+        <Link className="zm-btn ghost lg" href="#naplo">Pörkölési napló</Link>
       </div>
     </>
   ];
@@ -273,7 +281,7 @@ export function RoastHero() {
                   className="zm-chart-label"
                   textAnchor={xOf(mark.at) > X1 - 60 ? "end" : "start"}
                   x={xOf(mark.at) + (xOf(mark.at) > X1 - 60 ? -3 : 3)}
-                  y={Y0 - 4}
+                  y={xOf(mark.at) > X1 - 60 ? Y1 + 10 : Y0 - 4}
                 >
                   {mark.label}
                 </text>

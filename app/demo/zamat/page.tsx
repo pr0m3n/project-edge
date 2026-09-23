@@ -56,7 +56,7 @@ export default function ZamatHome() {
               <li>Fix kedvenc, vagy mindig az aktuális tétel</li>
               <li>Kihagyás és lemondás egy kattintással</li>
             </ul>
-            <Link className="zm-btn light lg" href="#kavek">
+            <Link className="zm-btn lg" href="#kavek">
               Előfizetést indítok
             </Link>
           </div>

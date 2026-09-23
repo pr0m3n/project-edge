@@ -71,7 +71,7 @@ export const WORKS: Work[] = [
       "Görgetésre lejátszott 3D pörkölés, forgatható zacskó, működő kosár — webshop, ami megmutatja, mit vesz a vevő.",
     href: "/demo/zamat",
     external: false,
-    src: "/work/demos/zamat-porkoles.webp",
+    src: "/work/demos/zamat-tal.webp",
     width: 1440,
     height: 900
   },

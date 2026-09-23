@@ -65,15 +65,16 @@ export function rateOfRise(minute: number) {
 
 /** A bab színe a pörkölés percében (sRGB hex-ek közti átmenet). */
 const COLORS: [number, string][] = [
-  [0, "#7d8a4f"],
-  [3, "#8f9259"],
-  [5, "#c4ad68"],
-  [6.6, "#b6864b"],
-  [8, "#94582d"],
-  [9, "#7a4322"],
-  [10.2, "#5c321a"],
-  [11.8, "#352012"],
-  [12.4, "#2a190f"]
+  // a zöld kávé valójában szürkészöld, nem olívazöld
+  [0, "#a2a684"],
+  [3, "#aaa681"],
+  [5, "#c8b27c"],
+  [6.6, "#b88b58"],
+  [8, "#97603a"],
+  [9, "#7c4a2a"],
+  [10.2, "#5f3820"],
+  [11.8, "#3b2415"],
+  [12.4, "#2e1c11"]
 ];
 
 const hexToRgb = (hex: string) => [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);

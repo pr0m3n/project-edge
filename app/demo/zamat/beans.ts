@@ -1,15 +1,18 @@
 /**
  * A pörkölés 3D jelenete — kizárólag böngészőben, dinamikusan betöltve.
  *
- * Egyetlen procedurális babgeometria (lapos oldal, S-alakú barázda),
- * instancolva: ~170 bab egyetlen rajzolási hívással. A görgetésből kapott
- * pörkölési perc hajt mindent: szín (roast.ts), duzzadás, fényesség
- * (sötét pörkölésnél kiül az olaj), a két pattanás lökése és a pelyva,
- * a végén pedig a babok a hűtőtálcára ülnek, és forog a keverőkar.
+ * Világos, csendes kompozíció: egy mázas kerámiatál, benne egy kupac kávébab,
+ * ami a görgetéssel helyben pörkölődik. Nincs „szálló babfelhő": a babok a
+ * tálban maradnak, lassan forog velük a tál, és csak a két pattanásnál ugrik
+ * fel néhány — ahogy a dobban is. Az első pattanásnál pelyva (ezüstbőr)
+ * száll fel. Sötét pörkölésnél kiül az olaj, fényesebb lesz a felszín.
+ *
+ * A babgeometria procedurális (domború hát, lapos has, S-ívű barázda),
+ * finom zaj-bumpmappel; ~150 bab egyetlen instancolt rajzolásban.
  */
 
 import * as THREE from "three";
-import { beanColor, beanTemp, ROAST_END } from "./roast";
+import { beanColor, ROAST_END } from "./roast";
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 const smooth = (from: number, to: number, value: number) => {
@@ -18,7 +21,7 @@ const smooth = (from: number, to: number, value: number) => {
 };
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** Determinisztikus véletlen: minden betöltésnél ugyanaz a kompozíció. */
+/** Determinisztikus véletlen: minden betöltésnél ugyanaz a kupac. */
 function random(seed: number) {
   let state = seed;
   return () => {
@@ -27,210 +30,296 @@ function random(seed: number) {
   };
 }
 
-/** Kávébab: nyújtott ellipszoid, a +y oldal lapos, rajta S-ívű barázda. */
-function beanGeometry() {
-  const geometry = new THREE.SphereGeometry(1, 30, 20);
+/**
+ * Kávébab. Hossztengely: z. A −y oldal a domború hát, a +y oldal lapos,
+ * rajta a jellegzetes, enyhén S-ívű barázda, ami a végek felé elfogy.
+ */
+function beanGeometry(detail: number) {
+  const geometry = new THREE.SphereGeometry(1, detail, Math.round(detail * 0.7));
   const position = geometry.attributes.position;
   const vertex = new THREE.Vector3();
   for (let index = 0; index < position.count; index++) {
     vertex.fromBufferAttribute(position, index);
-    const x = vertex.x * 0.64;
-    let y = vertex.y * 0.46;
-    const z = vertex.z * 0.92;
-    if (y > 0) {
-      y *= 0.6;
-      const offset = x - 0.05 * Math.sin(vertex.z * 3.1);
-      const crease = Math.exp(-((offset / 0.075) ** 2)) * (1 - Math.abs(vertex.z) ** 6);
-      y -= 0.17 * crease;
+    const along = vertex.z;
+    // a végek felé kicsit elkeskenyedik (tojásdad, nem ellipszoid)
+    const taper = 1 - 0.1 * along * along;
+    const x = vertex.x * 0.66 * taper;
+    let y = vertex.y;
+    if (y < 0) {
+      y *= 0.52;
+    } else {
+      y *= 0.2;
+      const offset = x - 0.07 * Math.sin(along * 2.4);
+      const fade = 1 - Math.abs(along) ** 3;
+      y -= 0.2 * Math.exp(-((offset / 0.07) ** 2)) * fade;
+      // a barázda két ajka kicsit kidomborodik
+      y += 0.04 * Math.exp(-(((Math.abs(offset) - 0.14) / 0.08) ** 2)) * fade;
     }
-    position.setXYZ(index, x, y, z);
+    position.setXYZ(index, x, y, along);
   }
   geometry.computeVertexNormals();
   return geometry;
 }
 
-/** Egy pattanás lökése: a pillanatban 1, utána gyorsan lecseng. */
-const crack = (minute: number, at: number) => (minute < at ? 0 : Math.exp(-(minute - at) * 3.2) * (minute - at < 1.6 ? 1 : 0));
+/** Finom, szabálytalan felszín — ettől nem lesz műanyaghatású a bab. */
+function noiseTexture() {
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const image = ctx.createImageData(size, size);
+    const rand = random(5);
+    for (let index = 0; index < size * size; index++) {
+      const value = 110 + rand() * 60;
+      image.data.set([value, value, value, 255], index * 4);
+    }
+    ctx.putImageData(image, 0, 0);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+/** A tál belső felülete: t = 0 a közép, t = 1 a perem. */
+const innerProfile = (t: number) => ({
+  r: 0.2 + 3.1 * Math.sin((t * Math.PI) / 2) ** 0.8,
+  y: 0.05 + 1.05 * (1 - Math.cos((t * Math.PI) / 2))
+});
+
+/** A tál belső aljának magassága egy adott sugárnál (mintavételezéssel). */
+function innerHeight(radius: number) {
+  let previous = innerProfile(0);
+  for (let step = 1; step <= 60; step++) {
+    const next = innerProfile(step / 60);
+    if (next.r >= radius) {
+      const u = (radius - previous.r) / Math.max(1e-6, next.r - previous.r);
+      return previous.y + (next.y - previous.y) * Math.max(0, u);
+    }
+    previous = next;
+  }
+  return previous.y;
+}
+
+/** Mázas kerámiatál: lapos talp, íves fal, kihajló perem. */
+function bowlGeometry() {
+  const points: THREE.Vector2[] = [];
+  for (let step = 0; step <= 24; step++) {
+    const { r, y } = innerProfile(step / 24);
+    points.push(new THREE.Vector2(r, y));
+  }
+  // perem, majd vissza a külső falon
+  points.push(new THREE.Vector2(3.42, 1.12));
+  for (let step = 24; step >= 0; step--) {
+    const t = step / 24;
+    points.push(new THREE.Vector2(0.45 + 3.05 * Math.sin((t * Math.PI) / 2) ** 0.8, 1.02 * (1 - Math.cos((t * Math.PI) / 2))));
+  }
+  return new THREE.LatheGeometry(points, 96);
+}
 
 type Bean = {
-  angle: number;
-  radius: number;
-  height: number;
-  speed: number;
-  phase: number;
+  base: THREE.Vector3;
+  rotation: THREE.Quaternion;
   size: number;
   shade: number;
-  axis: THREE.Vector3;
-  spin: number;
-  heap: THREE.Vector3;
-  heapRotation: THREE.Quaternion;
+  hue: number;
+  hop: number;
+  hopAt: number;
+  spin: THREE.Vector3;
 };
 
-export function createRoastScene(canvas: HTMLCanvasElement, options: { count: number }) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, powerPreference: "high-performance" });
+export function createRoastScene(canvas: HTMLCanvasElement, options: { detail: number }) {
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, canvas, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
-  const background = new THREE.Color("#140f0b");
   const scene = new THREE.Scene();
-  scene.background = background;
-  scene.fog = new THREE.Fog(background, 11, 24);
+  const camera = new THREE.PerspectiveCamera(28, 1, 0.5, 80);
 
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 60);
+  scene.add(new THREE.HemisphereLight("#fffaf2", "#cfc6b8", 1.15));
+  const key = new THREE.DirectionalLight("#fff4e6", 2.4);
+  key.position.set(-4, 9, 5);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { bottom: -6, left: -6, right: 6, top: 6 });
+  key.shadow.bias = -0.0004;
+  key.shadow.normalBias = 0.015;
+  const rim = new THREE.DirectionalLight("#ffe2c4", 0.8);
+  rim.position.set(6, 3, -5);
+  scene.add(key, rim);
 
-  scene.add(new THREE.HemisphereLight("#fff1e0", "#2a1a10", 0.55));
-  const key = new THREE.DirectionalLight("#ffe3c4", 2.8);
-  key.position.set(4, 6, 5);
-  const rim = new THREE.DirectionalLight("#ffae6b", 1.7);
-  rim.position.set(-6, 2, -4);
-  const heat = new THREE.PointLight("#ff5a1f", 0, 16, 1.6);
-  heat.position.set(0, -3.4, 0.8);
-  scene.add(key, rim, heat);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.ShadowMaterial({ opacity: 0.13 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const turntable = new THREE.Group();
+  scene.add(turntable);
+
+  const bowl = new THREE.Mesh(
+    bowlGeometry(),
+    new THREE.MeshPhysicalMaterial({ clearcoat: 0.6, clearcoatRoughness: 0.35, color: "#f4efe7", roughness: 0.55, side: THREE.DoubleSide })
+  );
+  bowl.castShadow = true;
+  bowl.receiveShadow = true;
+  turntable.add(bowl);
 
   /* babok */
-  const geometry = beanGeometry();
-  const material = new THREE.MeshPhysicalMaterial({ clearcoat: 0, clearcoatRoughness: 0.3, metalness: 0, roughness: 0.8 });
-  const mesh = new THREE.InstancedMesh(geometry, material, options.count);
-  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  scene.add(mesh);
+  const bump = noiseTexture();
+  const material = new THREE.MeshPhysicalMaterial({
+    bumpMap: bump,
+    bumpScale: 0.6,
+    clearcoat: 0,
+    clearcoatRoughness: 0.25,
+    roughness: 0.78
+  });
+  const rand = random(19);
+  const beans: Bean[] = [];
+  const euler = new THREE.Euler();
 
-  const rand = random(7);
-  const beans: Bean[] = Array.from({ length: options.count }, () => {
-    const heapRadius = 2.45 * Math.sqrt(rand());
-    const heapAngle = rand() * Math.PI * 2;
-    const mound = 0.8 * (1 - (heapRadius / 2.45) ** 2);
-    return {
-      angle: rand() * Math.PI * 2,
-      radius: 1.1 + rand() * 2,
-      height: (rand() - 0.5) * 4.4,
-      speed: 0.18 + rand() * 0.22,
-      phase: rand() * Math.PI * 2,
-      size: 0.27 + rand() * 0.08,
-      shade: 0.84 + rand() * 0.3,
-      axis: new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize(),
-      spin: 0.4 + rand() * 0.9,
-      heap: new THREE.Vector3(Math.cos(heapAngle) * heapRadius, -2.15 + mound * (0.55 + rand() * 0.45), Math.sin(heapAngle) * heapRadius),
-      heapRotation: new THREE.Quaternion().setFromEuler(new THREE.Euler(rand() * 0.6 - 0.3 + (rand() > 0.5 ? Math.PI : 0), rand() * Math.PI * 2, rand() * 0.6 - 0.3))
-    };
+  /*
+   * Kupac rétegenként: minden réteg egy kicsit szűkebb korong, egy
+   * rácsra szórt babokkal. Így a babok egymáson fekszenek, nem lebegnek;
+   * a kis egymásba lógást a fölöttük lévők eltakarják.
+   */
+  const LAYERS = [
+    { radius: 2.7, lift: 0.1 },
+    { radius: 2.05, lift: 0.3 },
+    { radius: 1.35, lift: 0.5 },
+    { radius: 0.7, lift: 0.68 }
+  ];
+  const CELL = 0.37;
+  LAYERS.forEach((layer, layerIndex) => {
+    const top = layerIndex === LAYERS.length - 1;
+    for (let gx = -layer.radius; gx <= layer.radius; gx += CELL) {
+      for (let gz = -layer.radius; gz <= layer.radius; gz += CELL) {
+        const x = gx + (rand() - 0.5) * CELL * 0.7 + (layerIndex % 2) * CELL * 0.5;
+        const z = gz + (rand() - 0.5) * CELL * 0.7 + (layerIndex % 2) * CELL * 0.5;
+        const radius = Math.hypot(x, z);
+        if (radius > layer.radius - 0.12) continue;
+        // a réteg széle lejt: a kupac nem henger, hanem domb
+        const edge = 1 - (radius / layer.radius) ** 2;
+        const y = innerHeight(radius) + layer.lift * (layerIndex === 0 ? 1 : 0.55 + 0.45 * edge) + 0.02 * rand();
+        euler.set((rand() > 0.5 ? 0 : Math.PI) + (rand() - 0.5) * 0.8, rand() * Math.PI * 2, (rand() - 0.5) * 0.8);
+        const outer = layerIndex >= LAYERS.length - 2 || radius > layer.radius - 0.5;
+        beans.push({
+          base: new THREE.Vector3(x, y, z),
+          hop: outer && rand() < (top ? 0.5 : 0.12) ? 0.45 + rand() * 0.8 : 0,
+          hopAt: rand() * 0.5,
+          hue: (rand() - 0.5) * 0.05,
+          rotation: new THREE.Quaternion().setFromEuler(euler),
+          shade: 0.86 + rand() * 0.24,
+          size: 0.2 + rand() * 0.04,
+          spin: new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize()
+        });
+      }
+    }
   });
 
-  /* hűtőtálca: perforált acél korong, perem, forgó keverőkar */
-  const tray = new THREE.Group();
-  const steel = new THREE.MeshStandardMaterial({ color: "#3a332d", metalness: 0.85, roughness: 0.38 });
-  const trayDisc = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.12, 72), steel);
-  trayDisc.position.y = -2.42;
-  const rimRing = new THREE.Mesh(new THREE.TorusGeometry(3, 0.09, 12, 96), steel);
-  rimRing.rotation.x = Math.PI / 2;
-  rimRing.position.y = -2.3;
-  const wall = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.5, 72, 1, true), new THREE.MeshStandardMaterial({ color: "#2c2621", metalness: 0.8, roughness: 0.45, side: THREE.DoubleSide }));
-  wall.position.y = -2.2;
-  const arm = new THREE.Group();
-  const armBar = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.1, 0.1), steel);
-  const armBar2 = armBar.clone();
-  armBar2.rotation.y = Math.PI / 2;
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.5, 24), steel);
-  arm.add(armBar, armBar2, hub);
-  arm.position.y = -1.75;
-  tray.add(trayDisc, rimRing, wall, arm);
-  scene.add(tray);
+  const mesh = new THREE.InstancedMesh(beanGeometry(options.detail), material, beans.length);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  turntable.add(mesh);
 
-  /* pelyva: az első pattanásnál leváló ezüstbőr, felfelé sodródik */
-  const chaffCount = 240;
-  const chaffBase = new Float32Array(chaffCount * 4);
-  for (let index = 0; index < chaffCount; index++) {
-    const angle = rand() * Math.PI * 2;
-    const radius = rand() * 3.2;
-    chaffBase.set([Math.cos(angle) * radius, (rand() - 0.5) * 4, Math.sin(angle) * radius, 0.6 + rand() * 1.4], index * 4);
-  }
-  const chaffGeometry = new THREE.BufferGeometry();
-  const chaffPositions = new Float32Array(chaffCount * 3);
-  chaffGeometry.setAttribute("position", new THREE.BufferAttribute(chaffPositions, 3));
-  const chaffMaterial = new THREE.PointsMaterial({ color: "#e9d4ae", depthWrite: false, opacity: 0, size: 0.05, transparent: true });
-  const chaff = new THREE.Points(chaffGeometry, chaffMaterial);
-  scene.add(chaff);
+  /* pelyva: apró, papírvékony, világos pikkelyek — felszállnak és sodródnak */
+  const chaffCount = 60;
+  const chaffMesh = new THREE.InstancedMesh(
+    new THREE.CircleGeometry(0.06, 7),
+    new THREE.MeshStandardMaterial({ color: "#d9c39a", roughness: 1, side: THREE.DoubleSide }),
+    chaffCount
+  );
+  const chaff = Array.from({ length: chaffCount }, () => ({
+    angle: rand() * Math.PI * 2,
+    radius: rand() * 2.2,
+    speed: 0.5 + rand() * 0.9,
+    sway: rand() * Math.PI * 2,
+    size: 0.6 + rand() * 0.9
+  }));
+  turntable.add(chaffMesh);
 
   const matrix = new THREE.Matrix4();
-  const quaternion = new THREE.Quaternion();
-  const spinQuaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
   const position = new THREE.Vector3();
-  const vortex = new THREE.Vector3();
+  const quaternion = new THREE.Quaternion();
+  const spin = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
   const color = new THREE.Color();
-  const tint = new THREE.Color();
+  const hsl = { h: 0, l: 0, s: 0 };
+  const target = new THREE.Vector3();
   let narrow = false;
 
-  const update = (minute: number, seconds: number) => {
-    const temp = beanTemp(minute);
-    const settle = smooth(ROAST_END, ROAST_END + 0.75, minute);
-    const swell = 1 + 0.13 * smooth(6.5, 11.5, minute);
-    const first = crack(minute, 8);
-    const second = crack(minute, 11.8);
-    const heatLevel = smooth(95, 226, temp);
+  /** Pattanás: a pillanatban 1, fél perc alatt lecseng. */
+  const crackPulse = (minute: number, at: number, offset: number) => {
+    const local = minute - at - offset;
+    return local < 0 || local > 0.45 ? 0 : Math.sin((local / 0.45) * Math.PI);
+  };
 
+  const update = (minute: number, seconds: number) => {
+    const swell = 1 + 0.12 * smooth(6.5, 11.5, minute);
     const [r, g, b] = beanColor(minute);
-    color.setRGB(r, g, b, THREE.SRGBColorSpace);
-    material.roughness = mix(0.82, 0.36, smooth(9.5, 12.2, minute));
-    material.clearcoat = 0.7 * smooth(10.6, 12.3, minute);
+    material.roughness = mix(0.8, 0.38, smooth(9.8, 12.2, minute));
+    material.clearcoat = 0.65 * smooth(10.8, 12.3, minute);
+    material.bumpScale = mix(0.6, 0.25, smooth(8, 12, minute));
 
     beans.forEach((bean, index) => {
-      const theta = bean.angle + seconds * bean.speed * (0.35 + heatLevel * 0.9) * (1 - settle) + minute * 0.32;
-      const push = 1 + 0.4 * first * Math.sin(bean.phase * 3) ** 2 + 0.28 * second * Math.cos(bean.phase * 2) ** 2;
-      const radius = bean.radius * push;
-      vortex.set(
-        Math.cos(theta) * radius,
-        bean.height + 0.28 * Math.sin(seconds * 0.55 + bean.phase) + 0.5 * first * Math.sin(bean.phase),
-        Math.sin(theta) * radius
-      );
-      position.lerpVectors(vortex, bean.heap, settle);
-
-      spinQuaternion.setFromAxisAngle(bean.axis, bean.phase + (seconds * bean.spin + minute * 1.4) * (1 - settle));
-      quaternion.copy(spinQuaternion).slerp(bean.heapRotation, settle);
-      const size = bean.size * swell;
-      scale.set(size, size, size);
+      const hop = bean.hop ? Math.max(crackPulse(minute, 8, bean.hopAt), crackPulse(minute, 11.8, bean.hopAt * 0.6)) * bean.hop : 0;
+      position.copy(bean.base);
+      position.y += hop;
+      spin.setFromAxisAngle(bean.spin, hop * 5);
+      quaternion.copy(bean.rotation).premultiply(spin);
+      scale.setScalar(bean.size * swell);
       matrix.compose(position, quaternion, scale);
       mesh.setMatrixAt(index, matrix);
 
-      tint.copy(color).multiplyScalar(bean.shade);
-      mesh.setColorAt(index, tint);
+      color.setRGB(r, g, b, THREE.SRGBColorSpace);
+      color.getHSL(hsl);
+      color.setHSL(hsl.h + bean.hue, hsl.s, Math.min(1, hsl.l * bean.shade));
+      mesh.setColorAt(index, color);
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
-    // pelyva: 8. perctől 10,5-ig, felfelé sodródva és ringatózva
-    const chaffLife = smooth(7.9, 8.3, minute) * (1 - smooth(9.6, 10.6, minute));
-    chaffMaterial.opacity = 0.85 * chaffLife;
-    chaff.visible = chaffLife > 0.01;
-    if (chaff.visible) {
+    // pelyva az első pattanástól kb. két percig
+    const life = smooth(7.9, 8.2, minute) * (1 - smooth(9.4, 10.3, minute));
+    chaffMesh.visible = life > 0.01;
+    if (chaffMesh.visible) {
       const age = Math.max(0, minute - 7.9);
-      for (let index = 0; index < chaffCount; index++) {
-        const [x, y, z, speed] = chaffBase.subarray(index * 4, index * 4 + 4);
-        chaffPositions[index * 3] = x + 0.25 * Math.sin(seconds * 0.8 + index);
-        chaffPositions[index * 3 + 1] = y + age * speed * 1.6;
-        chaffPositions[index * 3 + 2] = z + 0.25 * Math.cos(seconds * 0.7 + index);
-      }
-      chaffGeometry.attributes.position.needsUpdate = true;
+      chaff.forEach((flake, index) => {
+        const rise = age * flake.speed * 1.4;
+        position.set(
+          Math.cos(flake.angle + rise * 0.4) * (flake.radius + rise * 0.3),
+          1.2 + rise + 0.1 * Math.sin(seconds * 1.3 + flake.sway),
+          Math.sin(flake.angle + rise * 0.4) * (flake.radius + rise * 0.3)
+        );
+        euler.set(seconds * 0.9 + flake.sway, seconds * 0.6 + index, 0);
+        quaternion.setFromEuler(euler);
+        scale.setScalar(flake.size * life);
+        matrix.compose(position, quaternion, scale);
+        chaffMesh.setMatrixAt(index, matrix);
+      });
+      chaffMesh.instanceMatrix.needsUpdate = true;
     }
 
-    // a dob hője alulról izzik; pattanáskor felvillan
-    heat.intensity = (14 * heatLevel + 55 * first + 30 * second) * (1 - settle);
-    background.setRGB(mix(0.078, 0.11, heatLevel * (1 - settle)), mix(0.059, 0.066, heatLevel), mix(0.043, 0.04, heatLevel), THREE.SRGBColorSpace);
-    (scene.fog as THREE.Fog).color.copy(background);
+    // a tál lassan forog; a görgetés is forgatja, hogy legyen mozgás
+    turntable.rotation.y = minute * 0.16 + seconds * 0.04;
 
-    // a tálca alulról emelkedik be, a kar forog
-    tray.visible = settle > 0.001;
-    tray.position.y = mix(-4, 0, smooth(0, 0.6, settle));
-    arm.rotation.y = seconds * 0.5;
-
-    // kamera: lassú körpálya, a végén föléhajol a tálcának
-    const progress = minute / (ROAST_END + 1);
-    const azimuth = ((mix(-14, 18, progress) + Math.sin(seconds * 0.12) * 2) * Math.PI) / 180;
-    const distance = mix(10, 8.6, settle) * (narrow ? 1.55 : 1);
-    camera.position.set(Math.sin(azimuth) * distance, mix(0.6, 4.6, settle), Math.cos(azimuth) * distance);
-    camera.lookAt(0, mix(0, -1.9, settle), 0);
-
-    return { temp };
+    const cooling = smooth(ROAST_END, ROAST_END + 0.8, minute);
+    const azimuth = ((mix(-10, 12, minute / (ROAST_END + 1)) + Math.sin(seconds * 0.12) * 1.5) * Math.PI) / 180;
+    const elevation = (mix(34, 50, cooling) * Math.PI) / 180;
+    const distance = (narrow ? 25 : 14) - 1 * smooth(4, 10, minute);
+    target.set(0, 0.7, 0);
+    camera.position.set(
+      Math.sin(azimuth) * Math.cos(elevation) * distance,
+      target.y + Math.sin(elevation) * distance,
+      Math.cos(azimuth) * Math.cos(elevation) * distance
+    );
+    camera.lookAt(target);
   };
 
   return {
@@ -240,14 +329,15 @@ export function createRoastScene(canvas: HTMLCanvasElement, options: { count: nu
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
-      // A babok ne a szöveg alatt örvényeljenek: asztalin jobbra, telefonon feljebb.
+      // A tál ne a szöveg alatt álljon: asztalin jobbra, telefonon feljebb.
       if (narrow) camera.setViewOffset(width, height, 0, height * 0.2, width, height);
-      else camera.setViewOffset(width, height, -width * 0.2, 0, width, height);
+      else camera.setViewOffset(width, height, -width * 0.2, height * 0.07, width, height);
     },
     render() {
       renderer.render(scene, camera);
     },
     dispose() {
+      bump.dispose();
       scene.traverse((object) => {
         const item = object as THREE.Mesh;
         item.geometry?.dispose();

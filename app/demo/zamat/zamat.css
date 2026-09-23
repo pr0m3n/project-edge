@@ -156,8 +156,9 @@
 
 .zm-announce {
   align-items: center;
-  background: var(--espresso);
-  color: rgba(250, 245, 238, 0.82);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
   display: flex;
   font-size: 12px;
   gap: 14px;
@@ -168,7 +169,7 @@
 }
 
 .zm-announce-sep {
-  background: rgba(250, 245, 238, 0.3);
+  background: var(--line);
   height: 12px;
   width: 1px;
 }
@@ -868,8 +869,10 @@
 /* ── előfizetés ── */
 
 .zm-subscribe {
-  background: var(--espresso);
-  color: rgba(250, 245, 238, 0.78);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   padding: clamp(52px, 7vw, 92px) clamp(16px, 4vw, 32px);
 }
 
@@ -883,7 +886,7 @@
 }
 
 .zm-subscribe h2 {
-  color: var(--cream);
+  color: var(--espresso);
   font-size: clamp(30px, 4vw, 46px);
 }
 
@@ -909,7 +912,7 @@
 }
 
 .zm-subscribe li::before {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%23e6b98a' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3 4.9 8.8 9.6 3.4' fill='none' stroke='%23d9442a' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
   content: "";
   height: 13px;
   left: 0;
@@ -919,9 +922,10 @@
 }
 
 .zm-subscribe-card {
-  background: rgba(250, 245, 238, 0.07);
-  border: 1px solid rgba(250, 245, 238, 0.16);
+  background: var(--cream);
+  border: 1px solid var(--line);
   border-radius: 3px;
+  color: var(--ink);
   display: grid;
   gap: 12px;
   padding: 28px;
@@ -935,18 +939,18 @@
 }
 
 .zm-sub-row.muted {
-  color: rgba(250, 245, 238, 0.6);
+  color: var(--muted);
   font-size: 13px;
 }
 
 .zm-sub-off {
-  color: #8fd1a0 !important;
+  color: var(--green) !important;
   font-weight: 650;
 }
 
 .zm-sub-row.total {
-  border-top: 1px solid rgba(250, 245, 238, 0.16);
-  color: var(--cream);
+  border-top: 1px solid var(--line);
+  color: var(--espresso);
   margin-top: 6px;
   padding-top: 16px;
 }
@@ -957,7 +961,7 @@
 }
 
 .zm-sub-note {
-  color: rgba(250, 245, 238, 0.5);
+  color: var(--muted);
   font-size: 12px !important;
   margin-top: 4px !important;
 }
@@ -1327,18 +1331,19 @@
 /* ── lábléc ── */
 
 .zm-footer {
-  background: var(--espresso);
-  color: rgba(250, 245, 238, 0.66);
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   padding: clamp(48px, 6vw, 72px) clamp(16px, 4vw, 32px) 26px;
 }
 
 .zm-footer .zm-logo,
 .zm-footer .zm-logo-text {
-  color: var(--cream);
+  color: var(--espresso);
 }
 
 .zm-footer .zm-logo-mark span {
-  background: var(--espresso);
+  background: var(--paper);
 }
 
 .zm-footer .zm-logo-mark span::after {
@@ -1373,24 +1378,24 @@
 }
 
 .zm-footer-cols span {
-  color: var(--cream);
+  color: var(--espresso);
   font-size: 13px;
   font-weight: 640;
   margin-bottom: 4px;
 }
 
 .zm-footer-cols a {
-  color: rgba(250, 245, 238, 0.66);
+  color: var(--muted);
   font-size: 13.5px;
   transition: color 0.2s ease;
 }
 
 .zm-footer-cols a:hover {
-  color: #e6b98a;
+  color: var(--terra);
 }
 
 .zm-footer-bottom {
-  border-top: 1px solid rgba(250, 245, 238, 0.14);
+  border-top: 1px solid var(--line);
   display: flex;
   flex-wrap: wrap;
   font-size: 12.5px;
@@ -1402,7 +1407,7 @@
 }
 
 .zm-footer-bottom a:hover {
-  color: #e6b98a;
+  color: var(--terra);
 }
 
 /* ── reszponzív ── */
@@ -1536,14 +1541,14 @@
 /* ── pörkölés (hero) ── */
 
 .zm-roast {
-  background: var(--char);
+  background: var(--cream);
   height: 600vh;
   position: relative;
 }
 
 .zm-roast-stage {
-  background: var(--char);
-  color: #f1ebe2;
+  background: radial-gradient(90% 80% at 68% 58%, #f7f4ee 0%, var(--cream) 62%, #e4dfd6 100%);
+  color: var(--ink);
   height: calc(100svh - var(--demo-bar-h, 0px));
   overflow: hidden;
   position: sticky;
@@ -1566,7 +1571,7 @@
 
 .zm-roast-stage::before {
   /* a babok ne keveredjenek a szöveg alá: bal oldalt a háttérbe sötétül */
-  background: linear-gradient(90deg, rgba(20, 15, 11, 0.92) 0%, rgba(20, 15, 11, 0.7) 30%, rgba(20, 15, 11, 0) 52%);
+  background: linear-gradient(90deg, rgba(236, 232, 225, 0.94) 0%, rgba(236, 232, 225, 0.72) 30%, rgba(236, 232, 225, 0) 52%);
   content: "";
   inset: 0;
   pointer-events: none;
@@ -1605,7 +1610,7 @@
 
 .zm-roast .zm-roast-step h1,
 .zm-roast .zm-roast-step h2 {
-  color: #f6f0e6;
+  color: var(--espresso);
   text-transform: uppercase;
 }
 
@@ -1618,7 +1623,7 @@
 }
 
 .zm-roast-step > p:not(.zm-kicker) {
-  color: #cdbfb1;
+  color: var(--muted);
   font-size: 17px;
   line-height: 1.6;
   margin-top: 18px;
@@ -1632,24 +1637,25 @@
   margin-top: 26px;
 }
 
-.zm-roast .zm-btn:not(.ghost-light):not(.is-added) {
+.zm-roast .zm-btn:not(.ghost-light):not(.ghost):not(.is-added) {
   background: var(--terra);
   border-color: var(--terra);
   color: #fff;
 }
 
-.zm-roast .zm-btn:not(.ghost-light):not(.is-added):hover {
-  background: #f1ebe2;
-  border-color: #f1ebe2;
-  color: var(--espresso);
+.zm-roast .zm-btn:not(.ghost-light):not(.ghost):not(.is-added):hover {
+  background: var(--espresso);
+  border-color: var(--espresso);
+  color: #fff;
 }
 
 /* „Itt vesszük ki" kártya */
 .zm-drop {
   align-items: stretch;
   backdrop-filter: blur(10px);
-  background: rgba(255, 244, 230, 0.07);
-  border: 1px solid rgba(255, 244, 230, 0.16);
+  background: rgba(255, 253, 250, 0.86);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 34px rgba(23, 18, 14, 0.08);
   display: grid;
   gap: 14px;
   grid-template-columns: 10px minmax(0, 1fr) auto;
@@ -1669,13 +1675,13 @@
 }
 
 .zm-drop-body small {
-  color: #e7a489;
+  color: var(--terra);
   font-family: var(--mono);
   font-size: 12px;
 }
 
 .zm-drop-body a {
-  color: #f6f0e6;
+  color: var(--espresso);
   font-family: var(--serif);
   font-size: 26px;
   font-weight: 800;
@@ -1684,11 +1690,11 @@
 }
 
 .zm-drop-body a:hover {
-  color: #ffb49c;
+  color: var(--terra);
 }
 
 .zm-drop-body span {
-  color: #b9ab9d;
+  color: var(--muted);
   font-size: 14px;
 }
 
@@ -1700,8 +1706,8 @@
 /* pörkölési görbe + mérőértékek */
 .zm-chart {
   backdrop-filter: blur(10px);
-  background: rgba(20, 15, 11, 0.72);
-  border: 1px solid rgba(255, 244, 230, 0.14);
+  background: rgba(255, 253, 250, 0.82);
+  border: 1px solid var(--line);
   bottom: 22px;
   margin: 0;
   padding: 12px 14px 8px;
@@ -1723,7 +1729,7 @@
 }
 
 .zm-readouts dt {
-  color: #9d8f82;
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -1731,7 +1737,7 @@
 }
 
 .zm-readouts dd {
-  color: #f6f0e6;
+  color: var(--espresso);
   font-family: var(--mono);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
@@ -1751,7 +1757,7 @@
 }
 
 .zm-readouts .is-phase i {
-  border: 1px solid rgba(255, 244, 230, 0.4);
+  border: 1px solid rgba(23, 18, 14, 0.25);
   display: inline-block;
   flex: none;
   height: 12px;
@@ -1766,24 +1772,24 @@
 }
 
 .zm-chart-grid {
-  stroke: rgba(255, 244, 230, 0.09);
+  stroke: rgba(23, 18, 14, 0.08);
   stroke-width: 1;
 }
 
 .zm-chart-mark {
-  stroke: rgba(255, 244, 230, 0.18);
+  stroke: rgba(23, 18, 14, 0.2);
   stroke-dasharray: 2 3;
 }
 
 .zm-chart-axis,
 .zm-chart-label {
-  fill: #8c7f73;
+  fill: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
 }
 
 .zm-chart-label {
-  fill: #a89a8c;
+  fill: var(--ink);
 }
 
 .zm-chart-curve {
@@ -1794,13 +1800,13 @@
 }
 
 .zm-chart-curve.is-ghost {
-  stroke: rgba(255, 244, 230, 0.16);
+  stroke: rgba(23, 18, 14, 0.14);
   stroke-width: 1.4;
 }
 
 .zm-chart-drop {
-  fill: var(--char);
-  stroke: #f1ebe2;
+  fill: var(--paper);
+  stroke: var(--espresso);
   stroke-width: 1.4;
 }
 
@@ -1812,7 +1818,7 @@
 
 .zm-scroll-hint {
   bottom: 30px;
-  color: #cdbfb1;
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
   left: clamp(20px, 5vw, 76px);
@@ -1848,7 +1854,7 @@
 }
 
 .zm-roast-static {
-  color: #f1ebe2;
+  color: var(--ink);
   display: grid;
   gap: 40px 56px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1907,9 +1913,7 @@
 
 /* ── előfizetés ── */
 
-.zm-subscribe {
-  background: var(--char);
-}
+
 
 .zm-subscribe h2 {
   font-size: clamp(40px, 4.6vw, 68px);
@@ -2149,6 +2153,10 @@
 }
 
 @media (max-width: 860px) {
+  .zm-roast-stage::before {
+    display: none;
+  }
+
   .zm-roast-copy {
     bottom: 16px;
     left: 16px;
@@ -2159,8 +2167,8 @@
 
   .zm-roast-step {
     backdrop-filter: blur(10px);
-    background: rgba(20, 15, 11, 0.78);
-    border: 1px solid rgba(255, 244, 230, 0.14);
+    background: rgba(250, 248, 244, 0.92);
+    border: 1px solid var(--line);
     bottom: 0;
     padding: 18px;
     top: auto;
