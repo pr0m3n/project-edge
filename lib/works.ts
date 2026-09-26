@@ -48,6 +48,20 @@ export type Work = {
 
 export const WORKS: Work[] = [
   {
+    id: "fablemotion",
+    name: "fablemotion",
+    goal: "Portfólió ajánlatkéréssel",
+    industry: "Motion design",
+    copy:
+      "Motion design stúdió 3D portfóliója: görgetésre a vázlattól a kész animációig épül fel minden munka.",
+    href: "https://fablemotion.hu",
+    external: true,
+    src: "/work/refs/fablemotion.webp",
+    width: 1440,
+    height: 900,
+    quote: { text: "Nagyon prémium oldal lett, teljesen le vagyok nyűgözve.", name: "Marci" }
+  },
+  {
     id: "leadscope",
     name: "LeadScope.hu",
     goal: "B2B lead generálás",
