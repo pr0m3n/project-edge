@@ -62,6 +62,23 @@ export const WORKS: Work[] = [
     quote: { text: "Nagyon prémium oldal lett, teljesen le vagyok nyűgözve.", name: "Marci" }
   },
   {
+    id: "zsongorko",
+    name: "Zsongorkő Gyógyszertár",
+    goal: "Recept-félretétel telefonon",
+    industry: "Gyógyszertár · Pécs",
+    copy:
+      "Pécsi patika 1999 óta. Élő „most nyitva” jelzés, és mindenhol kéznél egy gomb, ami felhívja a patikát.",
+    href: "https://www.zsongorkogyogyszertar.hu",
+    external: true,
+    src: "/work/refs/zsongorko.webp",
+    width: 1440,
+    height: 900,
+    fact: {
+      text: "Egyoldalas bemutató oldal fiókpatikával, szűrésekkel és 12 elfogadott egészségpénztárral.",
+      caption: "Élesben · zsongorkogyogyszertar.hu"
+    }
+  },
+  {
     id: "leadscope",
     name: "LeadScope.hu",
     goal: "B2B lead generálás",
