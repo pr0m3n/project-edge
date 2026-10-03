@@ -17,6 +17,13 @@ import { WORKS } from "@/lib/works";
  * A pakli tiszta CSS-sel legyeződik szét — nincs JS, nincs böngészőfüggő
  * szűrő. Érintőn a `:hover` nem sül el, ezért ott a nyugalmi állapot is
  * olvasható marad: minden kártya címkéje látszik.
+ *
+ * A képek NEM lusták. A szakasz közvetlenül a heró alatt van, a `next/image`
+ * alapértelmezett `loading="lazy"`-je miatt viszont a böngésző csak a
+ * szakasz közelében kérte le mind a tízet, egyszerre — mobilneten a kártyák
+ * sötéten álltak, aztán a kép egy pillanat alatt „beteleportált". Most az
+ * oldal betöltésekor indulnak, de alacsony prioritással, hogy a heró képét
+ * ne előzzék meg.
  */
 
 export function WorkDeck() {
@@ -43,8 +50,12 @@ export function WorkDeck() {
           <span className="work-deck-card" key={work.src} style={{ "--i": index } as React.CSSProperties}>
             <Image
               alt={`${work.name} — ${work.goal}`}
+              fetchPriority="low"
               height={work.height}
-              sizes="(max-width: 980px) calc(100vw - 40px), 46vw"
+              loading="eager"
+              // A kártya szélessége a CSS-ből: telefonon a pakli 86%-a,
+              // tableten 74%-a, asztalin a jobb hasáb 70%-a.
+              sizes="(max-width: 620px) 82vw, (max-width: 980px) 70vw, 34vw"
               src={work.src}
               width={work.width}
             />

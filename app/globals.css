@@ -18138,7 +18138,9 @@ details.admin-collapse summary:hover {
 .work-deck-stack{position:relative;z-index:2;display:block;
   height:clamp(300px,33vw,450px);perspective:1500px;perspective-origin:62% 45%}
 .work-deck-card{position:absolute;top:13%;left:0;width:70%;
-  border-radius:16px;overflow:hidden;background:#0d1116;
+  border-radius:16px;overflow:hidden;
+  /* Amíg a kép úton van, ne fekete lyuk álljon a helyén. */
+  background:linear-gradient(150deg,#222b35 0%,#141a21 60%,#0d1116 100%);
   border:1px solid rgba(255,255,255,.14);
   box-shadow:0 34px 70px -34px rgba(0,0,0,.95);
   transform-origin:left center;
