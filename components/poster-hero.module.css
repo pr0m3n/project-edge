@@ -186,7 +186,15 @@
   aspect-ratio: 2;
   z-index: 4;
   pointer-events: none;
-  animation: hand-in 1.2s 0.25s both;
+  /* Rejtve vár, amíg a kép meg nem érkezik és ki nem rajzolódik (`.ready`).
+     Korábban a beúszás az oldalbetöltéstől futott: lassú netnél lement üres
+     vásznon, és a kéz utána egy csapásra ugrott be. */
+  opacity: 0;
+}
+
+.visual.ready {
+  opacity: 1;
+  animation: hand-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
 
 .hand {

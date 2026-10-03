@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import { formatHuf, PURCHASE_OPTION_PRICES } from "@/lib/subscriptions";
 import styles from "./poster-hero.module.css";
 
@@ -82,11 +83,21 @@ const FADE_OUT = 0.18;
    között mozog; 1440-en volt véletlenül 3px. A ceruza alatt ráadásul tiszta
    háttér van, tehát máshol egy odavetett vonal lebegett a semmiben. */
 
+/* Veszteségmentes WebP: pixelre ugyanaz, mint a PNG (böngészőben
+   összemérve, 0 eltérés), csak harmadával kisebb. Veszteséges tömörítés nem
+   mehet rá — a matt kivágása egy 23-as fényességküszöbön múlik. */
+const HAND_SRC = "/experiments/hero-hand-pencil-dark.webp";
+const HAND_FALLBACK_SRC = "/experiments/hero-hand-pencil-dark.png";
+
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
 
-function Hand() {
+/* `onReady` akkor fut, amikor a kép megérkezett ÉS kirajzolódott. A beúszás
+   ehhez van kötve, nem az oldalbetöltéshez: lassú netnél (telefonon gyakori)
+   a kép a régi, időzített beúszás UTÁN érkezett meg, és egy csapásra ott
+   termett a kéz. */
+function Hand({ onReady }: { onReady: (ready: boolean) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -507,6 +518,7 @@ function Hand() {
       window.addEventListener("scroll", onScroll, { passive: true });
 
       paint(0);
+      onReady(true);
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       /* Ez váltotta ki az „Újrajátszás" gombot. A ciklus csak akkor fut,
@@ -527,7 +539,11 @@ function Hand() {
       observer.observe(canvas);
     };
 
-    source.src = "/experiments/hero-hand-pencil-dark.png";
+    // régi böngésző WebP nélkül: a PNG-vel is ugyanaz a kép
+    source.onerror = () => {
+      if (!disposed && !source.src.endsWith(".png")) source.src = HAND_FALLBACK_SRC;
+    };
+    source.src = HAND_SRC;
     return () => {
       disposed = true;
       cancelAnimationFrame(frame);
@@ -536,8 +552,9 @@ function Hand() {
       observer?.disconnect();
       if (onScroll) window.removeEventListener("scroll", onScroll);
       source.onload = null;
+      source.onerror = null;
     };
-  }, []);
+  }, [onReady]);
 
   return (
     <canvas
@@ -553,6 +570,11 @@ function Hand() {
 // ravikatiyar162's Minimalist Hero, retrieved from 21st.dev.
 export function PosterHero() {
   const heroRef = useRef<HTMLElement>(null);
+  const [handReady, setHandReady] = useState(false);
+
+  // A letöltés a HTML-lel együtt induljon, ne csak a hidratálás után — a kép
+  // amúgy a JS lefutásáig el sem kezdene jönni.
+  preload(HAND_SRC, { as: "image" });
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -608,8 +630,8 @@ export function PosterHero() {
         <h1 id="hero-title" className={styles.title}>
           Van egy ötleted.
         </h1>
-        <div className={styles.visual}>
-          <Hand />
+        <div className={`${styles.visual}${handReady ? ` ${styles.ready}` : ""}`}>
+          <Hand onReady={setHandReady} />
         </div>
         <p className={styles.script}>Adjunk neki helyet.</p>
         <span className={styles.sideNote}>
