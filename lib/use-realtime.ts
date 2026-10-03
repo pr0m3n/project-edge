@@ -79,10 +79,11 @@ export function useRealtime(
     function connect() {
       if (disposed) return;
 
-      channel = supabase.channel(channelName);
+      const current = supabase.channel(channelName);
+      channel = current;
 
       for (const entry of handlersRef.current) {
-        channel.on(
+        current.on(
           "postgres_changes",
           { event: entry.event ?? "*", schema: "public", table: entry.table },
           // A Supabase típusa itt szándékosan laza: a payload alakja táblánként
@@ -91,8 +92,12 @@ export function useRealtime(
         );
       }
 
-      channel.subscribe((state) => {
-        if (disposed) return;
+      current.subscribe((state) => {
+        // Csak a SAJÁT, még élő csatorna állapota számít. A `removeChannel`
+        // ugyanazon a híváson belül újra CLOSED-ot küld erre a callbackre —
+        // ezt a szűrést nélkülözve a callback önmagát hívta végtelen
+        // rekurzióban, és közben több párhuzamos újracsatlakozást is indított.
+        if (disposed || channel !== current) return;
 
         if (state === "SUBSCRIBED") {
           attempt = 0;
@@ -111,10 +116,8 @@ export function useRealtime(
           // Újracsatlakozás növekvő várakozással. A régi csatornát el kell
           // engedni, különben a Supabase kliens a háttérben tovább próbálná,
           // és két párhuzamos csatorna küldene ugyanarról eseményt.
-          if (channel) {
-            void supabase.removeChannel(channel);
-            channel = null;
-          }
+          channel = null;
+          void supabase.removeChannel(current);
           retryTimer = setTimeout(() => {
             attempt += 1;
             setStatus("connecting");
