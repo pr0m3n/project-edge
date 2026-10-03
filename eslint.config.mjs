@@ -16,7 +16,9 @@ const config = [
       ".backup_pre_improvements/**",
       // A Claude Code munkafák (worktree-k) teljes repómásolatok: a lint
       // különben >1000 hamis hibát jelentett belőlük.
-      ".claude/**"
+      ".claude/**",
+      // A hirdetési videó külön Remotion-projekt, saját csomagokkal (video/).
+      "video/**"
     ]
   },
   ...nextCoreWebVitals,

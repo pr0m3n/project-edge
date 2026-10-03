@@ -27,7 +27,7 @@ const content: ServiceLandingContent = {
   faq: [
     ["A szöveget is megírod?", "Vázlatból segítek érthető weboldalszöveget készíteni és megszerkesztem a tartalmi sorrendet."],
     ["Mi van, ha még nincs logóm vagy saját képem?", "A briefben ezt jelezheted. A vizuális irányt logó nélkül is el lehet kezdeni, képekhez pedig stock vagy külön fotós megoldást keresünk."],
-    ["Meg lehet venni a weboldalt egy összegben?", "Új weboldal mindig menedzselt havidíjas szolgáltatásként indul — így nincs nagy induló kiadás, és az üzemeltetés sem a te dolgod. Ha később a saját tulajdonodba vennéd, bármikor lehívhatod az előre rögzített vételi opciót: egyetlen egyszeri díjért átveszed a forráskódot, a domaint és a technikai fiókokat, az előfizetés pedig lezárul. Egyedül a webapp és az ügyfélkapu fut eleve egyszeri, egyedi fejlesztésként — meglévő oldal felújítása is havidíjas."]
+    ["Meg lehet venni a weboldalt egy összegben?", "Igen, már induláskor választhatod a Jelenlét, Üzleti vagy Egyedi csomag megvásárlását. A teljes díj rendezése után átadom a forráskódot és a technikai hozzáféréseket a saját fiókjaidba. A domain, tárhely és egyéb szolgáltatások működési díjait külön fizeted. Havidíjas indulás esetén a későbbi kivásárlás lehetősége is megmarad."]
   ]
 };
 

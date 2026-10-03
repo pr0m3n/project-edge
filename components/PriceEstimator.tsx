@@ -23,9 +23,12 @@ import {
   termSaving,
   termTotal,
   formatHuf,
+  websitePurchaseFeatures,
+  type CommercialModel,
   type SubscriptionPlanKey
 } from "@/lib/subscriptions";
-import { TransitionLink } from "@/components/TransitionLink";
+import { CommercialModelPicker } from "@/components/CommercialModelPicker";
+import { trackEvent } from "@/lib/analytics";
 import { huArticle } from "@/lib/hu";
 
 type PriceEstimatorProps = {
@@ -46,13 +49,14 @@ type PriceEstimatorProps = {
  */
 export const PLAN_PRESELECT_KEY = "pe-preselect-plan";
 
-function preselectPlan(key: SubscriptionPlanKey) {
+function preselectPlan(key: SubscriptionPlanKey, model: CommercialModel = "subscription") {
   try {
     window.sessionStorage.setItem(PLAN_PRESELECT_KEY, key);
-    window.dispatchEvent(new CustomEvent("projectedge:plan-preselected", { detail: key }));
+    window.sessionStorage.setItem("pe-preselect-model", model);
   } catch {
-    /* Privát módban a sessionStorage tiltott lehet — a horgony ettől még működik. */
+    /* A választás az eseménnyel tárolás nélkül is átadható. */
   }
+  window.dispatchEvent(new CustomEvent("projectedge:plan-preselected", { detail: { plan: key, model } }));
 }
 
 export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
@@ -64,6 +68,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
    * a havi vetülete viszont épp az érv mellette (12 417 Ft/hó) — a kettőt
    * egymás mellett kell látni ahhoz, hogy a kedvezmény értelmet nyerjen.
    */
+  const [model, setModel] = useState<CommercialModel>("subscription");
   const [annual, setAnnual] = useState(false);
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
@@ -73,14 +78,36 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
       {showLead ? (
         <div className="pricing-lead">
           <p className="micro-label dark">Árak</p>
-          <h3>Havidíjas weboldal, egyetlen fix díjjal.</h3>
+          <h3>Ugyanaz a weboldal, kétféle konstrukcióban.</h3>
           <p>
-            A domaint, a tárhelyet és a karbantartást is én intézem. Ha később a sajátod lenne, bármikor
-            megveheted — <a href="#veteli-opcio">lentebb látod, mennyiért</a>.
+            Válassz folyamatos üzemeltetést havidíjért, vagy vedd meg az oldalt már az induláskor.
           </p>
         </div>
       ) : null}
 
+      <CommercialModelPicker value={model} onChange={(next) => { setModel(next); trackEvent("pricing_model_selected", { model: next }); }} />
+      {model === "purchase" ? (
+        <div className="website-purchase-pricing" id="pricing-panel-purchase">
+          <div className="pricing-promise"><p><strong>Az első naptól a saját weboldaladat rendeled meg.</strong> Nincs előfizetés. A szerződés után 10 000 Ft foglalóval indul az építés; ez beleszámít a vételárba. A fennmaradó összeget a jóváhagyás és élesítés után, a teljes technikai átadás előtt fizeted.</p></div>
+          <div className="subscription-plan-grid">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <article className={`subscription-plan ${plan.featured ? "featured" : ""}`} key={plan.key}>
+                {plan.featured ? <span className="plan-ribbon">Többoldalas céges oldal</span> : null}
+                <div className="plan-number">{plan.key === "presence" ? "01" : plan.key === "business" ? "02" : "03"}</div>
+                <h3>{plan.name}</h3><p>{plan.short}</p>
+                <div className="plan-scope"><strong>{plan.pages}</strong><span>{plan.buildTime}</span></div>
+                <div className="plan-fit"><span>Válaszd, ha…</span><p>{PLAN_DECISION_RULE[plan.key]}</p></div>
+                <div className="plan-price"><strong>{formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</strong><span>egyszeri díj</span></div>
+                <ul>{websitePurchaseFeatures(plan).map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                <div className="plan-meta"><span>Saját tulajdon</span><span>Nincs előfizetés</span></div>
+                <a className="button primary" href="#projektbrief" onClick={() => preselectPlan(plan.key, "purchase")}>Ezt megvásárolom</a>
+              </article>
+            ))}
+          </div>
+          <div className="pricing-promise"><p><strong>A működtetés költsége külön tétel.</strong> A domain megújítása, a tárhely és a külső szolgáltatások díja a saját fiókjaidban téged terhel. A folyamatos karbantartásra külön megállapodást kérhetsz. A csomagon túli funkciókat előre egyeztetjük és külön árazzuk.</p></div>
+          <p className="purchase-tax-note">{PRICE_TAX_NOTE}</p>
+        </div>
+      ) : <>
       <div className="subscription-pricing-panel" id="pricing-panel-subscription">
           {/* A legerősebb érv a legfeltűnőbb helyen.
               A legtöbb stúdió 50% előleget kér egy még el sem készült
@@ -266,10 +293,6 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
       </div>
 
       <MobileFold label="Vételi opció — bármikor megveheted">
-      {/* A vásárlás KIMENET, nem belépő: a bérlés az egyetlen belépési pont, és
-          a tulajdonszerzés egy később lehívható opció. Így a hideg forgalom nem
-          a nagy egyösszegű döntéssel találkozik először, az „és ha egyszer a
-          sajátom akarom?" kifogásra viszont van válasz. */}
       <section className="buyout-band" id="veteli-opcio">
         <div className="buyout-copy">
           <span className="micro-label dark">Vételi opció</span>
@@ -313,6 +336,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
         </div>
       </section>
       </MobileFold>
+      </>}
     </section>
   );
 }

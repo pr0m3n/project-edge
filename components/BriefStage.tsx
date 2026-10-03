@@ -5,6 +5,7 @@ import { PublicBriefWizard } from "@/components/PublicBriefWizard";
 import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { BriefQuickLane } from "@/components/BriefQuickLane";
 import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft";
+import { type CommercialModel, SUBSCRIPTION_PLANS } from "@/lib/subscriptions";
 import { trackEvent } from "@/lib/analytics";
 
 /**
@@ -40,6 +41,7 @@ export function BriefStage() {
   const [live, setLive] = useState(false);
   const [resumeForm, setResumeForm] = useState<Partial<BriefFormValues> | null>(null);
   const [resumeStep, setResumeStep] = useState(0);
+  const [preselectedModel, setPreselectedModel] = useState<CommercialModel>("subscription");
   const [preselectedPlan, setPreselectedPlan] = useState<string | null>(null);
   const stageRef = useRef<HTMLElement>(null);
   const cardRect = useRef<DOMRect | null>(null);
@@ -134,22 +136,23 @@ export function BriefStage() {
     };
   }, []);
 
-  /* Az árkártyáról érkező látogatónak már van csomagja — neki a kaput
-     átugorjuk, és egyből az Ajánlás lépésen nyílik meg a brief. */
+  /* Az árkártyáról érkező látogató csomagját megőrizzük, de az alapadatokat
+     neki is az első lépésen kérjük be. */
   useEffect(() => {
-    function pickUp() {
-      let stored: string | null = null;
+    function pickUp(event?: Event) {
+      const detail = (event as CustomEvent<{ plan: string; model: CommercialModel }> | undefined)?.detail;
+      let stored = detail?.plan ?? null;
+      let model: string | null = detail?.model ?? null;
       try {
-        stored = window.sessionStorage.getItem("pe-preselect-plan");
-      } catch {
-        return;
-      }
-      if (!stored) return;
-      try {
+        stored ??= window.sessionStorage.getItem("pe-preselect-plan");
+        model ??= window.sessionStorage.getItem("pe-preselect-model");
         window.sessionStorage.removeItem("pe-preselect-plan");
+        window.sessionStorage.removeItem("pe-preselect-model");
       } catch {
-        /* nem baj, ha nem törölhető */
+        /* Az eseményben érkező választás privát módban is működik. */
       }
+      if (!SUBSCRIPTION_PLANS.some((plan) => plan.key === stored)) return;
+      setPreselectedModel(model === "purchase" ? "purchase" : "subscription");
       setPreselectedPlan(stored);
       setChoice((current) => current ?? "no");
     }
@@ -376,9 +379,10 @@ export function BriefStage() {
             </button>
             <PublicBriefWizard
             bare
+            initialModel={preselectedModel}
             initialForm={resumeForm ?? undefined}
             initialPlan={preselectedPlan ?? undefined}
-            initialStep={resumeForm ? resumeStep : preselectedPlan ? 2 : 1}
+            initialStep={resumeForm ? resumeStep : 0}
             initialWebsiteStatus={choice}
             />
           </>

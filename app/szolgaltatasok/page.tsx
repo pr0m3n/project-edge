@@ -31,7 +31,7 @@ const services = [
   ["Kivásárlás bármikor", "A bérelt oldalt egyszeri díjért megveheted: a forráskód, a domain és a hozzáférések a tieddé válnak, az előfizetés pedig lezárul."],
   ["Folyamatos gondozás", "A bérelt oldalt figyelem, frissítem, és a csomag szerinti módosításokat elvégzem. Neked nincs technikai feladatod."],
   ["Díjmentes email továbbítás", "A domainhez tartozó email címekről (pl. info@cegnev.hu) automatikusan továbbítom a leveleket a saját postafiókodba."],
-  ["Meglévő oldal felújítása", "A régi oldal nem akadály, hanem kiindulás: a tartalmat áthozom, és ugyanúgy bérelt oldalként épül újra."]
+  ["Meglévő oldal felújítása", "A régi oldal nem akadály, hanem kiindulás: a tartalmat áthozom, és havidíjjal vagy egyszeri vásárlással épül újra."]
 ];
 
 // Ügyféltípus → megoldás → mire használjuk (az ár a lenti csúszkás becslőben van,
@@ -54,7 +54,7 @@ const solutions: Array<{
   {
     type: "Már van oldalad, de nem hoz ügyfelet",
     who: "Van működő oldalad, de lassú, elavult vagy nem érkezik rajta megkeresés.",
-    stack: "Új oldal épül a helyére, a tartalmat áthozom — ugyanabban a havidíjas konstrukcióban, mint bármelyik új oldal. A domainedet megtartod."
+    stack: "Új oldal épül a helyére, a tartalmat áthozom — havidíjjal vagy egyszeri vásárlással, ahogy bármelyik új oldal. A domainedet megtartod."
   },
   {
     type: "Egyedi rendszer, ügyfélkapu, admin",
@@ -77,7 +77,7 @@ const branches: Branch[] = [
   {
     id: "van",
     label: "Van, de nem hoz ügyfelet",
-    hint: "Ugyanaz a havidíjas konstrukció — a régi oldal csak a kiindulás",
+    hint: "Havidíj vagy egyszeri vásárlás — a régi oldal a kiindulás",
     cards: [solutions[2]],
     extras: [
       {
@@ -131,8 +131,8 @@ export default function ServicesPage() {
           <p className="micro-label dark">Szolgáltatások</p>
           <h1>Annyit építek, amennyi kell.</h1>
           <p>
-            A weboldalt bérled: havidíjat fizetsz, én pedig megépítem és üzemeltetem. Előleg és
-            belépési díj nincs — csak a kész, általad jóváhagyott oldalért fizetsz.
+            Havidíjjal kéred, és én építem és üzemeltetem — induló díj nélkül. Vagy egyszeri
+            díjért megvásárolod, és a kész oldalt a forráskóddal együtt átadom neked.
           </p>
         </div>
         <BuildTower level={3} />
@@ -171,8 +171,8 @@ export default function ServicesPage() {
         <PriceEstimator />
 
         <p className="solutions-note">
-          Az első díj a kész oldal jóváhagyása után esedékes, utána élesítem. Hűségidő nincs,
-          bármikor lemondható vagy szüneteltethető.
+          Havidíjnál az első díj a kész oldal jóváhagyása után esedékes, és nincs hűségidő.
+          Egyszeri vásárlásnál 10 000 Ft foglalóval indul a munka; az átadás a teljes díj rendezése után történik.
         </p>
       </section>
 

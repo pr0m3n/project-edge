@@ -18,13 +18,7 @@ import {
   IconChevronLeft,
   IconChevronRight
 } from "@/components/icons";
-import {
-  buyoutCreditMonths,
-  buyoutFloorPrice,
-  formatHuf,
-  PURCHASE_OPTION_PRICES,
-  SUBSCRIPTION_PLANS
-} from "@/lib/subscriptions";
+
 
 interface StepDetail {
   number: string;
@@ -228,185 +222,16 @@ const BERLES_DATA: StepDetail[] = [
   }
 ];
 
-const KIVASARLAS_DATA: StepDetail[] = [
-  {
-    number: "01",
-    title: "Az oldalad már élesben termel",
-    shortDesc: "Nem látatlanban veszel rendszert: az oldalad már működik és hozza az ügyfeleket.",
-    badge: "Kockázatmentes",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconGlobe size={18} /></span>
-          <span className="hud-title">Bizonyított működés</span>
-          <span className="hud-badge hud-badge-aqua">Éles oldal</span>
-        </div>
-        <div className="hud-body">
-          <p className="hud-statement">
-            Nem ígéretek alapján vásárolsz weboldalt: a rendszer már a saját domaineden dolgozik,
-            valós látogatókkal és működő konverziós útvonallal.
-          </p>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Előny</span>
-          <span className="hud-metric-val">Kipróbáltad, mielőtt megveszed</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "02",
-    title: "Megvásárlás indítása",
-    shortDesc: "Bármelyik hónapban elindítod az ügyfélkapun, egy gombnyomással.",
-    badge: "Bármikor",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconKey size={18} /></span>
-          <span className="hud-title">Kivásárlás indítása</span>
-          <span className="hud-badge">Ügyfélkapu</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-trigger-preview">
-            <span className="hud-tp-btn"><IconKey size={16} /> Megvásárlás indítása</span>
-            <small>Nincs kötelező várakozási idő: bármelyik hónapban élhetsz vele.</small>
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Időzítés</span>
-          <span className="hud-metric-val">Teljesen szabad döntés</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "03",
-    title: "Rögzített ár, beszámítással",
-    shortDesc: "A vételár a szerződésben rögzített, és minden befizetett hónap után a havidíjad fele levonódik belőle, a vételár feléig.",
-    badge: "Beszámítás",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconLock size={18} /></span>
-          <span className="hud-title">Vételár csomagonként</span>
-          <span className="hud-badge">Alku nélkül</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-price-breakdown">
-            {SUBSCRIPTION_PLANS.map((plan) => (
-              <div className="hud-price-row" key={plan.key}>
-                <span>{plan.name}: {formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</span>
-                <span className="hud-highlight-text">
-                  {buyoutCreditMonths(plan.key)}. hónaptól {formatHuf(buyoutFloorPrice(plan.key))}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Beszámítás</span>
-          <span className="hud-metric-val">A havidíj fele, a vételár feléig</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "04",
-    title: "Összefoglaló és számla",
-    shortDesc: "Átadási összefoglalót kapsz a felhalmozott beszámítással és a fizetendő összeggel. A vételár beérkezése után indul az átadás.",
-    badge: "Írásban",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconFileText size={18} /></span>
-          <span className="hud-title">Tulajdonjog átruházása</span>
-          <span className="hud-badge">Írásban</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-legal-checklist">
-            <div className="hud-code-line"><IconCheck size={14} /> A forráskód teljes felhasználási joga</div>
-            <div className="hud-code-line"><IconCheck size={14} /> A design- és tartalmi anyagok átadása</div>
-            <div className="hud-code-line"><IconCheck size={14} /> A domain és a fiókok átruházása a te nevedre</div>
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Jogi garancia</span>
-          <span className="hud-metric-val">Tiszta tulajdonjog</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "05",
-    title: "Vezetett technikai átadás",
-    shortDesc: "Lépésről lépésre átadom az infrastruktúrát a saját fiókjaidba. Útmutatót kapsz.",
-    badge: "Vezetett",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconCode size={18} /></span>
-          <span className="hud-title">Technikai átadás</span>
-          <span className="hud-badge">Vezetett</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-migration-steps">
-            <div className="hud-mig-item">
-              <span className="hud-mig-step">1</span>
-              <span>A forráskód átkerül a saját GitHub-fiókodba</span>
-            </div>
-            <div className="hud-mig-item">
-              <span className="hud-mig-step">2</span>
-              <span>A tárhely a saját fiókodba kerül</span>
-            </div>
-            <div className="hud-mig-item">
-              <span className="hud-mig-step">3</span>
-              <span>A domaint átíratom a te nevedre</span>
-            </div>
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Biztonság</span>
-          <span className="hud-metric-val">Jelszót egyikünk sem küld</span>
-        </div>
-      </div>
-    )
-  },
-  {
-    number: "06",
-    title: "A kód, domain és fiókok a tieid",
-    shortDesc: "Nincs több havidíj. Az átadás lezárásától 30 napig díjmentesen javítom a hibákat.",
-    badge: "Nincs havidíj",
-    scene: (
-      <div className="stage-hud-card">
-        <div className="hud-header">
-          <span className="hud-header-icon"><IconKey size={18} /></span>
-          <span className="hud-title">Teljes tulajdon</span>
-          <span className="hud-badge hud-badge-aqua">100% a tiéd</span>
-        </div>
-        <div className="hud-body">
-          <div className="hud-ownership-cert">
-            <div className="hud-cert-row">
-              <span>Forráskód:</span>
-              <strong>Teljes Git-repó a neveden</strong>
-            </div>
-            <div className="hud-cert-row">
-              <span>Domain és DNS:</span>
-              <strong>Kizárólagos tulajdonod</strong>
-            </div>
-            <div className="hud-cert-row">
-              <span>Utógarancia:</span>
-              <strong className="text-emerald-400">30 nap díjmentes javítás</strong>
-            </div>
-          </div>
-        </div>
-        <div className="hud-footer">
-          <span className="hud-metric-label">Utána</span>
-          <span className="hud-metric-val">Nincs több havidíj</span>
-        </div>
-      </div>
-    )
-  }
-];
+const VASARLAS_DATA: StepDetail[] = [
+  { title: "Csomag és adatlap", description: "A Jelenlét, Üzleti vagy Egyedi csomagot választod, és leírod, mire van szükséged.", badge: "Egyszeri díj" },
+  { title: "Ajánlat és szerződés", description: "Az ügyfélkapuban rögzítjük a tartalmat, a vételárat és a határidőt. A szerződés után 10 000 Ft foglaló indítja az építést; ez a vételár része.", badge: "Írásban rögzítve" },
+  { title: "Elkészítés és jóváhagyás", description: "Privát előnézeti linken átnézed az oldalt, és jelzed a módosításokat. Csak a jóváhagyásod után élesítem.", badge: "Nálad a döntés" },
+  { title: "Végső fizetés és átadás", description: "Jóváhagyás és élesítés után rendezed a fennmaradó vételárat. Ezután a forráskód és a hozzáférések a saját fiókjaidba kerülnek.", badge: "Saját tulajdon" },
+  { title: "Indulás után", description: "Az átadás lezárásától 30 nap díjmentes technikai hibajavítás jár. A domain, a tárhely, a külső szolgáltatások és a későbbi karbantartás költsége külön tétel.", badge: "30 nap hibajavítás" }
+].map((step, index) => ({
+  number: `0${index + 1}`, title: step.title, shortDesc: step.description, badge: step.badge,
+  scene: <div className="stage-hud-card"><div className="hud-header"><span className="hud-header-icon"><IconKey size={18} /></span><span className="hud-title">{step.title}</span><span className="hud-badge">{step.badge}</span></div><div className="hud-body"><p className="hud-statement">{step.description}</p></div><div className="hud-footer"><span className="hud-metric-label">Konstrukció</span><span className="hud-metric-val">Egyszeri vásárlás</span></div></div>
+}));
 
 const GUARANTEES = [
   {
@@ -424,13 +249,13 @@ const GUARANTEES = [
   {
     badge: "Felügyelet",
     title: "Indulás után is",
-    desc: "Folyamatos működésfigyelés és technikai frissítések, hibára 1 munkanapon belül reagálok.",
+    desc: "Havidíjnál folyamatos felügyelet; vásárlásnál az átadástól 30 nap technikai hibajavítás.",
     icon: IconWrench,
   },
   {
-    badge: "0 Ft előleg",
-    title: "Fizetés a végén",
-    desc: "Csak a kész, jóváhagyott oldalért fizetsz. Ha nem tetszik, nem fizetsz.",
+    badge: "Átlátható fizetés",
+    title: "Előre rögzített feltételek",
+    desc: "Havidíjnál csak a jóváhagyott oldalért fizetsz. Vásárlásnál 10 000 Ft foglalóval indul az építés.",
     icon: IconLock,
   },
 ];
@@ -456,7 +281,7 @@ export function InteractiveFlowStage() {
      desktopon amúgy is a bal oszlopban állnak, tehát nincs mit láthatóvá
      tenni. */
 
-  const currentData = activeTab === "berles" ? BERLES_DATA : KIVASARLAS_DATA;
+  const currentData = activeTab === "berles" ? BERLES_DATA : VASARLAS_DATA;
   const currentStep = currentData[activeStepIndex] || currentData[0];
 
   const handleTabChange = (tab: "berles" | "kivasarlas") => {
@@ -550,11 +375,11 @@ export function InteractiveFlowStage() {
         <header className="stage-head">
           <p className="micro-label">Két útvonal</p>
           <h2 className="stage-main-title">
-            Bérléssel indulsz — és bármikor a sajátod lehet.
+            Havidíjjal vagy saját weboldallal indulsz.
           </h2>
           <p className="stage-lead">
-            Nem kell a nulladik napon nagy összeget kifizetned. Havidíjjal indulsz, és ha egyszer
-            megtartanád, a befizetett havidíjad fele beszámít a vételárba.
+            Havidíjnál én kezelem a működtetést. Egyszeri vásárlásnál a kész oldal a saját
+            fiókjaidba kerül. A havidíjas oldal később is kivásárolható, a befizetett díjak részbeni beszámításával.
           </p>
 
           {/* Útvonal Kapcsoló Lucide ikonokkal */}
@@ -582,8 +407,8 @@ export function InteractiveFlowStage() {
             >
               <span className="switch-icon"><IconKey size={18} /></span>
               <div className="switch-text">
-                <strong>02. Kivásárlás</strong>
-                <small>Bármikor megveheted · a havidíj fele beszámít</small>
+                <strong>02. Egyszeri vásárlás</strong>
+                <small>Saját tulajdon · forráskód és hozzáférések</small>
               </div>
             </button>
           </div>

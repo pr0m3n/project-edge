@@ -11,7 +11,7 @@
  */
 
 import { paletteOptions, priorityLabels, platformLabels } from "@/components/portal/brief-fields";
-import { formatHuf, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { formatHuf, isWebsitePackage, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import { PROVIDER } from "@/lib/legal";
 
 export type PromptStack = "nextjs" | "static" | "astro";
@@ -216,7 +216,8 @@ export function buildAiBuildPrompt(project: AiPromptProject, options: AiPromptOp
   const domain = project.managedDomain || text(brief?.domainName) || parsed["Domain"] || "";
   const publicEmail = text(brief?.contactEmail) || parsed["Kapcsolati email"] || "";
   const publicPhone = text(brief?.contactPhone) || parsed["Telefon"] || "";
-  const plan = project.subscriptionPlanKey ? subscriptionPlan(project.subscriptionPlanKey) : null;
+  const planKey = project.subscriptionPlanKey || (isWebsitePackage({ commercialModel: project.commercialModel, projectType: text(brief?.projectType) }) ? text(brief?.subscriptionPlan) : "");
+  const plan = planKey ? subscriptionPlan(planKey) : null;
 
   const socials = fieldLines([
     ["Facebook", text(brief?.facebookUrl)],
@@ -270,12 +271,12 @@ export function buildAiBuildPrompt(project: AiPromptProject, options: AiPromptOp
           ["Tervezett domain", domain],
           ["Konstrukció", project.commercialModel === "subscription"
             ? `menedzselt előfizetés${plan ? ` — ${plan.name} csomag (${plan.pages})` : ""}${project.monthlyPrice ? `, ${formatHuf(project.monthlyPrice)}/hó` : ""}`
-            : "egyszeri fejlesztés, az ügyfél tulajdonába kerül"],
+            : `egyszeri fejlesztés, az ügyfél tulajdonába kerül${plan ? ` — ${plan.name} csomag (${plan.pages})` : ""}`],
           ["Fő üzleti cél", goals],
           ["Prioritás", priority]
         ]),
         contentBrief ? `\n**Amit az ügyfél mesélt magáról — ez a szövegírás nyersanyaga, dolgozd fel, ne másold:**\n\n> ${contentBrief.replace(/\n+/g, "\n> ")}` : "",
-        project.commercialModel === "subscription" && plan
+        plan
           ? `\n**Terjedelmi korlát:** a csomag terjedelme: ${plan.pages.toLowerCase()}. Ne építs többet — ami nem fér bele, azt jelezd külön listában bővítési javaslatként.`
           : ""
       ].join("\n")

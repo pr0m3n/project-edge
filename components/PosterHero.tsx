@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { formatHuf, PURCHASE_OPTION_PRICES } from "@/lib/subscriptions";
 import styles from "./poster-hero.module.css";
 
 /* A ceruzahegy helye a FORRÁSKÉP koordinátáiban (1774×887). Innen indul a
@@ -624,7 +625,7 @@ export function PosterHero() {
         <p className={styles.offer}>
           <strong>Egyedi céges weboldal, már 2–4 munkanap alatt.</strong>
           <br />
-          <span>Domain, tárhely és karbantartás a havidíjban — végig egy emberrel egyeztetsz.</span>
+          <span>Havidíjjal vagy egyszeri vásárlással — végig egy emberrel egyeztetsz.</span>
         </p>
         {/* „Nézzük a lehetőségeket" nem mondta meg, hova visz — a cél viszont a
             csomagok és az árak. A hirdetésekből érkezők jelentős része
@@ -638,16 +639,17 @@ export function PosterHero() {
         <p className={styles.price}>
           <strong>14 900 Ft</strong> / hó-tól
           <br />
-          <span className={styles.promise}>Csak akkor fizetsz, ha tetszik</span>
+          <span>vagy {formatHuf(PURCHASE_OPTION_PRICES.presence)}-tól egyszeri díjjal</span>
+          <br />
+          <span className={styles.promise}>Havidíjnál csak akkor fizetsz, ha tetszik</span>
         </p>
       </footer>
     </div>
   );
 }
 
-/* A hero alatti tartalmat ez a burok oldja fel a világos szakaszba. Külön
-   komponens, mert a `.after` osztály a hero CSS-moduljában él — a `children`
-   szerveroldali marad, csak a burok fut kliensen. */
+/* A nyitórész utáni szakaszok közös háttere. A children szerveroldali
+   marad; a burok osztálya a nyitórész CSS-moduljából jön. */
 export function PosterHeroFollow({ children }: { children: React.ReactNode }) {
   return <div className={styles.after}>{children}</div>;
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   initialBriefForm,
+  chooseWebsitePackage,
   PUBLIC_BRIEF_DRAFT_KEY,
   readPublicBriefDraft,
   type BriefFormValues,
@@ -11,6 +12,9 @@ import {
 } from "@/lib/brief-draft";
 import {
   LOGO_DESIGN_PRICE,
+  purchaseOptionPrice,
+  isWebsitePackage,
+  type CommercialModel,
   formatHuf,
   SUBSCRIPTION_PLANS,
   subscriptionPlan,
@@ -19,6 +23,7 @@ import {
   SERVICE_COUNT_OPTIONS,
   VISITOR_TASK_OPTIONS
 } from "@/lib/subscriptions";
+import { CommercialModelPicker } from "@/components/CommercialModelPicker";
 import { trackEvent } from "@/lib/analytics";
 
 /**
@@ -61,10 +66,21 @@ function toggle(value: string, item: string) {
   return values.includes(item) ? values.filter((entry) => entry !== item).join(", ") : [...values, item].join(", ");
 }
 
+function domainFromAddress(value: string) {
+  try {
+    const url = new URL(/^https?:\/\//i.test(value.trim()) ? value.trim() : `https://${value.trim()}`);
+    return url.hostname.includes(".") && !/\s/.test(value) ? url.hostname : "";
+  } catch {
+    return "";
+  }
+}
+
 function validate(step: number, form: BriefFormValues) {
   if (step === 0) {
     if (form.company.trim().length < 2) return "Add meg a vállalkozásod vagy márkád nevét.";
     if (form.commercialModel === "purchase" && !form.projectType) return "Válaszd ki, milyen projektet szeretnél.";
+    if (form.websiteStatus === "yes" && !domainFromAddress(form.website)) return "Add meg a jelenlegi weboldalad címét, például: vallalkozasod.hu.";
+    if (["have", "keep"].includes(form.domainStatus) && !domainFromAddress(form.domainName)) return "Add meg a meglévő domainedet, például: vallalkozasod.hu.";
   }
   if (step === 1) {
     if (!form.serviceCount) return "Jelöld, hány szolgáltatást vagy terméket árulsz.";
@@ -86,13 +102,22 @@ function validate(step: number, form: BriefFormValues) {
   return "";
 }
 
+function resumableStep(form: BriefFormValues, target: number) {
+  const next = Math.max(0, Math.min(steps.length - 1, target));
+  for (let index = 0; index < next; index++) {
+    if (validate(index, form)) return index;
+  }
+  return next;
+}
+
 export type PublicBriefWizardProps = {
   /** A heró kapujából érkező válasz — előtölti az 1. lépést. */
   initialWebsiteStatus?: "no" | "yes";
-  /** Melyik lépésen induljon (árkártyáról érkezve a 3.: Ajánlás). */
+  /** Mentett, kitöltött adatlap folytatási lépése. Új brief az elsőn indul. */
   initialStep?: number;
   /** Előre kiválasztott csomag (árkártyáról érkezve). */
   initialPlan?: string;
+  initialModel?: CommercialModel;
   /**
    * Kész adatlap, emailben kapott folytatás-linkről. Ha meg van adva, a
    * „Folytatod a korábbi projektbriefet?" kérdés ELMARAD: a link megnyitása
@@ -107,24 +132,32 @@ export function PublicBriefWizard({
   initialWebsiteStatus,
   initialStep = 0,
   initialPlan,
+  initialModel = "subscription",
   initialForm,
   bare = false
 }: PublicBriefWizardProps = {}) {
   const router = useRouter();
   const [form, setForm] = useState<BriefFormValues>(() => {
     // Emailből érkező kész adatlap mindent felülír — a kapu válasza is benne van.
-    if (initialForm) return { ...initialBriefForm, ...initialForm };
-    return {
+    if (initialForm) {
+      const resumed = { ...initialBriefForm, ...initialForm };
+      return {
+        ...resumed,
+        domainStatus: ["have", "keep"].includes(resumed.domainStatus) ? "have" : "need",
+        domainName: resumed.domainName || (["have", "keep"].includes(resumed.domainStatus) ? domainFromAddress(resumed.website) : "")
+      };
+    }
+    return chooseWebsitePackage({
       ...initialBriefForm,
       ...(initialWebsiteStatus === "yes"
-        ? { websiteStatus: "yes", domainStatus: "keep" }
+        ? { websiteStatus: "yes", domainStatus: "have" }
         : initialWebsiteStatus === "no"
-          ? { websiteStatus: "no", domainStatus: "new" }
+          ? { websiteStatus: "no", domainStatus: "need" }
           : {}),
       ...(initialPlan ? { subscriptionPlan: initialPlan as BriefFormValues["subscriptionPlan"] } : {})
-    };
+    }, initialModel);
   });
-  const [step, setStep] = useState(initialStep);
+  const [step, setStep] = useState(() => resumableStep(form, initialStep));
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState("");
@@ -151,12 +184,12 @@ export function PublicBriefWizard({
     openedAt.current = Date.now();
     // Emailből érkezve NE kérdezzük meg, hogy folytatja-e: a link megnyitása
     // maga a válasz. Az adatlap már be van töltve, egyből ott folytatja.
-    if (!initialForm) {
+    if (!initialForm && !initialPlan) {
       const saved = readPublicBriefDraft(window.localStorage.getItem(PUBLIC_BRIEF_DRAFT_KEY));
       if (saved && (saved.data.company || saved.step > 0)) setResumeDraft(saved);
     }
     setReady(true);
-  }, [initialForm]);
+  }, [initialForm, initialPlan]);
 
   useEffect(() => {
     if (!ready || resumeDraft) return;
@@ -179,6 +212,21 @@ export function PublicBriefWizard({
     setForm((current) => (current.subscriptionPlan === recommended ? current : { ...current, subscriptionPlan: recommended }));
   }, [recommended, manualPlan]);
 
+  useEffect(() => {
+    function pickUp(event: Event) {
+      const { plan, model } = (event as CustomEvent<{ plan: BriefFormValues["subscriptionPlan"]; model: CommercialModel }>).detail;
+      if (!SUBSCRIPTION_PLANS.some((item) => item.key === plan)) return;
+      setForm((current) => chooseWebsitePackage(current, model, plan));
+      setManualPlan(true);
+      setResumeDraft(null);
+      setStep(0);
+      setError("");
+    }
+    window.addEventListener("projectedge:plan-preselected", pickUp);
+    return () => window.removeEventListener("projectedge:plan-preselected", pickUp);
+  }, []);
+
+  const packaged = isWebsitePackage(form);
   const selectedPlan = subscriptionPlan(form.subscriptionPlan);
   const selectedVibe = vibes.find(([key]) => key === form.vibe) ?? vibes[1];
   const selectedPalette = palettes.find(([key]) => key === form.palette) ?? palettes[0];
@@ -202,10 +250,13 @@ export function PublicBriefWizard({
 
   function go(next: number) {
     if (next > step) {
-      const message = validate(step, form);
-      if (message) {
-        setError(message);
-        return;
+      for (let index = 0; index < next; index++) {
+        const message = validate(index, form);
+        if (message) {
+          setStep(index);
+          setError(message);
+          return;
+        }
       }
     }
     setError("");
@@ -214,13 +265,20 @@ export function PublicBriefWizard({
   }
 
   function continueToAccount() {
+    const incomplete = resumableStep(form, steps.length - 1);
+    if (incomplete < steps.length - 1) {
+      setStep(incomplete);
+      setError(validate(incomplete, form));
+      return;
+    }
     const paletteName = form.palette === "custom"
       ? "Egyedi paletta"
       : palettes.find(([key]) => key === form.palette)?.[1] ?? "Rátok bízom";
     const prepared: BriefFormValues = {
       ...form,
+      domainName: ["have", "keep"].includes(form.domainStatus) ? domainFromAddress(form.domainName) : "",
       title: form.title || `${form.company} weboldal`,
-      budget: form.commercialModel === "subscription" ? "subscription" : form.budget || "not-sure",
+      budget: form.commercialModel === "subscription" ? "subscription" : packaged ? formatHuf(purchaseOptionPrice(form.subscriptionPlan)) : form.budget || "not-sure",
       priority: form.priority || "conversion",
       brandColors: form.brandColors || paletteName,
       fontPreference: form.fontPreference || "Nincs preferencia — bízom a stúdióra",
@@ -240,9 +298,14 @@ export function PublicBriefWizard({
 
   function continueDraft() {
     if (!resumeDraft) return;
-    setForm(resumeDraft.data);
+    const resumed = {
+      ...resumeDraft.data,
+      domainStatus: ["have", "keep"].includes(resumeDraft.data.domainStatus) ? "have" : "need",
+      domainName: resumeDraft.data.domainName || (["have", "keep"].includes(resumeDraft.data.domainStatus) ? domainFromAddress(resumeDraft.data.website) : "")
+    };
+    setForm(resumed);
     setSavedAt(resumeDraft.savedAt);
-    setStep(resumeDraft.step);
+    setStep(resumableStep(resumed, resumeDraft.step));
     setResumeDraft(null);
     briefStarted.current = true;
     trackEvent("brief_resumed", { step: resumeDraft.step + 1 });
@@ -250,7 +313,11 @@ export function PublicBriefWizard({
 
   function restartDraft() {
     window.localStorage.removeItem(PUBLIC_BRIEF_DRAFT_KEY);
-    setForm(initialBriefForm);
+    setForm(chooseWebsitePackage({
+      ...initialBriefForm,
+      websiteStatus: initialWebsiteStatus ?? "no",
+      domainStatus: initialWebsiteStatus === "yes" ? "have" : "need"
+    }, initialModel, initialPlan as BriefFormValues["subscriptionPlan"] | undefined));
     setStep(0);
     setSavedAt("");
     setResumeDraft(null);
@@ -287,8 +354,8 @@ export function PublicBriefWizard({
         <div className="public-brief-progress"><i style={{ width: `${progress}%` }} /></div>
         <nav className="public-brief-steps" aria-label="Brief lépései">
           {steps.map((label, index) => (
-            <button aria-disabled={index > step} className={index === step ? "active" : index < step ? "done" : ""} disabled={index > step} key={label} onClick={() => go(index)} type="button">
-              <span>{index < step ? "✓" : index + 1}</span>{label}
+            <button aria-disabled={index > step} aria-current={index === step ? "step" : undefined} className={index === step ? "active" : index < step && !validate(index, form) ? "done" : ""} disabled={index > step} key={label} onClick={() => go(index)} type="button">
+              <span>{index < step && !validate(index, form) ? "✓" : index + 1}</span>{label}
             </button>
           ))}
         </nav>
@@ -296,16 +363,9 @@ export function PublicBriefWizard({
         <div className="public-brief-layout">
           <form className="public-brief-form" onSubmit={(event) => event.preventDefault()}>
             {step === 0 ? <div className="public-brief-slide">
-              {/* Nincs konstrukcióválasztás: a weboldal bérelhető, és ha később
-                  a sajátod lenne, a bérlésből hívod le a vételi opciót. Új
-                  weboldalt teljes áron megvenni sehol nem lehet.
-                  A webapp / ügyfélkapu / meglévő oldal átalakítása külön út,
-                  a /szolgaltatasok „Egyedi projekt indítása" gombjáról indul
-                  (`/ugyfelkapu?model=purchase`) — ide szándékosan nem kerül be.
-                  A `purchase` ágak lentebb megmaradnak a régi, még be nem
-                  küldött piszkozatok miatt. */}
-              <header><span>01 / Rólad</span><h3>Kezdjük veled.</h3><p>Csomagot most nem kell választanod — azt a következő lépés válaszaiból ajánlom majd. Előleg nincs: csak a kész, általad jóváhagyott oldalért fizetsz.</p></header>
-              {form.commercialModel === "purchase" ? <div className="public-chip-grid">
+              <CommercialModelPicker value={form.commercialModel} onChange={(model) => update(chooseWebsitePackage(form, model))} />
+              <header><span>01 / Rólad</span><h3>Kezdjük veled.</h3><p>{manualPlan ? `A választott ${selectedPlan.name} csomagot megőriztem. Előbb add meg a vállalkozásod és a domained alapadatait; a csomagot később még módosíthatod.` : form.commercialModel === "subscription" ? "Csomagot most nem kell választanod — azt a következő lépés válaszaiból ajánlom. Előleg nincs: csak a kész, jóváhagyott oldalért fizetsz." : "Egyszeri díjért saját weboldalt kapsz. A csomagot az igényeid alapján ajánlom; az árat és a fizetési ütemezést az ajánlat és a szerződés rögzíti."}</p></header>
+              {!packaged ? <div className="public-chip-grid">
                 {projectTypes.map(([value, label]) => <button className={form.projectType === value ? "selected" : ""} key={value} onClick={() => update({ projectType: value })} type="button">{label}</button>)}
               </div> : null}
               <label className="public-field"><span>Vállalkozás vagy márka neve</span><input value={form.company} onChange={(event) => update({ company: event.target.value })} placeholder="Például: Kovács Épületgépészet" /></label>
@@ -314,14 +374,14 @@ export function PublicBriefWizard({
                 <div className="public-chip-grid">
                   <button
                     className={form.websiteStatus !== "yes" ? "selected" : ""}
-                    onClick={() => update({ websiteStatus: "no", website: "", domainStatus: "new" })}
+                    onClick={() => update({ websiteStatus: "no", website: "", domainStatus: form.domainName ? "have" : "need" })}
                     type="button"
                   >
                     Új weboldalt indítok
                   </button>
                   <button
                     className={form.websiteStatus === "yes" ? "selected" : ""}
-                    onClick={() => update({ websiteStatus: "yes", domainStatus: "keep" })}
+                    onClick={() => update({ websiteStatus: "yes", domainStatus: "have" })}
                     type="button"
                   >
                     Meglévő weboldal felújítása
@@ -329,35 +389,39 @@ export function PublicBriefWizard({
                 </div>
               </div>
               {form.websiteStatus === "yes" ? (
-                <div className="public-field">
+                <label className="public-field">
                   <span>Jelenlegi weboldalad címe</span>
                   <input
                     value={form.website}
-                    onChange={(event) => update({ website: event.target.value })}
+                    onChange={(event) => update({ website: event.target.value, ...(["have", "keep"].includes(form.domainStatus) ? { domainName: domainFromAddress(event.target.value) } : {}) })}
                     placeholder="https://kovacsklima.hu"
                   />
-                  <div style={{ marginTop: "10px" }}>
-                    <span style={{ fontSize: "13px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-                      Mi történjen a meglévő domainnel?
-                    </span>
-                    <div className="public-chip-grid">
-                      <button
-                        className={form.domainStatus === "keep" ? "selected" : ""}
-                        onClick={() => update({ domainStatus: "keep" })}
-                        type="button"
-                      >
-                        Megtartom a jelenlegi domaint
-                      </button>
-                      <button
-                        className={form.domainStatus === "need-new" ? "selected" : ""}
-                        onClick={() => update({ domainStatus: "need-new" })}
-                        type="button"
-                      >
-                        Új domaint szeretnék az új oldalhoz
-                      </button>
-                    </div>
-                  </div>
+                </label>
+              ) : null}
+              <div className="public-field">
+                <span>{form.websiteStatus === "yes" ? "Mi történjen a meglévő domainnel?" : "Van már domained?"}</span>
+                <div className="public-chip-grid">
+                  <button
+                    className={["have", "keep"].includes(form.domainStatus) ? "selected" : ""}
+                    onClick={() => update({ domainStatus: "have", domainName: form.domainName || domainFromAddress(form.website) })}
+                    type="button"
+                  >
+                    {form.websiteStatus === "yes" ? "Megtartom a jelenlegi domaint" : "Domainem már van"}
+                  </button>
+                  <button
+                    className={["need", "new", "need-new"].includes(form.domainStatus) ? "selected" : ""}
+                    onClick={() => update({ domainStatus: "need" })}
+                    type="button"
+                  >
+                    {form.websiteStatus === "yes" ? "Új domaint szeretnék az új oldalhoz" : "Új domaint szeretnék"}
+                  </button>
                 </div>
+              </div>
+              {["have", "keep"].includes(form.domainStatus) ? (
+                <label className="public-field">
+                  <span>Meglévő domained</span>
+                  <input value={form.domainName} onChange={(event) => update({ domainName: event.target.value })} placeholder="vallalkozasod.hu" />
+                </label>
               ) : null}
             </div> : null}
 
@@ -369,7 +433,7 @@ export function PublicBriefWizard({
                   {SERVICE_COUNT_OPTIONS.map(([value, label]) => <button
                     className={form.serviceCount === value ? "selected" : ""}
                     key={value}
-                    onClick={() => { setManualPlan(false); update({ serviceCount: value }); }}
+                    onClick={() => update({ serviceCount: value })}
                     type="button"
                   >{label}</button>)}
                 </div>
@@ -380,7 +444,7 @@ export function PublicBriefWizard({
                   {VISITOR_TASK_OPTIONS.map(([value, label]) => <button
                     className={form.visitorTask === value ? "selected" : ""}
                     key={value}
-                    onClick={() => { setManualPlan(false); update({ visitorTask: value }); }}
+                    onClick={() => update({ visitorTask: value })}
                     type="button"
                   >{label}</button>)}
                 </div>
@@ -392,17 +456,18 @@ export function PublicBriefWizard({
             </div> : null}
 
             {step === 2 ? <div className="public-brief-slide">
-              <header><span>03 / Ajánlás</span><h3>Ez a csomag elég neked.</h3><p>Nem a legdrágábbat ajánlom, hanem a legolcsóbbat, amiben elfér, amit mondtál. Felülbírálhatod.</p></header>
+              <header><span>03 / Ajánlás</span><h3>{manualPlan ? "A választott csomagod." : "Ez a csomag elég neked."}</h3><p>{manualPlan ? "Ellenőrizd a csomag tartalmát, és jelöld, mire van szükséged. A választásodat még módosíthatod." : "A válaszaid alapján ajánlom a csomagot. Felülbírálhatod."}</p></header>
 
-              {form.commercialModel === "subscription" ? <div className="brief-recommend">
+              <CommercialModelPicker value={form.commercialModel} onChange={(model) => update(chooseWebsitePackage(form, model))} />
+              {packaged ? <div className="brief-recommend">
                 <div className="brief-recommend-head">
                   <div>
                     <span>{manualPlan ? "A VÁLASZTÁSOD" : "A VÁLASZAID ALAPJÁN"}</span>
                     <strong>{selectedPlan.name}</strong>
                   </div>
-                  <b>{formatHuf(selectedPlan.price)}<small>/hó</small></b>
+                  <b>{formatHuf(form.commercialModel === "subscription" ? selectedPlan.price : purchaseOptionPrice(selectedPlan.key))}<small>{form.commercialModel === "subscription" ? "/hó" : "egyszeri díj"}</small></b>
                 </div>
-                <p className="brief-recommend-why">{recommendationReason(form.serviceCount, form.visitorTask)}</p>
+                <p className="brief-recommend-why">{manualPlan ? selectedPlan.idealFor : recommendationReason(form.serviceCount, form.visitorTask)}</p>
                 <p className="brief-recommend-scope">{selectedPlan.pages} · {selectedPlan.buildTime.replace("Jellemzően ", "elkészül ")}</p>
                 <button className="brief-recommend-toggle" onClick={() => setShowPlans((value) => !value)} type="button">
                   {showPlans ? "Rendben, maradjon ez" : "Inkább másik csomagot választok"}
@@ -411,17 +476,17 @@ export function PublicBriefWizard({
                   {SUBSCRIPTION_PLANS.map((plan) => <button
                     className={form.subscriptionPlan === plan.key ? "selected" : ""}
                     key={plan.key}
-                    onClick={() => { setManualPlan(true); update({ subscriptionPlan: plan.key }); }}
+                    onClick={() => { setManualPlan(true); update(chooseWebsitePackage(form, form.commercialModel, plan.key)); }}
                     type="button"
                   >
                     <span>{plan.name}</span>
-                    <strong>{formatHuf(plan.price)}<small>/hó</small></strong>
+                    <strong>{formatHuf(form.commercialModel === "subscription" ? plan.price : purchaseOptionPrice(plan.key))}<small>{form.commercialModel === "subscription" ? "/hó" : "egyszeri díj"}</small></strong>
                     <p>{plan.short}</p>
                   </button>)}
                 </div> : null}
               </div> : null}
-              <div className="public-field"><span>Oldalak vagy tartalmi blokkok</span><div className="public-chip-grid">{(form.commercialModel === "subscription" ? selectedPlan.pageOptions : pageOptions).map((item) => <button className={parts(form.pages).includes(item) ? "selected" : ""} key={item} onClick={() => update({ pages: toggle(form.pages, item) })} type="button">{item}</button>)}</div></div>
-              <div className="public-field"><span>Szükséges funkciók</span><div className="public-chip-grid">{(form.commercialModel === "subscription" ? selectedPlan.featureOptions : featureOptions).map((item) => <button className={parts(form.features).includes(item) ? "selected" : ""} key={item} onClick={() => update({ features: toggle(form.features, item) })} type="button">{item}</button>)}</div></div>
+              <div className="public-field"><span>Oldalak vagy tartalmi blokkok</span><div className="public-chip-grid">{(packaged ? selectedPlan.pageOptions : pageOptions).map((item) => <button className={parts(form.pages).includes(item) ? "selected" : ""} key={item} onClick={() => update({ pages: toggle(form.pages, item) })} type="button">{item}</button>)}</div></div>
+              <div className="public-field"><span>Szükséges funkciók</span><div className="public-chip-grid">{(packaged ? selectedPlan.featureOptions : featureOptions).map((item) => <button className={parts(form.features).includes(item) ? "selected" : ""} key={item} onClick={() => update({ features: toggle(form.features, item) })} type="button">{item}</button>)}</div></div>
               <label className="public-field"><span>Mesélj röviden a vállalkozásról és az ajánlatodról</span><textarea value={form.contentBrief} onChange={(event) => update({ contentBrief: event.target.value })} placeholder="Mivel foglalkoztok, mitől vagytok jók, miért választanak benneteket? Nem kell marketingesen fogalmazni." /></label>
             </div> : null}
 
@@ -458,7 +523,7 @@ export function PublicBriefWizard({
             {step === 4 ? <div className="public-brief-slide public-summary">
               <header><span>05 / Mentés</span><h3>A projekted váza elkészült.</h3><p>Most még semmit nem küldtünk el. A mentéshez lépj be, vagy hozz létre egy fiókot — onnan indul a projekt.</p></header>
               <div className="public-summary-grid">
-                <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : "Egyedi projekt · egyszeri fejlesztés"}</strong></div>
+                <div><span>Konstrukció</span><strong>{form.commercialModel === "subscription" ? `${selectedPlan.name} · ${formatHuf(selectedPlan.price)}/hó` : packaged ? `${selectedPlan.name} · ${formatHuf(purchaseOptionPrice(selectedPlan.key))} egyszeri díj` : "Egyedi projekt · egyszeri fejlesztés"}</strong></div>
                 <div><span>Márka</span><strong>{form.company}</strong></div>
                 <div><span>Elsődleges cél</span><strong>{form.primaryAction}</strong></div>
                 <div><span>Megjelenés</span><strong>{selectedVibe[1]} · {form.palette === "custom" ? "Egyedi paletta" : selectedPalette[1]}</strong></div>

@@ -1,6 +1,7 @@
 import { JsonLd } from "@/components/JsonLd";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { WorkDeck } from "@/components/WorkDeck";
 import { SiteNav } from "@/components/SiteNav";
 
 export type ServiceLandingContent = {
@@ -44,6 +45,8 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
         <aside><span>PROJECTEDGE · TELJESEN ONLINE</span><strong>{content.promise}</strong><ul>{content.audience.map((item) => <li key={item}>{item}</li>)}</ul></aside>
       </section>
 
+      <WorkDeck />
+
       <section className="landing-outcomes">
         <header><p className="micro-label dark">Nem csak látvány</p><h2>Mit kapsz a végén?</h2></header>
         <div>{content.outcomes.map((item, index) => <article key={item.title}><span>0{index + 1}</span><h3>{item.title}</h3><p>{item.copy}</p></article>)}</div>
@@ -56,7 +59,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
 
       {/* A PriceEstimator saját bevezetője itt kikapcsolva: a fenti section-head
           már ugyanazt mondja el, két azonos árfejléc volt egymás alatt. */}
-      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2><p>A domain, a tárhely és a folyamatos karbantartás mind benne van a havidíjban — külön belépési díj nélkül, rugalmas vételi opcióval.</p></div><PriceEstimator showLead={false} /></section>
+      <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Havidíjjal vagy egyszeri vásárlással.</h2><p>Havidíjnál a működtetést is én intézem. Egyszeri vásárlásnál a kész oldalt a forráskóddal és a hozzáférésekkel együtt átadom neked.</p></div><PriceEstimator showLead={false} /></section>
 
       {/* A brief korábban a főoldal /#projektbrief horgonyára dobta a látogatót:
           a fizetett forgalom pont a kitöltés előtt hagyta el a landinget. Itt

@@ -1,4 +1,4 @@
-import type { CommercialModel, SubscriptionPlanKey } from "@/lib/subscriptions";
+import { formatHuf, purchaseOptionPrice, WEBSITE_PURCHASE_TYPE, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 
 export const PUBLIC_BRIEF_DRAFT_KEY = "projectedge-public-brief-v1";
 
@@ -68,6 +68,23 @@ export const initialBriefForm = {
 };
 
 export type BriefFormValues = typeof initialBriefForm;
+
+export function chooseWebsitePackage(form: BriefFormValues, model: CommercialModel, plan = form.subscriptionPlan): BriefFormValues {
+  return {
+    ...form,
+    commercialModel: model,
+    subscriptionPlan: plan,
+    projectType: model === "purchase" ? WEBSITE_PURCHASE_TYPE : "",
+    budget: model === "purchase" ? formatHuf(purchaseOptionPrice(plan)) : "subscription",
+    domainStatus: ["have", "keep"].includes(form.domainStatus)
+      ? "have"
+      : ["need", "new", "need-new"].includes(form.domainStatus)
+        ? "need"
+        : form.domainName ? "have" : "need",
+    hostingAccess: model === "subscription" ? "managed" : form.hostingAccess === "managed" ? "" : form.hostingAccess,
+    ...(plan !== form.subscriptionPlan ? { pages: "", features: "" } : {})
+  };
+}
 
 export type PublicBriefDraft = {
   data: BriefFormValues;

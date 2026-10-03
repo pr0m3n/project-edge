@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
   initialBriefForm,
+  chooseWebsitePackage,
   isBlankBriefDraft,
   PUBLIC_BRIEF_DRAFT_KEY,
   readPublicBriefDraft
@@ -41,7 +42,8 @@ import { AssetLink, AssetImage } from "@/components/portal/AssetLink";
 import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
-import { BILLING_TERMS, LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { CommercialModelPicker } from "@/components/CommercialModelPicker";
+import { BILLING_TERMS, isWebsitePackage, websitePurchaseFeatures, LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import {
   ASSUMED_RETENTION_MONTHS,
   consumeSignupLead,
@@ -224,7 +226,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const model = modelFromUrl ?? saved.model ?? null;
     const plan = planFromUrl ?? saved.plan ?? null;
     if (model !== "subscription" && model !== "purchase") return;
-    setProjectForm((current) => ({
+    setProjectForm((current) => model === "purchase" && params.get("project") !== "custom" ? chooseWebsitePackage(current, model, SUBSCRIPTION_PLANS.some((item) => item.key === plan) ? plan as SubscriptionPlanKey : current.subscriptionPlan) : ({
       ...current,
       commercialModel: model,
       subscriptionPlan: SUBSCRIPTION_PLANS.some((item) => item.key === plan) ? (plan as SubscriptionPlanKey) : current.subscriptionPlan,
@@ -737,7 +739,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
    * „folytatás"-t ígér.
    */
   const briefInProgress = publicBriefPending || !isBlankBriefDraft(projectForm);
-  const displayedBriefSteps = projectForm.commercialModel === "subscription"
+  const packagedWebsite = isWebsitePackage(projectForm);
+  const displayedBriefSteps = packagedWebsite
     ? ["Csomag és márka", "Cél és ügyfél", "Csomagtartalom", "Megjelenés", "Induló anyagok", "Ellenőrzés"]
     : briefSteps;
 
@@ -1422,6 +1425,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const detailedGoals = buildBriefText(projectForm);
     const selectedSubscription = subscriptionPlan(projectForm.subscriptionPlan);
     const isSubscription = projectForm.commercialModel === "subscription";
+    const isPackage = isWebsitePackage(projectForm);
+    const projectTitle = isPackage ? `${projectForm.company} · ${selectedSubscription.name}` : projectForm.title;
 
     const { error } = await supabase.from("client_projects").insert({
       budget: projectForm.budget,
@@ -1430,7 +1435,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       contact_name: profileName || email,
       goals: detailedGoals,
       project_type: isSubscription ? `managed-${selectedSubscription.key}` : projectForm.projectType,
-      title: isSubscription ? `${projectForm.company} · ${selectedSubscription.name}` : projectForm.title,
+      title: projectTitle,
       user_id: userId,
       website: isSubscription ? null : projectForm.website || null,
       brief_data: projectForm,
@@ -1439,9 +1444,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       monthly_price: isSubscription ? selectedSubscription.price : null,
       subscription_status: isSubscription ? "agreement_pending" : null,
       status: isSubscription ? "contract_pending" : "request_received",
-      offer_title: isSubscription ? `${selectedSubscription.name} menedzselt weboldal` : null,
-      offer_summary: isSubscription ? selectedSubscription.short : null,
-      offer_scope: isSubscription ? selectedSubscription.features.join("\n") : null,
+      offer_title: isSubscription ? `${selectedSubscription.name} menedzselt weboldal` : isPackage ? `${selectedSubscription.name} weboldal · egyszeri vásárlás` : null,
+      offer_summary: isPackage ? selectedSubscription.short : null,
+      offer_scope: isSubscription ? selectedSubscription.features.join("\n") : isPackage ? websitePurchaseFeatures(selectedSubscription).join("\n") : null,
       offer_price: isSubscription ? selectedSubscription.price : null,
       offer_currency: "Ft",
       offer_status: isSubscription ? "accepted" : "draft",
@@ -1507,7 +1512,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       "project",
       isSubscription ? selectedSubscription.price * ASSUMED_RETENTION_MONTHS : undefined
     );
-    setSubmittedProjectTitle(isSubscription ? `${projectForm.company} · ${selectedSubscription.name}` : projectForm.title);
+    setSubmittedProjectTitle(projectTitle);
     setNotice(isSubscription ? "A menedzselt weboldal adatlapja elkészült. Következő lépés a szolgáltatási szerződés." : "Elmentettük és elküldtük a tervet. Hamarosan jelentkezünk a következő lépésekkel.");
     loadPortal(true);
   }
@@ -2732,7 +2737,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
             meghívás nélkül nem lehet élesíteni, tehát ezeknek az élesítés ELŐTT
             kell megtörténniük. Az ajánlat előtt viszont nem jelenik meg, mert
             akkor még nincs se szerződés, se eldöntött technikai összetétel. */}
-        {project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && ["in_progress", "review", "launched"].includes(project.status) &&
+        {project.commercial_model !== "subscription" && !selectedWebsitePurchase && ["in_progress", "review", "launched"].includes(project.status) &&
         (project.handover_steps?.length ?? 0) > 0 && (
           <HandoverPanel
             project={project}
@@ -2766,7 +2771,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               onReportTransfer={() => selectedWebsitePurchase ? reportWebsitePurchaseTransferV2(selectedWebsitePurchase.id) : Promise.resolve()}
             />
           </>
-        ) : project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && project.status === "launched" ? (
+        ) : project.commercial_model !== "subscription" && !selectedWebsitePurchase && project.status === "launched" ? (
           <LaunchedPanel project={project} onPayFinal={() => { setPaymentMode("final"); setShowPaymentModalProjectId(project.id); setPaymentError(""); }} onCloseProject={() => closeCompletedProject(project)} />
         ) : null}
 
@@ -2994,33 +2999,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <div className="wizard-slide" key={projectStep}>
                 {projectStep === 0 ? (
                   <>
-                    {/* NINCS konstrukcióválasztás a lap tetején.
-                        Két egyforma doboz akkor is két terméknek látszik, ha az
-                        egyik már nem „weboldal vásárlás", hanem egyedi projekt.
-                        Az alapértelmezés a bérlés; az egyedi projekt egy halk
-                        kiút a csomagválasztó alatt, azoknak, akiknek olyan kell,
-                        amit tényleg nem lehet bérelni. */}
-                    {projectForm.commercialModel === "purchase" ? (
-                      <div className="brief-custom-mode">
-                        <div>
-                          <span>EGYEDI PROJEKT</span>
-                          <strong>Egyszeri fejlesztés, egyedi ajánlattal</strong>
-                          <p>Webapp, ügyfélkapu vagy meglévő oldal átalakítása. A brief kérdései ehhez igazodnak.</p>
-                        </div>
-                        <button
-                          className="brief-mode-switch"
-                          type="button"
-                          onClick={() => setProjectForm((current) => ({ ...current, commercialModel: "subscription", domainStatus: "need", hostingAccess: "managed", budget: "subscription", projectType: "", websiteStatus: "", website: "", existingPlatform: "", wpAccess: "", analyticsAccess: "", priority: "" }))}
-                        >
-                          Mégis havidíjas weboldalt szeretnék →
-                        </button>
-                      </div>
-                    ) : null}
-                    {projectForm.commercialModel === "subscription" ? (
+                    <CommercialModelPicker value={projectForm.commercialModel} onChange={(model) => setProjectForm((current) => chooseWebsitePackage(current, model))} />
+                    {!packagedWebsite ? <div className="brief-custom-mode"><div><span>EGYEDI PROJEKT</span><strong>Egyszeri fejlesztés, egyedi ajánlattal</strong><p>Webapp, ügyfélkapu vagy meglévő rendszer átalakítása.</p></div></div> : null}
+                    {packagedWebsite ? (
                       <section className="brief-plan-picker" aria-labelledby="brief-plan-title">
                         <header className="brief-plan-head">
-                          <div><span>02 / HAVI CSOMAG</span><h3 id="brief-plan-title">Mekkora weboldalra van szükséged?</h3></div>
-                          <p>A havidíj fix. Induló díj nincs, és bármelyik hónapban lemondhatod.</p>
+                          <div><span>{projectForm.commercialModel === "subscription" ? "HAVIDÍJAS CSOMAG" : "EGYSZERI VÁSÁRLÁS"}</span><h3 id="brief-plan-title">Mekkora weboldalra van szükséged?</h3></div>
+                          <p>{projectForm.commercialModel === "subscription" ? "A havidíj fix. Induló díj nincs, és bármelyik hónapban lemondhatod." : "A csomag egyszeri díjáért saját weboldalt kapsz, forráskóddal és hozzáférésekkel. A működtetés költsége külön tétel."}</p>
                         </header>
                         <div className="brief-plan-list">
                           {SUBSCRIPTION_PLANS.map((plan) => {
@@ -3031,20 +3016,21 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                                 className={`${selected ? "selected" : ""} ${plan.featured ? "recommended" : ""}`}
                                 key={plan.key}
                                 type="button"
-                                onClick={() => setProjectForm((current) => ({ ...current, subscriptionPlan: plan.key, pages: "", features: "" }))}
+                                onClick={() => setProjectForm((current) => chooseWebsitePackage(current, current.commercialModel, plan.key))}
                               >
                                 <span className="brief-plan-radio" aria-hidden="true"><i /></span>
                                 <span className="brief-plan-name">{plan.name}{plan.featured ? <em>Legnépszerűbb</em> : null}</span>
-                                <strong>{new Intl.NumberFormat("hu-HU").format(plan.price)} Ft<small>/hó</small></strong>
+                                <strong>{formatHuf(projectForm.commercialModel === "subscription" ? plan.price : purchaseOptionPrice(plan.key))}<small>{projectForm.commercialModel === "subscription" ? "/hó" : "egyszeri díj"}</small></strong>
                                 <p>{plan.short}</p>
-                                <span className="brief-plan-scope"><b>{plan.pages}</b><b>{plan.changes}</b></span>
+                                <span className="brief-plan-scope"><b>{plan.pages}</b><b>{projectForm.commercialModel === "subscription" ? plan.changes : "Teljes technikai átadás"}</b></span>
                               </button>
                             );
                           })}
                         </div>
-                        <footer><span>✓ Domain, hosting és SSL</span><span>✓ Technikai felügyelet</span><span>✓ Nincs hűségidő</span></footer>
+                        <footer>{projectForm.commercialModel === "subscription" ? <><span>✓ Domain, hosting és SSL</span><span>✓ Technikai felügyelet</span><span>✓ Nincs hűségidő</span></> : <><span>✓ Saját tulajdon</span><span>✓ Forráskód és hozzáférések</span><span>✓ 30 nap hibajavítás az átadás után</span></>}</footer>
                       </section>
                     ) : null}
+                    {packagedWebsite ? <button className="brief-mode-switch" type="button" onClick={() => setProjectForm((current) => ({ ...current, commercialModel: "purchase", projectType: "web-app", budget: "not-sure", hostingAccess: "", domainStatus: current.domainName ? "have" : "need" }))}>Csomag helyett egyedi webappot vagy rendszert szeretnék →</button> : null}
                     <div className="wizard-visual foundation">
                       <div className="mini-browser">
                         <span />
@@ -3055,7 +3041,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <div className="floating-card one">Landing</div>
                       <div className="floating-card two">Admin</div>
                     </div>
-                    {projectForm.commercialModel === "subscription" ? (
+                    {packagedWebsite ? (
                       <div className="managed-brand-start">
                         <span>01 / A PROJEKT ALAPJAI</span>
                         <div className="field">
@@ -3074,7 +3060,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                             </button>
                             <button
                               className={projectForm.websiteStatus === "yes" ? "selected" : ""}
-                              onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "yes", domainStatus: "keep" }))}
+                              onClick={() => setProjectForm((current) => ({ ...current, websiteStatus: "yes", domainStatus: current.commercialModel === "subscription" ? "keep" : "have" }))}
                               type="button"
                             >
                               <strong>Meglévő weboldal felújítása</strong>
@@ -3096,8 +3082,8 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                               </span>
                               <div className="choice-grid compact">
                                 <button
-                                  className={projectForm.domainStatus === "keep" ? "selected" : ""}
-                                  onClick={() => setProjectForm((current) => ({ ...current, domainStatus: "keep" }))}
+                                  className={["keep", "have"].includes(projectForm.domainStatus) ? "selected" : ""}
+                                  onClick={() => setProjectForm((current) => ({ ...current, domainStatus: current.commercialModel === "subscription" ? "keep" : "have" }))}
                                   type="button"
                                 >
                                   <strong>Megtartom a jelenlegi domaint</strong>
@@ -3181,7 +3167,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                     <div className="field">
                       <label htmlFor="project-goals">Mit szeretnél, hogy az oldal elérjen?</label>
                       <div className="quick-chips">
-                        {(projectForm.commercialModel === "subscription"
+                        {(packagedWebsite
                           ? projectForm.subscriptionPlan === "presence"
                             ? ["Profi online névjegy", "Egy szolgáltatás bemutatása", "Könnyű kapcsolatfelvétel"]
                             : projectForm.subscriptionPlan === "business"
@@ -3228,7 +3214,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         placeholder="Kattints a fenti gombokra, vagy pontosítsd szabadon..."
                       />
                     </div>
-                    {projectForm.commercialModel === "subscription" ? <div className="field" id="primary-action">
+                    {packagedWebsite ? <div className="field" id="primary-action">
                       <label>Mi legyen az oldal legfontosabb gombja?</label>
                       <div className="choice-grid compact">
                         {(projectForm.subscriptionPlan === "custom" ? ["Ajánlatot kérek", "Időpontot foglalok", "Visszahívást kérek", "Feliratkozom"] : ["Ajánlatot kérek", "Kapcsolatfelvétel", "Telefonálok", "Időpontot kérek"]).map((action) => <button className={projectForm.primaryAction === action ? "selected" : ""} key={action} onClick={() => setProjectForm((current) => ({ ...current, primaryAction: action }))} type="button"><strong>{action}</strong></button>)}
@@ -3251,10 +3237,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
                 {projectStep === 2 ? (
                   <>
-                    {projectForm.commercialModel === "subscription" ? (
+                    {packagedWebsite ? (
                       <div className="plan-scope-banner">
                         <div><span>VÁLASZTOTT KERET</span><strong>{subscriptionPlan(projectForm.subscriptionPlan).name}</strong></div>
-                        <p><b>{subscriptionPlan(projectForm.subscriptionPlan).pages}</b><b>{subscriptionPlan(projectForm.subscriptionPlan).changes}</b><small>A kereten túli funkciót is megjelölheted; arra külön ajánlatot kapsz, mielőtt elkészülne.</small></p>
+                        <p><b>{subscriptionPlan(projectForm.subscriptionPlan).pages}</b><b>{projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).changes : "Egyszeri vásárlás"}</b><small>A kereten túli funkciót is megjelölheted; arra külön ajánlatot kapsz, mielőtt elkészülne.</small></p>
                       </div>
                     ) : null}
                     <div className="wizard-visual structure">
@@ -3264,13 +3250,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       <div>Automatizmus</div>
                     </div>
                     <div className="field">
-                      <label htmlFor="project-pages">{projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).pageQuestion : "Milyen oldalak kellenek?"}</label>
+                      <label htmlFor="project-pages">{packagedWebsite ? subscriptionPlan(projectForm.subscriptionPlan).pageQuestion : "Milyen oldalak kellenek?"}</label>
                       <div className="quick-chips">
-                        {(projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).pageOptions : pageChips).map((chip) => (
+                        {(packagedWebsite ? subscriptionPlan(projectForm.subscriptionPlan).pageOptions : pageChips).map((chip) => (
                           <button
                             className={splitListValue(projectForm.pages).includes(chip) ? "active" : ""}
                             key={chip}
-                            onClick={() => setProjectForm((current) => ({ ...current, pages: projectForm.commercialModel === "subscription" ? toggleLimitedListValue(current.pages, chip, current.subscriptionPlan === "presence" ? 7 : current.subscriptionPlan === "business" ? 5 : 10) : toggleListValue(current.pages, chip) }))}
+                            onClick={() => setProjectForm((current) => ({ ...current, pages: packagedWebsite ? toggleLimitedListValue(current.pages, chip, current.subscriptionPlan === "presence" ? 7 : current.subscriptionPlan === "business" ? 5 : 10) : toggleListValue(current.pages, chip) }))}
                             type="button"
                           >
                             {chip}
@@ -3282,14 +3268,14 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         required
                         value={projectForm.pages}
                         onChange={(event) => setProjectForm((current) => ({ ...current, pages: event.target.value }))}
-                        placeholder={projectForm.commercialModel === "subscription" ? "Jelöld ki a csomag keretén belüli tartalmakat, és itt pontosíthatsz..." : "Kattints a fenti gombokra, vagy sorold fel szabadon..."}
+                        placeholder={packagedWebsite ? "Jelöld ki a csomag keretén belüli tartalmakat, és itt pontosíthatsz..." : "Kattints a fenti gombokra, vagy sorold fel szabadon..."}
                       />
-                      {projectForm.commercialModel === "subscription" ? <small className="plan-selection-count">{splitListValue(projectForm.pages).length} kiválasztva · maximum {projectForm.subscriptionPlan === "presence" ? 7 : projectForm.subscriptionPlan === "business" ? 5 : 10}</small> : null}
+                      {packagedWebsite ? <small className="plan-selection-count">{splitListValue(projectForm.pages).length} kiválasztva · maximum {projectForm.subscriptionPlan === "presence" ? 7 : projectForm.subscriptionPlan === "business" ? 5 : 10}</small> : null}
                     </div>
                     <div className="field">
-                      <label htmlFor="project-features">{projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).featureQuestion : "Milyen funkciókat szeretnél?"}</label>
+                      <label htmlFor="project-features">{packagedWebsite ? subscriptionPlan(projectForm.subscriptionPlan).featureQuestion : "Milyen funkciókat szeretnél?"}</label>
                       <div className="quick-chips">
-                        {(projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).featureOptions : featureChips).map((chip) => (
+                        {(packagedWebsite ? subscriptionPlan(projectForm.subscriptionPlan).featureOptions : featureChips).map((chip) => (
                           <button
                             className={splitListValue(projectForm.features).includes(chip) ? "active" : ""}
                             key={chip}
@@ -3305,10 +3291,10 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         required
                         value={projectForm.features}
                         onChange={(event) => setProjectForm((current) => ({ ...current, features: event.target.value }))}
-                        placeholder={projectForm.commercialModel === "subscription" ? "Jelöld ki, amit a választott csomagból használni szeretnél..." : "Kattints a fenti gombokra, vagy írd le szabadon, mire van szükséged..."}
+                        placeholder={packagedWebsite ? "Jelöld ki, amit a választott csomagból használni szeretnél..." : "Kattints a fenti gombokra, vagy írd le szabadon, mire van szükséged..."}
                       />
                     </div>
-                    {projectForm.commercialModel === "purchase" ? <div className="field">
+                    {!packagedWebsite ? <div className="field">
                       <label htmlFor="project-budget">Mekkora kerettel gondolkodsz?</label>
                       <select
                         id="project-budget"
@@ -3321,7 +3307,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <option value="350k-700k">350 000 - 700 000 Ft</option>
                         <option value="700k-plus">700 000 Ft felett</option>
                       </select>
-                    </div> : <div className="managed-brief-note"><span>✓</span><p><strong>Az árat már tudod.</strong>A {subscriptionPlan(projectForm.subscriptionPlan).name} csomag díja {new Intl.NumberFormat("hu-HU").format(subscriptionPlan(projectForm.subscriptionPlan).price)} Ft/hó, külön induló költség nélkül.</p></div>}
+                    </div> : <div className="managed-brief-note"><span>✓</span><p><strong>Az árat már tudod.</strong> A {subscriptionPlan(projectForm.subscriptionPlan).name} csomag díja {formatHuf(projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).price : purchaseOptionPrice(projectForm.subscriptionPlan))}{projectForm.commercialModel === "subscription" ? "/hó, külön induló költség nélkül." : " egyszeri díj. A csomagon túli igényeket külön egyeztetjük."}</p></div>}
                   </>
                 ) : null}
 
@@ -3966,13 +3952,13 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                   <div className="wizard-summary">
                     <div className="summary-hero">
                       <span>Beküldés előtt</span>
-                      <h3>{projectForm.title || "Új projekt"}</h3>
+                      <h3>{packagedWebsite ? `${projectForm.company} · ${subscriptionPlan(projectForm.subscriptionPlan).name}` : projectForm.title || "Új projekt"}</h3>
                       <p>{projectForm.goals || "A cél még nincs megadva."}</p>
                     </div>
                     <div className="summary-grid">
                       <div>
-                        <span>{projectForm.commercialModel === "subscription" ? "Weboldal kerete" : "Projekt típusa"}</span>
-                        <strong>{projectForm.commercialModel === "subscription" ? subscriptionPlan(projectForm.subscriptionPlan).pages : selectedProjectTypeLabels.join(", ") || "Nincs kiválasztva"}</strong>
+                        <span>{packagedWebsite ? "Weboldal kerete" : "Projekt típusa"}</span>
+                        <strong>{packagedWebsite ? subscriptionPlan(projectForm.subscriptionPlan).pages : selectedProjectTypeLabels.join(", ") || "Nincs kiválasztva"}</strong>
                       </div>
                       <div>
                         <span>Stílus</span>
@@ -3983,16 +3969,16 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                         <strong>{selectedPalette[1]}</strong>
                       </div>
                       <div>
-                        <span>{projectForm.commercialModel === "subscription" ? "Konstrukció" : "Büdzsé"}</span>
-                        <strong>{projectForm.commercialModel === "subscription" ? `${subscriptionPlan(projectForm.subscriptionPlan).name} előfizetés` : projectForm.budget}</strong>
+                        <span>{packagedWebsite ? "Konstrukció" : "Büdzsé"}</span>
+                        <strong>{projectForm.commercialModel === "subscription" ? `${subscriptionPlan(projectForm.subscriptionPlan).name} előfizetés` : packagedWebsite ? `${subscriptionPlan(projectForm.subscriptionPlan).name} · ${formatHuf(purchaseOptionPrice(projectForm.subscriptionPlan))} egyszeri díj` : projectForm.budget}</strong>
                       </div>
                       {projectForm.commercialModel === "subscription" ? <div>
                         <span>Indítás és fizetés</span>
-                        <strong>{formatHuf(subscriptionPlan(projectForm.subscriptionPlan).price)}/hó · első hónap a szerződés után</strong>
+                        <strong>{formatHuf(subscriptionPlan(projectForm.subscriptionPlan).price)}/hó · első díj a kész oldal jóváhagyása után</strong>
                       </div>
                       : null}
                     </div>
-                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést — ez indítja az építést, fizetés nélkül. Az első díjat csak akkor kell rendezni, amikor a kész oldalt jóváhagytad; utána élesítem.</p></div> : null}
+                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést — ez indítja az építést, fizetés nélkül. Az első díjat csak akkor kell rendezni, amikor a kész oldalt jóváhagytad; utána élesítem.</p></div> : packagedWebsite ? <div className="summary-payment-note"><span>01</span><p><strong>Egyszeri vásárlás, saját tulajdon.</strong> Az ajánlat és a szerződés elfogadása után 10 000 Ft foglalóval indul az építés. Ez a vételár része. A fennmaradó összeg jóváhagyás és élesítés után, a hozzáférések teljes átadása előtt esedékes. A működtetés és a későbbi módosítások külön költséget jelentenek.</p></div> : null}
                     <label className="brief-final-confirm"><input type="checkbox" checked={briefConfirmed} onChange={(event) => setBriefConfirmed(event.target.checked)} /><span><strong>Ellenőriztem az adatokat.</strong> Kifejezetten kérem az adatlap beküldését és a következő szerződéses lépés megnyitását.</span></label>
                   </div>
                 ) : null}
@@ -4044,7 +4030,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
               <h3>{projectForm.title || "A projekt neve ide kerül"}</h3>
               <p>{projectForm.goals || (projectForm.commercialModel === "subscription" ? "Ahogy válaszolsz, itt áll össze a választott csomag kivitelezési adatlapja." : "Ahogy válaszolsz, itt épül össze az anyag, amiből ajánlatot tudok adni.")}</p>
               <div className="live-brief-tags">
-                <span>{projectForm.commercialModel === "subscription" ? `${subscriptionPlan(projectForm.subscriptionPlan).name} · ${formatHuf(subscriptionPlan(projectForm.subscriptionPlan).price)}/hó` : selectedProjectTypeLabels.join(" · ") || "Projekt típusa"}</span>
+                <span>{projectForm.commercialModel === "subscription" ? `${subscriptionPlan(projectForm.subscriptionPlan).name} · ${formatHuf(subscriptionPlan(projectForm.subscriptionPlan).price)}/hó` : packagedWebsite ? `${subscriptionPlan(projectForm.subscriptionPlan).name} · ${formatHuf(purchaseOptionPrice(projectForm.subscriptionPlan))} egyszeri díj` : selectedProjectTypeLabels.join(" · ") || "Projekt típusa"}</span>
                 <span>{selectedVibe[1]}</span>
                 <span>{projectForm.commercialModel === "subscription" ? projectForm.primaryAction || "Elsődleges művelet" : splitListValue(projectForm.priority).map((value) => priorityLabels[value]).filter(Boolean).join(" · ") || "Vágyott eredmény"}</span>
               </div>

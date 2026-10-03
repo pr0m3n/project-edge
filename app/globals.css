@@ -18041,7 +18041,8 @@ details.admin-collapse summary:hover {
 .brief-recommend-head span{display:block;font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.17em;color:#d93b08;margin-bottom:7px}
 .brief-recommend-head strong{display:block;font-size:23px;letter-spacing:-.02em;font-weight:670;color:var(--ink)}
 .brief-recommend-head b{font-size:20px;font-weight:670;color:var(--ink);white-space:nowrap}
-.brief-recommend-head b small{font-size:13px;font-weight:500;color:var(--muted)}
+.brief-recommend-head b small{display:block;margin-top:4px;font-size:11px;font-weight:500;color:var(--muted)}
+.public-plan-grid strong small{display:block;margin-top:4px;font-size:11px;font-weight:500}
 .brief-recommend-why{margin:12px 0 4px;font-size:14.5px;color:var(--ink)}
 .brief-recommend-scope{margin:0;font-size:13px;color:var(--muted)}
 .brief-recommend-toggle{margin-top:14px;padding:9px 15px;border-radius:10px;cursor:pointer;font-family:inherit;
@@ -18103,6 +18104,13 @@ details.admin-collapse summary:hover {
 .work-deck-glow{position:absolute;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(52% 46% at 78% 16%,rgba(255,87,34,.28),transparent 66%),
              radial-gradient(46% 42% at 12% 92%,rgba(118,171,174,.22),transparent 68%)}
+
+/* A színes háttér a nyitórész sötét színéből indul, egyenletesen. */
+.work-deck::before{content:"";position:absolute;inset:0 0 auto;z-index:1;
+  height:clamp(110px,16vw,200px);pointer-events:none;
+  background:linear-gradient(180deg,var(--night) 0%,rgba(17,23,28,.98) 6%,
+    rgba(17,23,28,.92) 16%,rgba(17,23,28,.8) 29%,rgba(17,23,28,.62) 44%,
+    rgba(17,23,28,.4) 61%,rgba(17,23,28,.18) 80%,rgba(17,23,28,0) 100%)}
 
 .work-deck-copy{position:relative;z-index:2}
 .work-deck-copy h2{margin:14px 0 16px;font-size:clamp(30px,4.2vw,54px);line-height:1.02;
@@ -21164,3 +21172,8 @@ details.admin-collapse summary:hover {
 
   .pay-transfer { flex: 1 1 auto; }
 }
+
+/* A vásárlási csomag ára és a kiválasztott kártya szövege is olvasható marad. */
+.brief-plan-list>button>strong small{display:block;margin:4px 0 0}
+.brief-plan-list>button.selected .brief-plan-name,.brief-plan-list>button.selected .brief-plan-scope b{color:#a6d2d4}
+.brief-plan-list>button.selected>strong small{color:rgba(255,255,255,.75);opacity:1}

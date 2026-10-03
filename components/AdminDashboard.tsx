@@ -1,5 +1,7 @@
 "use client";
 
+import { isWebsitePackage, purchaseOptionPrice, websitePurchaseFeatures } from "@/lib/subscriptions";
+
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -1288,15 +1290,21 @@ export function AdminDashboard() {
   }
 
   function primeOffer(project: ClientProject) {
+    const purchasePlan = project.commercial_model === "purchase" && project.brief_data && isWebsitePackage(project.brief_data)
+      ? subscriptionPlan(project.brief_data.subscriptionPlan) : null;
     updateClientProject(project.id, {
       offer_currency: project.offer_currency || "Ft",
-      offer_deliverables: project.offer_deliverables || defaultOfferDeliverables,
+      ...(purchasePlan ? {
+        offer_price: project.offer_price ?? purchaseOptionPrice(purchasePlan.key),
+        deposit_amount: project.deposit_amount ?? 10000
+      } : {}),
+      offer_deliverables: project.offer_deliverables || (purchasePlan ? websitePurchaseFeatures(purchasePlan).join("\n") : defaultOfferDeliverables),
       offer_status: project.offer_status || "draft",
       offer_summary:
         project.offer_summary ||
         "Egy átgondolt, konverzióra és későbbi bővíthetőségre épített webes rendszer, nem csak egy új design.",
       offer_title: project.offer_title || `${project.title} - részletes ajánlat`,
-      offer_timeline: project.offer_timeline || "Első ütem: tervezés és design. Második ütem: fejlesztés, tesztelés és élesítés.",
+      offer_timeline: project.offer_timeline || (purchasePlan ? `${purchasePlan.buildTime}, a hiánytalan anyagok beérkezésétől. Vezetett technikai átadás a teljes díj rendezése után.` : "Első ütem: tervezés és design. Második ütem: fejlesztés, tesztelés és élesítés."),
       status: "planning",
       next_step: project.next_step || "Átnézem az adatlapot és összerakom a részletes ajánlatot a dashboardodban."
     });
@@ -2372,7 +2380,9 @@ export function AdminDashboard() {
                 ].filter(([, value]) => Boolean(value));
 
                 const s = project.status;
-                const showHandover = project.commercial_model !== "subscription" && project.commercial_model !== "purchase" && s !== "closed" && s !== "deletion_pending";
+                const purchasePlan = project.commercial_model === "purchase" && project.brief_data && isWebsitePackage(project.brief_data)
+                  ? subscriptionPlan(project.brief_data.subscriptionPlan) : null;
+                const showHandover = project.commercial_model !== "subscription" && !websitePurchases.some((purchase) => purchase.project_id === project.id && purchase.status !== "cancelled") && s !== "closed" && s !== "deletion_pending";
 
                 return (
                 <article className="admin-project-card" key={project.id} style={{ border: project.delete_requested ? '2px solid #DC3545' : '1px solid var(--adm-ink-08)', position: 'relative' }}>
@@ -2420,7 +2430,7 @@ export function AdminDashboard() {
                       <strong className="admin-fact-value">
                         {project.commercial_model === "subscription"
                           ? `${subscriptionPlan(project.subscription_plan).name} (${formatHuf(project.monthly_price ?? subscriptionPlan(project.subscription_plan).price)}/hó) · Havidíjas`
-                          : `${project.budget || "Egyedi büdzsé"} · Egyszeri megvásárlás`}
+                          : `${purchasePlan ? `${purchasePlan.name} (${formatHuf(project.offer_price ?? purchaseOptionPrice(purchasePlan.key))})` : project.budget || "Egyedi büdzsé"} · Egyszeri megvásárlás`}
                       </strong>
                     </div>
                     <div className="admin-fact-pill">

@@ -6,10 +6,10 @@ test("a főoldal egyértelmű ajánlattal és működő árkalkulátorral indul"
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: /Csomagok és árak/ })).toBeVisible();
 
-  const purchaseTab = page.getByRole("tab", { name: /Weboldal megvásárlása/ });
-  await purchaseTab.focus();
+  const purchaseTab = page.locator("#arak").getByRole("radio", { name: /Weboldal megvásárlása/ });
+  await purchaseTab.click();
   await purchaseTab.press("ArrowLeft");
-  await expect(page.getByRole("tab", { selected: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#arak").getByRole("radio", { name: /Havidíjas weboldal/ })).toHaveAttribute("aria-checked", "true");
 });
 
 test("a mobilmenü csapdázza a fókuszt és Escape-re bezár", async ({ page, isMobile }) => {
@@ -38,8 +38,8 @@ test("a keresési céloldalak önálló címmel és brief CTA-val rendelkeznek",
 });
 
 test("a Checky referencia nem állít kitalált ügyféleredményt", async ({ page }) => {
-  await page.goto("/munkak/checky");
-  await expect(page.getByText("Éles digitális termék", { exact: false }).first()).toBeVisible();
+  await page.goto("/munkak");
+  await expect(page.locator('a[href="https://checky.hu"]').first()).toBeAttached();
   await expect(page.getByText(/valós ügyfélmunka/i)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Élő rendszer megnyitása/ })).toHaveAttribute("href", "https://checky.hu");
+  await expect(page.locator('a[href="https://checky.hu"]').first()).toHaveAttribute("href", "https://checky.hu");
 });

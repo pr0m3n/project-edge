@@ -16,6 +16,8 @@ type ProjectInlineMessengerProps = {
 
 type OptimisticMsg = TicketMessage & { sending?: boolean };
 
+const EMPTY_MESSAGES: TicketMessage[] = [];
+
 function formatMsgTime(iso: string) {
   try {
     const d = new Date(iso);
@@ -56,7 +58,7 @@ export function ProjectInlineMessenger({
     tickets.find((t) => t.subject?.toLowerCase().includes(project.title.toLowerCase())) ||
     tickets[0];
 
-  const serverMessages = projectTicket ? (messages[projectTicket.id] ?? []) : [];
+  const serverMessages = projectTicket ? (messages[projectTicket.id] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES;
 
   // Sync server messages into local state with optimistic merge
   useEffect(() => {

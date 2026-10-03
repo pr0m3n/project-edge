@@ -25,6 +25,7 @@ const content: ServiceLandingContent = {
     { title: "Jóváhagyás, fizetés, élesítés", copy: "Privát linken átnézed a kész oldalt. Ha tetszik, kifizeted az első díjat, én élesítem, és onnantól gondoskodom a technikai működéséről." }
   ],
   faq: [
+    ["Megvásárolhatom rögtön a weboldalt?", "Igen. A csomagoknál válaszd a Weboldal megvásárlása lehetőséget. Egyszeri vételárért megkapod a forráskódot és a technikai hozzáféréseket; a domain, tárhely és egyéb szolgáltatások működési díjait külön, a saját fiókjaidban fizeted."],
     ["Van hűségidő?", "Nincs. Az előfizetés bármikor lemondható, a már kifizetett időszak végéig használható az oldal."],
     ["Jár céges email cím a weboldalhoz?", "Igen, a domainhez tartozó email címről (pl. info@cegnev.hu) díjmentesen biztosítunk automata email továbbítást a meglévő fiókodba (pl. Gmail). Ha külön Google Workspace fiókot szeretnél, a beállításában is segítünk."],
     ["Kié lesz a forráskód?", "Előfizetésnél a technikai rendszer a ProjectEdge kezelésében marad. Ha a saját tulajdonodba szeretnéd venni, a rögzített vételi opcióval bármikor kivásárolhatod a forráskóddal együtt."],

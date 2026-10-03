@@ -6,7 +6,7 @@
  * ki, miközben egyetlen sora sem függ a komponens állapotától.
  */
 
-import { subscriptionPlan } from "@/lib/subscriptions";
+import { isWebsitePackage, purchaseOptionPrice, formatHuf, subscriptionPlan } from "@/lib/subscriptions";
 import type { BriefFormValues } from "@/lib/brief-draft";
 
 export const briefSteps = [
@@ -221,7 +221,7 @@ export function buildBriefText(form: BriefFormValues) {
   ].filter(Boolean);
 
   return [
-    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : "Egyedi projekt — egyszeri fejlesztés"}`,
+    `Konstrukció: ${form.commercialModel === "subscription" ? `Weboldal bérlése — ${subscriptionPlan(form.subscriptionPlan).name} csomag` : isWebsitePackage(form) ? `Weboldal megvásárlása — ${subscriptionPlan(form.subscriptionPlan).name} csomag · ${formatHuf(purchaseOptionPrice(form.subscriptionPlan))} egyszeri díj` : "Egyedi projekt — egyszeri fejlesztés"}`,
     `Cél: ${form.goals}`,
     form.audience ? `Célközönség / vásárlók: ${form.audience}` : "",
     form.primaryAction ? `Elsődleges látogatói művelet: ${form.primaryAction}` : "",
@@ -260,7 +260,7 @@ export function buildBriefText(form: BriefFormValues) {
  */
 export function validateProjectStep(step: number, form: BriefFormValues): string | null {
   if (step === 0) {
-    if (form.commercialModel === "purchase" && form.title.trim().length < 2) return "Add meg a projekt nevét legalább 2 karakterrel.";
+    if (form.commercialModel === "purchase" && !isWebsitePackage(form) && form.title.trim().length < 2) return "Add meg a projekt nevét legalább 2 karakterrel.";
     if (form.company.trim().length < 2) return "Add meg a cég vagy márka nevét legalább 2 karakterrel.";
     if (form.commercialModel === "purchase" && !splitListValue(form.projectType).length) return "Válassz legalább egy projekt típust.";
     if (form.commercialModel === "purchase" && !form.websiteStatus) return "Jelöld, hogy van-e már weboldalad.";
@@ -270,8 +270,8 @@ export function validateProjectStep(step: number, form: BriefFormValues): string
   if (step === 1) {
     if (form.goals.trim().length < 10) return "Írd le legalább egy rövid mondatban, mit szeretnél elérni az oldallal.";
     if (form.audience.trim().length < 5) return "Írd le legalább néhány szóval, kiknek készül az oldal.";
-    if (form.commercialModel === "subscription" && !form.primaryAction.trim()) return "Válaszd ki, mi legyen a weboldal elsődleges művelete.";
-    if (form.commercialModel === "purchase" && !splitListValue(form.priority).length) return "Válassz legalább egy vágyott eredményt.";
+    if (isWebsitePackage(form) && !form.primaryAction.trim()) return "Válaszd ki, mi legyen a weboldal elsődleges művelete.";
+    if (form.commercialModel === "purchase" && !isWebsitePackage(form) && !splitListValue(form.priority).length) return "Válassz legalább egy vágyott eredményt.";
   }
 
   if (step === 2) {

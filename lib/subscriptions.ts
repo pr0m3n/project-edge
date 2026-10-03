@@ -1,6 +1,18 @@
 export type CommercialModel = "subscription" | "purchase";
 export type SubscriptionPlanKey = "presence" | "business" | "custom";
 
+export const WEBSITE_PURCHASE_TYPE = "website-purchase";
+
+/** Distinguishes a website package from an individually quoted development project. */
+export function isWebsitePackage(form: { commercialModel: string; projectType: string }) {
+  return form.commercialModel === "subscription" || form.projectType === WEBSITE_PURCHASE_TYPE;
+}
+
+export function websitePurchaseFeatures(plan: SubscriptionPlan) {
+  return [plan.designLevel, plan.leadFlow, plan.measurement, plan.pages,
+    "Forráskód és technikai hozzáférések átadása", "30 nap díjmentes technikai hibajavítás az átadás után"];
+}
+
 export const PURCHASE_REQUEST_PREFIX = "[WEBOLDAL_MEGVASARLAS]";
 
 export const PURCHASE_OPTION_PRICES: Record<SubscriptionPlanKey, number> = {

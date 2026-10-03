@@ -1,3 +1,4 @@
+import { PURCHASE_OPTION_PRICES, formatHuf } from "@/lib/subscriptions";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { ShaderBackdrop } from "@/components/ShaderBackdrop";
@@ -7,7 +8,6 @@ import { SiteNav } from "@/components/SiteNav";
 import { PosterHero, PosterHeroFollow } from "@/components/PosterHero";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BriefStage } from "@/components/BriefStage";
-import { DeliverStack } from "@/components/DeliverStack";
 import { WorkDeck } from "@/components/WorkDeck";
 import { AuditRequestSection } from "@/components/AuditRequestSection";
 import { PhoneLink } from "@/components/PhoneLink";
@@ -16,7 +16,7 @@ import { STUDIO_PHONE_LABEL } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Weboldal készítés vállalkozásoknak | ProjectEdge",
-  description: "Egyedi, gyors weboldal készítés 14 900 Ft/hó-tól, külön belépési díj nélkül. Domain, tárhely, email továbbítás és folyamatos karbantartás egyben, rugalmas vételi opcióval.",
+  description: "Egyedi, gyors weboldal készítés 14 900 Ft/hó-tól, külön belépési díj nélkül, vagy egyszeri vásárlással 179 000 Ft-tól. Egyedi megjelenés és átlátható folyamat.",
   alternates: { canonical: "/" }
 };
 
@@ -50,43 +50,10 @@ const proof = [
   "Átlátható projektfolyamat"
 ];
 
-/* Mind a négy tétel ugyanennek az oldalnak a GYIK-jéből és az árazásából jön —
-   szándékosan nincs köztük olyan szám vagy ígéret, ami máshol nem szerepel. */
-const deliverables = [
-  {
-    n: "01",
-    title: "Domain, tárhely, email — nálam van.",
-    copy:
-      "Nem kell szolgáltatókat összevadásznod és számlákat követned. A .hu vagy .com domaint, az SSL-tanúsítványt és a gyors felhőtárhelyet én intézem, ugyanabból a havidíjból.",
-    items: [".hu vagy .com domain", "SSL és felhőtárhely", "céges email továbbítás", "automata mentések"]
-  },
-  {
-    n: "02",
-    title: "Látod, hol tart, anélkül hogy utánam írogatnál.",
-    copy:
-      "Az ügyfélkapun belépsz, és ott van, mi készült el és mi jön ezután. Ticketet nyitsz, ha valami kell, és később visszanézed az összes előzményt.",
-    items: ["saját ügyfélkapu", "ticketek és előzmények", "kötelező hívás nélkül"]
-  },
-  {
-    n: "03",
-    title: "Az élesítést te mondod ki, nem én.",
-    copy:
-      "A kész oldalt egy privát előnézeti linken kapod meg, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Csak a jóváhagyásod után kerül ki élesbe.",
-    items: ["privát előnézeti link", "módosítás, amíg jó nem lesz", "te engeded élesbe"]
-  },
-  {
-    n: "04",
-    title: "Bármikor a tiéd lehet az egész.",
-    copy:
-      "Nincs bezárás: a rögzített vételi opcióval megveheted az oldalt a forráskóddal és a technikai fiókokkal együtt. Az átadás lépésenként megy, írásban.",
-    items: ["forráskód és adatbázis", "domain és fiókok", "30 nap hibajavítás az átadás után"]
-  }
-];
-
 const faqs = [
   [
     "Mennyibe kerül a weboldal?",
-    "Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Előleg, foglaló és belépési díj nincs: a megrendelés után elkészítem az oldalt, és csak akkor fizetsz, ha a kész oldalt jóváhagytad. A domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod."
+    `Egyszeri vásárlással a Jelenlét ${formatHuf(PURCHASE_OPTION_PRICES.presence)}, az Üzleti ${formatHuf(PURCHASE_OPTION_PRICES.business)}, az Egyedi ${formatHuf(PURCHASE_OPTION_PRICES.custom)}. Itt 10 000 Ft foglaló indítja a munkát, amely a vételár része; a működtetés külön költség. Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Előleg, foglaló és belépési díj nincs: a megrendelés után elkészítem az oldalt, és csak akkor fizetsz, ha a kész oldalt jóváhagytad. A domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod.`
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -94,7 +61,7 @@ const faqs = [
   ],
   [
     "Mi van, ha nem tetszik az irány?",
-    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Fizetni csak a jóváhagyásod után kell, és az oldal csak a fizetés után kerül ki élesbe. Ha végül nem tetszik, nem fizetsz semmit."
+    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Havidíjas konstrukcióban csak a jóváhagyás után fizetsz, és ha végül nem tetszik, nem fizetsz semmit. Egyszeri vásárlásnál a foglaló és a fizetési ütemezés feltételeit az ajánlat és a szerződés rögzíti."
   ],
   [
     "Jár céges email cím a weboldalhoz?",
@@ -102,15 +69,15 @@ const faqs = [
   ],
   [
     "Kell hozzá saját domain és tárhely?",
-    "Nem kell semmit külön venned: a .hu vagy .com domaint, az SSL-tanúsítványt és a gyors felhőtárhelyet is intézem a havidíj részeként."
+    "Havidíjas konstrukcióban nem kell semmit külön venned: a .hu vagy .com domaint, az SSL-tanúsítványt és a gyors felhőtárhelyet is intézem a havidíj részeként. Egyszeri vásárlásnál segítek a beállításban, a domain és a tárhely díját a saját fiókjaidban fizeted."
   ],
   [
     "Mi van az élesítés után?",
-    "A havidíj tartalmazza a folyamatos technikai felügyeletet, az automata biztonsági mentéseket, a technikai hibák javítását és a csomagodhoz tartozó kisebb tartalmi/design módosításokat. Nagy megbízhatóságú felhőinfrastruktúrán futtatom az oldalt, de százalékos rendelkezésre állást szándékosan nem ígérek: az üzemidő részben olyan harmadik felektől függ, amelyekre nincs ráhatásom. Ha kiesés van, azt díjmentesen és soron kívül kezelem."
+    "Egyszeri vásárlásnál az átadást követő 30 napban díjmentesen javítom a technikai hibákat; folyamatos karbantartásra külön megállapodást kérhetsz. A havidíj tartalmazza a folyamatos technikai felügyeletet, az automata biztonsági mentéseket, a technikai hibák javítását és a csomagodhoz tartozó kisebb tartalmi/design módosításokat. Menedzselt szolgáltatásnál a kiesést díjmentesen és soron kívül kezelem; százalékos rendelkezésre állást nem ígérek, mert az üzemidő részben külső szolgáltatóktól függ."
   ],
   [
     "Kinél lesznek a hozzáférések és ki fizeti a futtatást?",
-    "A domaint, a tárhelyet és a technikai infrastruktúrát én kezelem, neked ezzel nincs adminisztrációs teendőd. Ha egyszer úgy döntesz, hogy kivásárolod az oldalt, a forráskódot és a teljes infrastruktúrát átadom a saját fiókjaidba."
+    "Havidíjnál a domaint, a tárhelyet és a technikai infrastruktúrát én kezelem. Egyszeri vásárlásnál a teljes díj rendezése után a saját fiókjaidba adom át az oldalt. Ha egyszer úgy döntesz, hogy kivásárolod az oldalt, a forráskódot és a teljes infrastruktúrát átadom a saját fiókjaidba."
   ]
 ];
 
@@ -126,10 +93,9 @@ export default function Home() {
           veszett el: a heró alsó sávjában állnak. */}
       <PosterHero />
 
-      {/* A sötét heró feloldódik a világos szakaszba, ahelyett hogy elvágva
-          érne véget — ugyanaz az elv, amit a régi `.home-hero::before`
-          csinált, csak most a hero CSS-moduljából. */}
+      {/* A sötét nyitórészt közvetlenül a referenciák követik. */}
       <PosterHeroFollow>
+      <WorkDeck />
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -140,55 +106,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Ezek szándékosan NEM idézetek: saját vállalások. A korábbi
-          blockquote + „szerző" felépítés ügyfélvéleménynek látszott, holott
-          nincs mögötte valós referencia. A vállalás-kártyákból viszont nem
-          derült ki, mit is kap konkrétan a látogató — ezért lett belőle
-          tételes átadási lista. Minden állítás mögött ott áll ugyanennek az
-          oldalnak egy GYIK-pontja: nincs köztük új ígéret. */}
-      <section className="deliver-section">
-        <div className="deliver-intro">
-          <p className="micro-label dark">Mire számíthatsz</p>
-          <h2>Ezt kapod tőlem.</h2>
-          <p>
-            Nem ügynökség vagy alvállalkozói lánc: egy ember, aki a tervezéstől az üzemeltetésig
-            végigviszi. Ez a négy dolog az, ami ebből neked konkrétan jár.
-          </p>
-          {/* Ahogy görgetsz a négy tételen, rétegenként összeáll a kész oldal. */}
-          <DeliverStack />
-        </div>
-        <div className="deliver-list">
-          {deliverables.map((item) => (
-            <article className="deliver-row" key={item.title}>
-              <span className="deliver-n">{item.n}</span>
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.copy}</p>
-                <ul className="deliver-items">
-                  {item.items.map((entry) => (
-                    <li key={entry}>{entry}</li>
-                  ))}
-                </ul>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* A brief a főoldal egyetlen sötét szakasza. Korábban közvetlenül a heró
-          alatt ült, és a két sötét felület úgy csapódott egymásnak, hogy
-          telefonon zavaró volt. Innen viszont a látogató már érti, miről van
-          szó, mire a feketéhez ér. A heró `#projektbrief` linkje egy
-          koppintással továbbra is idehoz. */}
-      <BriefStage />
-
       <section className="price-teaser">
         <div className="section-head">
           <p className="micro-label dark">Árak</p>
-          <h2>Menedzselt weboldal, egyetlen fix havidíjért.</h2>
+          <h2>Havidíjjal vagy egyszeri vásárlással.</h2>
           <p>
-            A domaint, a tárhelyet, a karbantartást és a havi módosításokat mind intézem ugyanabból az összegből.
-            Ha később a saját tulajdonodba vennéd, a forráskóddal együtt bármikor megvásárolhatod.
+            Havidíjnál én kezelem a domaint, a tárhelyet és a karbantartást.
+            Egyszeri vásárlásnál a kész weboldalt a forráskóddal és a hozzáférésekkel együtt átadom neked.
           </p>
         </div>
         {/* A saját bevezetője itt kikapcsolva: a fenti section-head már
@@ -196,7 +120,8 @@ export default function Home() {
         <PriceEstimator showLead={false} />
       </section>
 
-      <WorkDeck />
+      {/* Az árak megismerése után következik a projektindítás. */}
+      <BriefStage />
 
       <section className="founder-section">
         <div className="founder-card">
