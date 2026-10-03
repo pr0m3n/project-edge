@@ -90,6 +90,8 @@ export function SupportWidget() {
   // Az `active` szándékosan ref és nem state: a pointerdown → pointerup páros
   // egy gyors koppintásnál ugyanabba a React batch-be esik, így a state még a
   // régi értékén állna, és a megnyitás elmaradna.
+  // A `drag` hamis érintésnél: telefonon a buborék nem húzható (a
+  // hüvelykujj görgetés közben folyton elmozdította), ott csak koppintani lehet.
   const dragStartRef = useRef<{
     startX: number;
     startY: number;
@@ -97,13 +99,15 @@ export function SupportWidget() {
     posY: number;
     moved: boolean;
     active: boolean;
+    drag: boolean;
   }>({
     startX: 0,
     startY: 0,
     posX: 0,
     posY: 0,
     moved: false,
-    active: false
+    active: false,
+    drag: false
   });
 
   // Mobile Bottom-Sheet Pull-Down to Close
@@ -122,6 +126,12 @@ export function SupportWidget() {
     }
 
     try {
+      // Érintőképernyőn nincs húzás, tehát egy korábban elmentett pozíció sem
+      // érvényes: a buborék mindig a helyén, a sarokban van.
+      if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) {
+        window.sessionStorage.removeItem(positionKey);
+        return;
+      }
       const storedPos = window.sessionStorage.getItem(positionKey);
       if (storedPos) {
         const parsed = JSON.parse(storedPos);
@@ -320,7 +330,8 @@ export function SupportWidget() {
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (open) return; // Don't drag while chat is actively open
     const target = e.currentTarget;
-    target.setPointerCapture(e.pointerId);
+    const drag = e.pointerType !== "touch";
+    if (drag) target.setPointerCapture(e.pointerId);
 
     const rect = target.getBoundingClientRect();
     dragStartRef.current = {
@@ -329,9 +340,10 @@ export function SupportWidget() {
       posX: rect.left,
       posY: rect.top,
       moved: false,
-      active: true
+      active: true,
+      drag
     };
-    setIsDragging(true);
+    if (drag) setIsDragging(true);
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -339,9 +351,11 @@ export function SupportWidget() {
     const dx = e.clientX - dragStartRef.current.startX;
     const dy = e.clientY - dragStartRef.current.startY;
 
-    if (Math.hypot(dx, dy) > 5) {
+    if (Math.hypot(dx, dy) > (dragStartRef.current.drag ? 5 : 10)) {
       dragStartRef.current.moved = true;
     }
+    // érintésnél a mozdulat csak azt dönti el, hogy koppintás volt-e
+    if (!dragStartRef.current.drag) return;
 
     const nextX = Math.max(12, Math.min(window.innerWidth - 120, dragStartRef.current.posX + dx));
     const nextY = Math.max(12, Math.min(window.innerHeight - 70, dragStartRef.current.posY + dy));
@@ -364,6 +378,7 @@ export function SupportWidget() {
       toggleOpen();
       return;
     }
+    if (!dragStartRef.current.drag) return;
 
     // Magnetic Snap to nearest screen edge (left or right)
     const currentX = pos?.x ?? dragStartRef.current.posX;
@@ -380,6 +395,18 @@ export function SupportWidget() {
     } catch {
       // Ignore
     }
+  }
+
+  /* A böngésző `pointercancel`-t küld, amikor egy a buborékon kezdett
+     érintésből görgetés lesz. Ez nem koppintás: nem nyithat meg semmit. */
+  function handlePointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragStartRef.current.active) return;
+    if (dragStartRef.current.drag) {
+      dragStartRef.current.moved = true;
+      handlePointerUp(e);
+      return;
+    }
+    dragStartRef.current.active = false;
   }
 
   function toggleOpen() {
@@ -607,7 +634,7 @@ export function SupportWidget() {
       {/* Draggable Chat Trigger Head */}
       <div
         className={`support-widget support-trigger-container ${open ? "open" : ""} ${isDragging ? "dragging" : ""}`}
-        onPointerCancel={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

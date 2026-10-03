@@ -6799,6 +6799,15 @@ details.admin-collapse summary:hover {
   cursor: grabbing;
 }
 
+/* Telefonon nem húzható (lásd SupportWidget): a buborékon kezdett görgetés
+   menjen át az oldalra, és ne legyen „megfogó" kurzor. */
+@media (hover: none) and (pointer: coarse) {
+  .support-trigger-container {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
 /* A gombban korábban csak egy zöld pont és a „Chat" felirat volt — telefonon
    a felirat el is tűnik (`font-size: 0`), tehát egy narancs körben lebegett
    egy apró zöld pötty, és semmi nem mutatta, hogy ez egy chat. Most valódi
