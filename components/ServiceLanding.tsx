@@ -108,14 +108,14 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
           </article>
           <article className="voice-card">
             <p className="voice-claim">
-              Ha a bérlésből kivásárolod, a végén minden a tiéd: domain, forráskód, adatbázis. Az
-              átadás lépésenként megy, írásban — és a lezárásától még 30 napig díjmentesen javítom,
-              ami elromlik.
+              Ha megveszed — már induláskor, vagy később a bérlésből kivásárolva —, minden a tiéd:
+              domain, forráskód, adatbázis. Az átadás lépésenként megy, írásban — és a lezárásától
+              még 30 napig díjmentesen javítom, ami elromlik.
             </p>
             <div className="voice-author">
               <div>
                 <strong>Nincs bezárás</strong>
-                <span>kivásárlás + 30 nap hibajavítás</span>
+                <span>saját tulajdon + 30 nap hibajavítás</span>
               </div>
             </div>
           </article>

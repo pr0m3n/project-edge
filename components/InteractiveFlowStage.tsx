@@ -468,7 +468,7 @@ export function InteractiveFlowStage() {
                 />
               </div>
               <div className="stage-canvas-meta-row">
-                <span>{activeTab === "berles" ? "Bérlés" : "Kivásárlás"}</span>
+                <span>{activeTab === "berles" ? "Bérlés" : "Vásárlás"}</span>
                 <span className="stage-swipe-hint">Ujjal húzva is lapozható</span>
                 <span className="stage-canvas-counter">
                   {currentStep.number} / 0{currentData.length}

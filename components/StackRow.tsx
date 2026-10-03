@@ -80,7 +80,7 @@ const stack: StackItem[] = [
   {
     name: "Stripe",
     role: "Fizetés",
-    note: "A havidíj bankkártyás terhelését végig a Stripe kezeli. Kártyaadat nem kerül hozzám, és nem tárolom.",
+    note: "A havidíj bankkártyás terhelését a Stripe kezeli, kártyaadat nem kerül hozzám. Egyszeri vásárlásnál banki átutalással fizetsz, és számlát kapsz róla.",
     scale: 0.92,
     Mark: MarkStripe
   }
