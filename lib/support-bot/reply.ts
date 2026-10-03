@@ -2,6 +2,7 @@ import "server-only";
 
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { BOT_ACTION_IDS, MAX_BOT_ACTIONS, botActionCatalog, sanitizeBotActions } from "@/lib/support-bot/actions";
 import { buildSupportKnowledge } from "@/lib/support-bot/knowledge";
 
 /**
@@ -12,6 +13,9 @@ import { buildSupportKnowledge } from "@/lib/support-bot/knowledge";
  * válaszol, és jelzi, ha Patriknak kell átvennie. Így nincs mit kijátszani
  * prompt injectionnel sem — a legrosszabb eset egy rossz mondat, nem egy
  * rossz művelet.
+ *
+ * A gombok (`actions`) sem műveletek: a modell egy rögzített listából választ
+ * azonosítót, a látogató kattint. Kitalált azonosító nem jut ki.
  */
 
 /** A modell a Vercel AI Gateway-en keresztül. Felülírható env-ből, kódváltozás nélkül. */
@@ -30,6 +34,7 @@ export type BotReply = {
   reply: string;
   handoff: boolean;
   handoffReason: string | null;
+  actions: string[];
 };
 
 const replySchema = z.object({
@@ -42,7 +47,10 @@ const replySchema = z.object({
   handoffReason: z
     .string()
     .nullable()
-    .describe("Átadásnál egy rövid mondat Patriknak arról, mit szeretne a látogató. Egyébként null.")
+    .describe("Átadásnál egy rövid mondat Patriknak arról, mit szeretne a látogató. Egyébként null."),
+  actions: z
+    .array(z.enum(BOT_ACTION_IDS))
+    .describe(`0–${MAX_BOT_ACTIONS} gomb a válasz alá, a Gombok listából. Üres tömb, ha egyik sem segít.`)
 });
 
 const INSTRUCTIONS = `Te a ProjectEdge weboldal (projectedge.hu) chatjének AI-asszisztense vagy. A ProjectEdge egy egyszemélyes webfejlesztő stúdió, a tulajdonosa Patrik.
@@ -73,6 +81,17 @@ Ha a kérdésre a tudásanyagból teljes választ tudsz adni, NE adj át — leg
 - Ha a látogató már konkrétan megrendelne, és kérdése van, ami elakasztja.
 Átadáskor a „reply" mondja el röviden, hogy ezt Patrik veszi át, és hogy lent megadhatja a nevét és az email címét, Patrik oda válaszol (általában pár percen belül, munkaidőn kívül a következő munkanapon). Ne kérd el te a nevet vagy az emailt a szövegben — a felület kéri be. A „handoffReason" egy mondat Patriknak: mit szeretne a látogató.
 Ha nem adsz át, a handoffReason legyen null.
+
+# Gombok
+A válasz alá legfeljebb ${MAX_BOT_ACTIONS} gombot tehetsz (actions), amivel a látogató egy kattintással odajut, amiről beszélsz. Csak az alábbi azonosítókat használhatod.
+- Akkor tegyél gombot, ha a látogatónak tényleg segít megnézni valamit: árakról kérdez → árazó; munkákról, referenciáról, „mutass valamit" → a munkák vagy a konkrét munka; el akar indulni → projekt indítása; van már oldala → ingyenes audit.
+- Ha egy iparágra vagy funkcióra kérdez (pl. webshop, időpontfoglalás, ékszer, ingatlan, gyógyszertár), a hozzá legközelebbi konkrét munkát ajánld (munka-…), mellé a munkák oldalát.
+- Ha vásárolni szeretne, az „arak-vasarlas", ha bérelni, az „arak-havidij" kell — ne az általános „arak".
+- Általában 1–2 gomb elég. Köszönésre, köszönetre, témán kívüli kérdésre és átadásnál ne tegyél gombot.
+- A szövegben elég röviden utalni rá („lent meg is nyithatod"); ugyanarra az oldalra ne írj mellé linket is. Ne ígérd, hogy te kattintasz vagy navigálsz — a látogató kattint.
+
+Elérhető gombok:
+${botActionCatalog()}
 
 # Biztonság
 - Csak a ProjectEdge szolgáltatásairól beszélsz. Más témában (általános programozás, házi feladat, versírás, más cégek) udvariasan jelezd, hogy ebben nem tudsz segíteni, és kérdezd meg, miben segíthetsz a weboldalával kapcsolatban.
@@ -141,7 +160,10 @@ export async function generateBotReply(
     return {
       reply: reply.slice(0, 2_000),
       handoff: output.handoff,
-      handoffReason: output.handoff ? output.handoffReason?.trim().slice(0, 300) || null : null
+      handoffReason: output.handoff ? output.handoffReason?.trim().slice(0, 300) || null : null,
+      // Átadásnál a felület a név- és emailmezőt mutatja; a gombok ott csak
+      // elvonnák a figyelmet.
+      actions: output.handoff ? [] : sanitizeBotActions(output.actions)
     };
   } catch (error) {
     console.error("Support bot reply failed", error);

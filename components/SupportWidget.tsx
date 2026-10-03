@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { FormEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
+import { PRICING_MODEL_EVENT, PRICING_MODEL_REQUEST_KEY } from "@/lib/pricing-model-request";
+import { type BotAction, botActionById, sanitizeBotActions } from "@/lib/support-bot/actions";
 
 type ChatMessage = {
   id: string;
@@ -10,6 +12,8 @@ type ChatMessage = {
   created_at: string;
   sender: "customer" | "admin" | "bot";
   status?: "sending" | "sent" | "error";
+  /** Az AI gombjai — csak a friss válaszban jönnek, utána az `actionMap` őrzi. */
+  actions?: string[];
 };
 
 /**
@@ -35,6 +39,30 @@ const initialForm = {
 const storageKey = "projectedge-support-ticket";
 const positionKey = "projectedge-chat-pos";
 const greetKey = "projectedge-chat-greeted";
+/**
+ * Az AI-válaszok gombjai üzenetenként. Nem az adatbázisban vannak (az admin
+ * falán nincs rájuk szükség), hanem itt: így újratöltés és oldalváltás után
+ * is a helyükön maradnak. Csak az aktuális beszélgetésé.
+ */
+const actionsKey = "projectedge-support-actions";
+type StoredActions = { ticketId: string; map: Record<string, string[]> };
+
+/** A tárolt gombok, csak ismert azonosítókkal. Szerveren és hibánál `null`. */
+function readStoredActions(): StoredActions | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(actionsKey) || "null") as StoredActions | null;
+    if (!stored || typeof stored.ticketId !== "string" || typeof stored.map !== "object" || !stored.map) return null;
+    const map: Record<string, string[]> = {};
+    for (const [id, ids] of Object.entries(stored.map)) {
+      const clean = sanitizeBotActions(ids);
+      if (clean.length) map[id] = clean;
+    }
+    return { ticketId: stored.ticketId, map };
+  } catch {
+    return null;
+  }
+}
 const reviewMessage = "Szeretnék egy rövid weboldal-áttekintést kérni. A weboldalam címe: ";
 
 /** Az AI-nak szánt üzenet felső határa — a szerver is ennyit enged. */
@@ -43,9 +71,67 @@ const BOT_MESSAGE_LIMIT = 2000;
 /** Egykoppintásos kezdőkérdések az üres AI-chatben. */
 const STARTER_QUESTIONS = [
   "Mennyibe kerül egy weboldal?",
+  "Milyen munkáid vannak?",
   "Mennyi idő alatt készül el?",
   "Bérlés vagy vásárlás — mi a különbség?"
 ];
+
+/** Ennyi ideig marad a telefonos „Folytatjuk?" buborék, ha nem nyúlnak hozzá. */
+const PEEK_MS = 14_000;
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Odagörget egy elemhez úgy, hogy a rögzített fejléc ne takarja ki. A CSS-ben
+ * megadott `scroll-margin-top` (pl. `#arak`) is számít, ha az a nagyobb.
+ */
+function scrollToElement(element: HTMLElement) {
+  const margin = Number.parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
+  const nav = document.querySelector<HTMLElement>(".nav-shell");
+  const navBottom = nav ? Math.max(0, nav.getBoundingClientRect().bottom) : 0;
+  const offset = Math.max(margin, navBottom + 16);
+  window.scrollTo({
+    top: Math.max(0, element.getBoundingClientRect().top + window.scrollY - offset),
+    behavior: prefersReducedMotion() ? "auto" : "smooth"
+  });
+}
+
+/** Egy rövid fénygyűrű a célon, hogy a szem megtalálja, mire mutatott a gomb. */
+function spotlight(element: HTMLElement) {
+  element.classList.remove("bot-spotlight");
+  // Újraindítja az animációt, ha ugyanarra a gombra kétszer kattintanak.
+  void element.offsetWidth;
+  element.classList.add("bot-spotlight");
+  window.setTimeout(() => element.classList.remove("bot-spotlight"), 2_600);
+}
+
+/**
+ * A horgony felfedése: az árazó a kért nézetre áll, a telefonon összecsukott
+ * blokk (`MobileFold`) kinyílik, aztán görgetés és kiemelés.
+ *
+ * A `MobileFold` a `hashchange` eseményre nyílik ki — ezért kerül a horgony
+ * a címsorba (`replaceState`: nem ugrik, nem kerül új bejegyzés az előzménybe),
+ * és ezért küldünk utána egy `hashchange`-et kézzel.
+ */
+function revealAnchor(anchor: string, pricingModel?: BotAction["pricingModel"]) {
+  if (pricingModel) window.dispatchEvent(new CustomEvent(PRICING_MODEL_EVENT, { detail: { model: pricingModel } }));
+  const oldURL = window.location.href;
+  window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}#${anchor}`);
+  window.dispatchEvent(new HashChangeEvent("hashchange", { oldURL, newURL: window.location.href }));
+
+  // Két képkocka: React addig kirajzolja a kinyitott blokkot és az átállt árazót.
+  window.requestAnimationFrame(() =>
+    window.requestAnimationFrame(() => {
+      const element = document.getElementById(anchor);
+      if (!element) return;
+      scrollToElement(element);
+      const panel = anchor === "arak" && pricingModel ? document.getElementById(`pricing-panel-${pricingModel}`) : null;
+      spotlight(panel ?? element);
+    })
+  );
+}
 
 /**
  * A bot válaszában a `projectedge.hu/…` hivatkozások kattinthatók. CSAK a
@@ -94,10 +180,80 @@ function TypingBubble() {
   );
 }
 
-/** Egy buborék a falon. A bot üzenete az admin oldalán ül, „AI" jelöléssel. */
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const side = message.sender === "customer" ? "customer" : "admin";
+/**
+ * Megvárja, amíg a horgony megjelenik (legfeljebb 4 mp), aztán felfedi.
+ * Kell másik oldalra érkezéskor, és akkor is, ha a cél az árazó MÁSIK
+ * nézetében van (a vételi opció csak a havidíjas nézetben létezik): ilyenkor
+ * előbb átáll az árazó, és a cél csak utána kerül a DOM-ba.
+ * A visszaadott függvény leállítja a várakozást.
+ */
+function waitForAnchor(anchor: string, pricingModel?: BotAction["pricingModel"]) {
+  let tries = 0;
+  const timer = window.setInterval(() => {
+    tries += 1;
+    if (document.getElementById(anchor)) {
+      window.clearInterval(timer);
+      revealAnchor(anchor, pricingModel);
+    } else if (tries > 40) {
+      window.clearInterval(timer);
+    }
+  }, 100);
+  return () => window.clearInterval(timer);
+}
+
+function ArrowIcon({ external }: { external: boolean }) {
   return (
+    <svg aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 16 16">
+      {external ? <path d="M5.5 10.5L10.5 5.5M6 5.5h4.5V10" /> : <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" />}
+    </svg>
+  );
+}
+
+/**
+ * Az AI-válasz gombjai. Valódi linkek (`<a href>`): középső kattintással,
+ * Ctrl/Cmd-kattintással új lapon is megnyithatók, és a képernyőolvasó is
+ * linknek mondja. A sima kattintást a widget kezeli (görgetés, kiemelés).
+ */
+function ActionRow({
+  ids,
+  onAction
+}: {
+  ids: string[];
+  onAction: (event: ReactMouseEvent<HTMLAnchorElement>, action: BotAction) => void;
+}) {
+  const actions = ids.map(botActionById).filter((action): action is BotAction => Boolean(action));
+  if (actions.length === 0) return null;
+  return (
+    <div className="chat-actions">
+      {actions.map((action) => (
+        <a
+          className="chat-action"
+          href={action.href}
+          key={action.id}
+          onClick={(event) => onAction(event, action)}
+          {...(action.newTab ? { rel: "noopener", target: "_blank" } : {})}
+        >
+          <span>{action.label}</span>
+          <ArrowIcon external={Boolean(action.newTab)} />
+          {action.newTab ? <span className="sr-only"> (új lapon nyílik)</span> : null}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+/** Egy buborék a falon. A bot üzenete az admin oldalán ül, „AI" jelöléssel. */
+function MessageBubble({
+  message,
+  actions,
+  onAction
+}: {
+  message: ChatMessage;
+  actions?: string[];
+  onAction: (event: ReactMouseEvent<HTMLAnchorElement>, action: BotAction) => void;
+}) {
+  const side = message.sender === "customer" ? "customer" : "admin";
+  const bubble = (
     <div
       className={`chat-bubble ${side} ${message.sender === "bot" ? "bot" : ""} ${message.status === "sending" ? "sending" : ""}`}
     >
@@ -112,10 +268,18 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       </div>
     </div>
   );
+  if (message.sender !== "bot" || !actions?.length) return bubble;
+  return (
+    <>
+      {bubble}
+      <ActionRow ids={actions} onAction={onAction} />
+    </>
+  );
 }
 
 export function SupportWidget() {
   const pathname = usePathname();
+  const router = useRouter();
   const messagesRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -145,6 +309,11 @@ export function SupportWidget() {
 
   /** A köszöntő buborék: munkamenetenként egyszer, késleltetve. */
   const [greeting, setGreeting] = useState(false);
+  /** Telefonon a gomb lecsukja a chatet; ez a buborék hív vissza bele. */
+  const [peek, setPeek] = useState(false);
+  const [storedActions, setStoredActions] = useState<StoredActions | null>(readStoredActions);
+  /** Másik oldalra navigáláskor ide kerül, hová kell görgetni megérkezés után. */
+  const pendingAnchorRef = useRef<{ anchor: string; pricingModel?: BotAction["pricingModel"] } | null>(null);
   /**
    * Az első üzenet két lépésben megy el.
    *
@@ -422,6 +591,21 @@ export function SupportWidget() {
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   }, []);
 
+  /* Megérkezés egy másik oldalra, ahová a gomb vitt: megvárjuk, amíg a cél
+     felépül, aztán odagörgetünk. */
+  useEffect(() => {
+    const pending = pendingAnchorRef.current;
+    if (!pending) return;
+    pendingAnchorRef.current = null;
+    return waitForAnchor(pending.anchor, pending.pricingModel);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!peek || open) return;
+    const timer = window.setTimeout(() => setPeek(false), PEEK_MS);
+    return () => window.clearTimeout(timer);
+  }, [peek, open]);
+
   if (pathname.startsWith("/admin") || pathname.startsWith("/ugyfelkapu")) {
     return null;
   }
@@ -512,6 +696,7 @@ export function SupportWidget() {
   function toggleOpen() {
     /* A köszöntésnek nincs több dolga, ha egyszer megnyílt a chat. */
     setGreeting(false);
+    setPeek(false);
     if (!open) {
       formStartedAt.current = Date.now();
       trackEvent("support_opened", { intent: "contact", source: "floating_button" });
@@ -738,11 +923,27 @@ export function SupportWidget() {
         setHasRated(false);
         trackEvent("support_bot_started", { source });
       }
+      const incoming: ChatMessage[] = data.messages ?? [];
       setMessages((current) => [
         ...current.filter((m) => m.id !== optimisticId),
-        ...(data.messages ?? []).map((m: ChatMessage) => ({ ...m, status: "sent" as const }))
+        ...incoming.map((m) => ({ ...m, status: "sent" as const }))
       ]);
-      trackEvent("support_bot_message", { handoff: Boolean(data.handoff) });
+      const ticketIdForActions = ticket?.id ?? data.ticket?.id;
+      const withActions = incoming.filter((m) => m.sender === "bot" && sanitizeBotActions(m.actions).length);
+      if (ticketIdForActions && withActions.length) {
+        setStoredActions((current) => {
+          const map = { ...(current && current.ticketId === ticketIdForActions ? current.map : {}) };
+          for (const m of withActions) map[m.id] = sanitizeBotActions(m.actions);
+          const next: StoredActions = { ticketId: ticketIdForActions, map };
+          try {
+            window.localStorage.setItem(actionsKey, JSON.stringify(next));
+          } catch {
+            /* privát mód: ebben a fülben így is látszanak */
+          }
+          return next;
+        });
+      }
+      trackEvent("support_bot_message", { handoff: Boolean(data.handoff), actions: withActions.length > 0 });
       if (data.handoff) {
         setHandoffInitiator("bot");
         setHandoffOpen(true);
@@ -875,8 +1076,59 @@ export function SupportWidget() {
     }
   }
 
+  /**
+   * Egy AI-gomb. Új lapos cél (demó, élő ügyféloldal) a böngészőre marad;
+   * a többi helyben görget, vagy átvisz a másik oldalra és ott görget.
+   * Telefonon a chatlap eltakarná a célt, ezért lecsukódik, és egy kis
+   * buborék hív vissza a beszélgetéshez. Asztalon a chat nyitva marad.
+   */
+  function runBotAction(event: ReactMouseEvent<HTMLAnchorElement>, action: BotAction) {
+    trackEvent("support_bot_action", { action: action.id });
+    if (action.newTab) return;
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+
+    if (action.pricingModel) {
+      try {
+        window.sessionStorage.setItem(PRICING_MODEL_REQUEST_KEY, action.pricingModel);
+      } catch {
+        /* helyben az esemény is elég */
+      }
+    }
+    if (window.matchMedia("(max-width: 640px)").matches) {
+      setOpen(false);
+      setPeek(true);
+    }
+
+    const [path] = action.href.split("#");
+    if (action.anchor && document.getElementById(action.anchor)) {
+      revealAnchor(action.anchor, action.pricingModel);
+      return;
+    }
+    if (action.anchor && action.pricingModel && document.getElementById("arak")) {
+      /* Az árazó itt van, csak a másik nézetében: átállítjuk, és megvárjuk,
+         amíg a cél kirajzolódik. */
+      window.dispatchEvent(new CustomEvent(PRICING_MODEL_EVENT, { detail: { model: action.pricingModel } }));
+      waitForAnchor(action.anchor, action.pricingModel);
+      return;
+    }
+    const hashAnchor = action.href.includes("#") ? action.href.split("#")[1] : null;
+    if (path === pathname) {
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      return;
+    }
+    pendingAnchorRef.current = hashAnchor ? { anchor: hashAnchor, pricingModel: action.pricingModel } : null;
+    router.push(path || "/");
+  }
+
   function resetConversation() {
     window.localStorage.removeItem(storageKey);
+    try {
+      window.localStorage.removeItem(actionsKey);
+    } catch {
+      /* nem baj */
+    }
+    setStoredActions(null);
     setTicket(null);
     setMessages([]);
     setTicketStatus("open");
@@ -921,6 +1173,9 @@ export function SupportWidget() {
         right: "auto"
       }
     : {};
+
+  /* A gombok a beszélgetéshez tartoznak: más (régi) ticket gombjai nem jönnek elő. */
+  const actionMap = ticket && storedActions?.ticketId === ticket.id ? storedActions.map : {};
 
   /** Az AI-asszisztens viszi-e a beszélgetést (vagy fogja, az első kérdéstől). */
   const botMode = ticket ? ticketStatus === "bot" : chatMode === "bot";
@@ -1037,6 +1292,28 @@ export function SupportWidget() {
             </button>
           </div>
         ) : null}
+
+        {/* Telefonon az AI-gomb lecsukta a chatet, hogy a cél látszódjon.
+            Ugyanúgy működik, mint a köszöntés: a koppintás a konténeren
+            keresztül nyitja vissza a beszélgetést. */}
+        {peek && !open && !greeting ? (
+          <div className="support-greeting support-peek" role="status">
+            <p>
+              <strong>Vissza a beszélgetéshez</strong>
+            </p>
+            <button
+              aria-label="Buborék bezárása"
+              className="support-greeting-close"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                setPeek(false);
+              }}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Modern Glassmorphic / Bottom Sheet Panel */}
@@ -1119,7 +1396,7 @@ export function SupportWidget() {
                 {messages.length === 0 ? (
                   <p className="chat-empty">Beszélgetés betöltése…</p>
                 ) : (
-                  messages.map((message) => <MessageBubble key={message.id} message={message} />)
+                  messages.map((message) => <MessageBubble actions={actionMap[message.id]} key={message.id} message={message} onAction={runBotAction} />)
                 )}
                 {botThinking ? <TypingBubble /> : null}
                 {handoffDone && !botMode ? (
@@ -1220,7 +1497,7 @@ export function SupportWidget() {
                 ) : null}
 
                 {messages.map((message) => (
-                  <MessageBubble key={message.id} message={message} />
+                  <MessageBubble actions={actionMap[message.id]} key={message.id} message={message} onAction={runBotAction} />
                 ))}
                 {botThinking ? <TypingBubble /> : null}
               </div>

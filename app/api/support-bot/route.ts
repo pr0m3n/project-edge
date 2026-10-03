@@ -148,6 +148,7 @@ export async function POST(request: Request) {
   let reply: string;
   let handoff: boolean;
   let handoffReason: string | null;
+  let actions: string[] = [];
 
   if ((botReplies ?? 0) >= MAX_BOT_REPLIES_PER_TICKET) {
     reply = LIMIT_REPLY;
@@ -159,7 +160,7 @@ export async function POST(request: Request) {
     const budget = await checkGlobalDurableLimit("support-bot-daily", 1_500, 24 * 60 * 60);
     const generated = budget.allowed ? await generateBotReply(transcript, { ticketId: ticket.id }) : null;
     if (generated) {
-      ({ reply, handoff, handoffReason } = generated);
+      ({ reply, handoff, handoffReason, actions } = generated);
     } else {
       reply = FALLBACK_REPLY;
       handoff = true;
@@ -188,7 +189,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ticket: created ? { id: ticket.id, visitorToken: ticket.visitor_token, status: "bot" } : undefined,
-    messages: [customerMessage, botMessage],
+    /* A gombok nem kerülnek az adatbázisba: a látogató böngészője tartja
+       meg őket (újratöltés után is), az admin falán pedig nincs rájuk szükség. */
+    messages: [customerMessage, { ...botMessage, actions }],
     handoff
   });
 }

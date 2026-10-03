@@ -188,7 +188,7 @@ export default function Home() {
         </ul>
       </section>
 
-      <section className="faq-section">
+      <section className="faq-section" id="gyik">
         <div className="section-head">
           <p className="micro-label dark">GYIK</p>
           <h2>A leggyakoribb kérdések.</h2>

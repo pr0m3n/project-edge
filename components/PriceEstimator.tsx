@@ -30,6 +30,7 @@ import {
 import { CommercialModelPicker } from "@/components/CommercialModelPicker";
 import { trackEvent } from "@/lib/analytics";
 import { huArticle } from "@/lib/hu";
+import { PRICING_MODEL_EVENT, PRICING_MODEL_REQUEST_KEY } from "@/lib/pricing-model-request";
 
 type PriceEstimatorProps = {
   /**
@@ -72,6 +73,31 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
   const [annual, setAnnual] = useState(false);
   const [detailPlan, setDetailPlan] = useState<SubscriptionPlanKey>("business");
   const activePlan = SUBSCRIPTION_PLANS.find((plan) => plan.key === detailPlan) ?? SUBSCRIPTION_PLANS[1];
+
+  /* A chat AI-asszisztensének gombja („Árak vásárlással") a megfelelő nézetre
+     állítja az árazót. Ha másik oldalról érkezik, a kérés a sessionStorage-ban
+     vár, amíg ez a komponens felépül; ha már itt van, eseményként jön. */
+  useEffect(() => {
+    function apply(next: unknown) {
+      if (next === "purchase" || next === "subscription") setModel(next);
+    }
+    try {
+      apply(window.sessionStorage.getItem(PRICING_MODEL_REQUEST_KEY));
+      window.sessionStorage.removeItem(PRICING_MODEL_REQUEST_KEY);
+    } catch {
+      /* privát mód: az esemény így is megérkezik */
+    }
+    function onRequest(event: Event) {
+      apply((event as CustomEvent<{ model?: string }>).detail?.model);
+      try {
+        window.sessionStorage.removeItem(PRICING_MODEL_REQUEST_KEY);
+      } catch {
+        /* nem baj */
+      }
+    }
+    window.addEventListener(PRICING_MODEL_EVENT, onRequest);
+    return () => window.removeEventListener(PRICING_MODEL_EVENT, onRequest);
+  }, []);
 
   return (
     <section className="model-pricing" id="arak">
