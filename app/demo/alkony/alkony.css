@@ -4,9 +4,10 @@
    termék lényege — az alexandrit is ettől vált színt —, ezért az egész lap
    vele együtt áll át.
 
-   Tipográfia: a Bodoni csak NAGY méretben szerepel (H1, H2, nagy ár, logó).
-   Kicsiben a hajszálvonalai szálkásak és zavaróak voltak; minden más egy
-   erős groteszk, 15 px-es alsó határral és sötétebb másodlagos színnel.
+   Tipográfia: egyetlen erős groteszk mindenhol, 15 px-es alsó határral és
+   sötétebb másodlagos színnel. Didone (Bodoni) betű SEHOL — a hajszálvonalai
+   nagy címben és az árban is vékonynak, zavarónak hatottak. A címek súlyát
+   a méret, a 600-as vastagság és a szűk betűköz adja.
 
    Dobozok: ékszerdoboz-keret (hajszálvonal + belső második vonal), alig
    lekerekítve, árnyék nélkül — a lebegő, nagy sugarú kártyák SaaS-hatásúak
@@ -27,7 +28,6 @@
   --button-bg: #111317;
   --button-ink: #f9fafb;
   --r: 3px;
-  --display: var(--ak-display), "Bodoni Moda", Didot, serif;
   --sans: var(--ak-sans), "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --shift: 0.9s ease;
@@ -112,11 +112,10 @@
 }
 
 .ak-root h2 {
-  font-family: var(--display);
-  font-size: clamp(44px, 5.4vw, 80px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  font-size: clamp(40px, 5vw, 72px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
 }
 
 /* ─── logó ─────────────────────────────────────────────────────────────── */
@@ -133,11 +132,10 @@
 }
 
 .ak-logo-word {
-  font-family: var(--display);
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  margin-right: -0.3em;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  margin-right: -0.26em;
   text-transform: uppercase;
 }
 
@@ -316,14 +314,13 @@
 }
 
 .ak-h1-name {
-  font-family: var(--display);
-  font-size: clamp(68px, 8.6vw, 140px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 0.86;
+  font-size: clamp(60px, 7.6vw, 124px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
   margin-left: -0.04em;
-  /* a Bodoni „j" szára mélyre lóg: helyet kap, mielőtt az alcím jön */
-  padding-bottom: 0.2em;
+  /* a „j" szára lelóg: helyet kap, mielőtt az alcím jön */
+  padding-bottom: 0.12em;
 }
 
 .ak-h1-sub {
@@ -356,17 +353,16 @@
 
 .ak-price {
   display: grid;
-  font-family: var(--display);
-  font-size: clamp(40px, 3.3vw, 50px);
+  font-size: clamp(36px, 3vw, 46px);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   gap: 6px;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   line-height: 1.02;
 }
 
 .ak-price small {
   color: var(--muted);
-  font-family: var(--sans);
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0;
@@ -1072,10 +1068,11 @@
 .ak-sheet-price {
   border-bottom: 1px solid var(--line);
   display: grid;
-  font-family: var(--display);
-  font-size: clamp(38px, 3.2vw, 48px);
+  font-size: clamp(34px, 2.9vw, 44px);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   gap: 6px;
+  letter-spacing: -0.03em;
   line-height: 1;
   padding-bottom: 24px;
   transition: border-color var(--shift);
@@ -1083,9 +1080,9 @@
 
 .ak-sheet-price small {
   color: var(--muted);
-  font-family: var(--sans);
   font-size: 15px;
   font-weight: 500;
+  letter-spacing: 0;
 }
 
 .ak-chain {
@@ -1573,14 +1570,43 @@
     flex: 1 1 220px;
   }
 
+  /* Egymás alá téve a kő fölül, a csúszka a hosszú leírás után jött: húzás
+     közben a kő már kint volt a képből, a változást nem lehetett látni.
+     Telefonon ezért a szöveg megy előre, a kő és a csúszka pedig közvetlenül
+     egymás alá kerül — a kör akkorára méretezve, hogy a csúszkával együtt
+     egy képernyőn elférjen. */
   .ak-stone {
+    gap: 0;
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .ak-stone-copy {
+    display: contents;
+  }
+
+  .ak-stone-copy > .ak-eyebrow { order: 1; }
+  .ak-stone-copy > h2 { order: 2; margin-top: 14px; }
+  .ak-stone-copy > p:not(.ak-eyebrow) { order: 3; margin-top: 18px; }
+
   .ak-macro {
     justify-self: center;
-    max-width: 520px;
+    margin-top: 32px;
+    max-width: min(520px, calc(100svh - var(--demo-bar-h, 0px) - 330px));
+    min-width: 240px;
+    order: 4;
     width: 100%;
+  }
+
+  .ak-kelvin {
+    border-top: 0;
+    margin-top: 6px;
+    order: 5;
+    padding-top: 16px;
+  }
+
+  .ak-dance {
+    margin-top: 26px;
+    order: 6;
   }
 
   .ak-order-head,
