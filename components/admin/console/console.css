@@ -1,0 +1,2394 @@
+/* ════════════════════════════════════════════════════════════════════════
+   ADMIN KONZOL — dizájnrendszer
+   ────────────────────────────────────────────────────────────────────────
+   Minden szabály a `.pe-admin` alá zárva: a nyilvános oldalra és a régi
+   (átmeneti) adminra nem hat. A színek tokenekből jönnek; a világos téma
+   csak a tokeneket írja át, a komponensek szabályai közösek.
+
+   A régi admin újrahasznosított paneljei (AI-prompt, ügyfélfelvétel,
+   fizetések, átadás, kivásárlás, változáskérés-szál) az `--adm-*` tokenekre
+   épülnek — ezeket itt az új palettára képezzük le, így egységesen néznek ki.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.admin-page.pe-admin {
+  --pa-bg: #0a0c0f;
+  --pa-surface: #111419;
+  --pa-surface-2: #161a20;
+  --pa-raised: #1b2027;
+  --pa-hover: rgba(255, 255, 255, 0.045);
+  --pa-border: rgba(255, 255, 255, 0.075);
+  --pa-border-strong: rgba(255, 255, 255, 0.14);
+  --pa-text: #eef1f4;
+  --pa-text-2: #aab3be;
+  --pa-text-3: #737d89;
+  --pa-accent: #ff5a24;
+  --pa-accent-hover: #ff6d3a;
+  --pa-accent-ink: #ffffff;
+  --pa-accent-soft: rgba(255, 90, 36, 0.14);
+  --pa-accent-text: #ff8a5c;
+  --pa-ai: #76abae;
+  --pa-ai-soft: rgba(118, 171, 174, 0.14);
+  --pa-ai-text: #8cc3c6;
+  --pa-success: #3ecf8e;
+  --pa-success-soft: rgba(62, 207, 142, 0.13);
+  --pa-warn: #f5a524;
+  --pa-warn-soft: rgba(245, 165, 36, 0.13);
+  --pa-danger: #f2564b;
+  --pa-danger-soft: rgba(242, 86, 75, 0.13);
+  --pa-danger-text: #ff8a80;
+  --pa-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --pa-shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --pa-radius: 14px;
+  --pa-radius-sm: 10px;
+  --pa-sidebar: 248px;
+  --pa-topbar: 60px;
+  --pa-bottombar: 64px;
+  --pa-focus: 0 0 0 3px rgba(255, 90, 36, 0.35);
+
+  /* A régi panelek tokenjei az új palettán. */
+  --adm-text: var(--pa-text);
+  --adm-text-soft: var(--pa-text);
+  --adm-text-muted: var(--pa-text-2);
+  --adm-accent-text: var(--pa-ai-text);
+  --adm-danger-text: var(--pa-danger-text);
+  --adm-warn-text: var(--pa-warn);
+  --adm-panel: var(--pa-surface);
+  --adm-inset: var(--pa-bg);
+
+  background: var(--pa-bg);
+  color: var(--pa-text);
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-page.pe-admin[data-admin-theme="light"] {
+  --pa-bg: #f4f5f7;
+  --pa-surface: #ffffff;
+  --pa-surface-2: #f8f9fb;
+  --pa-raised: #ffffff;
+  --pa-hover: rgba(15, 20, 26, 0.04);
+  --pa-border: rgba(15, 20, 26, 0.085);
+  --pa-border-strong: rgba(15, 20, 26, 0.16);
+  --pa-text: #10151b;
+  --pa-text-2: #4a5462;
+  --pa-text-3: #7f8996;
+  --pa-accent: #ee4b14;
+  --pa-accent-hover: #d9410d;
+  --pa-accent-soft: rgba(238, 75, 20, 0.1);
+  --pa-accent-text: #c23d0f;
+  --pa-ai: #3f8b8f;
+  --pa-ai-soft: rgba(63, 139, 143, 0.11);
+  --pa-ai-text: #2c6f73;
+  --pa-success: #15935a;
+  --pa-success-soft: rgba(21, 147, 90, 0.1);
+  --pa-warn: #b86b00;
+  --pa-warn-soft: rgba(184, 107, 0, 0.1);
+  --pa-danger: #d43a2f;
+  --pa-danger-soft: rgba(212, 58, 47, 0.09);
+  --pa-danger-text: #b62f25;
+  --pa-shadow: 0 1px 2px rgba(15, 20, 26, 0.06), 0 8px 24px -14px rgba(15, 20, 26, 0.18);
+  --pa-shadow-pop: 0 24px 60px -24px rgba(15, 20, 26, 0.35), 0 0 0 1px rgba(15, 20, 26, 0.06);
+  color-scheme: light;
+}
+
+.pe-admin *,
+.pe-admin *::before,
+.pe-admin *::after {
+  box-sizing: border-box;
+}
+
+.pe-admin a {
+  color: inherit;
+}
+
+.pe-admin :focus-visible {
+  outline: none;
+  box-shadow: var(--pa-focus);
+}
+
+.pe-admin h1,
+.pe-admin h2,
+.pe-admin h3,
+.pe-admin p {
+  margin: 0;
+}
+
+.pe-admin .sr-only {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* ── Keret ────────────────────────────────────────────────────────────── */
+
+.pa-shell {
+  display: grid;
+  grid-template-columns: var(--pa-sidebar) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.pa-sidebar {
+  background: var(--pa-surface);
+  border-right: 1px solid var(--pa-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100dvh;
+  padding: 18px 12px 14px;
+  position: sticky;
+  top: 0;
+}
+
+.pa-brand {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin: 0 6px 18px;
+  text-decoration: none;
+}
+
+.pa-brand-mark {
+  align-items: center;
+  background: linear-gradient(140deg, #ff7a45, #ff4a12);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px -6px rgba(255, 74, 18, 0.7);
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 850;
+  height: 34px;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  width: 34px;
+}
+
+.pa-brand-text {
+  display: grid;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.pa-brand-text strong {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.pa-brand-text span {
+  color: var(--pa-text-3);
+  font-size: 12px;
+}
+
+.pa-nav {
+  display: grid;
+  gap: 2px;
+}
+
+.pa-nav-label {
+  color: var(--pa-text-3);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  margin: 14px 10px 6px;
+  text-transform: uppercase;
+}
+
+.pa-nav-item {
+  align-items: center;
+  border-radius: 10px;
+  color: var(--pa-text-2);
+  display: flex;
+  font-size: 14px;
+  font-weight: 560;
+  gap: 11px;
+  min-height: 40px;
+  padding: 8px 10px;
+  position: relative;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pa-nav-item:hover {
+  background: var(--pa-hover);
+  color: var(--pa-text);
+}
+
+.pa-nav-item[aria-current="page"] {
+  background: var(--pa-raised);
+  box-shadow: inset 0 0 0 1px var(--pa-border);
+  color: var(--pa-text);
+}
+
+.pa-nav-item[aria-current="page"] .pa-nav-icon {
+  color: var(--pa-accent);
+}
+
+.pa-nav-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 20px;
+  width: 20px;
+}
+
+.pa-nav-icon svg {
+  height: 100%;
+  width: 100%;
+}
+
+.pa-nav-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-count {
+  align-items: center;
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border);
+  border-radius: 999px;
+  color: var(--pa-text-2);
+  display: inline-flex;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  height: 20px;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0 6px;
+}
+
+.pa-count.is-hot {
+  background: var(--pa-accent);
+  border-color: transparent;
+  color: var(--pa-accent-ink);
+}
+
+.pa-count.is-ai {
+  background: var(--pa-ai-soft);
+  border-color: transparent;
+  color: var(--pa-ai-text);
+}
+
+.pa-sidebar-foot {
+  border-top: 1px solid var(--pa-border);
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.pa-live {
+  align-items: center;
+  color: var(--pa-text-3);
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.pa-live i {
+  background: var(--pa-text-3);
+  border-radius: 50%;
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+}
+
+.pa-live.is-live i {
+  background: var(--pa-success);
+  box-shadow: 0 0 0 3px var(--pa-success-soft);
+}
+
+.pa-live.is-offline i {
+  background: var(--pa-danger);
+}
+
+.pa-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pa-topbar {
+  align-items: center;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background: color-mix(in srgb, var(--pa-bg) 82%, transparent);
+  border-bottom: 1px solid var(--pa-border);
+  display: flex;
+  gap: 10px;
+  height: var(--pa-topbar);
+  justify-content: flex-end;
+  padding: 0 clamp(16px, 3vw, 32px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.pa-topbar-title {
+  align-items: center;
+  display: none;
+  flex: 1;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pa-topbar-title strong {
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-topbar > .pa-live {
+  display: none;
+}
+
+.pa-search-hint {
+  color: var(--pa-text-3);
+  flex: 1;
+  font-size: 13px;
+}
+
+.pa-content {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: clamp(18px, 3vw, 34px) clamp(16px, 3vw, 32px) 56px;
+  width: 100%;
+}
+
+.pa-bottombar {
+  display: none;
+}
+
+/* Tablet: az oldalsáv ikonsávvá szűkül. */
+@media (max-width: 1099px) and (min-width: 768px) {
+  .pa-shell {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .pa-sidebar {
+    padding: 16px 10px;
+  }
+
+  .pa-brand {
+    justify-content: center;
+    margin: 0 0 16px;
+  }
+
+  .pa-brand-text,
+  .pa-nav-text,
+  .pa-nav-label,
+  .pa-live span,
+  .pa-sidebar .pa-count {
+    display: none;
+  }
+
+  .pa-nav-item {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .pa-nav-item .pa-dot {
+    position: absolute;
+    right: 9px;
+    top: 7px;
+  }
+
+  .pa-live {
+    justify-content: center;
+  }
+}
+
+.pa-dot {
+  background: var(--pa-accent);
+  border-radius: 50%;
+  display: none;
+  height: 8px;
+  width: 8px;
+}
+
+@media (max-width: 1099px) and (min-width: 768px) {
+  .pa-nav-item .pa-dot.is-on {
+    display: block;
+  }
+}
+
+/* Telefon: felső sáv + alsó menü, oldalsáv nélkül. */
+@media (max-width: 767px) {
+  .admin-page.pe-admin {
+    font-size: 15px;
+  }
+
+  .pa-shell {
+    display: block;
+  }
+
+  .pa-sidebar {
+    display: none;
+  }
+
+  .pa-topbar {
+    height: calc(var(--pa-topbar) + env(safe-area-inset-top));
+    justify-content: space-between;
+    padding: env(safe-area-inset-top) 12px 0 16px;
+  }
+
+  .pa-topbar-title {
+    display: flex;
+  }
+
+  .pa-search-hint {
+    display: none;
+  }
+
+  .pa-topbar > .pa-live {
+    display: flex;
+    padding: 6px;
+  }
+
+  .pa-content {
+    padding: 16px 14px calc(var(--pa-bottombar) + env(safe-area-inset-bottom) + 28px);
+  }
+
+  .pa-bottombar {
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    background: color-mix(in srgb, var(--pa-surface) 90%, transparent);
+    border-top: 1px solid var(--pa-border);
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    left: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    z-index: 50;
+  }
+
+  .pa-tab {
+    align-items: center;
+    border-radius: 12px;
+    color: var(--pa-text-3);
+    display: grid;
+    font-size: 10.5px;
+    font-weight: 650;
+    gap: 3px;
+    justify-items: center;
+    min-height: 50px;
+    padding: 6px 2px;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .pa-tab svg {
+    height: 22px;
+    width: 22px;
+  }
+
+  .pa-tab[aria-current="page"] {
+    color: var(--pa-text);
+  }
+
+  .pa-tab[aria-current="page"] svg {
+    color: var(--pa-accent);
+  }
+
+  .pa-tab .pa-count {
+    font-size: 10px;
+    height: 17px;
+    left: calc(50% + 6px);
+    min-width: 17px;
+    padding: 0 4px;
+    position: absolute;
+    top: 2px;
+  }
+}
+
+/* ── Ikongomb (felső sáv) ─────────────────────────────────────────────── */
+
+.pa-icon-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--pa-text-2);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 40px;
+  justify-content: center;
+  position: relative;
+  transition: background 0.15s ease, color 0.15s ease;
+  width: 40px;
+}
+
+.pa-icon-btn:hover {
+  background: var(--pa-hover);
+  color: var(--pa-text);
+}
+
+.pa-icon-btn svg {
+  height: 20px;
+  width: 20px;
+}
+
+.pa-icon-btn .pa-badge-dot {
+  background: var(--pa-accent);
+  border: 2px solid var(--pa-bg);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  min-width: 18px;
+  padding: 0 4px;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+}
+
+/* ── Oldalfejléc ──────────────────────────────────────────────────────── */
+
+.pa-page-head {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.pa-page-head h1 {
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.pa-page-head p {
+  color: var(--pa-text-2);
+  font-size: 14px;
+  margin-top: 4px;
+  max-width: 62ch;
+}
+
+.pa-page-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pa-back {
+  align-items: center;
+  color: var(--pa-text-2);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 6px;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.pa-back:hover {
+  color: var(--pa-text);
+}
+
+.pa-back svg {
+  height: 16px;
+  width: 16px;
+}
+
+@media (max-width: 767px) {
+  .pa-page-head {
+    margin-bottom: 16px;
+  }
+
+  .pa-page-head.is-compact h1 {
+    display: none;
+  }
+
+  .pa-page-actions {
+    width: 100%;
+  }
+
+  .pa-page-actions > .pa-btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ── Gombok ───────────────────────────────────────────────────────────── */
+
+.pa-btn {
+  align-items: center;
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 10px;
+  color: var(--pa-text);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 620;
+  gap: 7px;
+  justify-content: center;
+  line-height: 1.2;
+  min-height: 38px;
+  padding: 8px 14px;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  white-space: nowrap;
+}
+
+.pa-btn:hover {
+  background: var(--pa-hover);
+  border-color: var(--pa-border-strong);
+}
+
+.pa-btn:active {
+  transform: translateY(1px);
+}
+
+.pa-btn:disabled,
+.pa-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pa-btn svg {
+  height: 16px;
+  width: 16px;
+}
+
+.pa-btn.is-primary {
+  background: var(--pa-accent);
+  border-color: transparent;
+  box-shadow: 0 6px 18px -8px rgba(255, 90, 36, 0.75);
+  color: var(--pa-accent-ink);
+}
+
+.pa-btn.is-primary:hover {
+  background: var(--pa-accent-hover);
+}
+
+.pa-btn.is-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--pa-text-2);
+}
+
+.pa-btn.is-ghost:hover {
+  background: var(--pa-hover);
+  color: var(--pa-text);
+}
+
+.pa-btn.is-danger {
+  background: var(--pa-danger-soft);
+  border-color: transparent;
+  color: var(--pa-danger-text);
+}
+
+.pa-btn.is-danger:hover {
+  background: var(--pa-danger);
+  color: #fff;
+}
+
+.pa-btn.is-sm {
+  font-size: 12.5px;
+  min-height: 32px;
+  padding: 6px 11px;
+}
+
+.pa-btn.is-block {
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .pa-btn {
+    min-height: 42px;
+  }
+
+  .pa-btn.is-sm {
+    min-height: 36px;
+  }
+}
+
+/* ── Mezők ────────────────────────────────────────────────────────────── */
+
+.pe-admin .pa-input,
+.pe-admin .pa-select,
+.pe-admin .pa-textarea {
+  background: var(--pa-surface-2);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 10px;
+  color: var(--pa-text);
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.pe-admin .pa-textarea {
+  line-height: 1.5;
+  min-height: 92px;
+  resize: vertical;
+}
+
+.pe-admin .pa-select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--pa-text-3) 50%), linear-gradient(135deg, var(--pa-text-3) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 52%, calc(100% - 12px) 52%;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+  padding-right: 34px;
+}
+
+.pe-admin .pa-input:focus,
+.pe-admin .pa-select:focus,
+.pe-admin .pa-textarea:focus {
+  border-color: var(--pa-accent);
+  box-shadow: var(--pa-focus);
+  outline: none;
+}
+
+.pe-admin .pa-input::placeholder,
+.pe-admin .pa-textarea::placeholder {
+  color: var(--pa-text-3);
+}
+
+@media (max-width: 767px) {
+  /* 16 px alatt az iOS rázoomol a mezőre. */
+  .pe-admin .pa-input,
+  .pe-admin .pa-select,
+  .pe-admin .pa-textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}
+
+.pa-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pa-field > span {
+  color: var(--pa-text-2);
+  font-size: 12.5px;
+  font-weight: 620;
+}
+
+.pa-field > small {
+  color: var(--pa-text-3);
+  font-size: 12px;
+}
+
+.pa-form-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pa-form-grid .is-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .pa-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pa-search {
+  position: relative;
+}
+
+.pa-search svg {
+  color: var(--pa-text-3);
+  height: 16px;
+  left: 12px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+}
+
+.pe-admin .pa-search .pa-input {
+  padding-left: 36px;
+}
+
+/* ── Kártyák ──────────────────────────────────────────────────────────── */
+
+.pa-card {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  box-shadow: var(--pa-shadow);
+  min-width: 0;
+}
+
+.pa-card-pad {
+  padding: clamp(16px, 2vw, 22px);
+}
+
+.pa-card-head {
+  align-items: center;
+  border-bottom: 1px solid var(--pa-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 14px clamp(16px, 2vw, 22px);
+}
+
+.pa-card-head h2,
+.pa-card-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pa-card-head p {
+  color: var(--pa-text-3);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.pa-card-body {
+  padding: clamp(16px, 2vw, 22px);
+}
+
+.pa-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.pa-stack.is-tight {
+  gap: 10px;
+}
+
+.pa-grid-2 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pa-split {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+@media (max-width: 980px) {
+  .pa-grid-2,
+  .pa-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pa-section-title {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin: 26px 0 10px;
+}
+
+.pa-section-title h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pa-text-2);
+}
+
+.pa-section-title:first-child {
+  margin-top: 0;
+}
+
+/* ── Statisztika-csempék ──────────────────────────────────────────────── */
+
+.pa-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 22px;
+}
+
+.pa-stat {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  box-shadow: var(--pa-shadow);
+  color: inherit;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+a.pa-stat:hover {
+  border-color: var(--pa-border-strong);
+}
+
+.pa-stat > span {
+  color: var(--pa-text-3);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.pa-stat > strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.pa-stat > small {
+  color: var(--pa-text-2);
+  font-size: 12.5px;
+}
+
+.pa-stat.is-hot > strong {
+  color: var(--pa-accent-text);
+}
+
+.pa-stat.is-good > strong {
+  color: var(--pa-success);
+}
+
+@media (max-width: 980px) {
+  .pa-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .pa-stats {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .pa-stat {
+    padding: 12px 13px;
+  }
+
+  .pa-stat > strong {
+    font-size: 20px;
+  }
+}
+
+/* ── Címkék ───────────────────────────────────────────────────────────── */
+
+.pa-badge {
+  align-items: center;
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border);
+  border-radius: 999px;
+  color: var(--pa-text-2);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 650;
+  gap: 5px;
+  line-height: 1;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.pa-badge i {
+  background: currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  height: 6px;
+  width: 6px;
+}
+
+.pa-badge.is-accent {
+  background: var(--pa-accent-soft);
+  border-color: transparent;
+  color: var(--pa-accent-text);
+}
+
+.pa-badge.is-ai {
+  background: var(--pa-ai-soft);
+  border-color: transparent;
+  color: var(--pa-ai-text);
+}
+
+.pa-badge.is-success {
+  background: var(--pa-success-soft);
+  border-color: transparent;
+  color: var(--pa-success);
+}
+
+.pa-badge.is-warn {
+  background: var(--pa-warn-soft);
+  border-color: transparent;
+  color: var(--pa-warn);
+}
+
+.pa-badge.is-danger {
+  background: var(--pa-danger-soft);
+  border-color: transparent;
+  color: var(--pa-danger-text);
+}
+
+/* ── Szegmentált fülek és szűrők ──────────────────────────────────────── */
+
+.pa-tabs {
+  border-bottom: 1px solid var(--pa-border);
+  display: flex;
+  gap: 2px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pa-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.pa-tabs a,
+.pa-tabs button {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--pa-text-2);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 620;
+  gap: 7px;
+  margin-bottom: -1px;
+  padding: 10px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pa-tabs a:hover,
+.pa-tabs button:hover {
+  color: var(--pa-text);
+}
+
+.pa-tabs [aria-current="page"],
+.pa-tabs [aria-selected="true"] {
+  border-bottom-color: var(--pa-accent);
+  color: var(--pa-text);
+}
+
+.pa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pa-chip {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 999px;
+  color: var(--pa-text-2);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 620;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+
+.pa-chip:hover {
+  color: var(--pa-text);
+}
+
+.pa-chip[aria-pressed="true"] {
+  background: var(--pa-text);
+  border-color: var(--pa-text);
+  color: var(--pa-bg);
+}
+
+.pa-chip .pa-count {
+  height: 18px;
+  min-width: 18px;
+}
+
+.pa-chip[aria-pressed="true"] .pa-count {
+  background: color-mix(in srgb, var(--pa-bg) 20%, transparent);
+  border-color: transparent;
+  color: var(--pa-bg);
+}
+
+@media (max-width: 767px) {
+  .pa-chips.is-scroll {
+    flex-wrap: nowrap;
+    margin: 0 -14px;
+    overflow-x: auto;
+    padding: 0 14px;
+    scrollbar-width: none;
+  }
+
+  .pa-chips.is-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pa-chip {
+    min-height: 36px;
+  }
+}
+
+.pa-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pa-toolbar .pa-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+@media (max-width: 767px) {
+  .pa-toolbar .pa-search {
+    max-width: none;
+  }
+}
+
+/* ── Listák ───────────────────────────────────────────────────────────── */
+
+.pa-list {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  box-shadow: var(--pa-shadow);
+  display: grid;
+  overflow: hidden;
+}
+
+.pa-row {
+  align-items: center;
+  border-bottom: 1px solid var(--pa-border);
+  color: inherit;
+  display: grid;
+  gap: 4px 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  padding: 14px 18px;
+  position: relative;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.pa-row:last-child {
+  border-bottom: 0;
+}
+
+a.pa-row:hover,
+button.pa-row:hover {
+  background: var(--pa-hover);
+}
+
+button.pa-row {
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.pa-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pa-row-top {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.pa-row-title {
+  font-size: 14.5px;
+  font-weight: 650;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pa-row-sub {
+  color: var(--pa-text-2);
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.pa-row-meta {
+  color: var(--pa-text-3);
+  font-size: 12px;
+}
+
+.pa-row-side {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.pa-row.is-unread .pa-row-title::before {
+  background: var(--pa-accent);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 8px;
+  margin-right: 8px;
+  vertical-align: 2px;
+  width: 8px;
+}
+
+@media (max-width: 767px) {
+  .pa-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .pa-row-side {
+    justify-content: flex-start;
+  }
+}
+
+/* Teendő-sor: bal oldali fontossági csík. */
+.pa-task {
+  align-items: start;
+  border-bottom: 1px solid var(--pa-border);
+  display: grid;
+  gap: 10px 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px 18px 16px 22px;
+  position: relative;
+}
+
+.pa-task:last-child {
+  border-bottom: 0;
+}
+
+.pa-task::before {
+  background: var(--pa-border-strong);
+  border-radius: 3px;
+  bottom: 14px;
+  content: "";
+  left: 9px;
+  position: absolute;
+  top: 14px;
+  width: 3px;
+}
+
+.pa-task.p1::before {
+  background: var(--pa-danger);
+}
+
+.pa-task.p2::before {
+  background: var(--pa-accent);
+}
+
+.pa-task.p3::before {
+  background: var(--pa-ai);
+}
+
+.pa-task-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pa-task-body strong {
+  font-size: 14.5px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.pa-task-body p {
+  color: var(--pa-text-2);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.pa-task-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .pa-task {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px 14px 14px 20px;
+  }
+
+  .pa-task-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ── Üres állapot és töltés ───────────────────────────────────────────── */
+
+.pa-empty {
+  align-items: center;
+  color: var(--pa-text-2);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 44px 20px;
+  text-align: center;
+}
+
+.pa-empty-icon {
+  align-items: center;
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border);
+  border-radius: 14px;
+  color: var(--pa-text-3);
+  display: inline-flex;
+  height: 46px;
+  justify-content: center;
+  margin-bottom: 4px;
+  width: 46px;
+}
+
+.pa-empty-icon svg {
+  height: 22px;
+  width: 22px;
+}
+
+.pa-empty strong {
+  color: var(--pa-text);
+  font-size: 15px;
+}
+
+.pa-empty p {
+  font-size: 13.5px;
+  max-width: 46ch;
+}
+
+.pa-skel {
+  animation: pa-shimmer 1.4s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--pa-raised) 0%, var(--pa-hover) 50%, var(--pa-raised) 100%) 0 0 / 200% 100%;
+  border-radius: 8px;
+}
+
+@keyframes pa-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-skel {
+    animation: none;
+  }
+}
+
+.pa-banner {
+  align-items: center;
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+}
+
+.pa-banner > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pa-banner strong {
+  font-size: 14px;
+}
+
+.pa-banner p {
+  color: var(--pa-text-2);
+  font-size: 13px;
+}
+
+.pa-banner.is-danger {
+  background: var(--pa-danger-soft);
+  border-color: color-mix(in srgb, var(--pa-danger) 40%, transparent);
+}
+
+.pa-banner.is-accent {
+  background: var(--pa-accent-soft);
+  border-color: color-mix(in srgb, var(--pa-accent) 35%, transparent);
+}
+
+.pa-banner.is-ai {
+  background: var(--pa-ai-soft);
+  border-color: color-mix(in srgb, var(--pa-ai) 35%, transparent);
+}
+
+.pa-banner.is-warn {
+  background: var(--pa-warn-soft);
+  border-color: color-mix(in srgb, var(--pa-warn) 35%, transparent);
+}
+
+/* ── Kulcs–érték rács ─────────────────────────────────────────────────── */
+
+.pa-kv {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.pa-kv > div {
+  border-bottom: 1px solid var(--pa-border);
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px 2px;
+}
+
+.pa-kv dt,
+.pa-kv > div > span {
+  color: var(--pa-text-3);
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.pa-kv dd,
+.pa-kv > div > strong {
+  font-size: 14px;
+  font-weight: 560;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.pa-kv.is-wide {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* ── Folyamatsáv (projekt fázisai) ────────────────────────────────────── */
+
+.pa-flow {
+  display: grid;
+  gap: 4px;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.pa-flow > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pa-flow > div > i {
+  background: var(--pa-raised);
+  border-radius: 3px;
+  display: block;
+  height: 5px;
+}
+
+.pa-flow > div.is-done > i {
+  background: var(--pa-ai);
+}
+
+.pa-flow > div.is-now > i {
+  background: var(--pa-accent);
+}
+
+.pa-flow > div > span {
+  color: var(--pa-text-3);
+  font-size: 11px;
+  font-weight: 620;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-flow > div.is-now > span {
+  color: var(--pa-text);
+}
+
+@media (max-width: 767px) {
+  .pa-flow > div > span {
+    display: none;
+  }
+
+  .pa-flow > div.is-now > span {
+    display: block;
+    overflow: visible;
+  }
+}
+
+/* ── Következő lépés kártya ───────────────────────────────────────────── */
+
+.pa-next {
+  background: linear-gradient(135deg, var(--pa-accent-soft), transparent 70%), var(--pa-surface);
+  border: 1px solid color-mix(in srgb, var(--pa-accent) 30%, var(--pa-border));
+  border-radius: var(--pa-radius);
+  display: grid;
+  gap: 12px;
+  padding: clamp(16px, 2vw, 22px);
+}
+
+.pa-next.is-waiting {
+  background: var(--pa-surface);
+  border-color: var(--pa-border);
+}
+
+.pa-next h2 {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.pa-next p {
+  color: var(--pa-text-2);
+  font-size: 14px;
+  max-width: 70ch;
+}
+
+.pa-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Ügyfél-fejléc ────────────────────────────────────────────────────── */
+
+.pa-client-head {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.pa-client-head h1 {
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.pa-client-head .pa-row-top {
+  margin-top: 8px;
+}
+
+.pa-client-meta {
+  color: var(--pa-text-2);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  gap: 4px 14px;
+  margin-top: 8px;
+}
+
+.pa-client-meta a {
+  color: var(--pa-ai-text);
+  text-decoration: none;
+}
+
+.pa-client-meta a:hover {
+  text-decoration: underline;
+}
+
+/* ── Beszélgetések ────────────────────────────────────────────────────── */
+
+.pa-inbox {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  box-shadow: var(--pa-shadow);
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  height: calc(100dvh - var(--pa-topbar) - 150px);
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.pa-inbox-list {
+  border-right: 1px solid var(--pa-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pa-inbox-list-head {
+  border-bottom: 1px solid var(--pa-border);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.pa-inbox-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pa-conv {
+  border-bottom: 1px solid var(--pa-border);
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.pa-conv:hover {
+  background: var(--pa-hover);
+}
+
+.pa-conv[aria-current="page"] {
+  background: var(--pa-raised);
+  box-shadow: inset 3px 0 0 var(--pa-accent);
+}
+
+.pa-conv-top {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.pa-conv-top strong {
+  font-size: 14px;
+  font-weight: 650;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-conv-top time {
+  color: var(--pa-text-3);
+  flex: 0 0 auto;
+  font-size: 11.5px;
+}
+
+.pa-conv p {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--pa-text-2);
+  display: -webkit-box;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.pa-conv.is-unread .pa-conv-top strong::before {
+  background: var(--pa-accent);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 8px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  width: 8px;
+}
+
+.pa-thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pa-thread-head {
+  align-items: center;
+  border-bottom: 1px solid var(--pa-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  justify-content: space-between;
+  padding: 12px 18px;
+}
+
+.pa-thread-head h2 {
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.pa-thread-head p {
+  color: var(--pa-text-2);
+  font-size: 13px;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.pa-thread-head p a {
+  color: var(--pa-ai-text);
+}
+
+.pa-thread-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px;
+}
+
+.pa-msg {
+  display: grid;
+  gap: 4px;
+  max-width: min(78%, 620px);
+}
+
+.pa-msg-meta {
+  color: var(--pa-text-3);
+  display: flex;
+  font-size: 11.5px;
+  gap: 8px;
+}
+
+.pa-msg-meta b {
+  color: var(--pa-text-2);
+  font-weight: 650;
+}
+
+.pa-msg-bubble {
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border);
+  border-radius: 14px 14px 14px 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  padding: 10px 13px;
+  white-space: pre-wrap;
+}
+
+.pa-msg.is-admin {
+  align-self: flex-end;
+}
+
+.pa-msg.is-admin .pa-msg-meta {
+  justify-content: flex-end;
+}
+
+.pa-msg.is-admin .pa-msg-bubble {
+  background: var(--pa-accent);
+  border-color: transparent;
+  border-radius: 14px 14px 4px 14px;
+  color: var(--pa-accent-ink);
+}
+
+.pa-msg.is-bot .pa-msg-bubble {
+  background: var(--pa-ai-soft);
+  border-color: color-mix(in srgb, var(--pa-ai) 30%, transparent);
+}
+
+.pa-composer {
+  align-items: flex-end;
+  border-top: 1px solid var(--pa-border);
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.pe-admin .pa-composer .pa-textarea {
+  max-height: 180px;
+  min-height: 44px;
+  resize: none;
+}
+
+.pa-composer-note {
+  color: var(--pa-text-3);
+  font-size: 12px;
+  padding: 0 16px 10px;
+}
+
+@media (max-width: 1099px) {
+  .pa-inbox {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .pa-inbox {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .pa-inbox-list {
+    border: 0;
+  }
+
+  .pa-inbox.has-thread .pa-inbox-list,
+  .pa-inbox:not(.has-thread) .pa-thread {
+    display: none;
+  }
+
+  .pa-inbox-list-head {
+    border: 0;
+    padding: 0 0 12px;
+  }
+
+  .pa-inbox-scroll {
+    background: var(--pa-surface);
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius);
+    overflow: hidden;
+  }
+
+  .pa-thread {
+    background: var(--pa-surface);
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius);
+    min-height: calc(100dvh - var(--pa-topbar) - var(--pa-bottombar) - 120px);
+  }
+
+  .pa-thread-body {
+    max-height: none;
+    padding: 14px;
+  }
+
+  .pa-msg {
+    max-width: 88%;
+  }
+
+  .pa-composer {
+    background: var(--pa-surface);
+    border-radius: 0 0 var(--pa-radius) var(--pa-radius);
+    bottom: calc(var(--pa-bottombar) + env(safe-area-inset-bottom));
+    position: sticky;
+  }
+}
+
+/* ── Értesítések ──────────────────────────────────────────────────────── */
+
+.pa-popover {
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 16px;
+  box-shadow: var(--pa-shadow-pop);
+  display: flex;
+  flex-direction: column;
+  max-height: min(560px, calc(100dvh - 90px));
+  overflow: hidden;
+  position: fixed;
+  right: clamp(12px, 3vw, 32px);
+  top: calc(var(--pa-topbar) + 6px);
+  width: min(400px, calc(100vw - 24px));
+  z-index: 80;
+}
+
+.pa-popover-head {
+  align-items: center;
+  border-bottom: 1px solid var(--pa-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.pa-popover-head strong {
+  font-size: 14px;
+}
+
+.pa-popover-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pa-notif {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--pa-border);
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 3px;
+  padding: 12px 14px 12px 26px;
+  position: relative;
+  text-align: left;
+  width: 100%;
+}
+
+.pa-notif:hover {
+  background: var(--pa-hover);
+}
+
+.pa-notif strong {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.pa-notif p {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: var(--pa-text-2);
+  display: -webkit-box;
+  font-size: 12.5px;
+  overflow: hidden;
+  white-space: pre-line;
+}
+
+.pa-notif time {
+  color: var(--pa-text-3);
+  font-size: 11.5px;
+}
+
+.pa-notif.is-unread::before {
+  background: var(--pa-accent);
+  border-radius: 50%;
+  content: "";
+  height: 8px;
+  left: 11px;
+  position: absolute;
+  top: 17px;
+  width: 8px;
+}
+
+.pa-scrim {
+  background: rgba(0, 0, 0, 0.35);
+  inset: 0;
+  position: fixed;
+  z-index: 70;
+}
+
+@media (min-width: 768px) {
+  .pa-scrim {
+    background: transparent;
+  }
+}
+
+@media (max-width: 767px) {
+  .pa-popover {
+    border-radius: 18px 18px 0 0;
+    bottom: 0;
+    left: 0;
+    max-height: 78dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    right: 0;
+    top: auto;
+    width: 100%;
+  }
+}
+
+/* ── Menü (telefon felső sáv) ─────────────────────────────────────────── */
+
+.pa-menu {
+  display: grid;
+  padding: 6px;
+}
+
+.pa-menu a,
+.pa-menu button {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  color: var(--pa-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 560;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+.pa-menu a:hover,
+.pa-menu button:hover {
+  background: var(--pa-hover);
+}
+
+.pa-menu svg {
+  color: var(--pa-text-3);
+  height: 20px;
+  width: 20px;
+}
+
+/* ── Visszajelzések a keretben ────────────────────────────────────────── */
+
+.pe-admin .toast-stack {
+  z-index: 120;
+}
+
+@media (max-width: 767px) {
+  .pe-admin .toast-stack {
+    bottom: calc(var(--pa-bottombar) + env(safe-area-inset-bottom) + 12px);
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+}
+
+.pe-admin .offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+/* ── A régi panelek az új keretben ────────────────────────────────────── */
+
+.pe-admin .admin-btn-primary {
+  background: var(--pa-accent);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-shadow: none;
+  color: var(--pa-accent-ink);
+  font-size: 13px;
+  font-weight: 650;
+  min-height: 36px;
+}
+
+.pe-admin .admin-btn-primary:hover {
+  background: var(--pa-accent-hover);
+  transform: none;
+}
+
+.pe-admin .admin-btn-secondary {
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 10px;
+  color: var(--pa-text);
+  font-size: 13px;
+  font-weight: 620;
+  min-height: 36px;
+}
+
+.pe-admin .admin-btn-secondary:hover {
+  background: var(--pa-hover);
+}
+
+.pe-admin .pa-embed > section,
+.pe-admin .pa-embed > div > section {
+  border-radius: var(--pa-radius);
+}
+
+.pe-admin .pa-embed .ai-prompt-panel,
+.pe-admin .pa-embed .website-purchase-admin-card,
+.pe-admin .pa-embed .billingo-issues {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  box-shadow: var(--pa-shadow);
+}
+
+.pe-admin .status-pill {
+  border-radius: 999px;
+}
+
+.pe-admin .confirm-card {
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 18px;
+  box-shadow: var(--pa-shadow-pop);
+  color: var(--pa-text);
+}
+
+.pe-admin .confirm-card p {
+  color: var(--pa-text-2);
+}
+
+/* ── Apróságok ────────────────────────────────────────────────────────── */
+
+.pa-muted {
+  color: var(--pa-text-2);
+}
+
+.pa-faint {
+  color: var(--pa-text-3);
+  font-size: 12.5px;
+}
+
+.pa-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+}
+
+.pa-divider {
+  border: 0;
+  border-top: 1px solid var(--pa-border);
+  margin: 4px 0;
+}
+
+.pa-inline {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pa-link {
+  background: none;
+  border: 0;
+  color: var(--pa-ai-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 620;
+  padding: 0;
+  text-decoration: none;
+}
+
+.pa-link:hover {
+  text-decoration: underline;
+}
+
+.pa-palette {
+  display: flex;
+  gap: 6px;
+}
+
+.pa-palette span {
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 8px;
+  display: inline-block;
+  height: 30px;
+  width: 30px;
+}
+
+.pa-check {
+  align-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 4px;
+}
+
+.pa-check input {
+  accent-color: var(--pa-accent);
+  height: 18px;
+  width: 18px;
+}
+
+.pa-check.is-done span {
+  color: var(--pa-text-3);
+  text-decoration: line-through;
+}
+
+details.pa-details > summary {
+  color: var(--pa-text-2);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 620;
+  list-style: none;
+  padding: 4px 0;
+}
+
+details.pa-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.pa-details > summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+
+details.pa-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.pa-table-scroll {
+  overflow-x: auto;
+}
+
+.pa-stars {
+  color: var(--pa-warn);
+  letter-spacing: 2px;
+}
+
+/* Csak telefonon / csak gépen látszó elemek. */
+.pa-only-mobile {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .pa-only-mobile {
+    display: inline-flex !important;
+  }
+
+  .pa-row-meta .pa-only-mobile {
+    display: inline !important;
+  }
+
+  .pa-hide-mobile {
+    display: none !important;
+  }
+}
+
+.pa-row-side svg {
+  height: 16px;
+  width: 16px;
+}
+
+/* Az ügyfélkapuval közös változáskérés-szál (ChangeThread) a konzol színeiben. */
+.pe-admin .change-thread-toggle {
+  background: var(--pa-ai-soft);
+  border-color: transparent;
+  color: var(--pa-ai-text);
+  font-weight: 650;
+}
+
+.pe-admin .change-thread-toggle:hover {
+  transform: none;
+}
+
+.pe-admin .change-thread-body {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--pa-surface-2);
+  border: 1px solid var(--pa-border);
+  border-radius: 12px;
+}
+
+.pe-admin .change-thread-empty {
+  color: var(--pa-text-3);
+}
+
+.pe-admin .change-thread-composer {
+  border-top-color: var(--pa-border);
+}
+
+.pe-admin .change-thread-composer textarea {
+  background: var(--pa-bg);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 10px;
+  color: var(--pa-text);
+  font-size: 14px;
+}
+
+.pe-admin .change-thread-composer .button {
+  border-radius: 10px;
+}
+
+.pe-admin .change-message {
+  background: var(--pa-raised);
+  border: 1px solid var(--pa-border);
+  color: var(--pa-text);
+}
+
+.pe-admin .change-message.mine {
+  background: var(--pa-accent-soft);
+  border-color: transparent;
+}
+
+@media (max-width: 767px) {
+  .pe-admin .change-thread-composer textarea {
+    font-size: 16px;
+  }
+}
+
+.pe-admin .change-message span {
+  color: var(--pa-text-3);
+}
+
+/* A beágyazott (régi) panelek mezői a konzol mezőstílusában. */
+.pe-admin .pa-embed input:not([type="checkbox"]):not([type="radio"]),
+.pe-admin .pa-embed select,
+.pe-admin .pa-embed textarea {
+  background-color: var(--pa-surface-2);
+  border: 1px solid var(--pa-border-strong);
+  border-radius: 10px;
+  color: var(--pa-text);
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.pe-admin .pa-embed textarea {
+  line-height: 1.5;
+}
+
+.pe-admin .pa-embed input:focus,
+.pe-admin .pa-embed select:focus,
+.pe-admin .pa-embed textarea:focus {
+  border-color: var(--pa-accent);
+  box-shadow: var(--pa-focus);
+  outline: none;
+}
+
+.pe-admin .pa-embed input::placeholder,
+.pe-admin .pa-embed textarea::placeholder {
+  color: var(--pa-text-3);
+}
+
+.pe-admin .pa-embed input[type="checkbox"],
+.pe-admin .pa-embed input[type="radio"] {
+  accent-color: var(--pa-accent);
+}
+
+.pe-admin .admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pe-admin .admin-field > span {
+  color: var(--pa-text-2);
+  font-size: 12.5px;
+  font-weight: 620;
+}
+
+@media (max-width: 767px) {
+  .pe-admin .pa-embed input:not([type="checkbox"]):not([type="radio"]),
+  .pe-admin .pa-embed select,
+  .pe-admin .pa-embed textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}

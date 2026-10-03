@@ -47,7 +47,7 @@ export function AdminLogin() {
       return;
     }
 
-    hardNavigate("/admin/dashboard");
+    hardNavigate("/admin/ma");
   }
 
   return (
