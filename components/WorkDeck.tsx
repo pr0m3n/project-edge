@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { DeckImage } from "@/components/DeckImage";
 import { TransitionLink } from "@/components/TransitionLink";
 import { WORKS } from "@/lib/works";
 
@@ -24,6 +24,10 @@ import { WORKS } from "@/lib/works";
  * sötéten álltak, aztán a kép egy pillanat alatt „beteleportált". Most az
  * oldal betöltésekor indulnak, de alacsony prioritással, hogy a heró képét
  * ne előzzék meg.
+ *
+ * Gyors görgetésnél a szakasz így is megelőzheti a képeket, ezért egy
+ * `DeckImage` kezeli őket: amíg úton vannak, a kártyán töltés-csillanás fut,
+ * megérkezéskor pedig beúsznak, lapról lapra kis késleltetéssel.
  */
 
 export function WorkDeck() {
@@ -48,7 +52,7 @@ export function WorkDeck() {
       <TransitionLink aria-label="Munkák és projektbemutatók megnyitása" className="work-deck-stack" href="/munkak">
         {WORKS.map((work, index) => (
           <span className="work-deck-card" key={work.src} style={{ "--i": index } as React.CSSProperties}>
-            <Image
+            <DeckImage
               alt={`${work.name} — ${work.goal}`}
               fetchPriority="low"
               height={work.height}

@@ -18268,7 +18268,15 @@ details.admin-collapse summary:hover {
             rotateY(-21deg) rotateX(5deg) rotateZ(-1.2deg);
   z-index:calc(20 - var(--i));
   transition:transform .55s cubic-bezier(.2,.9,.3,1),box-shadow .4s ease,border-color .3s ease}
-.work-deck-card img{display:block;width:100%;height:auto}
+.work-deck-card img{display:block;width:100%;height:auto;
+  transition:opacity .7s ease calc(var(--i) * 45ms),transform 1s cubic-bezier(.2,.9,.3,1) calc(var(--i) * 45ms)}
+/* Úton lévő kép (DeckImage): átlátszó, és beúszik, amint megérkezik. */
+.work-deck-card img[data-fade="wait"]{opacity:0;transform:scale(1.04)}
+/* Addig egy csillanás fut a kártyán, hogy látszódjon: tölt, nem üres. */
+.work-deck-card:has(img[data-fade="wait"])::before{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.07) 48%,transparent 66%) 0 0/250% 100%;
+  animation:work-deck-shimmer 1.4s linear infinite}
+@keyframes work-deck-shimmer{from{background-position:100% 0}to{background-position:-150% 0}}
 .work-deck-card::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(196deg,rgba(255,255,255,.14),transparent 42%),
              linear-gradient(0deg,rgba(8,11,15,.86) 0%,rgba(8,11,15,.15) 34%,transparent 62%)}
@@ -18303,7 +18311,9 @@ details.admin-collapse summary:hover {
 }
 @media (max-width:620px){
   /* Érintőn nincs hover: a pakli eleve nyitottabb, hogy minden címke látszódjon. */
-  .work-deck-stack{height:clamp(280px,74vw,380px)}
+  /* A lapok lépcsője felfelé is kinyúlik a dobozból; tíz lapnál már a
+     gombra csúszott. A felső margó ennyit ad vissza. */
+  .work-deck-stack{height:clamp(280px,74vw,380px);margin-top:clamp(36px,12vw,56px)}
   .work-deck-card{width:86%;
     transform:translate3d(calc(var(--i) * 5.4%),calc(var(--i) * -5.2%),0) rotateY(-11deg) rotateX(2deg)}
   .work-deck-label b{font-size:12.5px}
@@ -18312,6 +18322,9 @@ details.admin-collapse summary:hover {
 }
 @media (prefers-reduced-motion:reduce){
   .work-deck-card{transition:none}
+  .work-deck-card img{transition:opacity .3s ease}
+  .work-deck-card img[data-fade="wait"]{transform:none}
+  .work-deck-card:has(img[data-fade="wait"])::before{animation:none}
 }
 
 /* ════════════════════════════════════════════════════════════════════
