@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Jost } from "next/font/google";
+import { Bodoni_Moda, Instrument_Sans } from "next/font/google";
 import { AlkonySite } from "./AlkonySite";
 import "./alkony.css";
 
-/* Didone a címekhez és a márkanévhez (a divatlapok és ékszerházak betűje),
-   geometrikus grotesk minden máshoz. `latin-ext` nélkül az ő és az ű
+/* Didone a nagy címekhez és a márkanévhez (a divatlapok és ékszerházak
+   betűje) — de CSAK nagy méretben: kicsiben a hajszálvonalai szálkásak.
+   Minden más egy erős, nagy x-magasságú groteszk; a korábbi Jost kis
+   méretben vékonynak és aprónak hatott. `latin-ext` nélkül az ő és az ű
    helyettesítő betűvel jelenne meg. */
 const display = Bodoni_Moda({
   axes: ["opsz"],
@@ -14,7 +16,7 @@ const display = Bodoni_Moda({
   variable: "--ak-display"
 });
 
-const sans = Jost({ display: "swap", subsets: ["latin-ext"], variable: "--ak-sans" });
+const sans = Instrument_Sans({ display: "swap", subsets: ["latin-ext"], variable: "--ak-sans" });
 
 export const metadata: Metadata = {
   title: "Alkony — mintaprojekt | ProjectEdge",

@@ -38,11 +38,37 @@ function stoneAt(mix: number) {
 
 const kelvinToMix = (kelvin: number) => (6500 - kelvin) / 3800;
 
+/* A skála címkéi a valódi Kelvin-helyükön ülnek a csúszka alatt. A lámpa
+   azért 3600 K (és nem a szokásos 3000), mert különben telefonon rácsúszna a
+   „Gyertya" feliratra. */
 const LIGHT_PRESETS = [
   { kelvin: 2700, label: "Gyertya" },
-  { kelvin: 3300, label: "Lámpa" },
+  { kelvin: 3600, label: "Lámpa" },
   { kelvin: 4500, label: "Alkony" },
   { kelvin: 6500, label: "Nappal" }
+];
+
+const PROMISES: { icon: React.ReactNode; title: string; text: string }[] = [
+  {
+    icon: <path d="M2.5 6.5h11v9h-11zM13.5 9.5h4l2.5 3v3h-6.5M6 18.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4ZM16.5 18.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z" />,
+    text: "1–2 munkanap, nyomon követhető futárral",
+    title: "Ingyenes, biztosított szállítás"
+  },
+  {
+    icon: <path d="M4 9h11a5 5 0 0 1 0 10H8M4 9l4-4M4 9l4 4" />,
+    text: "Kérdés nélkül; a futárt is mi rendeljük",
+    title: "30 napos visszaküldés"
+  },
+  {
+    icon: <path d="M12 3.5 14 5l2.5-.2.8 2.4 2.2 1.2-.6 2.4.9 2.4-2.1 1.4-.6 2.5-2.6-.1-2 1.6-2-1.6-2.6.1-.6-2.5-2.1-1.4.9-2.4-.6-2.4 2.2-1.2.8-2.4L10 5ZM9 12l2 2 4-4" />,
+    text: "A kövekről és a fémről, 2 év garanciával",
+    title: "Tanúsítvány"
+  },
+  {
+    icon: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.4 2.4M15.3 15.3l2.4 2.4M17.7 6.3l-2.4 2.4M8.7 15.3l-2.4 2.4" />,
+    text: "Évente egyszer, a foglalat átnézésével",
+    title: "Ingyenes tisztítás"
+  }
 ];
 
 const SPECS: [string, string][] = [
@@ -319,10 +345,17 @@ export function AlkonySite() {
                 type="range"
                 value={kelvin}
               />
-              <div className="ak-kelvin-presets">
+              <div className="ak-kelvin-scale">
                 {LIGHT_PRESETS.map((preset) => (
-                  <button aria-pressed={kelvin === preset.kelvin} key={preset.kelvin} onClick={() => setKelvin(preset.kelvin)} type="button">
+                  <button
+                    aria-pressed={kelvin === preset.kelvin}
+                    key={preset.kelvin}
+                    onClick={() => setKelvin(preset.kelvin)}
+                    style={{ "--at": `${((preset.kelvin - 2700) / 3800) * 100}%` } as React.CSSProperties}
+                    type="button"
+                  >
                     {preset.label}
+                    <small>{`${grouped(preset.kelvin)}\u00a0K`}</small>
                   </button>
                 ))}
               </div>
@@ -376,74 +409,90 @@ export function AlkonySite() {
           </dl>
         </section>
 
-        {/* ── Rendelés ─────────────────────────────────────────────────── */}
+        {/* ── Rendelés: termékadatlap, nem lebegő kártya ─────────────── */}
         <section className="ak-order" id="rendeles" aria-labelledby="ak-order-title">
-          <div className="ak-order-copy">
-            <p className="ak-eyebrow">Rendelés</p>
-            <h2 id="ak-order-title">Díszdobozban, holnapra.</h2>
+          <div className="ak-order-head">
+            <div>
+              <p className="ak-eyebrow">Rendelés</p>
+              <h2 id="ak-order-title">Díszdobozban, holnapra.</h2>
+            </div>
             <p>
               Ha délután kettőig megrendeled, másnap biztosított futár viszi. Budapesten személyesen is
               átveheted a bemutatótermünkben, előre egyeztetett időpontban.
             </p>
-            <ul className="ak-promises">
-              <li>Ingyenes, biztosított kiszállítás</li>
-              <li>30 napos visszaküldés, kérdés nélkül</li>
-              <li>Tanúsítvány a kövekről, 2 év garancia</li>
-              <li>Évente ingyenes tisztítás és foglalat-ellenőrzés</li>
-            </ul>
           </div>
 
-          <div className="ak-order-panel">
-            <div className="ak-order-product">
-              <span className="ak-order-thumb">
-                <Image alt="" fill sizes="88px" src="/demo/alkony/elolrol.webp" />
-              </span>
-              <div>
-                <strong>Esthajnal medál</strong>
-                <small>14 kt fehérarany · alexandrit · 44 gyémánt</small>
+          <div className="ak-sheet">
+            <figure className="ak-sheet-photo">
+              <Image alt="Az Esthajnal medál elölről" fill sizes="(max-width: 900px) 92vw, 46vw" src="/demo/alkony/elolrol.webp" />
+              <figcaption>Esthajnal · 14 kt fehérarany</figcaption>
+            </figure>
+
+            <div className="ak-sheet-buy">
+              <div className="ak-sheet-title">
+                <h3>Esthajnal medál</h3>
+                <p>Fehérarany, alexandrit, 44 gyémánt</p>
               </div>
-              <b>{forint(PRICE)}</b>
+              <p className="ak-sheet-price">
+                {forint(PRICE)}
+                <small>ÁFA-val, ingyenes szállítással</small>
+              </p>
+
+              <fieldset className="ak-chain">
+                <legend>Lánchossz</legend>
+                <div>
+                  {CHAINS.map((length) => (
+                    <label key={length}>
+                      <input checked={chain === length} name="chain" onChange={() => setChain(length)} type="radio" value={length} />
+                      <span>
+                        {length} cm
+                        <small>{length === 40 ? "nyakhoz simul" : length === 45 ? "kulcscsont alatt" : "dekoltázsban"}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <label className="ak-card-toggle">
+                <input checked={cardOn} onChange={(event) => setCardOn(event.target.checked)} type="checkbox" />
+                <span>
+                  Kézzel írt kártya a dobozba <small>ingyenes</small>
+                </span>
+              </label>
+              {cardOn && (
+                <div className="ak-card-field">
+                  <textarea
+                    aria-label="A kártya szövege"
+                    maxLength={120}
+                    onChange={(event) => setCard(event.target.value)}
+                    placeholder="Pl. Boldog évfordulót! Minden estére."
+                    rows={3}
+                    value={card}
+                  />
+                  <small>{card.length}/120</small>
+                </div>
+              )}
+
+              <button className="ak-button wide" onClick={addToCart} type="button">
+                Kosárba · {forint(PRICE)}
+              </button>
+              <p className="ak-sheet-note">Bankkártya, Apple Pay vagy átutalás · biztonságos fizetés</p>
             </div>
-
-            <fieldset className="ak-chain">
-              <legend>Lánchossz</legend>
-              <div>
-                {CHAINS.map((length) => (
-                  <label key={length}>
-                    <input checked={chain === length} name="chain" onChange={() => setChain(length)} type="radio" value={length} />
-                    <span>
-                      {length} cm
-                      <small>{length === 40 ? "nyakhoz simul" : length === 45 ? "kulcscsont alatt" : "dekoltázsban"}</small>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <label className="ak-card-toggle">
-              <input checked={cardOn} onChange={(event) => setCardOn(event.target.checked)} type="checkbox" />
-              <span>
-                Kézzel írt kártya a dobozba <small>ingyenes</small>
-              </span>
-            </label>
-            {cardOn && (
-              <div className="ak-card-field">
-                <textarea
-                  aria-label="A kártya szövege"
-                  maxLength={120}
-                  onChange={(event) => setCard(event.target.value)}
-                  placeholder="Pl. Boldog évfordulót! Minden estére."
-                  rows={3}
-                  value={card}
-                />
-                <small>{card.length}/120</small>
-              </div>
-            )}
-
-            <button className="ak-button wide" onClick={addToCart} type="button">
-              Kosárba · {forint(PRICE)}
-            </button>
           </div>
+
+          <ul className="ak-promises">
+            {PROMISES.map((promise) => (
+              <li key={promise.title}>
+                <svg aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.4" viewBox="0 0 22 22">
+                  {promise.icon}
+                </svg>
+                <span>
+                  <strong>{promise.title}</strong>
+                  {promise.text}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* ── Kérdések ─────────────────────────────────────────────────── */}
