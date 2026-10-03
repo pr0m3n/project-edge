@@ -127,6 +127,19 @@ export const WORKS: Work[] = [
     quote: { text: "Nagyon gyors szolgáltatás, szép eredmény.", name: "Ferenc", role: "tulajdonos" }
   },
   {
+    id: "alkony",
+    name: "Alkony",
+    goal: "Prémium termékoldal",
+    industry: "Ékszer",
+    copy:
+      "Valós idejű 3D medál szikrázó gyémántokkal — egy kapcsolóra az alexandrit nappali fényben zöld, gyertyafényben lila.",
+    href: "/demo/alkony",
+    external: false,
+    src: "/work/demos/alkony-medal.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
