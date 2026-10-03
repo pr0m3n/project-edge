@@ -3,6 +3,7 @@ import { createServerSupabaseAdminClient } from "@/lib/supabase/server";
 import { checkDurableRateLimit, rateLimitResponse, readJsonBody } from "@/lib/api-guard";
 import { sendProjectEdgeEmail } from "@/lib/projectedge-email";
 import { supportResumePath } from "@/lib/support-link";
+import { ticketSource } from "@/lib/support-source";
 
 type TicketPayload = {
   email?: string;
@@ -15,20 +16,6 @@ type TicketPayload = {
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-/**
- * Honnan indult a beszélgetés. A `source` az adminban listaszűrő és címke,
- * ezért NEM vesszük át nyersen a klienstől: egy szabadszöveges érték oda
- * bármit be tudna írni a listába. Csak az itt felsorolt értékek élnek, minden
- * más az alapértelmezettre esik vissza.
- */
-const TICKET_SOURCES = ["projectedge.hu", "gyorssav"] as const;
-const DEFAULT_TICKET_SOURCE = TICKET_SOURCES[0];
-
-function ticketSource(value: unknown) {
-  const candidate = clean(value);
-  return (TICKET_SOURCES as readonly string[]).includes(candidate) ? candidate : DEFAULT_TICKET_SOURCE;
 }
 
 export async function POST(request: Request) {

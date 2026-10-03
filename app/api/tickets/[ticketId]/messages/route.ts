@@ -55,6 +55,13 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Ticket is closed." }, { status: 409 });
   }
 
+  // Az AI-asszisztensnél futó beszélgetés a `/api/support-bot` végponton megy
+  // tovább. Itt beírva a bot nem válaszolna, Patrik pedig nem kapna róla
+  // értesítést, mert a ticket még nem az övé — az üzenet a semmibe veszne.
+  if (ticket.status === "bot") {
+    return NextResponse.json({ error: "Ticket is handled by the assistant.", status: "bot" }, { status: 409 });
+  }
+
   const { data: message, error: messageError } = await supabase
     .from("support_ticket_messages")
     .insert({

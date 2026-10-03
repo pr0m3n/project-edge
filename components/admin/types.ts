@@ -30,9 +30,15 @@ export type Lead = {
 export type Ticket = {
   id: string;
   created_at: string;
-  name: string;
-  email: string;
+  last_message_at?: string | null;
+  /** AI-beszélgetésnél üres, amíg a látogató át nem adja Patriknak. */
+  name: string | null;
+  email: string | null;
   message: string;
+  /** Miért kérte az AI (vagy a látogató), hogy Patrik vegye át. */
+  handoff_reason?: string | null;
+  /** Mikor adta meg a látogató az elérhetőségét az átadáshoz. */
+  handoff_at?: string | null;
   rating: number | null;
   rating_comment: string | null;
   status: string;
@@ -48,7 +54,7 @@ export type TicketMessage = {
   id: string;
   ticket_id: string;
   created_at: string;
-  sender: "customer" | "admin";
+  sender: "customer" | "admin" | "bot";
   body: string;
   user_id?: string | null;
   status?: "sending" | "sent" | "error";

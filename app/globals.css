@@ -7264,6 +7264,125 @@ details.admin-collapse summary:hover {
   justify-content: flex-start;
 }
 
+/* ── AI-asszisztens ─────────────────────────────────────────────────
+   A bot buboréka az admin oldalán ül, de halvány türkiz árnyalattal és egy
+   „AI" címkével: a látogató mindig tudja, hogy nem Patrik írta. */
+.support-avatar.bot {
+  background: linear-gradient(135deg, #76ABAE, #4E8487);
+  letter-spacing: 0.04em;
+}
+
+.chat-bubble.admin.bot {
+  background: #F4FAFA;
+  border-color: rgba(118, 171, 174, 0.35);
+}
+
+.chat-bubble.bot p a {
+  color: #2F6F73;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-bot-tag {
+  background: rgba(118, 171, 174, 0.18);
+  border-radius: 5px;
+  color: #2F6F73;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+}
+
+.chat-bot-tag.human {
+  background: rgba(255, 87, 34, 0.12);
+  color: #C2410C;
+}
+
+/* Egykoppintásos kezdőkérdések az üres AI-chatben. */
+.chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-self: start;
+}
+
+.chat-starters button {
+  background: #FFFFFF;
+  border: 1px solid rgba(118, 171, 174, 0.45);
+  border-radius: 999px;
+  color: #2F6F73;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 750;
+  padding: 7px 12px;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.chat-starters button:hover {
+  background: rgba(118, 171, 174, 0.12);
+  border-color: #76ABAE;
+}
+
+/* Ugyanaz a tejüveg, mint a beíró mezőé: enélkül a heró szövege átlátszott
+   az apró betűs sor mögött, és olvashatatlanná tette. */
+.chat-bot-footnote {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0 16px 12px;
+}
+
+.chat-bot-footnote button {
+  background: none;
+  border: 0;
+  color: var(--ember);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-meta .chat-human-link {
+  color: #2F6F73;
+}
+
+.chat-meta .chat-human-link:disabled {
+  cursor: default;
+  opacity: 0.45;
+  text-decoration: none;
+}
+
+.chat-system-note {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  justify-self: center;
+  margin: 4px 0 0;
+  max-width: 90%;
+  text-align: center;
+}
+
+.support-panel form.chat-handoff {
+  background: rgba(118, 171, 174, 0.06);
+}
+
+.chat-handoff-lead {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+  margin: 0;
+}
+
 /* Typing Indicator */
 .chat-typing-bubble {
   align-items: center;
@@ -20367,6 +20486,43 @@ details.admin-collapse summary:hover {
   background: rgba(118, 171, 174, 0.14);
   border-color: rgba(118, 171, 174, 0.28);
   justify-self: end;
+}
+
+/* Az AI-asszisztens válasza: a stúdió oldalán ül, mint a te válaszod, de
+   szaggatott kerettel — egy pillantásra látszik, mit mondott a bot és mit te. */
+.admin-chat-message.bot {
+  background: var(--adm-ink-05);
+  border: 1px dashed rgba(118, 171, 174, 0.45);
+  justify-self: end;
+}
+
+.admin-chat-message.bot .admin-chat-meta span {
+  color: var(--adm-accent-text);
+  letter-spacing: 0.02em;
+}
+
+/* Miért kérte az AI, hogy átvedd — a beszélgetés fölött. */
+.admin-ticket-handoff {
+  background: rgba(255, 87, 34, 0.08);
+  border: 1px solid rgba(255, 87, 34, 0.22);
+  border-radius: 12px;
+  display: grid;
+  gap: 3px;
+  margin: 0 18px 4px;
+  padding: 10px 14px;
+}
+
+.admin-ticket-handoff strong {
+  color: #FF8A65;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.admin-ticket-handoff span {
+  color: var(--adm-text);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .admin-chat-meta {

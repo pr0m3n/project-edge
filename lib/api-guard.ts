@@ -87,6 +87,28 @@ export async function checkDurableRateLimit(
   }
 }
 
+/**
+ * Telepítés-szintű, NEM látogatónkénti plafon — pénzbe kerülő végpontokhoz.
+ *
+ * Az IP-nkénti korlát egy támadót megfog, de sok IP-ről (vagy sok valódi
+ * látogatóval) a költség így is elszállhatna. Ez az egész oldalra érvényes
+ * felső határ. Ha az adatbázis nem elérhető, ZÁRVA marad: inkább álljon le a
+ * fizetős szolgáltatás, mint hogy őrizetlenül fusson.
+ */
+export async function checkGlobalDurableLimit(scope: string, limit: number, windowSeconds: number) {
+  try {
+    const { createServerSupabaseAdminClient } = await import("@/lib/supabase/server");
+    const { data, error } = await createServerSupabaseAdminClient()
+      .rpc("consume_rate_limit", { limit_key: `${scope}:global`, max_count: limit, window_seconds: windowSeconds })
+      .single<{ allowed: boolean; retry_after: number }>();
+    if (error || !data) throw error ?? new Error("empty rate limit response");
+    return { allowed: data.allowed, retryAfterSeconds: data.retry_after };
+  } catch (error) {
+    console.error("Global rate limit unavailable, failing closed", error);
+    return { allowed: false, retryAfterSeconds: 60 };
+  }
+}
+
 export function rateLimitResponse(retryAfterSeconds: number) {
   return new Response(JSON.stringify({ error: "Túl sok kérés érkezett. Próbáld újra később." }), {
     status: 429,

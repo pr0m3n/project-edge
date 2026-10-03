@@ -108,6 +108,7 @@ const statuses = [
 ];
 
 const ticketStatuses = [
+  ["bot", "AI kezeli"],
   ["open", "Nyitott"],
   ["answered", "Megválaszolva"],
   ["closed", "Lezárva"]
@@ -272,7 +273,7 @@ export function AdminDashboard() {
   const [ticketScope, setTicketScope] = useState<"all" | "public" | "portal">("all");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [, setSelectedTicketType] = useState<"public" | "portal">("public");
-  const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "open" | "answered" | "closed">("all");
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "bot" | "open" | "answered" | "closed">("all");
 
   const { toasts, pushToast, dismissToast } = useToasts();
   const { confirm, confirmModal } = useConfirm();
@@ -540,25 +541,34 @@ export function AdminDashboard() {
     snippet: string;
     source?: string | null;
     user_id?: string | null;
+    /** Az AI-asszisztenssel indult beszélgetés: van bot-üzenet vagy átadási ok. */
+    viaBot?: boolean;
+    handoffReason?: string | null;
   };
 
   const unifiedTickets = useMemo(() => {
     const pub: UnifiedTicket[] = tickets.map((t) => {
       const msgs = ticketMessages[t.id] ?? [];
       const lastMsg = msgs[msgs.length - 1]?.body ?? "Weboldal widget kérdés";
+      const viaBot = t.status === "bot" || Boolean(t.handoff_reason) || msgs.some((m) => m.sender === "bot");
       return {
         id: t.id,
         type: "public",
-        title: t.name,
-        subtitle: t.email || "Látogatói widget",
+        // Az AI-beszélgetésnek az átadásig nincs neve — az első kérdése azonosítja.
+        title: t.name || `Névtelen látogató · ${t.message.slice(0, 40)}${t.message.length > 40 ? "…" : ""}`,
+        subtitle: t.email || (t.status === "bot" ? "AI-beszélgetés — nem adott meg elérhetőséget" : "Látogatói widget"),
         email: t.email,
         status: t.status,
         rating: t.rating,
         ratingComment: t.rating_comment,
-        lastActivity: t.created_at || t.id,
+        // Az utolsó üzenet ideje, nem a létrehozásé: egy hosszan futó
+        // AI-beszélgetés különben a lista aljára süllyedne.
+        lastActivity: t.last_message_at || t.created_at || t.id,
         snippet: lastMsg,
         source: t.source,
-        user_id: null
+        user_id: null,
+        viaBot,
+        handoffReason: t.handoff_reason ?? null
       };
     });
 
@@ -3110,7 +3120,7 @@ export function AdminDashboard() {
                 </div>
 
                 <div style={{ display: "flex", gap: "6px" }}>
-                  {(["all", "open", "answered", "closed"] as const).map((st) => (
+                  {(["all", "bot", "open", "answered", "closed"] as const).map((st) => (
                     <button
                       key={st}
                       type="button"
@@ -3126,7 +3136,7 @@ export function AdminDashboard() {
                         cursor: "pointer"
                       }}
                     >
-                      {st === "all" ? "Mind" : st === "open" ? "Nyitott" : st === "answered" ? "Válaszolt" : "Lezárt"}
+                      {st === "all" ? "Mind" : st === "bot" ? "AI" : st === "open" ? "Nyitott" : st === "answered" ? "Válaszolt" : "Lezárt"}
                     </button>
                   ))}
                 </div>
@@ -3174,8 +3184,8 @@ export function AdminDashboard() {
                           {/* A gyors sávból érkező érdeklődő fizetett forgalom:
                               külön címkét kap, hogy a listában ne mosódjon
                               össze a lebegő chatből jövő kérdésekkel. */}
-                          <span style={t.source === "gyorssav" ? { color: "#FF8A65", fontWeight: 800 } : undefined}>
-                            {t.type === "public" ? (t.source === "gyorssav" ? "Gyors sáv" : "Widget") : "Kapu"}
+                          <span style={{ whiteSpace: "nowrap", ...(t.source === "gyorssav" ? { color: "#FF8A65", fontWeight: 800 } : t.viaBot ? { color: "var(--adm-accent-text)", fontWeight: 800 } : {}) }}>
+                            {t.type === "public" ? (t.source === "gyorssav" ? "Gyors sáv" : t.viaBot ? "AI-chat" : "Widget") : "Kapu"}
                           </span>
                         </div>
                         <p className="admin-ticket-item-snippet">{t.snippet || t.subtitle}</p>
@@ -3185,10 +3195,12 @@ export function AdminDashboard() {
                             fontWeight: "800",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            background: t.status === "open" ? "rgba(255, 87, 34, 0.15)" : t.status === "answered" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-06)",
-                            color: t.status === "open" ? "#FF8A65" : t.status === "answered" ? "var(--adm-accent-text)" : "var(--adm-ink-40)"
+                            background: t.status === "open" ? "rgba(255, 87, 34, 0.15)" : t.status === "answered" || t.status === "bot" ? "rgba(118, 171, 174, 0.15)" : "var(--adm-ink-06)",
+                            color: t.status === "open" ? "#FF8A65" : t.status === "answered" || t.status === "bot" ? "var(--adm-accent-text)" : "var(--adm-ink-40)"
                           }}>
-                            {t.status === "open" ? "Nyitott" : t.status === "answered" ? "Megválaszolva" : "Lezárva"}
+                            {t.status === "bot"
+                              ? t.handoffReason ? "AI · átadást kért" : "AI kezeli"
+                              : t.status === "open" ? "Nyitott" : t.status === "answered" ? "Megválaszolva" : "Lezárva"}
                           </span>
                           <span style={{ fontSize: "10.5px", color: "var(--adm-ink-30)" }}>
                             {t.lastActivity ? new Date(t.lastActivity).toLocaleDateString("hu-HU", { month: "short", day: "numeric" }) : ""}
@@ -3249,6 +3261,13 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
+                  {activeT.type === "public" && activeT.handoffReason ? (
+                    <div className="admin-ticket-handoff">
+                      <strong>{activeT.status === "bot" ? "Az AI átadást javasolt, de a látogató nem adott meg elérhetőséget" : "Átadva az AI-tól"}</strong>
+                      <span>{activeT.handoffReason}</span>
+                    </div>
+                  ) : null}
+
                   <div className="admin-ticket-detail-messages">
                     {msgs.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "40px", color: "var(--adm-ink-40)", fontSize: "13px" }}>
@@ -3263,7 +3282,7 @@ export function AdminDashboard() {
                            képernyő magas dobozt kapott. */
                         <div key={item.id} className={`admin-chat-message ${item.sender}`}>
                           <div className="admin-chat-meta">
-                            <span>{item.sender === "admin" ? "Te" : activeT.title}</span>
+                            <span>{item.sender === "admin" ? "Te" : item.sender === "bot" ? "AI-asszisztens" : activeT.type === "public" && !activeT.email ? "Látogató" : activeT.title}</span>
                             <small>
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" }) : ""}
                             </small>
@@ -3294,7 +3313,13 @@ export function AdminDashboard() {
                           }
                         }
                       }}
-                      placeholder="Írd ide a válaszod… (Enter = küldés, Shift+Enter = új sor)"
+                      placeholder={
+                        activeT.status === "bot"
+                          ? activeT.email
+                            ? "Ha most írsz, átveszed az AI-tól… (Enter = küldés)"
+                            : "Átveszed az AI-tól. Nincs email címe: a válasz csak akkor éri el, ha a chat még nyitva van nála."
+                          : "Írd ide a válaszod… (Enter = küldés, Shift+Enter = új sor)"
+                      }
                       rows={2}
                     />
                     <button

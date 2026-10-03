@@ -46,6 +46,12 @@ export async function POST(request: Request, { params }: Params) {
   }).select("id, ticket_id, sender, body, created_at").single();
   if (error || !message) return NextResponse.json({ error: "A válasz mentése nem sikerült." }, { status: 500 });
 
+  // Egy AI-beszélgetésnek (még) nincs emailje: ha Patrik az átadás előtt
+  // beleszól, a válasz csak a chatben jelenik meg, levél nem megy.
+  if (!ticket.email) {
+    return NextResponse.json({ message, emailSent: false, emailError: "A látogató nem adott meg email címet." });
+  }
+
   // A link a `visitor_token`-t hordozza a hash-ében, tehát a beszélgetés
   // bármelyik eszközön folytatható — nem csak abban a böngészőben, amelyikben
   // elindult.
@@ -54,7 +60,7 @@ export async function POST(request: Request, { params }: Params) {
     subject: "Új válasz érkezett a ProjectEdge-től",
     eyebrow: "PROJECTEDGE · SUPPORT VÁLASZ",
     preheader: "Új válasz érkezett a support beszélgetésedben.",
-    message: `Szia ${ticket.name}!\n\nÚj válasz érkezett:\n\n${body}\n\nA lenti gombbal bármelyik eszközön folytathatod a beszélgetést — telefonon is.`,
+    message: `Szia${ticket.name ? ` ${ticket.name}` : ""}!\n\nÚj válasz érkezett:\n\n${body}\n\nA lenti gombbal bármelyik eszközön folytathatod a beszélgetést — telefonon is.`,
     link: supportResumePath(ticket.id, ticket.visitor_token),
     linkLabel: "Beszélgetés folytatása",
     details: [{ label: "Ticket", value: ticket.id.slice(0, 8).toUpperCase() }]
