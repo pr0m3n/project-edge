@@ -391,7 +391,22 @@
 
 @media (min-width: 1600px) {
   .hero { min-height: min(720px, calc(100svh - 252px)); }
-  .visual { right: -100px; }
+  /* A forráskép az alkar közepén ér véget, tehát a vászon jobb szélének a
+     képernyőn KÍVÜL kell lennie. A hero 1600px-nél megáll, a vászon viszont
+     ehhez volt kötve (−100px): 1800px felett a kar egyenes vonalban vágódott
+     el a képernyő széle előtt (1920-on 60px-rel, 2560-on 380px-rel). Most a
+     képernyő széléhez igazodik (+24px a görgetősávra). A −220px plafon azért
+     kell, hogy a ceruzahegy a korongon maradjon: 2000px-ig ez elég is. */
+  .visual { right: max(-220px, min(-100px, calc((1600px - 100vw) / 2 - 24px))); }
+}
+
+/* Ennél szélesebb képernyőn a vászon széle mindenképp a képernyőn belülre
+   esik. Itt a kar elhalványul a sötétben — egyenes vágás helyett. */
+@media (min-width: 2040px) {
+  .visual {
+    -webkit-mask-image: linear-gradient(to right, #000 64%, transparent 97%);
+    mask-image: linear-gradient(to right, #000 64%, transparent 97%);
+  }
 }
 
 @media (max-width: 1000px) {
