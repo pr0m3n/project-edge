@@ -103,7 +103,29 @@ const nextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           ...(!isDev ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" }] : [])
         ]
+      },
+      {
+        // A Klarhaus statikus demó (public/demo/klarhaus): az app/demo/layout.tsx
+        // `robots` beállítása erre nem hat, ezért fejlécben is noindex.
+        source: "/demo/klarhaus/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
+      },
+      {
+        source: "/demo/klarhaus",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
       }
+    ];
+  },
+  /**
+   * A Klarhaus iparági demó sima HTML (public/demo/klarhaus), nem React-oldal.
+   * A tiszta URL-ekhez (`/demo/klarhaus`, `/demo/klarhaus/impressum`) kell a
+   * rewrite: a public mappa a könyvtárhoz nem szolgál ki index.html-t.
+   */
+  async rewrites() {
+    return [
+      { source: "/demo/klarhaus", destination: "/demo/klarhaus/index.html" },
+      { source: "/demo/klarhaus/impressum", destination: "/demo/klarhaus/impressum.html" },
+      { source: "/demo/klarhaus/datenschutz", destination: "/demo/klarhaus/datenschutz.html" }
     ];
   }
 };
