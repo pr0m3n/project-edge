@@ -140,6 +140,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "klarhaus",
+    name: "Klarhaus",
+    goal: "Ajánlatkérés helyi szolgáltatónak",
+    industry: "Takarítás · osztrák piac",
+    copy:
+      "Takarító- és házkarbantartó cég német nyelvű oldala: illusztrált szolgáltatások, húzható előtte–utána csúszka és egy perc alatt kitölthető ajánlatkérő.",
+    href: "/demo/klarhaus",
+    external: false,
+    src: "/work/demos/klarhaus.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
@@ -188,19 +201,6 @@ export const WORKS: Work[] = [
     href: "/demo/veyra",
     external: false,
     src: "/work/demos/veyra-het.webp",
-    width: 1440,
-    height: 900
-  },
-  {
-    id: "klarhaus",
-    name: "Klarhaus",
-    goal: "Ajánlatkérés helyi szolgáltatónak",
-    industry: "Takarítás · osztrák piac",
-    copy:
-      "Takarító- és házkarbantartó cég német nyelvű oldala: illusztrált szolgáltatások, húzható előtte–utána csúszka és egy perc alatt kitölthető ajánlatkérő.",
-    href: "/demo/klarhaus",
-    external: false,
-    src: "/work/demos/klarhaus.webp",
     width: 1440,
     height: 900
   }
