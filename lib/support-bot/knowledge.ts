@@ -13,6 +13,7 @@ import {
   PARKING_MONTHLY_PRICE,
   PRICE_TAX_NOTE,
   PURCHASE_OPTION_PRICES,
+  purchaseAdvance,
   SUBSCRIPTION_PLANS,
   SUBSCRIPTION_SHARED_INCLUDED,
   buyoutCreditMonths,
@@ -93,7 +94,7 @@ Szövegek: az ár tartalmazza, vázlatból megírom. Képek: saját fotó a legj
 
 ## Mikor kell fizetni
 - Havidíjnál: nincs előleg, foglaló, belépési díj és hűségidő. A szerződés elfogadása indítja az építést fizetés nélkül; a díj csak a kész oldal jóváhagyása után esedékes. Ha nem tetszik, nem fizetsz. Élesbe csak a fizetés után kerül.
-- Egyszeri vásárlásnál: 10 000 Ft foglaló indítja a munkát, ami a vételár része. Az átadás a teljes díj rendezése után történik, utána 30 nap díjmentes technikai hibajavítás jár.
+- Egyszeri vásárlásnál: a vételár 50%-a előlegként indítja a munkát, ami a vételár része (például ${formatHuf(PURCHASE_OPTION_PRICES.business)} vételárnál ${formatHuf(purchaseAdvance(PURCHASE_OPTION_PRICES.business))}). Az átadás a teljes díj rendezése után történik, utána 30 nap díjmentes technikai hibajavítás jár.
 
 ## Kivásárlás (bérlésből tulajdon)
 A bérelt oldal bármikor megvásárolható egyszeri díjért: a forráskód, a domain és a hozzáférések az ügyfélé lesznek, az előfizetés lezárul. A befizetett havidíj fele beszámít a vételárba, egészen addig, amíg a vételár a felére nem csökken (nagyjából egy-másfél év bérlés után feleáron vehető meg). Felmondáskor a fel nem használt beszámítás elvész. A megvásárlást az ügyfélkapun lehet elindítani.

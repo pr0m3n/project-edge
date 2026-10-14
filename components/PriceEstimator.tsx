@@ -114,7 +114,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
       <CommercialModelPicker value={model} onChange={(next) => { setModel(next); trackEvent("pricing_model_selected", { model: next }); }} />
       {model === "purchase" ? (
         <div className="website-purchase-pricing" id="pricing-panel-purchase">
-          <div className="pricing-promise"><p><strong>Az első naptól a saját weboldaladat rendeled meg.</strong> Nincs előfizetés. A szerződés után 10 000 Ft foglalóval indul az építés; ez beleszámít a vételárba. A fennmaradó összeget a jóváhagyás és élesítés után, a teljes technikai átadás előtt fizeted.</p></div>
+          <div className="pricing-promise"><p><strong>Az első naptól a saját weboldaladat rendeled meg.</strong> Nincs előfizetés. A szerződés után a vételár 50%-a előlegként indítja az építést; ez beleszámít a vételárba. A fennmaradó összeget a jóváhagyás és élesítés után, a teljes technikai átadás előtt fizeted.</p></div>
           <div className="subscription-plan-grid">
             {SUBSCRIPTION_PLANS.map((plan) => (
               <article className={`subscription-plan ${plan.featured ? "featured" : ""}`} key={plan.key}>

@@ -11,7 +11,7 @@ export const statusLabels: Record<string, string> = {
   request_received: "Igény beérkezett",
   planning: "Tervezés",
   offer_sent: "Ajánlat elküldve",
-  deposit_pending: "Foglaló fizetésre vár",
+  deposit_pending: "Fizetésre vár",
   contract_pending: "Szerződés aláírásra vár",
   in_progress: "Kivitelezés",
   review: "Visszajelzés és jóváhagyás",

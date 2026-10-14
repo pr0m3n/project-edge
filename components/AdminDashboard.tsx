@@ -1,6 +1,6 @@
 "use client";
 
-import { isWebsitePackage, purchaseOptionPrice, websitePurchaseFeatures } from "@/lib/subscriptions";
+import { isWebsitePackage, purchaseAdvance, purchaseOptionPrice, websitePurchaseFeatures } from "@/lib/subscriptions";
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -1306,7 +1306,7 @@ export function AdminDashboard() {
       offer_currency: project.offer_currency || "Ft",
       ...(purchasePlan ? {
         offer_price: project.offer_price ?? purchaseOptionPrice(purchasePlan.key),
-        deposit_amount: project.deposit_amount ?? 10000
+        deposit_amount: project.deposit_amount ?? purchaseAdvance(project.offer_price ?? purchaseOptionPrice(purchasePlan.key))
       } : {}),
       offer_deliverables: project.offer_deliverables || (purchasePlan ? websitePurchaseFeatures(purchasePlan).join("\n") : defaultOfferDeliverables),
       offer_status: project.offer_status || "draft",
@@ -1697,7 +1697,7 @@ export function AdminDashboard() {
           updateClientProject(project.id, {
             payment_status: "deposit_paid",
             status: "in_progress",
-            next_step: "A foglaló beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik."
+            next_step: "Az előleg beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik."
           });
         }
         break;
@@ -1755,7 +1755,7 @@ export function AdminDashboard() {
       contract_pending: {
         who: "client",
         headline: "Szerződés aláírására vár",
-        detail: managed ? "A választott havi csomag rögzítve van. A szerződés elfogadása indítja az építést; a díj a kész oldal jóváhagyása után esedékes." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, a foglaló (előleg) befizetése következik.",
+        detail: managed ? "A választott havi csomag rögzítve van. A szerződés elfogadása indítja az építést; a díj a kész oldal jóváhagyása után esedékes." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — amint aláírta, az előleg (a vételár 50%-a) befizetése következik.",
         actions: [{ label: "📧 Onboarding emlékeztető email küldése", onClick: () => sendFollowupReminder(project), variant: "secondary" }]
       },
       deposit_pending: managed ? (
@@ -1775,12 +1775,12 @@ export function AdminDashboard() {
             }
       ) : {
         who: project.deposit_transfer_reported ? "admin" : "client",
-        headline: project.deposit_transfer_reported ? `Ellenőrizd ${managed ? "az első havidíj" : "a foglaló"} beérkezését` : `${managed ? "Első havidíj" : "Foglaló"} utalására vár`,
+        headline: project.deposit_transfer_reported ? `Ellenőrizd ${managed ? "az első havidíj" : "az előleg"} beérkezését` : `${managed ? "Első havidíj" : "Előleg"} utalására vár`,
         detail: project.deposit_transfer_reported
           ? "Az ügyfél jelezte az utalást. Ellenőrizd a bankszámlát, és csak akkor indítsd a fejlesztést, ha az összeg megérkezett."
-          : `Az ügyfélnek kell elutalnia és jeleznie ${managed ? "az első havidíjat" : "a foglalót"}. Addig nincs teendőd.`,
+          : `Az ügyfélnek kell elutalnia és jeleznie ${managed ? "az első havidíjat" : "az előleget"}. Addig nincs teendőd.`,
         actions: project.deposit_transfer_reported
-          ? [{ label: `${managed ? "Első havidíj" : "Foglaló"} megérkezett — fejlesztés indítása`, onClick: () => wizardNext(project) }]
+          ? [{ label: `${managed ? "Első havidíj" : "Előleg"} megérkezett — fejlesztés indítása`, onClick: () => wizardNext(project) }]
           : [{ label: "📧 Onboarding emlékeztető email küldése", onClick: () => sendFollowupReminder(project), variant: "secondary" }]
       },
       in_progress: {

@@ -163,7 +163,7 @@ function guideFor(project: ClientProject, actions: Actions): Guide | null {
     case "offer_sent":
       return { who: "client", headline: "Ajánlat elfogadására vár", detail: "Elküldted az ajánlatot. Az ügyfél most dönt: elfogadja, módosítást kér, vagy elutasítja. Jelez a rendszer, ha lépett." };
     case "contract_pending":
-      return { who: "client", headline: "Szerződés aláírására vár", detail: managed ? "A választott havi csomag rögzítve van. A szerződés elfogadása indítja az építést; a díj a kész oldal jóváhagyása után esedékes." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — utána a foglaló következik.", actions: [followup] };
+      return { who: "client", headline: "Szerződés aláírására vár", detail: managed ? "A választott havi csomag rögzítve van. A szerződés elfogadása indítja az építést; a díj a kész oldal jóváhagyása után esedékes." : "Az ügyfél elfogadta az ajánlatot. A szerződés aláírására vársz — utána az előleg következik.", actions: [followup] };
     case "deposit_pending":
       if (managed) {
         if (project.payment_status === "deposit_paid") {
@@ -174,8 +174,8 @@ function guideFor(project: ClientProject, actions: Actions): Guide | null {
           : { who: "client", headline: "Jóváhagyva — fizetésre vár", detail: "Az ügyfél jóváhagyta a kész oldalt. Most fizet: kártyánál a Stripe-terhelés, utalásnál a befizetés rögzítése után élesíthetsz.", actions: [followup] };
       }
       return project.deposit_transfer_reported
-        ? { who: "admin", headline: "Ellenőrizd a foglaló beérkezését", detail: "Az ügyfél jelezte az utalást. Ellenőrizd a bankszámlát, és csak akkor indítsd a fejlesztést, ha az összeg megérkezett.", actions: [{ label: "Foglaló megérkezett — fejlesztés indítása", run: () => actions.advanceProject(project) }] }
-        : { who: "client", headline: "Foglaló utalására vár", detail: "Az ügyfélnek kell elutalnia és jeleznie a foglalót. Addig nincs teendőd.", actions: [followup] };
+        ? { who: "admin", headline: "Ellenőrizd az előleg beérkezését", detail: "Az ügyfél jelezte az utalást. Ellenőrizd a bankszámlát, és csak akkor indítsd a fejlesztést, ha az összeg megérkezett.", actions: [{ label: "Előleg megérkezett — fejlesztés indítása", run: () => actions.advanceProject(project) }] }
+        : { who: "client", headline: "Előleg utalására vár", detail: "Az ügyfélnek kell elutalnia és jeleznie az előleget. Addig nincs teendőd.", actions: [followup] };
     case "in_progress":
       return { who: "admin", step: "3. lépés", headline: "Fejlesztés", detail: "Folyik a munka. Frissítsd a mérföldköveket, add meg az előnézeti linket és a tervezett átadást. Ha kész a bemutatható verzió, küldd el jóváhagyásra.", actions: [{ label: "Előnézet küldése az ügyfélnek", run: () => actions.sendPreview(project) }] };
     case "review":
@@ -204,7 +204,7 @@ const NEXT_LABEL: Record<string, string> = {
 };
 
 function nextLabel(project: ClientProject) {
-  if (project.status === "deposit_pending") return project.commercial_model === "subscription" ? "Élesítés" : "Foglaló beérkezett";
+  if (project.status === "deposit_pending") return project.commercial_model === "subscription" ? "Élesítés" : "Előleg beérkezett";
   return NEXT_LABEL[project.status];
 }
 
@@ -799,7 +799,7 @@ function PaymentTab({ project }: { project: ClientProject }) {
             <div><span>Konstrukció</span><strong>{modelLabel(project)}</strong></div>
             <div><span>Állapot</span><strong>{PAYMENT_STATUS_LABEL[project.payment_status] ?? project.payment_status}</strong></div>
             {project.offer_price ? <div><span>Vételár</span><strong>{formatHuf(project.offer_price)}</strong></div> : purchasePlan ? <div><span>Listaár</span><strong>{formatHuf(purchaseOptionPrice(purchasePlan.key))}</strong></div> : null}
-            {project.deposit_amount ? <div><span>Foglaló</span><strong>{formatHuf(project.deposit_amount)}{project.deposit_transfer_reported ? " · utalást jelzett" : ""}</strong></div> : null}
+            {project.deposit_amount ? <div><span>Előleg</span><strong>{formatHuf(project.deposit_amount)}{project.deposit_transfer_reported ? " · utalást jelzett" : ""}</strong></div> : null}
             <div><span>Végső fizetés</span><strong>{project.final_payment_paid ? `Beérkezett${project.final_payment_paid_at ? ` · ${formatDate(project.final_payment_paid_at)}` : ""}` : project.final_transfer_reported ? "Utalást jelzett — ellenőrizd" : "Még nem"}</strong></div>
             <div><span>Szerződés</span><strong>{project.contract_accepted ? `Elfogadva${project.contract_accepted_at ? ` · ${formatDate(project.contract_accepted_at)}` : ""}` : "Még nincs"}</strong></div>
           </div>

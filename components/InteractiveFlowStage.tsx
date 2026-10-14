@@ -224,7 +224,7 @@ const BERLES_DATA: StepDetail[] = [
 
 const VASARLAS_DATA: StepDetail[] = [
   { title: "Csomag és adatlap", description: "A Jelenlét, Üzleti vagy Egyedi csomagot választod, és leírod, mire van szükséged.", badge: "Egyszeri díj" },
-  { title: "Ajánlat és szerződés", description: "Az ügyfélkapuban rögzítjük a tartalmat, a vételárat és a határidőt. A szerződés után 10 000 Ft foglaló indítja az építést; ez a vételár része.", badge: "Írásban rögzítve" },
+  { title: "Ajánlat és szerződés", description: "Az ügyfélkapuban rögzítjük a tartalmat, a vételárat és a határidőt. A szerződés után a vételár 50%-a előlegként indítja az építést; ez a vételár része.", badge: "Írásban rögzítve" },
   { title: "Elkészítés és jóváhagyás", description: "Privát előnézeti linken átnézed az oldalt, és jelzed a módosításokat. Csak a jóváhagyásod után élesítem.", badge: "Nálad a döntés" },
   { title: "Végső fizetés és átadás", description: "Jóváhagyás és élesítés után rendezed a fennmaradó vételárat. Ezután a forráskód és a hozzáférések a saját fiókjaidba kerülnek.", badge: "Saját tulajdon" },
   { title: "Indulás után", description: "Az átadás lezárásától 30 nap díjmentes technikai hibajavítás jár. A domain, a tárhely, a külső szolgáltatások és a későbbi karbantartás költsége külön tétel.", badge: "30 nap hibajavítás" }
@@ -255,7 +255,7 @@ const GUARANTEES = [
   {
     badge: "Átlátható fizetés",
     title: "Előre rögzített feltételek",
-    desc: "Havidíjnál csak a jóváhagyott oldalért fizetsz. Vásárlásnál 10 000 Ft foglalóval indul az építés.",
+    desc: "Havidíjnál csak a jóváhagyott oldalért fizetsz. Vásárlásnál a vételár 50%-ának megfelelő előleggel indul az építés.",
     icon: IconLock,
   },
 ];

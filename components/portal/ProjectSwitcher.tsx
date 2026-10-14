@@ -5,7 +5,7 @@ const switcherStatusLabels: Record<string, string> = {
   planning: "Tervezés",
   offer_sent: "Ajánlat",
   contract_pending: "Szerződés",
-  deposit_pending: "Foglaló",
+  deposit_pending: "Fizetés",
   in_progress: "Épül",
   review: "Jóváhagyás",
   launched: "Élesítve",

@@ -16,7 +16,7 @@ import {
   formatHuf,
   isWebsitePackage,
   isWebsitePurchaseRequest,
-  purchaseOptionPrice,
+  purchaseAdvance, purchaseOptionPrice,
   subscriptionPlan,
   websitePurchaseFeatures
 } from "@/lib/subscriptions";
@@ -591,7 +591,7 @@ function useAdminDataState() {
         offer_currency: project.offer_currency || "Ft",
         ...(purchasePlan ? {
           offer_price: project.offer_price ?? purchaseOptionPrice(purchasePlan.key),
-          deposit_amount: project.deposit_amount ?? 10000
+          deposit_amount: project.deposit_amount ?? purchaseAdvance(project.offer_price ?? purchaseOptionPrice(purchasePlan.key))
         } : {}),
         offer_deliverables: project.offer_deliverables || (purchasePlan ? websitePurchaseFeatures(purchasePlan).join("\n") : DEFAULT_OFFER_DELIVERABLES),
         offer_status: project.offer_status || "draft",
@@ -649,7 +649,7 @@ function useAdminDataState() {
             return updateClientProject(project.id, {
               payment_status: "deposit_paid",
               status: "in_progress",
-              next_step: "A foglaló beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik."
+              next_step: "Az előleg beérkezett. Elindult a kivitelezés; most az adminisztrátor dolgozik."
             });
           }
           return false;

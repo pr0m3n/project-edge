@@ -282,7 +282,7 @@ export function AdminInbox({
           priority: KIND_PRIORITY.transfer,
           label: KIND_LABELS.transfer,
           client: nameOf(project.id),
-          detail: "Az ügyfél jelezte a foglaló utalását",
+          detail: "Az ügyfél jelezte az előleg utalását",
           since: project.last_modified_at,
           projectId: project.id
         });

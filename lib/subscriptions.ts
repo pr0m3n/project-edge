@@ -382,6 +382,17 @@ export function purchaseOptionPrice(key?: string | null) {
   return PURCHASE_OPTION_PRICES[plan.key];
 }
 
+/** Egyszeri vásárlásnál a munkát a vételár ennyi része indítja, előlegként. */
+export const PURCHASE_ADVANCE_RATE = 0.5;
+
+/**
+ * Az egyszeri vásárlás előlege: a vételár fele, egész forintra kerekítve.
+ * A fennmaradó rész (`offer_price - deposit_amount`) az átadáskor esedékes.
+ */
+export function purchaseAdvance(offerPrice?: number | null) {
+  return Math.round((offerPrice ?? 0) * PURCHASE_ADVANCE_RATE);
+}
+
 /**
  * Hány TELJES havidíjat fizetett be az ügyfél a fordulónapjához mérve.
  *

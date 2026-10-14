@@ -63,8 +63,8 @@ function buildGuide(project: Project): Guide | null {
           : { who: "client", headline: "Fizesd be az első díjat", detail: "A weboldalad elkészült, és jóváhagytad. Már csak a fizetés van hátra — utána élesítem." };
       }
       return project.deposit_transfer_reported
-        ? { who: "studio", headline: "Ellenőrizzük a foglalót", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }
-        : { who: "client", headline: "Fizesd be a foglalót", detail: "A szerződés megvan — utald el, majd lent jelezd az utalást." };
+        ? { who: "studio", headline: "Ellenőrizzük az előleget", detail: "Jelezted az utalást. Most nincs teendőd; értesítünk a jóváhagyás után." }
+        : { who: "client", headline: "Fizesd be az előleget", detail: "A szerződés megvan — utald el, majd lent jelezd az utalást." };
     case "in_progress":
       if (needsDomainFromClient(project)) {
         return {

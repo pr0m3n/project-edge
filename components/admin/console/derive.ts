@@ -110,7 +110,7 @@ export const SITE_HEALTH_LABEL: Record<string, string> = Object.fromEntries(SITE
 
 export const PAYMENT_STATUS_LABEL: Record<string, string> = {
   unpaid: "Még nem fizetett",
-  deposit_paid: "Első díj / foglaló beérkezett",
+  deposit_paid: "Első díj / előleg beérkezett",
   fully_paid: "Teljesen kifizetve"
 };
 
@@ -378,7 +378,7 @@ export type TodayInput = {
 function projectTurnHeadline(project: ClientProject) {
   if (project.status === "review" && project.review_approved) return ["Élesítésre vár", "Az ügyfél jóváhagyta az előnézetet — élesíthető."];
   if (project.status === "deposit_pending" && project.deposit_transfer_reported) {
-    return ["Utalás ellenőrzése", project.commercial_model === "subscription" ? "Az ügyfél jelezte az első díj utalását." : "Az ügyfél jelezte a foglaló utalását."];
+    return ["Utalás ellenőrzése", project.commercial_model === "subscription" ? "Az ügyfél jelezte az első díj utalását." : "Az ügyfél jelezte az előleg utalását."];
   }
   if (project.status === "launched" && project.final_transfer_reported && !project.final_payment_paid) {
     return ["Végszámla ellenőrzése", "Az ügyfél jelezte a hátralék utalását — csak a bankszámla ellenőrzése után jelöld beérkezettnek."];

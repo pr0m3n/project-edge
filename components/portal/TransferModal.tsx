@@ -7,7 +7,7 @@ import { BANK_TRANSFER_DETAILS, formatPrice, transferReference } from "@/compone
 /**
  * Banki utalás adatai az egyszeri (purchase) projektekhez.
  *
- * Az előfizetés a Stripe-on megy; ez a modál kizárólag a foglaló és a
+ * Az előfizetés a Stripe-on megy; ez a modál kizárólag az előleg és a
  * hátralék átutalásához adja meg a számlaadatokat és a közleményt.
  * A „másolva" visszajelzés saját, lokális állapot — nincs értelme a
  * portál fő komponensében tartani.
@@ -38,7 +38,7 @@ export function TransferModal({
     ? "Hátralék"
     : project.commercial_model === "subscription"
       ? "Első havidíj"
-      : "Foglaló";
+      : "Előleg";
   const reference = transferReference(project);
 
   async function copyValue(field: string, value: string) {

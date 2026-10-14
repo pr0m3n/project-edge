@@ -10,7 +10,7 @@ import { PURCHASE_OPTION_PRICES, formatHuf } from "@/lib/subscriptions";
 export const HOME_FAQS: Array<[question: string, answer: string]> = [
   [
     "Mennyibe kerül a weboldal?",
-    `Egyszeri vásárlással a Jelenlét ${formatHuf(PURCHASE_OPTION_PRICES.presence)}, az Üzleti ${formatHuf(PURCHASE_OPTION_PRICES.business)}, az Egyedi ${formatHuf(PURCHASE_OPTION_PRICES.custom)}. Itt 10 000 Ft foglaló indítja a munkát, amely a vételár része; a működtetés külön költség. Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Előleg, foglaló és belépési díj nincs: a megrendelés után elkészítem az oldalt, és csak akkor fizetsz, ha a kész oldalt jóváhagytad. A domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod.`
+    `Egyszeri vásárlással a Jelenlét ${formatHuf(PURCHASE_OPTION_PRICES.presence)}, az Üzleti ${formatHuf(PURCHASE_OPTION_PRICES.business)}, az Egyedi ${formatHuf(PURCHASE_OPTION_PRICES.custom)}. Itt a vételár 50%-a előlegként indítja a munkát, és beleszámít a végösszegbe; a működtetés külön költség. Menedzselt bérlésben 14 900 Ft/hó-tól indulsz. Előleg, foglaló és belépési díj nincs: a megrendelés után elkészítem az oldalt, és csak akkor fizetsz, ha a kész oldalt jóváhagytad. A domain, a tárhely meg a karbantartás is benne van ugyanabban az összegben. Ha később a sajátodként szeretnéd a forráskóddal és a technikai fiókokkal együtt, a rögzített vételi opcióval bármikor megvásárolhatod.`
   ],
   [
     "Mennyi idő alatt készül el?",
@@ -18,7 +18,7 @@ export const HOME_FAQS: Array<[question: string, answer: string]> = [
   ],
   [
     "Mi van, ha nem tetszik az irány?",
-    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Havidíjas konstrukcióban csak a jóváhagyás után fizetsz, és ha végül nem tetszik, nem fizetsz semmit. Egyszeri vásárlásnál a foglaló és a fizetési ütemezés feltételeit az ajánlat és a szerződés rögzíti."
+    "Az élesítés előtt megkapod a kész oldalt egy privát előnézeti linken, és ott kérsz módosítást — annyiszor, ahányszor kell, amíg jó nem lesz. Havidíjas konstrukcióban csak a jóváhagyás után fizetsz, és ha végül nem tetszik, nem fizetsz semmit. Egyszeri vásárlásnál az előleg és a fizetési ütemezés feltételeit az ajánlat és a szerződés rögzíti."
   ],
   [
     "Jár céges email cím a weboldalhoz?",

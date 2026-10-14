@@ -43,7 +43,7 @@ import { assetReference, parseAssetReference } from "@/lib/storage-assets";
 import { isAllowedUpload, MAX_PROJECT_UPLOAD_BYTES, MAX_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { completeHandoverStep } from "@/lib/handover";
 import { CommercialModelPicker } from "@/components/CommercialModelPicker";
-import { BILLING_TERMS, isWebsitePackage, websitePurchaseFeatures, LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
+import { BILLING_TERMS, isWebsitePackage, websitePurchaseFeatures, LOGO_DESIGN_PRICE, SUBSCRIPTION_PLANS, formatHuf, isWebsitePurchaseRequest, purchaseAdvance, purchaseOptionPrice, subscriptionPlan, type CommercialModel, type SubscriptionPlanKey } from "@/lib/subscriptions";
 import {
   ASSUMED_RETENTION_MONTHS,
   consumeSignupLead,
@@ -1650,10 +1650,9 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
 
   async function acceptOffer(project: Project) {
     setNotice("Ajánlat elfogadása...");
-    // Fix, alacsony foglaló — a cél a komoly érdeklődők szűrése, nem a
-    // kockázat fedezése (azt az adja, hogy csak teljes kifizetés után adjuk
-    // át a kész oldalt, lásd LaunchedPanel).
-    const deposit = 10000;
+    // A vételár fele előlegként indítja a munkát; a hozzáférések átadása
+    // továbbra is a teljes kifizetés után jár (lásd LaunchedPanel).
+    const deposit = purchaseAdvance(project.offer_price);
     const { error } = await supabase.from("client_projects").update({
       status: "contract_pending",
       deposit_amount: deposit,
@@ -1785,7 +1784,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
     const amount = formatPrice(project.deposit_amount, project.offer_currency || "Ft");
     const reference = transferReference(project);
     const managed = project.commercial_model === "subscription";
-    const paymentName = managed ? "első díj" : "foglaló";
+    const paymentName = managed ? "első díj" : "előleg";
 
     const { error } = await supabase.from("client_projects").update({
       deposit_transfer_reported: true,
@@ -1801,7 +1800,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       await triggerNotification(
         null,
         "admin@projectedge.hu",
-        `${managed ? "Első havidíj" : "Foglaló"} utalása bejelentve`,
+        `${managed ? "Első havidíj" : "Előleg"} utalása bejelentve`,
         `Az ügyfél (${email}) jelezte, hogy elindította a(z) ${amount} összegű ${paymentName} utalását a(z) "${project.title}" projekthez. Közlemény: ${reference}. Ellenőrizd a bankszámlát, és hagyd jóvá az admin felületen.`,
         "/admin"
       );
@@ -1876,26 +1875,26 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
       ...(managed ? { subscription_status: "agreement_pending" } : {}),
       next_step: managed
         ? "Szerződés elfogadva — elkezdtem dolgozni a weboldaladon. Amint elkészül, itt fogod látni előnézetben."
-        : "Szerződés aláírva! Kérlek, fizesd be a foglalót a kivitelezés elindításához."
+        : "Szerződés aláírva! Kérlek, fizesd be az előleget a kivitelezés elindításához."
     }).eq("id", project.id);
     if (error) {
       setNotice("Nem sikerült elfogadni a szerződést.");
     } else {
       setContractChecked(false);
       setPerformanceConsent(false);
-      setNotice(managed ? "Szerződés elfogadva. Elkezdtem dolgozni az oldaladon — fizetni csak a jóváhagyás után kell." : "Szerződés aláírva. Következő lépés: a foglaló befizetése.");
+      setNotice(managed ? "Szerződés elfogadva. Elkezdtem dolgozni az oldaladon — fizetni csak a jóváhagyás után kell." : "Szerződés aláírva. Következő lépés: az előleg befizetése.");
       await triggerNotification(
         null,
         "admin@projectedge.hu",
         "Szerződés aláírva",
-        `Az ügyfél (${email}) elfogadta a ${managed ? "szolgáltatási" : "vállalkozási"} szerződést a(z) "${project.title}" projekthez. ${managed ? "Indulhat az építés — a díj a jóváhagyás után esedékes." : "Foglaló befizetésére vár."}`,
+        `Az ügyfél (${email}) elfogadta a ${managed ? "szolgáltatási" : "vállalkozási"} szerződést a(z) "${project.title}" projekthez. ${managed ? "Indulhat az építés — a díj a jóváhagyás után esedékes." : "Előleg befizetésére vár."}`,
         "/admin"
       );
       await triggerNotification(
         userId,
         email,
         "Szerződés aláírva",
-        `Elfogadtad a szerződést a(z) "${project.title}" projekthez ${new Date().toLocaleString("hu-HU")} időpontban. ${managed ? "Elkezdtem dolgozni a weboldaladon. Amint elkészül, előnézetben megmutatom; fizetni csak akkor kell, ha jóváhagytad." : "Következő lépésként fizesd be a foglalót a kivitelezés elindításához."}\n\nAz elfogadott szerződés változatlan szövege:\n\n${contractPlainText(project)}`,
+        `Elfogadtad a szerződést a(z) "${project.title}" projekthez ${new Date().toLocaleString("hu-HU")} időpontban. ${managed ? "Elkezdtem dolgozni a weboldaladon. Amint elkészül, előnézetben megmutatom; fizetni csak akkor kell, ha jóváhagytad." : "Következő lépésként fizesd be az előleget a kivitelezés elindításához."}\n\nAz elfogadott szerződés változatlan szövege:\n\n${contractPlainText(project)}`,
         "/ugyfelkapu/dashboard#statuses"
       );
       loadPortal(true);
@@ -3978,7 +3977,7 @@ export function ClientPortal({ view = "auth" }: ClientPortalProps) {
                       </div>
                       : null}
                     </div>
-                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést — ez indítja az építést, fizetés nélkül. Az első díjat csak akkor kell rendezni, amikor a kész oldalt jóváhagytad; utána élesítem.</p></div> : packagedWebsite ? <div className="summary-payment-note"><span>01</span><p><strong>Egyszeri vásárlás, saját tulajdon.</strong> Az ajánlat és a szerződés elfogadása után 10 000 Ft foglalóval indul az építés. Ez a vételár része. A fennmaradó összeg jóváhagyás és élesítés után, a hozzáférések teljes átadása előtt esedékes. A működtetés és a későbbi módosítások külön költséget jelentenek.</p></div> : null}
+                    {projectForm.commercialModel === "subscription" ? <div className="summary-payment-note"><span>01</span><p><strong>A brief beküldése még nem fizetés.</strong> Előbb elfogadod a szolgáltatási szerződést — ez indítja az építést, fizetés nélkül. Az első díjat csak akkor kell rendezni, amikor a kész oldalt jóváhagytad; utána élesítem.</p></div> : packagedWebsite ? <div className="summary-payment-note"><span>01</span><p><strong>Egyszeri vásárlás, saját tulajdon.</strong> Az ajánlat és a szerződés elfogadása után a vételár 50%-a előlegként indítja az építést. Ez a vételár része. A fennmaradó összeg jóváhagyás és élesítés után, a hozzáférések teljes átadása előtt esedékes. A működtetés és a későbbi módosítások külön költséget jelentenek.</p></div> : null}
                     <label className="brief-final-confirm"><input type="checkbox" checked={briefConfirmed} onChange={(event) => setBriefConfirmed(event.target.checked)} /><span><strong>Ellenőriztem az adatokat.</strong> Kifejezetten kérem az adatlap beküldését és a következő szerződéses lépés megnyitását.</span></label>
                   </div>
                 ) : null}

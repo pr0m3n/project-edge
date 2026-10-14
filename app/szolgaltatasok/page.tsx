@@ -172,7 +172,7 @@ export default function ServicesPage() {
 
         <p className="solutions-note">
           Havidíjnál az első díj a kész oldal jóváhagyása után esedékes, és nincs hűségidő.
-          Egyszeri vásárlásnál 10 000 Ft foglalóval indul a munka; az átadás a teljes díj rendezése után történik.
+          Egyszeri vásárlásnál a vételár 50%-a előlegként indítja a munkát; az átadás a teljes díj rendezése után történik.
         </p>
       </section>
 
