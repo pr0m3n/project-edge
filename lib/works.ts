@@ -62,6 +62,23 @@ export const WORKS: Work[] = [
     quote: { text: "Nagyon prémium oldal lett, teljesen le vagyok nyűgözve.", name: "Marci" }
   },
   {
+    id: "smart-accountancy",
+    name: "Smart Accountancy",
+    goal: "Árajánlatkérés online",
+    industry: "Könyvelőiroda · Sopron",
+    copy:
+      "Online könyvelőiroda Soprontól Szegedig. Egy havi határidő-menetrend mutatja meg, mi készül el és mikor, és minden szolgáltatás mellett ott az árajánlatkérés.",
+    href: "https://sakft.hu",
+    external: true,
+    src: "/work/refs/smart-accountancy.webp",
+    width: 1440,
+    height: 900,
+    fact: {
+      text: "Öt szolgáltatás mintadokumentumokkal, négylépéses ügymenet és árajánlatkérő űrlap.",
+      caption: "Élesben · sakft.hu"
+    }
+  },
+  {
     id: "zsongorko",
     name: "Zsongorkő Gyógyszertár",
     goal: "Recept-félretétel telefonon",
