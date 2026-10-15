@@ -164,7 +164,8 @@ async function sendAnniversaryEmails(
         link: "/ugyfelkapu/dashboard",
         linkLabel: "Ügyfélkapu megnyitása",
         details,
-        tags: ["Évforduló", "Menedzselt weboldal"]
+        tags: ["Évforduló", "Menedzselt weboldal"],
+        log: { projectId: project.id }
       });
     }
 
@@ -280,7 +281,8 @@ async function runReminders(request: Request) {
             { label: "Számlaszám", value: BANK_TRANSFER_DETAILS.accountNumber },
             { label: "Közlemény", value: reference }
           ],
-          tags: ["Fizetés", "Menedzselt weboldal"]
+          tags: ["Fizetés", "Menedzselt weboldal"],
+          log: { projectId: project.id as string }
         });
         if (!result.ok) errors.push(`${project.title}: ${result.error}`);
       } else {

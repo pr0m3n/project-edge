@@ -41,7 +41,7 @@ type Result = {
   projectTitle: string;
   email: string;
   invited: boolean;
-  silent: boolean;
+  contactMode: "portal" | "reports" | "silent";
   nextBillingAt: string;
 };
 
@@ -80,8 +80,15 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
   const [adminNotes, setAdminNotes] = useState("");
   const [sendInvite, setSendInvite] = useState(true);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
-  /** Csendes ügyfél: csak a nyilvántartásnak, semmilyen levél vagy értesítés nem megy neki. */
-  const [silent, setSilent] = useState(false);
+  /**
+   * Hogyan tartjuk a kapcsolatot:
+   *  · portal  — ügyfélkapu, rendszerlevelek (az eddigi működés),
+   *  · reports — ügyfélkapu nélkül, csak negyedéves állapotjelentés emailben,
+   *  · silent  — csak a saját nyilvántartásunk, semmi nem megy ki neki.
+   */
+  const [contactMode, setContactMode] = useState<"portal" | "reports" | "silent">("portal");
+  const [reportSalutation, setReportSalutation] = useState("");
+  const silent = contactMode !== "portal";
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -187,6 +194,8 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
           marketingOptIn: silent ? false : marketingOptIn,
           sendInvite: silent ? false : sendInvite,
           silent,
+          statusReports: contactMode === "reports",
+          reportSalutation: contactMode === "reports" ? reportSalutation.trim() || null : null,
           billing: {
             name: billingName || company || fullName,
             taxNumber,
@@ -205,7 +214,7 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
         projectTitle,
         email: email.trim().toLowerCase(),
         invited: Boolean(payload.invited),
-        silent,
+        contactMode,
         nextBillingAt: payload.schedule?.nextBillingAt ?? ""
       });
       onNotice(`${projectTitle} felvéve az ügyfelek közé.`);
@@ -223,7 +232,9 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
         <div className={styles.success}>
           <strong>„{result.projectTitle}” felvéve.</strong>
           <span>
-            {result.silent
+            {result.contactMode === "reports"
+              ? "Ügyfélkapu nélkül: most semmilyen levelet nem kapott. Csak a negyedéves állapotjelentést fogja kapni, és az elsőt te hagyod jóvá a Levelek oldalon."
+              : result.contactMode === "silent"
               ? "Csendes ügyfél: semmilyen levelet vagy értesítést nem kapott, és a rendszer később sem ír neki."
               : result.invited
               ? `Meghívó elment a(z) ${result.email} címre — ezzel tud jelszót állítani magának.`
@@ -448,16 +459,42 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
               <textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} placeholder="Miben állapodtatok meg, mi a helyzet vele. Ezt az ügyfél nem látja." />
             </label>
 
-            <label className={styles.checkRow}>
-              <input type="checkbox" checked={silent} onChange={(e) => setSilent(e.target.checked)} />
-              <div>
-                <strong>Csendes ügyfél — csak a saját nyilvántartásomba</strong>
-                <small>
-                  Nem kap meghívót, havi jelentést, fizetési emlékeztetőt, évfordulós levelet, automatikus
-                  számlát és ügyfélkapus értesítést sem. Az esedékességről és a késésről te kapsz jelzést.
-                </small>
-              </div>
-            </label>
+            <fieldset className={styles.modeGroup}>
+              <legend>Kapcsolattartás</legend>
+              <label className={styles.checkRow}>
+                <input type="radio" name="contactMode" checked={contactMode === "portal"} onChange={() => setContactMode("portal")} />
+                <div>
+                  <strong>Ügyfélkapuval</strong>
+                  <small>Belépést kap, és megkapja a rendszerleveleket (havi jelentés, fizetési emlékeztető, számla).</small>
+                </div>
+              </label>
+              <label className={styles.checkRow}>
+                <input type="radio" name="contactMode" checked={contactMode === "reports"} onChange={() => setContactMode("reports")} />
+                <div>
+                  <strong>Csak e-mailes állapotjelentés, ügyfélkapu nélkül</strong>
+                  <small>
+                    Negyedévente kap egy magázó, gomb nélküli levelet arról, hogy az oldala rendben működik, a valódi
+                    mérésekből. Ezen kívül semmit. Gyanús mérésnél és az első alkalommal te hagyod jóvá a Levelek oldalon.
+                  </small>
+                </div>
+              </label>
+              {contactMode === "reports" ? (
+                <label className={styles.field}>
+                  <span>Megszólítás a jelentésben</span>
+                  <input value={reportSalutation} onChange={(e) => setReportSalutation(e.target.value)} placeholder={fullName.trim() ? `Tisztelt ${fullName.trim()}!` : "pl. Tisztelt Doktornő!"} />
+                </label>
+              ) : null}
+              <label className={styles.checkRow}>
+                <input type="radio" name="contactMode" checked={contactMode === "silent"} onChange={() => setContactMode("silent")} />
+                <div>
+                  <strong>Csendes — csak a saját nyilvántartásomba</strong>
+                  <small>
+                    Semmit nem kap: meghívót, jelentést, emlékeztetőt, automatikus számlát, értesítést sem. Az
+                    esedékességről és a késésről te kapsz jelzést.
+                  </small>
+                </div>
+              </label>
+            </fieldset>
 
             <label className={styles.checkRow}>
               <input type="checkbox" checked={sendInvite && !silent} disabled={silent} onChange={(e) => setSendInvite(e.target.checked)} />

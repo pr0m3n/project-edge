@@ -79,7 +79,8 @@ export async function POST(request: Request) {
         { label: "Projekt", value: projectTitle },
         { label: "Státusz", value: "Előkészítés alatt" }
       ],
-      tags: ["Onboarding", "Follow-up", "Projektindítás"]
+      tags: ["Onboarding", "Follow-up", "Projektindítás"],
+      log: { projectId: project.id as string }
     });
 
     if (!emailResult.ok) {

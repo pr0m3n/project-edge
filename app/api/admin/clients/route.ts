@@ -71,6 +71,8 @@ type Payload = {
   marketingOptIn?: unknown;
   sendInvite?: unknown;
   silent?: unknown;
+  statusReports?: unknown;
+  reportSalutation?: unknown;
   billing?: {
     name?: unknown;
     taxNumber?: unknown;
@@ -136,7 +138,11 @@ export async function POST(request: Request) {
   const domain = cleanText(body.domain, 253);
   // Csendes ügyfél (048): se meghívó, se üdvözlő levél, se ügyfélkapus
   // értesítés, se marketing — a felület jelölőnégyzetétől függetlenül.
-  const silent = body.silent === true;
+  // „Csak e-mailes jelentés" (049): ügyfélkapu nélkül, a negyedéves
+  // állapotjelentésen kívül semmi — tehát egyben csendes is.
+  const statusReports = body.statusReports === true;
+  const silent = statusReports || body.silent === true;
+  const reportSalutation = statusReports ? cleanText(body.reportSalutation, 120) : null;
   const marketingOptIn = !silent && body.marketingOptIn === true;
   const sendInvite = !silent && body.sendInvite !== false;
 
@@ -281,6 +287,8 @@ export async function POST(request: Request) {
       purchase_option_price: purchaseOptionPrice(planKey),
       admin_notes: cleanText(body.adminNotes, 2_000),
       silent,
+      status_reports: statusReports,
+      report_salutation: reportSalutation,
       next_step: "A weboldal él és felügyelet alatt van."
     }).select("*").single();
     if (projectError) throw projectError;
@@ -375,7 +383,8 @@ export async function POST(request: Request) {
           }] : []),
           { label: "Következő esedékesség", value: new Date(schedule.nextBillingAt).toLocaleDateString("hu-HU") }
         ],
-        tags: ["Ügyfélkapu", "Menedzselt weboldal"]
+        tags: ["Ügyfélkapu", "Menedzselt weboldal"],
+        log: { projectId: project.id as string }
       });
     }
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { buildProjectEdgeEmailHtml, type EmailDetail, type ProjectEdgeEmailContent } from "@/lib/email-template";
+import { kindFromEyebrow, recordEmail } from "@/lib/email-log";
 
 export type { EmailDetail };
 
@@ -13,6 +14,8 @@ export type ProjectEdgeEmailInput = ProjectEdgeEmailContent & {
    * ott a stúdió címe a helyes válaszcím.
    */
   replyTo?: string;
+  /** A levélnapló (049) adatai. Projekt nélkül is naplózódik. */
+  log?: { projectId?: string | null; kind?: string };
 };
 
 export type ProjectEdgeEmailResult =
@@ -35,6 +38,53 @@ function isValidEmail(value: string) {
  * lehetett megnézni, hogy tényleg kiküldtük valakinek.
  */
 export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promise<ProjectEdgeEmailResult> {
+  const defaultReplyTo = process.env.RESEND_REPLY_TO || "info@projectedge.hu";
+  const { html, text, unsubscribeUrl } = buildProjectEdgeEmailHtml(input, {
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://www.projectedge.hu",
+    replyTo: defaultReplyTo
+  });
+
+  const result = await deliverEmail({
+    to: input.to,
+    subject: input.subject,
+    html,
+    text,
+    replyTo: input.replyTo,
+    // A `List-Unsubscribe-Post` nélkül a Gmail nem jeleníti meg a saját
+    // leiratkozó gombját — a két fejléc csak együtt ér valamit.
+    headers: unsubscribeUrl ? {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
+    } : undefined
+  });
+
+  await recordEmail({
+    projectId: input.log?.projectId ?? null,
+    kind: input.log?.kind ?? kindFromEyebrow(input.eyebrow),
+    to: input.to.trim().toLowerCase(),
+    subject: input.subject,
+    html,
+    text,
+    status: result.ok ? "sent" : "failed",
+    error: result.ok ? null : result.error,
+    providerId: result.ok ? result.id ?? null : null
+  });
+
+  return result;
+}
+
+/**
+ * A nyers küldés Resenden át, kész HTML-lel. A levélnaplót NEM írja — azt a
+ * hívó teszi, mert csak ő tudja, milyen levél ez és milyen adat áll mögötte.
+ */
+export async function deliverEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
+}): Promise<ProjectEdgeEmailResult> {
   const to = input.to.trim().toLowerCase();
   const apiKey = process.env.RESEND_API_KEY;
 
@@ -51,11 +101,7 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
      végső soron látogatói adat, egy törött cím pedig a Resend hívást bukná. */
   const overrideReplyTo = input.replyTo?.trim().toLowerCase();
   const replyTo = overrideReplyTo && isValidEmail(overrideReplyTo) ? overrideReplyTo : defaultReplyTo;
-
-  const { html, text, unsubscribeUrl } = buildProjectEdgeEmailHtml(input, {
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://www.projectedge.hu",
-    replyTo: defaultReplyTo
-  });
+  const { html, text } = input;
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -70,14 +116,7 @@ export async function sendProjectEdgeEmail(input: ProjectEdgeEmailInput): Promis
         reply_to: replyTo,
         subject: input.subject.slice(0, 200),
         html,
-        // A `List-Unsubscribe-Post` nélkül a Gmail nem jeleníti meg a saját
-        // leiratkozó gombját — a két fejléc csak együtt ér valamit.
-        ...(unsubscribeUrl ? {
-          headers: {
-            "List-Unsubscribe": `<${unsubscribeUrl}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
-          }
-        } : {}),
+        ...(input.headers ? { headers: input.headers } : {}),
         text
       })
     });

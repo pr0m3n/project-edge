@@ -13,6 +13,7 @@ import {
   IconClients,
   IconClose,
   IconLeads,
+  IconMail,
   IconLogout,
   IconMoney,
   IconMoon,
@@ -111,7 +112,7 @@ function Shell({ children }: { children: ReactNode }) {
     "/admin/erdeklodok": counts.freshLeads > 0
   };
 
-  const current = [...SECTIONS, { href: "/admin/beallitasok", label: "Beállítások", short: "Beállítások", icon: null }]
+  const current = [...SECTIONS, { href: "/admin/levelek", label: "Levelek", short: "Levelek", icon: null }, { href: "/admin/beallitasok", label: "Beállítások", short: "Beállítások", icon: null }]
     .find((section) => isActive(pathname, section.href));
 
   const liveLabel = admin.realtimeStatus === "live" ? "Élő kapcsolat" : admin.realtimeStatus === "connecting" ? "Kapcsolódás…" : "Nincs élő kapcsolat";
@@ -146,6 +147,16 @@ function Shell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="pa-sidebar-foot">
+            <Link
+              aria-current={isActive(pathname, "/admin/levelek") ? "page" : undefined}
+              className="pa-nav-item"
+              href="/admin/levelek"
+              title="Levelek"
+            >
+              <span className="pa-nav-icon"><IconMail /></span>
+              <span className="pa-nav-text">Levelek</span>
+              {admin.pendingEmails ? <Count tone="hot" value={admin.pendingEmails} /> : null}
+            </Link>
             <Link
               aria-current={isActive(pathname, "/admin/beallitasok") ? "page" : undefined}
               className="pa-nav-item"
@@ -278,6 +289,7 @@ function Shell({ children }: { children: ReactNode }) {
             <button aria-label="Bezárás" className="pa-icon-btn" onClick={() => setPanel(null)} type="button"><IconClose /></button>
           </header>
           <div className="pa-menu">
+            <Link href="/admin/levelek"><IconMail /> Levelek{admin.pendingEmails ? ` (${admin.pendingEmails} jóváhagyásra vár)` : ""}</Link>
             <Link href="/admin/beallitasok"><IconSettings /> Beállítások</Link>
             <button onClick={() => admin.setTheme(admin.theme === "light" ? "dark" : "light")} type="button">
               {admin.theme === "light" ? <IconMoon /> : <IconSun />}

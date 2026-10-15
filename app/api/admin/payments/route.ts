@@ -259,7 +259,8 @@ export async function POST(request: Request) {
             { label: "Fizetési mód", value: "Banki átutalás" },
             { label: "Következő esedékesség", value: periodEnd.toLocaleDateString("hu-HU") }
           ],
-          tags: ["Befizetés", "Menedzselt weboldal"]
+          tags: ["Befizetés", "Menedzselt weboldal"],
+          log: { projectId: project.id as string }
         });
       }
     }

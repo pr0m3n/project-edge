@@ -291,3 +291,22 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* 049: kapcsolattartási mód (ügyfélkapu / csak jelentés / csendes) */
+.modeGroup {
+  border: 1px solid var(--adm-ink-06, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+  padding: 10px 14px 14px;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.modeGroup legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--adm-ink-58, rgba(255, 255, 255, 0.58));
+}

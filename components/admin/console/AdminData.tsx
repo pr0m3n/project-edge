@@ -161,6 +161,8 @@ function useAdminDataState() {
   const [websitePurchases, setWebsitePurchases] = useState<WebsitePurchase[]>([]);
   const [websitePurchaseBusyId, setWebsitePurchaseBusyId] = useState<string | null>(null);
   const [billingoIssues, setBillingoIssues] = useState<BillingoIssue[]>([]);
+  /** 049: jóváhagyásra váró levelek (pl. állapotjelentés gyanús méréssel). */
+  const [pendingEmails, setPendingEmails] = useState(0);
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
   const [billingoRetryId, setBillingoRetryId] = useState<string | null>(null);
   const [briefDrafts, setBriefDrafts] = useState<BriefDraftRow[]>([]);
@@ -248,7 +250,8 @@ function useAdminDataState() {
       { data: websitePurchaseData },
       { data: billingoData },
       { data: pendingPaymentData },
-      { data: briefDraftData, error: briefDraftError }
+      { data: briefDraftData, error: briefDraftError },
+      { count: pendingEmailCount }
     ] = await Promise.all([
       supabase.from("quote_requests").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("support_tickets").select("*").order("last_message_at", { ascending: false, nullsFirst: false }).limit(300),
@@ -274,7 +277,8 @@ function useAdminDataState() {
         .select("*")
         .is("submitted_at", null)
         .order("updated_at", { ascending: false })
-        .returns<BriefDraftRow[]>()
+        .returns<BriefDraftRow[]>(),
+      supabase.from("email_log").select("id", { count: "exact", head: true }).eq("status", "pending_approval")
     ]);
 
     if (leadError || ticketError) {
@@ -319,6 +323,7 @@ function useAdminDataState() {
     setBillingoIssues((billingoData ?? []) as BillingoIssue[]);
     setPendingPayments(pendingPaymentData ?? []);
     setBriefDrafts(briefDraftError ? [] : briefDraftData ?? []);
+    setPendingEmails(pendingEmailCount ?? 0);
     setLoading(false);
   }, []);
 
@@ -1188,6 +1193,7 @@ function useAdminDataState() {
     briefDrafts,
     notifications,
     unreadNotifications,
+    pendingEmails,
     adminUsers,
     usersLoading,
     usersError,

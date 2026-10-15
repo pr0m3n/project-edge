@@ -256,7 +256,8 @@ async function runMonthlyReport(request: Request) {
         link: "/ugyfelkapu/dashboard",
         linkLabel: "Megnyitás az ügyfélkapun",
         details,
-        tags: ["Havi jelentés", "Menedzselt weboldal", "ProjectEdge"]
+        tags: ["Havi jelentés", "Menedzselt weboldal", "ProjectEdge"],
+        log: { projectId: project.id as string }
       });
 
       if (result.ok) {

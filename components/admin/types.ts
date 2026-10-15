@@ -162,6 +162,10 @@ export type ClientProject = {
   origin?: string | null;
   /** 048: csendes ügyfél — semmilyen levél vagy értesítés nem megy neki. */
   silent?: boolean | null;
+  /** 049: negyedéves állapotjelentés emailben, ügyfélkapu nélkül. */
+  status_reports?: boolean | null;
+  status_report_autosend?: boolean | null;
+  report_salutation?: string | null;
   billing_interval?: "month" | "year" | null;
   /** A számlázási ciklus hónapban (1, 6, 12…) — ez a mérvadó, nem az intervallum. */
   billing_period_months?: number | null;
