@@ -41,6 +41,7 @@ type Result = {
   projectTitle: string;
   email: string;
   invited: boolean;
+  silent: boolean;
   nextBillingAt: string;
 };
 
@@ -79,6 +80,8 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
   const [adminNotes, setAdminNotes] = useState("");
   const [sendInvite, setSendInvite] = useState(true);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  /** Csendes ügyfél: csak a nyilvántartásnak, semmilyen levél vagy értesítés nem megy neki. */
+  const [silent, setSilent] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -181,8 +184,9 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
           domain,
           liveUrl,
           adminNotes,
-          marketingOptIn,
-          sendInvite,
+          marketingOptIn: silent ? false : marketingOptIn,
+          sendInvite: silent ? false : sendInvite,
+          silent,
           billing: {
             name: billingName || company || fullName,
             taxNumber,
@@ -201,6 +205,7 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
         projectTitle,
         email: email.trim().toLowerCase(),
         invited: Boolean(payload.invited),
+        silent,
         nextBillingAt: payload.schedule?.nextBillingAt ?? ""
       });
       onNotice(`${projectTitle} felvéve az ügyfelek közé.`);
@@ -218,7 +223,9 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
         <div className={styles.success}>
           <strong>„{result.projectTitle}” felvéve.</strong>
           <span>
-            {result.invited
+            {result.silent
+              ? "Csendes ügyfél: semmilyen levelet vagy értesítést nem kapott, és a rendszer később sem ír neki."
+              : result.invited
               ? `Meghívó elment a(z) ${result.email} címre — ezzel tud jelszót állítani magának.`
               : `A fiók létrejött a(z) ${result.email} címhez, de meghívót MÉG NEM küldtünk. Amíg nem küldesz, nem tud belépni.`}
           </span>
@@ -442,7 +449,18 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
             </label>
 
             <label className={styles.checkRow}>
-              <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)} />
+              <input type="checkbox" checked={silent} onChange={(e) => setSilent(e.target.checked)} />
+              <div>
+                <strong>Csendes ügyfél — csak a saját nyilvántartásomba</strong>
+                <small>
+                  Nem kap meghívót, havi jelentést, fizetési emlékeztetőt, évfordulós levelet, automatikus
+                  számlát és ügyfélkapus értesítést sem. Az esedékességről és a késésről te kapsz jelzést.
+                </small>
+              </div>
+            </label>
+
+            <label className={styles.checkRow}>
+              <input type="checkbox" checked={sendInvite && !silent} disabled={silent} onChange={(e) => setSendInvite(e.target.checked)} />
               <div>
                 <strong>Meghívó küldése most</strong>
                 <small>Kap egy levelet, amivel jelszót állít magának. Enélkül a fiók létrejön, de belépni nem tud.</small>
@@ -450,7 +468,7 @@ export function AddClientPanel({ onCreated, onClose, onNotice }: Props) {
             </label>
 
             <label className={styles.checkRow}>
-              <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
+              <input type="checkbox" checked={marketingOptIn && !silent} disabled={silent} onChange={(e) => setMarketingOptIn(e.target.checked)} />
               <div>
                 <strong>Hozzájárult a hírlevélhez</strong>
                 <small>

@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
   try {
     const { data: project, error: projectError } = await db.from("client_projects")
-      .select("id,user_id,title,contact_email,commercial_model,subscription_plan,monthly_price,billing_amount,billing_interval,billing_period_months,next_billing_at,prepaid_until")
+      .select("id,user_id,title,contact_email,commercial_model,subscription_plan,monthly_price,billing_amount,billing_interval,billing_period_months,next_billing_at,prepaid_until,silent")
       .eq("id", projectId).maybeSingle();
     if (projectError) throw projectError;
     if (!project) return bad("A projekt nem található.", 404);
@@ -199,9 +199,14 @@ export async function POST(request: Request) {
     }
 
     // ── Számla ───────────────────────────────────────────────────────────
-    let invoice: { ok: boolean; message: string } = { ok: false, message: "Számlázás kihagyva." };
+    // Csendes ügyfél (048): a Billingo a kész számlát emailben elküldi neki,
+    // ezért automatikus számla sem készül — azt kézzel kell kiállítani.
+    const silent = project.silent === true;
+    let invoice: { ok: boolean; message: string } = silent
+      ? { ok: false, message: "Csendes ügyfél: automatikus számla nem készült, állítsd ki kézzel." }
+      : { ok: false, message: "Számlázás kihagyva." };
 
-    if (issueInvoice) {
+    if (issueInvoice && !silent) {
       const party = await billingPartyForUser(project.user_id as string);
       const missing = party ? missingBillingFields(party) : ["minden"];
 
@@ -233,7 +238,7 @@ export async function POST(request: Request) {
     }
 
     // ── Értesítés ────────────────────────────────────────────────────────
-    if (notifyClient) {
+    if (notifyClient && !silent) {
       await db.from("notifications").insert({
         user_id: project.user_id,
         title: "Megérkezett a befizetésed",

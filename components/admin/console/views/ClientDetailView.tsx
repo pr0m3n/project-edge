@@ -89,6 +89,7 @@ export function ClientDetailView() {
             <ProjectStatusBadge project={project} />
             <Badge>{project.commercial_model === "subscription" ? "Havidíjas" : "Egyszeri"}</Badge>
             {project.commercial_model === "subscription" && project.status === "launched" ? <HealthBadge status={project.site_health_status} /> : null}
+            {project.silent ? <Badge tone="warn">Csendes ügyfél</Badge> : null}
           </div>
           <div className="pa-client-meta">
             <span>{project.contact_name || "Ügyfél"}</span>
@@ -292,6 +293,19 @@ function OverviewTab({ project }: { project: ClientProject }) {
             ) : (
               <div><span>Fizetés</span><strong>{PAYMENT_STATUS_LABEL[project.payment_status] ?? project.payment_status}</strong></div>
             )}
+            <div>
+              <span>Levelek, értesítések</span>
+              <strong>
+                <label className="pa-inline" style={{ gap: 8, cursor: "pointer" }}>
+                  <input
+                    checked={Boolean(project.silent)}
+                    onChange={(event) => void admin.actions.updateClientProject(project.id, { silent: event.target.checked })}
+                    type="checkbox"
+                  />
+                  {project.silent ? "Csendes — semmi nem megy ki neki" : "Normál — megkapja a rendszerleveleket"}
+                </label>
+              </strong>
+            </div>
             {project.last_modified_at ? <div><span>Utoljára módosította</span><strong>{project.last_modified_by_name || "Felhasználó"} · {relativeTime(project.last_modified_at, admin.nowMs)}</strong></div> : null}
           </div>
           {project.next_step ? (

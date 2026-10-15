@@ -88,6 +88,20 @@ export async function POST(request: Request) {
     const isAdmin = Boolean(adminRow);
 
     const targetUserId: string | null = typeof userId === "string" && userId ? userId : null;
+
+    // Csendes ügyfélnek (048) se levél, se ügyfélkapus értesítés nem megy —
+    // akármelyik admin művelet hívta. Itt egy helyen, nem gombonként.
+    if (targetUserId) {
+      const { data: silentProject } = await supabase
+        .from("client_projects")
+        .select("id")
+        .eq("user_id", targetUserId)
+        .eq("silent", true)
+        .limit(1)
+        .maybeSingle();
+      if (silentProject) return NextResponse.json({ success: true, silenced: true });
+    }
+
     let targetEmail: string | null = null;
 
     if (!targetUserId) {

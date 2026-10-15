@@ -99,7 +99,9 @@ async function runMonthlyReport(request: Request) {
       .from("client_projects")
       .select("id,title,user_id,contact_email,subscription_plan,subscription_status,monthly_price,managed_domain_name,live_url,ssl_expires_at,domain_expires_at,psi_performance,psi_accessibility,psi_seo,psi_checked_at,next_billing_at,billing_interval,payment_method,subscription_started_at,prepaid_until")
       .eq("commercial_model", "subscription")
-      .eq("subscription_status", "active");
+      .eq("subscription_status", "active")
+      // Csendes ügyfél (048) nem kap havi jelentést.
+      .eq("silent", false);
 
     if (projectsError) throw projectsError;
 

@@ -90,6 +90,7 @@ async function sendAnniversaryEmails(
     .select("id,title,user_id,contact_email,subscription_started_at,subscription_plan,anniversary_email_sent_at")
     .eq("commercial_model", "subscription")
     .eq("subscription_status", "active")
+    .eq("silent", false)
     .not("subscription_started_at", "is", null)
     .returns<AnniversaryProject[]>();
 
@@ -223,7 +224,7 @@ async function runReminders(request: Request) {
 
       const { data: project } = await admin
         .from("client_projects")
-        .select("id,title,user_id,contact_email,subscription_status,billing_interval")
+        .select("id,title,user_id,contact_email,subscription_status,billing_interval,silent")
         .eq("id", payment.project_id)
         .maybeSingle();
       if (!project) continue;
@@ -251,7 +252,20 @@ async function runReminders(request: Request) {
               message: `Szia!\n\nA(z) „${project.title}" weboldalad ${dueLabel}-n esedékes díja még nem érkezett meg. A weboldalad természetesen működik — ez csak egy jelzés, hátha elkerülte a figyelmedet.\n\nHa bármi közbejött, vagy máskor lenne kényelmesebb fizetned, írj vissza erre a levélre, és megbeszéljük.`
             };
 
-      if (email) {
+      // Csendes ügyfél (048): neki semmi nem megy ki, de a fokozat lép, és
+      // az admin kap jelzést — a pénzt ilyenkor kézzel kell beszedni.
+      const silent = project.silent === true;
+
+      if (silent) {
+        if (stage === STAGE.DUE) {
+          await admin.from("notifications").insert({
+            user_id: null,
+            title: `Esedékes (csendes ügyfél): ${project.title}`,
+            message: `${amount} ma esedékes (közlemény: ${reference}). Az ügyfél csendes, a rendszer NEM szólt neki — ha kell, keresd meg te.`,
+            link: "/admin/dashboard"
+          });
+        }
+      } else if (email) {
         const result = await sendProjectEdgeEmail({
           to: email,
           subject: copy.subject,
@@ -273,7 +287,7 @@ async function runReminders(request: Request) {
         errors.push(`${project.title}: nincs email cím, csak értesítés ment.`);
       }
 
-      await admin.from("notifications").insert({
+      if (!silent) await admin.from("notifications").insert({
         user_id: project.user_id,
         title: copy.title,
         message: `${amount} · esedékesség: ${dueLabel} · közlemény: ${reference}`,
@@ -296,7 +310,7 @@ async function runReminders(request: Request) {
         await admin.from("notifications").insert({
           user_id: null,
           title: `Elmaradt befizetés: ${project.title}`,
-          message: `${amount} nem érkezett meg (esedékesség: ${dueLabel}, közlemény: ${reference}). Az ügyfél megkapta a jelzést. Érdemes felhívni.`,
+          message: `${amount} nem érkezett meg (esedékesség: ${dueLabel}, közlemény: ${reference}). ${silent ? "Az ügyfél csendes, nem kapott jelzést." : "Az ügyfél megkapta a jelzést."} Érdemes felhívni.`,
           link: "/admin/dashboard"
         });
 

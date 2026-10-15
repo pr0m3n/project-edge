@@ -38,12 +38,16 @@ export async function POST(request: Request) {
 
     const { data: project, error: projectError } = await admin
       .from("client_projects")
-      .select("id, title, user_id, status, client_decision_note, created_at")
+      .select("id, title, user_id, status, client_decision_note, created_at, silent")
       .eq("id", projectId)
       .single();
 
     if (projectError || !project || !project.user_id) {
       return NextResponse.json({ error: "A projekt nem található vagy nem tartozik felhasználóhoz." }, { status: 404 });
+    }
+
+    if (project.silent) {
+      return NextResponse.json({ error: "Csendes ügyfél: neki nem megy ki emlékeztető." }, { status: 409 });
     }
 
     // Ügyfél profil lekérdezése

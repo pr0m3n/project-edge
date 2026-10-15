@@ -70,6 +70,7 @@ type Payload = {
   adminNotes?: unknown;
   marketingOptIn?: unknown;
   sendInvite?: unknown;
+  silent?: unknown;
   billing?: {
     name?: unknown;
     taxNumber?: unknown;
@@ -133,8 +134,11 @@ export async function POST(request: Request) {
   const recordPayment = body.recordPayment !== false;
   const liveUrl = normalizeUrl(body.liveUrl);
   const domain = cleanText(body.domain, 253);
-  const marketingOptIn = body.marketingOptIn === true;
-  const sendInvite = body.sendInvite !== false;
+  // Csendes ügyfél (048): se meghívó, se üdvözlő levél, se ügyfélkapus
+  // értesítés, se marketing — a felület jelölőnégyzetétől függetlenül.
+  const silent = body.silent === true;
+  const marketingOptIn = !silent && body.marketingOptIn === true;
+  const sendInvite = !silent && body.sendInvite !== false;
 
   // Hány ciklust fizetett ki egyben. Van, aki két évet utal át, és van, aki
   // három hónapot — a rendszer korábban mindkettőt egyetlen ciklusnak vette,
@@ -276,6 +280,7 @@ export async function POST(request: Request) {
       // havidíjak fele) ennél az ügyfélnél is működjön az első naptól.
       purchase_option_price: purchaseOptionPrice(planKey),
       admin_notes: cleanText(body.adminNotes, 2_000),
+      silent,
       next_step: "A weboldal él és felügyelet alatt van."
     }).select("*").single();
     if (projectError) throw projectError;
@@ -330,7 +335,7 @@ export async function POST(request: Request) {
     if (paymentsError) throw paymentsError;
 
     // ── 6. Értesítés az ügyfélnek ────────────────────────────────────────
-    await db.from("notifications").insert({
+    if (!silent) await db.from("notifications").insert({
       user_id: account.id,
       title: "Az ügyfélkapud elkészült",
       message: `A(z) „${projectTitle}" weboldalad adatai, a fizetési előzményed és a módosítási kereted innentől itt érhető el.`,

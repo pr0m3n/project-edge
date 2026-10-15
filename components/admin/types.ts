@@ -160,6 +160,8 @@ export type ClientProject = {
   last_health_check_at: string | null;
   /** 038: kézi felvétel és számlázási ciklus. Régi sorokon hiányzik. */
   origin?: string | null;
+  /** 048: csendes ügyfél — semmilyen levél vagy értesítés nem megy neki. */
+  silent?: boolean | null;
   billing_interval?: "month" | "year" | null;
   /** A számlázási ciklus hónapban (1, 6, 12…) — ez a mérvadó, nem az intervallum. */
   billing_period_months?: number | null;
