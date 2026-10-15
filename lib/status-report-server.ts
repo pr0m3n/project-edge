@@ -76,14 +76,19 @@ export async function prepareStatusReport(
   const window = measuredWindow(period, monitoredSince, now);
   const siteUrl = project.live_url || project.website || null;
 
-  const [{ data: summaryRows }, { data: lastCheck }, { count: sentBefore }] = await Promise.all([
+  const [{ data: summaryRows }, { data: lastCheck }, { count: sentBefore }, { data: dailyRows }] = await Promise.all([
     db.rpc("site_uptime_summary", {
       target_project: project.id,
       period_start: window.from.toISOString(),
       period_end: window.to.toISOString()
     }),
     db.from("site_checks").select("checked_at").eq("project_id", project.id).order("checked_at", { ascending: false }).limit(1).maybeSingle(),
-    db.from("email_log").select("id", { count: "exact", head: true }).eq("project_id", project.id).eq("kind", "status_report").eq("status", "sent")
+    db.from("email_log").select("id", { count: "exact", head: true }).eq("project_id", project.id).eq("kind", "status_report").eq("status", "sent"),
+    db.rpc("site_daily_uptime", {
+      target_project: project.id,
+      period_start: window.from.toISOString(),
+      period_end: window.to.toISOString()
+    })
   ]);
 
   const summary = (Array.isArray(summaryRows) ? summaryRows[0] : summaryRows) as UptimeSummary | null;
@@ -111,6 +116,9 @@ export async function prepareStatusReport(
     period,
     monitoredSince,
     uptime,
+    daily: Array.isArray(dailyRows)
+      ? (dailyRows as Array<{ day: string; checks: number; failures: number }>).map((row) => ({ day: String(row.day).slice(0, 10), checks: Number(row.checks), failures: Number(row.failures) }))
+      : [],
     lastCheckAt: date((lastCheck as { checked_at?: string } | null)?.checked_at),
     liveCheck,
     sslExpiresAt: date(project.ssl_expires_at),
@@ -138,6 +146,7 @@ export function reportData(prepared: PreparedReport) {
     monitoredSince: i.monitoredSince?.toISOString() ?? null,
     siteUrl: i.siteUrl,
     uptime: i.uptime,
+    daily: i.daily,
     lastCheckAt: i.lastCheckAt?.toISOString() ?? null,
     liveCheck: i.liveCheck,
     sslExpiresAt: i.sslExpiresAt?.toISOString() ?? null,

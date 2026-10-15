@@ -28,6 +28,9 @@ export type UptimeSummary = {
   last_failure_at: string | null;
 };
 
+/** Egy budapesti naptári nap mérései (`site_daily_uptime`, 050). */
+export type DailyUptime = { day: string; checks: number; failures: number };
+
 export type LiveCheck = { ok: boolean; responseMs: number | null; error: string | null };
 
 export type ReportInputs = {
@@ -39,6 +42,8 @@ export type ReportInputs = {
   /** Mióta méri a monitor az oldalt (a felvétel napja). */
   monitoredSince: Date | null;
   uptime: UptimeSummary | null;
+  /** Napi bontás a sávhoz. Üres tömb, ha nincs adat. */
+  daily: DailyUptime[];
   lastCheckAt: Date | null;
   liveCheck: LiveCheck | null;
   sslExpiresAt: Date | null;
@@ -179,6 +184,24 @@ export function formatSeconds(ms: number) {
 
 export function formatCount(value: number) {
   return value.toLocaleString("hu-HU");
+}
+
+/** A negyedév napjai (ÉÉÉÉ-HH-NN), a sáv cellái ebből épülnek. */
+export function periodDays(period: ReportPeriod) {
+  const days: string[] = [];
+  for (let t = period.start.getTime(); t < period.end.getTime(); t += DAY) {
+    days.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+export type DayState = "ok" | "partial" | "down" | "none";
+
+/** Egy nap színe: nincs mérés / rendben / volt fennakadás / többnyire elérhetetlen. */
+export function dayState(entry: DailyUptime | undefined): DayState {
+  if (!entry || entry.checks === 0) return "none";
+  if (entry.failures === 0) return "ok";
+  return entry.failures * 2 >= entry.checks ? "down" : "partial";
 }
 
 export function defaultSalutation(contactName: string | null | undefined) {

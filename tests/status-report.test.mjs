@@ -40,6 +40,7 @@ function inputs(overrides = {}) {
     period,
     monitoredSince: new Date("2026-10-01T00:00:00Z"),
     uptime: { checks: 2200, failures: 0, uptime_percent: 100, avg_response_ms: 310, last_failure_at: null },
+    daily: [],
     lastCheckAt: new Date("2027-01-02T07:00:00Z"),
     liveCheck: { ok: true, responseMs: 280, error: null },
     sslExpiresAt: new Date("2027-03-01T00:00:00Z"),
@@ -103,7 +104,7 @@ test("hiányos mérés, leállt monitor, élőben nem válaszoló oldal: mind me
 test("a levél magázó, gomb és ügyfélkapu nélküli, és a valódi számokat írja", () => {
   const email = buildStatusReportEmail(inputs(), sender);
   assert.match(email.html, /Tisztelt Doktornő!/);
-  assert.match(email.html, /2\s?200 ellenőrzésből mindegyik alkalommal elérhető volt/);
+  assert.match(email.html, /minden óránkénti ellenőrzéskor elérhető volt, összesen 2\s?200 alkalommal/);
   assert.match(email.html, /0,31 másodperc/);
   assert.match(email.subject, /2026\. október–december/);
   assert.doesNotMatch(email.html, /Szia|ügyfélkapu|ugyfelkapu|href="https?:\/\/[^"]*projectedge\.hu\/ugyfelkapu/i);
@@ -113,7 +114,27 @@ test("a levél magázó, gomb és ügyfélkapu nélküli, és a valódi számoka
 test("a fennakadást nem szépíti el", () => {
   const email = buildStatusReportEmail(inputs({ uptime: { checks: 2200, failures: 3, uptime_percent: 99.86, avg_response_ms: 300, last_failure_at: null } }), sender);
   assert.match(email.html, /3 alkalommal rövid fennakadást mértem/);
-  assert.doesNotMatch(email.html, /Kifogástalanul/);
+  assert.doesNotMatch(email.html, /Minden ellenőrzéskor elérhető volt/);
+});
+
+test("mérés nélkül a levél nem állítja, hogy az oldal rendben működött", () => {
+  const email = buildStatusReportEmail(inputs({ uptime: { checks: 0, failures: 0, uptime_percent: null, avg_response_ms: null, last_failure_at: null } }), sender);
+  assert.doesNotMatch(email.html, /Minden ellenőrzéskor elérhető volt|elérhető volt, összesen/);
+  assert.match(email.html, /Az első mérések folyamatban/);
+});
+
+test("a napi sáv a negyedév minden napjára egy cellát rajzol, a fennakadásos napot másik színnel", async () => {
+  const { periodDays, dayState } = await import("../lib/status-report.ts");
+  const days = periodDays(period);
+  assert.equal(days.length, 92);
+  assert.equal(dayState(undefined), "none");
+  assert.equal(dayState({ day: days[0], checks: 24, failures: 0 }), "ok");
+  assert.equal(dayState({ day: days[0], checks: 24, failures: 2 }), "partial");
+  assert.equal(dayState({ day: days[0], checks: 24, failures: 20 }), "down");
+  const daily = days.map((day) => ({ day, checks: 24, failures: day === "2026-11-03" ? 2 : 0 }));
+  const html = buildStatusReportEmail(inputs({ daily }), sender).html;
+  assert.equal((html.match(/height:34px;background:#34b37a/g) ?? []).length, 91);
+  assert.equal((html.match(/height:34px;background:#f0a63a/g) ?? []).length, 1);
 });
 
 test("a megszólítás nem injektálhat HTML-t", () => {
