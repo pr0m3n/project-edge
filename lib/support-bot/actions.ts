@@ -92,10 +92,10 @@ const PAGE_ACTIONS: BotAction[] = [
   },
   {
     id: "projekt-inditas",
-    label: "Projekt indítása",
+    label: "Ingyenes látványterv kérése",
     href: "/#projektbrief",
     anchor: "projektbrief",
-    hint: "A projekt-adatlap (brief). Ha el akar indulni, megrendelne, vagy azt kérdezi, hogyan kezdhet bele."
+    hint: "Az ingyenes látványterv-kérő űrlap (név, e-mail, weboldal vagy a vállalkozás leírása). Ha el akar indulni, megrendelne, árat kér egy konkrét oldalra, vagy azt kérdezi, hogyan kezdhet bele."
   },
   {
     id: "audit",

@@ -13,7 +13,9 @@ const links = [
   { href: "/folyamat", label: "Folyamat" },
   { href: "/munkak", label: "Munkák" },
   { href: "/blog", label: "Blog" },
-  { href: "/ugyfelkapu", label: "Ügyfélkapu" }
+  // Csak a meglévő ügyfeleknek: érdeklődőt nem ide küldünk (a fő ajánlat a
+  // látványterv-kérés), ezért a menüben is belépésként szerepel.
+  { href: "/ugyfelkapu", label: "Belépés" }
 ];
 
 export function SiteNav() {

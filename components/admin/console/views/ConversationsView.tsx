@@ -102,7 +102,7 @@ export function ConversationsView() {
                 </div>
                 <p>{item.snippet || item.subtitle}</p>
                 <div className="pa-row-top">
-                  <Badge tone={item.source === "ai" ? "ai" : item.source === "gyorssav" ? "accent" : "neutral"}>{SOURCE_LABEL[item.source]}</Badge>
+                  <Badge tone={item.source === "ai" ? "ai" : item.source === "gyorssav" || item.source === "latvanyterv" ? "accent" : "neutral"}>{SOURCE_LABEL[item.source]}</Badge>
                   <ConversationStatusBadge conversation={item} />
                 </div>
               </Link>
@@ -214,7 +214,7 @@ function Thread({ conversation }: { conversation: Conversation }) {
             {conversation.kind === "portal" && conversation.subtitle ? ` · ${conversation.subtitle}` : ""}
           </p>
           <div className="pa-row-top" style={{ marginTop: 6 }}>
-            <Badge tone={conversation.source === "ai" ? "ai" : conversation.source === "gyorssav" ? "accent" : "neutral"}>{SOURCE_LABEL[conversation.source]}</Badge>
+            <Badge tone={conversation.source === "ai" ? "ai" : conversation.source === "gyorssav" || conversation.source === "latvanyterv" ? "accent" : "neutral"}>{SOURCE_LABEL[conversation.source]}</Badge>
             <ConversationStatusBadge conversation={conversation} />
             {project ? <Link className="pa-link" href={`/admin/ugyfelek/${project.id}`}>{project.title} →</Link> : null}
           </div>

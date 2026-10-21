@@ -4,23 +4,27 @@ import { useEffect, useRef, useState } from "react";
 import { PublicBriefWizard } from "@/components/PublicBriefWizard";
 import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { BriefQuickLane } from "@/components/BriefQuickLane";
+import { MockupRequestForm } from "@/components/MockupRequestForm";
 import { PUBLIC_BRIEF_DRAFT_KEY, type BriefFormValues } from "@/lib/brief-draft";
 import { type CommercialModel, SUBSCRIPTION_PLANS } from "@/lib/subscriptions";
 import { trackEvent } from "@/lib/analytics";
 
 /**
- * A főoldal egyetlen sötét szakasza: egy kérdés, és onnan indul a brief.
+ * A főoldal egyetlen sötét szakasza: az ingyenes látványterv kérése.
  *
- * Miért van erre szükség: a látogatók 95%-a a főoldalra érkezik, és átlagosan
- * 32 másodpercet tölt itt. A brief korábban a 13 szekcióból az 5. volt — tízből
- * nyolcan el sem görgettek odáig. Ez a szakasz a „Ezt kapod" lista után ül,
- * egyetlen, tényszerű kérdéssel, amit bárki meg tud válaszolni gondolkodás
- * nélkül. A válasz után a brief a MEGNYOMOTT GOMBBÓL nő ki, és a válasz már
- * be van jelölve benne. A heróból a `#projektbrief` link egy koppintással
- * idehoz, tehát a gyors út nem veszett el a lejjebb kerüléssel.
+ * Korábban itt egy kétkártyás kapu („Új oldalt indítok / Meglévőt újítanék
+ * fel”) nyitotta az ötlépéses briefet. A mérés szerint a brief szinte senkinek
+ * nem kellett, a hideg leveleknél viszont a díjmentes látványterv-ajánlatra
+ * sorra jöttek az igenek. Ezért a szakasz most ezt az egy kérést teszi fel
+ * (`MockupRequestForm`), mellette marad a gyors sáv annak, aki csak kérdezne.
+ *
+ * A brief NEM tűnt el: a korábban kiküldött `?brief=<id>~<token>` linkek még
+ * ide érkeznek, és a félbehagyott adatlapot ugyanúgy visszatöltik (lásd lent).
+ * A `#projektbrief` horgony is marad, mert az árkártyák és a chat gombjai erre
+ * mutatnak.
  */
 
-const GATE_TEXTS = ["Új weboldalt indítasz, vagy a meglévőt újítanád fel?", "Kezdjük ott, ahol most tartasz."];
+const GATE_TEXTS = ["Kérd az ingyenes látványtervet.", "Megmutatom, milyen lehetne az oldalad."];
 
 /* A szakadás-sávok helye és vastagsága. Dekoráció, `aria-hidden`. */
 const TEARS = [
@@ -136,8 +140,8 @@ export function BriefStage() {
     };
   }, []);
 
-  /* Az árkártyáról érkező látogató csomagját megőrizzük, de az alapadatokat
-     neki is az első lépésen kérjük be. */
+  /* Az árkártyáról érkező látogató csomagját az űrlap egy címkében mutatja,
+     és a kéréssel együtt elküldi — de nem nyit külön adatlapot. */
   useEffect(() => {
     function pickUp(event?: Event) {
       const detail = (event as CustomEvent<{ plan: string; model: CommercialModel }> | undefined)?.detail;
@@ -154,19 +158,11 @@ export function BriefStage() {
       if (!SUBSCRIPTION_PLANS.some((plan) => plan.key === stored)) return;
       setPreselectedModel(model === "purchase" ? "purchase" : "subscription");
       setPreselectedPlan(stored);
-      setChoice((current) => current ?? "no");
     }
     pickUp();
     window.addEventListener("projectedge:plan-preselected", pickUp);
     return () => window.removeEventListener("projectedge:plan-preselected", pickUp);
   }, []);
-
-  function choose(event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>, value: GateChoice) {
-    cardRect.current = event.currentTarget.getBoundingClientRect();
-    morphed.current = false;
-    trackEvent("brief_gate_answered", { answer: value === "yes" ? "existing" : "new" });
-    setChoice(value);
-  }
 
   /* ── Vissza a kapuhoz ────────────────────────────────────────────
         A brief eddig egyirányú utca volt: aki elindította, nem tudott
@@ -227,7 +223,7 @@ export function BriefStage() {
       { duration: 460, easing: "cubic-bezier(.2,.9,.3,1)", fill: "both" }
     );
 
-    const stagger = [...gate.querySelectorAll<HTMLElement>(".brief-gate-choice"), gate.querySelector<HTMLElement>(".quick-lane")];
+    const stagger = [...gate.querySelectorAll<HTMLElement>(".letter-sheet"), gate.querySelector<HTMLElement>(".quick-lane")];
     stagger.forEach((node, index) => {
       node?.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], {
         duration: 380,
@@ -344,29 +340,12 @@ export function BriefStage() {
                 {GATE_TEXTS[textIndex]}
               </span>
             </h2>
-            <p className="brief-gate-sub">Nincs regisztráció, nincs telefonálás. Válassz, és innentől együtt rakjuk össze.</p>
-            <div className="brief-gate-choices">
-              <button className="brief-gate-choice" onClick={(event) => choose(event, "no")} type="button">
-                <strong>Új weboldalt indítok</strong>
-                <p>Még nincs oldalam, vagy a mostanit teljesen lecserélném.</p>
-                <span className="brief-gate-cta">
-                  Ezt választom
-                  <span aria-hidden="true" className="brief-gate-arrow">
-                    →
-                  </span>
-                </span>
-              </button>
-              <button className="brief-gate-choice" onClick={(event) => choose(event, "yes")} type="button">
-                <strong>Meglévőt újítanék fel</strong>
-                <p>Van már oldalam és domainem, de nem hozza, amit kéne.</p>
-                <span className="brief-gate-cta">
-                  Ezt választom
-                  <span aria-hidden="true" className="brief-gate-arrow">
-                    →
-                  </span>
-                </span>
-              </button>
-            </div>
+            <p className="brief-gate-sub">Írj pár sort, és megrajzolom, hogyan nézne ki az új oldalad. Regisztráció és kötelezettség nélkül.</p>
+            <MockupRequestForm
+              model={preselectedModel}
+              onClearPlan={() => setPreselectedPlan(null)}
+              plan={preselectedPlan}
+            />
             {/* A gyors sáv csak a kapu mellett él: ha a látogató már elindította
                 a briefet, ott a befejezés a dolga, nem egy második kijárat. */}
             <BriefQuickLane />

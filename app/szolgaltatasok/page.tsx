@@ -1,8 +1,8 @@
 import type { ReactElement } from "react";
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
-import { TransitionLink } from "@/components/TransitionLink";
 import { PriceEstimator } from "@/components/PriceEstimator";
+import { BriefStage } from "@/components/BriefStage";
 import { BuildTower } from "@/components/BuildTower";
 import { SolutionBranches, type Branch } from "@/components/SolutionBranches";
 import { StackRow } from "@/components/StackRow";
@@ -211,12 +211,10 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <section className="cta-band">
-        <h2>Kezdjük egy rövid adatlappal.</h2>
-        <TransitionLink className="button primary" href="/ugyfelkapu">
-          Projektet indítok
-        </TransitionLink>
-      </section>
+      {/* Az árkártyák „Ezt választom” gombjai a #projektbrief horgonyra mutatnak,
+          ezért a kérő itt is az oldalon van — korábban a gomb a semmibe vitt,
+          a záró sáv pedig fiókot kért az ügyfélkapuban. */}
+      <BriefStage />
     </main>
   );
 }

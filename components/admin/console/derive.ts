@@ -194,8 +194,8 @@ export type Conversation = {
   subtitle: string;
   email: string | null;
   status: string;
-  /** Honnan jött: AI-chat, gyors sáv, widget vagy ügyfélkapu. */
-  source: "ai" | "gyorssav" | "widget" | "portal";
+  /** Honnan jött: AI-chat, gyors sáv, látványterv-kérés, widget vagy ügyfélkapu. */
+  source: "ai" | "gyorssav" | "latvanyterv" | "widget" | "portal";
   viaBot: boolean;
   handoffReason: string | null;
   /** Válaszra vár (nyitott). Ez számít a „megválaszolatlan" számlálóba. */
@@ -212,6 +212,7 @@ export type Conversation = {
 export const SOURCE_LABEL: Record<Conversation["source"], string> = {
   ai: "AI-chat",
   gyorssav: "Gyors sáv",
+  latvanyterv: "Látványterv",
   widget: "Widget",
   portal: "Ügyfélkapu"
 };
@@ -231,7 +232,8 @@ export function buildConversations(input: {
     const viaBot = ticket.status === "bot" || Boolean(ticket.handoff_reason) || messages.some((m) => m.sender === "bot");
     const firstQuestion = messages.find((m) => m.sender === "customer")?.body || ticket.message || "";
     const last = messages[messages.length - 1];
-    const source: Conversation["source"] = ticket.source === "gyorssav" ? "gyorssav" : viaBot ? "ai" : "widget";
+    const source: Conversation["source"] =
+      ticket.source === "gyorssav" ? "gyorssav" : ticket.source === "latvanyterv" ? "latvanyterv" : viaBot ? "ai" : "widget";
     return {
       id: ticket.id,
       kind: "public",
@@ -501,7 +503,7 @@ export function buildTodayItems(input: TodayInput): TodayItem[] {
     list.push({
       id: `conv-${conversation.id}`,
       priority: 2,
-      category: conversation.kind === "portal" ? "Ügyfélüzenet" : conversation.source === "ai" ? "Átadott AI-chat" : "Üzenet",
+      category: conversation.kind === "portal" ? "Ügyfélüzenet" : conversation.source === "ai" ? "Átadott AI-chat" : conversation.source === "latvanyterv" ? "Látványterv-kérés" : "Üzenet",
       title: conversation.title,
       detail: conversation.snippet || conversation.subtitle,
       since: conversation.lastActivity,

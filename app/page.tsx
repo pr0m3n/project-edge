@@ -8,7 +8,6 @@ import { PosterHero, PosterHeroFollow } from "@/components/PosterHero";
 import { PriceEstimator } from "@/components/PriceEstimator";
 import { BriefStage } from "@/components/BriefStage";
 import { WorkDeck } from "@/components/WorkDeck";
-import { AuditRequestSection } from "@/components/AuditRequestSection";
 import { PhoneLink } from "@/components/PhoneLink";
 import { ContactButton } from "@/components/ContactButton";
 import { STUDIO_PHONE_LABEL } from "@/lib/contact";
@@ -34,10 +33,10 @@ const paths = [
     copy: "Rövid egyeztetések, látható haladás, nincs felesleges kör. Mindig tudod, épp min dolgozom."
   },
   {
-    href: "/ugyfelkapu",
-    eyebrow: "03 / Indítás",
-    title: "Indíts projektet saját ügyfél dashboardból.",
-    copy: "Belépés után ticketet nyithatsz, projektet indíthatsz, és később visszanézed az összes előzményt."
+    href: "/munkak",
+    eyebrow: "03 / Munkák",
+    title: "Nézd meg, mit készítettem eddig.",
+    copy: "Élő ügyféloldalak és bemutatók, mindegyik megnyitható. Ugyanígy készül a te látványterved is."
   }
 ];
 
@@ -65,6 +64,12 @@ export default function Home() {
       {/* A sötét nyitórészt közvetlenül a referenciák követik. */}
       <PosterHeroFollow>
       <WorkDeck />
+
+      {/* A látványterv-kérés közvetlenül a munkák után: előbb a bizonyíték,
+          aztán a kérés. Korábban az árak UTÁN állt, ~6–7 képernyőnyi görgetés
+          mélyén, ahová a látogatók többsége el sem jutott. Az árkártyák
+          „Ezt választom” gombjai ide (#projektbrief) görgetnek vissza. */}
+      <BriefStage />
       <section className="proof-marquee" aria-label="ProjectEdge előnyök">
         <div className="proof-track">
           {[...proof, ...proof].map((item, index) => (
@@ -88,9 +93,6 @@ export default function Home() {
             ugyanezt mondja el, két azonos „Árak" fejléc egymás alatt volt. */}
         <PriceEstimator showLead={false} />
       </section>
-
-      {/* Az árak megismerése után következik a projektindítás. */}
-      <BriefStage />
 
       <section className="founder-section">
         <div className="founder-card">
@@ -164,9 +166,9 @@ export default function Home() {
           <p className="micro-label">Ügyfélkapu & Egyeztetés</p>
           <h2>Nem kötelező telefonálnod.</h2>
           <p className="nc-copy">
-            Az ügyfélkapun elindítod a projektet, követed a haladást, fizetsz és kérdezel — amikor
-            neked kényelmes. A teljes folyamat zökkenőmentesen végigvihető írásban, kötelező értekezletek
-            nélkül, de ha telefonon vagy online megbeszélésen egyeztetnél, természetesen állok rendelkezésedre.
+            A látványtervet e-mailben kapod, a munka indulása után pedig az ügyfélkapuban követed a
+            haladást, fizetsz és kérdezel — amikor neked kényelmes. A teljes folyamat végigvihető írásban,
+            kötelező értekezletek nélkül, de ha telefonon vagy online egyeztetnél, természetesen állok rendelkezésedre.
           </p>
           {/* Korábban „Indítás az ügyfélkapun" volt, ami regisztrációra vitt —
               a mérés szerint aki odáig jutott, egyikük sem regisztrált. Az
@@ -203,7 +205,10 @@ export default function Home() {
         </div>
       </section>
 
-      <AuditRequestSection />
+      {/* Az ingyenes gyorselemzés innen kikerült: a főoldalnak egy ajánlata
+          van, a látványterv (fent, `BriefStage`). Két ingyenes ajánlat egymás
+          alatt egymással versenyzett. Az elemzés a saját landing oldalán
+          (/ingyenes-weboldal-audit) megmaradt. */}
 
       {/* Kivezető linkek szándékosan a lap végén: a funnel közepén elvitték
           a fizetett forgalmat az árak és a brief elől. */}

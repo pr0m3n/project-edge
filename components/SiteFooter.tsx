@@ -8,7 +8,7 @@ const navLinks = [
   { href: "/folyamat", label: "Folyamat" },
   { href: "/munkak", label: "Munkák" },
   { href: "/blog", label: "Blog" },
-  { href: "/ugyfelkapu", label: "Ügyfélkapu" }
+  { href: "/ugyfelkapu", label: "Ügyfél belépés" }
 ];
 
 const legalLinks = [

@@ -29,6 +29,7 @@ import {
 } from "@/lib/subscriptions";
 import { CommercialModelPicker } from "@/components/CommercialModelPicker";
 import { trackEvent } from "@/lib/analytics";
+import { WORKS } from "@/lib/works";
 import { huArticle } from "@/lib/hu";
 import { PRICING_MODEL_EVENT, PRICING_MODEL_REQUEST_KEY } from "@/lib/pricing-model-request";
 
@@ -58,6 +59,41 @@ function preselectPlan(key: SubscriptionPlanKey, model: CommercialModel = "subsc
     /* A választás az eseménnyel tárolás nélkül is átadható. */
   }
   window.dispatchEvent(new CustomEvent("projectedge:plan-preselected", { detail: { plan: key, model } }));
+}
+
+/**
+ * Csomagonként egy valódi, élő munka, hogy a látogató lássa, mit kap az árért
+ * (a fablemotion is így csinálja: minden ár mellett ott a minta). Csak hasonló
+ * TERJEDELMŰ munka: nem állítjuk, hogy az ügyfél ezt a csomagot vette.
+ */
+const PLAN_EXAMPLE: Record<SubscriptionPlanKey, string> = {
+  presence: "zsongorko",
+  business: "fablemotion",
+  custom: "leadscope"
+};
+
+function PlanExample({ plan }: { plan: SubscriptionPlanKey }) {
+  const work = WORKS.find((item) => item.id === PLAN_EXAMPLE[plan]);
+  if (!work) return null;
+  const domain = work.href.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+  return (
+    <a
+      className="plan-example"
+      href={work.href}
+      onClick={() => trackEvent("plan_example_opened", { plan, work: work.id })}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <span className="plan-example-thumb">
+        <img alt="" height={work.height} loading="lazy" src={work.src} width={work.width} />
+      </span>
+      <span className="plan-example-text">
+        <small>Hasonló terjedelemben készült</small>
+        <strong>{work.name}</strong>
+        <em>{domain} ↗</em>
+      </span>
+    </a>
+  );
 }
 
 export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
@@ -126,6 +162,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
                 <div className="plan-price"><strong>{formatHuf(PURCHASE_OPTION_PRICES[plan.key])}</strong><span>egyszeri díj</span></div>
                 <ul>{websitePurchaseFeatures(plan).map((feature) => <li key={feature}>{feature}</li>)}</ul>
                 <div className="plan-meta"><span>Saját tulajdon</span><span>Nincs előfizetés</span></div>
+                <PlanExample plan={plan.key} />
                 <a className="button primary" href="#projektbrief" onClick={() => preselectPlan(plan.key, "purchase")}>Ezt megvásárolom</a>
               </article>
             ))}
@@ -250,6 +287,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
                     a mérés szerint öten eljutottak idáig, és egyikük sem regisztrált.
                     A regisztráció ott legyen kötelező, ahol van mit védeni (szerződés,
                     fizetés) — nem ott, ahol valaki még csak érdeklődik. */}
+                <PlanExample plan={plan.key} />
                 <a className="button primary" href="#projektbrief" onClick={() => preselectPlan(plan.key)}>Ezt választom</a>
               </article>
             ))}
@@ -305,7 +343,7 @@ export function PriceEstimator({ showLead = true }: PriceEstimatorProps) {
           <section className="plan-detail-panel" id="csomag-reszletek">
             <header><div><span>RÉSZLETES CSOMAGTARTALOM</span><h3>{activePlan.name}</h3><p>{activePlan.idealFor}</p></div><div><strong>{formatHuf(annual ? termEffectiveMonthly(activePlan.price, billingTerm("annual")) : activePlan.price)}<small>/hó</small></strong><span>{annual ? `${formatHuf(termTotal(activePlan.price, billingTerm("annual")))} / év` : activePlan.buildTime}</span></div></header>
             <div>{activePlan.detailGroups.map((group, index) => <article key={group.title}><span>0{index + 1}</span><h4>{group.title}</h4><ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div>
-            <footer><p><strong>A brief is ehhez igazodik.</strong> Csak {huArticle(activePlan.name)} {activePlan.name} csomagban elérhető oldalakra, funkciókra és induló anyagokra kérdezünk rá.</p><a className="button primary" href="#projektbrief" onClick={() => preselectPlan(activePlan.key)}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</a></footer>
+            <footer><p><strong>A látványterv is ehhez igazodik.</strong> {huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomag terjedelmében tervezem meg, ingyen és kötelezettség nélkül.</p><a className="button primary" href="#projektbrief" onClick={() => preselectPlan(activePlan.key)}>{huArticle(activePlan.name) === "az" ? "Az" : "A"} {activePlan.name} csomagot választom</a></footer>
           </section>
           </MobileFold>
           <div className="subscription-footnotes">

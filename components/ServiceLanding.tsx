@@ -1,6 +1,6 @@
 import { JsonLd } from "@/components/JsonLd";
 import { PriceEstimator } from "@/components/PriceEstimator";
-import { PublicBriefWizard } from "@/components/PublicBriefWizard";
+import { BriefStage } from "@/components/BriefStage";
 import { WorkDeck } from "@/components/WorkDeck";
 import { SiteNav } from "@/components/SiteNav";
 
@@ -61,10 +61,10 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
           már ugyanazt mondja el, két azonos árfejléc volt egymás alatt. */}
       <section className="landing-pricing"><div className="section-head"><p className="micro-label dark">Átlátható konstrukció</p><h2>Havidíjjal vagy egyszeri vásárlással.</h2><p>Havidíjnál a működtetést is én intézem. Egyszeri vásárlásnál a kész oldalt a forráskóddal és a hozzáférésekkel együtt átadom neked.</p></div><PriceEstimator showLead={false} /></section>
 
-      {/* A brief korábban a főoldal /#projektbrief horgonyára dobta a látogatót:
-          a fizetett forgalom pont a kitöltés előtt hagyta el a landinget. Itt
-          helyben kitölthető, a záró CTA is ugyanerre a szekcióra mutat. */}
-      <PublicBriefWizard />
+      {/* Helyben kérhető, ugyanaz a látványterv-kérő, mint a főoldalon: a
+          fizetett forgalom ne hagyja el a landinget a kitöltés előtt. Az
+          árkártyák és a záró CTA is ide (#projektbrief) mutatnak. */}
+      <BriefStage />
 
       <section className="voices-section">
         <div className="section-head">
@@ -127,7 +127,7 @@ export function ServiceLanding({ content }: { content: ServiceLandingContent }) 
         <div className="faq-list">{content.faq.map(([question, answer]) => <details className="faq-item" key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
       </section>
 
-      <section className="cta-band"><h2>Írd le, mire van szükséged — kötelező értekezletek nélkül, gyorsan elindulunk.</h2><a className="button primary" href="#projektbrief">Projektbrief indítása</a></section>
+      <section className="cta-band"><h2>Nézd meg, milyen lehetne az oldalad, mielőtt bármit eldöntesz.</h2><a className="button primary" href="#projektbrief">Ingyenes látványtervet kérek</a></section>
     </main>
   );
 }

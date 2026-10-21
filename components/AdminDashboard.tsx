@@ -3185,7 +3185,7 @@ export function AdminDashboard() {
                               külön címkét kap, hogy a listában ne mosódjon
                               össze a lebegő chatből jövő kérdésekkel. */}
                           <span style={{ whiteSpace: "nowrap", ...(t.source === "gyorssav" ? { color: "#FF8A65", fontWeight: 800 } : t.viaBot ? { color: "var(--adm-accent-text)", fontWeight: 800 } : {}) }}>
-                            {t.type === "public" ? (t.source === "gyorssav" ? "Gyors sáv" : t.viaBot ? "AI-chat" : "Widget") : "Kapu"}
+                            {t.type === "public" ? (t.source === "gyorssav" ? "Gyors sáv" : t.source === "latvanyterv" ? "Látványterv" : t.viaBot ? "AI-chat" : "Widget") : "Kapu"}
                           </span>
                         </div>
                         <p className="admin-ticket-item-snippet">{t.snippet || t.subtitle}</p>
