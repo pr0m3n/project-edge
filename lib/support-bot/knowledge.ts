@@ -79,6 +79,8 @@ ${PRICE_TAX_NOTE}
 - Meglévő oldal felújítása: a régi tartalmat áthozom, és havidíjjal vagy egyszeri vásárlással épül újra.
 - Mástól származó, meglévő oldal gondozása (frissítés, mentés, mérés, apró javítások, havi riport): havi 15 000 – 35 000 Ft. Ez NEM a weboldal-bérlés; ott a gondozás már benne van a havidíjban.
 - Egyedi rendszer (belépés, adatbázis, jogosultságkezelés, ügyfélkapu, webapp): nem bérelhető, egyedi fejlesztés saját ajánlattal — ezt Patrik egyezteti.
+- Ingyenes látványterv — ez az első lépés: a főoldal űrlapján kérhető (név, e-mail, a mostani weboldal címe vagy pár szó a vállalkozásról), regisztráció és kötelezettség nélkül. 24 órán belül PDF-ben érkezik, hogyan nézne ki a főoldal számítógépen és telefonon. Ha a látogató már választott csomagot az árazóban („Ezt választom"), a látványterv annak a csomagnak a terjedelmében készül.
+- Egyből ajánlat látványterv nélkül: ugyanazon az űrlapon a „Látványterv nélkül, egyből indulnék" kapcsolóval — csomaggal vagy anélkül. Ilyenkor 24 órán belül ajánlat érkezik e-mailben.
 - Ingyenes weboldal-audit: a projectedge.hu/ingyenes-weboldal-audit oldalon kérhető, 24 órán belül 3 pontos, emberi elemzést küldök emailben (sebesség, mobilos használhatóság, konverzió). Díjmentes, nincs elköteleződés.
 
 ## Csomagok és árak
@@ -109,7 +111,7 @@ ${bullet(CHANGE_QUOTA_FREE)}
 ${CHANGE_LEAD_REALITY}
 
 ## A folyamat
-0. Ingyenes látványterv: a főoldal űrlapján (név, e-mail, a mostani weboldal címe vagy pár szó a vállalkozásról) kérhető, regisztráció és kötelezettség nélkül. 24 órán belül PDF-ben érkezik: hogyan nézne ki a főoldal telefonon és számítógépen.
+0. Ingyenes látványterv a főoldal űrlapján (lásd fent), 24 órán belül PDF-ben. Aki nem kér látványtervet, ugyanott egyből ajánlatot kérhet.
 1. Csomagválasztás és adatlap az ügyfélkapun, ha tetszik az irány — Patrik küldi el a linket.
 2. Digitális szerződés az ügyfélkapun — ez indítja az építést, fizetés nélkül.
 3. Egyedi építés mobilra tervezve; az ügyfélkapun végig látszik, hol tart.
@@ -125,7 +127,7 @@ Induláskor hasznos, ha megvan (de nem kötelező, később pótolható): vágyo
 - projectedge.hu/folyamat — a közös munka lépései
 - projectedge.hu/munkak — referenciák és bemutató projektek
 - projectedge.hu/ingyenes-weboldal-audit — ingyenes elemzés a meglévő oldalról
-- projectedge.hu/ugyfelkapu — belépés, projekt indítása, meglévő ügyfeleknek a kérések
+- projectedge.hu/ugyfelkapu — belépés meglévő ügyfeleknek (kérések, számlák, a projekt állása); új érdeklődő a látványterv-kérővel indul
 - projectedge.hu/aszf és projectedge.hu/adatkezeles — jogi dokumentumok
 
 ## Gyakori kérdések a főoldalról
