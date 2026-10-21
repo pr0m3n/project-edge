@@ -31,6 +31,8 @@ export type BotAction = {
   anchor?: string;
   /** Az árazó melyik nézetre álljon, mielőtt odagörgetünk. */
   pricingModel?: "subscription" | "purchase";
+  /** A látványterv-kérő levél egyből ajánlatkérésre kapcsoljon. */
+  mockupDirect?: boolean;
   /**
    * Új lapon nyílik: a demók (ott a chat el van rejtve) és az élő
    * ügyféloldalak (más domain). Így a beszélgetés itt megmarad.
@@ -95,7 +97,15 @@ const PAGE_ACTIONS: BotAction[] = [
     label: "Ingyenes látványterv kérése",
     href: "/#projektbrief",
     anchor: "projektbrief",
-    hint: "Az ingyenes látványterv-kérő űrlap (név, e-mail, weboldal vagy a vállalkozás leírása). Ha el akar indulni, megrendelne, árat kér egy konkrét oldalra, vagy azt kérdezi, hogyan kezdhet bele."
+    hint: "Az ingyenes látványterv-kérő űrlap (név, e-mail, weboldal vagy a vállalkozás leírása). Ha el akar indulni, kíváncsi, milyen lenne az oldala, vagy azt kérdezi, hogyan kezdhet bele. Ha azt mondja, hogy NEM kér látványtervet, ne ezt, hanem az „egybol-ajanlat\"-ot add."
+  },
+  {
+    id: "egybol-ajanlat",
+    label: "Egyből ajánlatot kérek",
+    href: "/#projektbrief",
+    anchor: "projektbrief",
+    mockupDirect: true,
+    hint: "Ugyanaz a kérő levél, de látványterv nélkül, ajánlatkérésre átkapcsolva. Ha nem kér látványtervet, csak árajánlatot szeretne, vagy már döntött és egyből indulna."
   },
   {
     id: "audit",

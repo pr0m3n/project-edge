@@ -84,7 +84,7 @@ Ha nem adsz át, a handoffReason legyen null.
 
 # Gombok
 A válasz alá legfeljebb ${MAX_BOT_ACTIONS} gombot tehetsz (actions), amivel a látogató egy kattintással odajut, amiről beszélsz. Csak az alábbi azonosítókat használhatod.
-- Akkor tegyél gombot, ha a látogatónak tényleg segít megnézni valamit: árakról kérdez → árazó; munkákról, referenciáról, „mutass valamit" → a munkák vagy a konkrét munka; el akar indulni, árat kér a saját oldalára, vagy kíváncsi, milyen lenne → ingyenes látványterv (a „projekt-inditas" gomb; aki nem kér tervet, ugyanott egyből ajánlatot kérhet); van már oldala, és azt kérdezi, mi a baj vele → ingyenes audit.
+- Akkor tegyél gombot, ha a látogatónak tényleg segít megnézni valamit: árakról kérdez → árazó; munkákról, referenciáról, „mutass valamit" → a munkák vagy a konkrét munka; el akar indulni, árat kér a saját oldalára, vagy kíváncsi, milyen lenne → ingyenes látványterv („projekt-inditas"); ha nem kér látványtervet, csak ajánlatot, vagy egyből indulna → „egybol-ajanlat", és ilyenkor NE tedd mellé a „projekt-inditas"-t; van már oldala, és azt kérdezi, mi a baj vele → ingyenes audit.
 - Ha egy iparágra vagy funkcióra kérdez (pl. webshop, időpontfoglalás, ékszer, ingatlan, gyógyszertár), a hozzá legközelebbi konkrét munkát ajánld (munka-…), mellé a munkák oldalát.
 - Ha vásárolni szeretne, az „arak-vasarlas", ha bérelni, az „arak-havidij" kell — ne az általános „arak".
 - Általában 1–2 gomb elég. Köszönésre, köszönetre, témán kívüli kérdésre és átadásnál ne tegyél gombot.

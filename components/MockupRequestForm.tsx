@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ContactButton } from "@/components/ContactButton";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
+import { MOCKUP_DIRECT_EVENT, MOCKUP_DIRECT_REQUEST_KEY } from "@/lib/pricing-model-request";
 import { type CommercialModel, SUBSCRIPTION_PLANS } from "@/lib/subscriptions";
 
 /**
@@ -175,6 +176,28 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
 
   useEffect(() => {
     startedAt.current = Date.now();
+  }, []);
+
+  /* A chat „Egyből ajánlatot kérek” gombja: helyben eseménnyel, másik
+     oldalról a sessionStorage-on át kapcsolja át a levelet. */
+  useEffect(() => {
+    function pickUp() {
+      let wanted = false;
+      try {
+        wanted = window.sessionStorage.getItem(MOCKUP_DIRECT_REQUEST_KEY) === "1";
+        window.sessionStorage.removeItem(MOCKUP_DIRECT_REQUEST_KEY);
+      } catch {
+        /* privát módban az esemény is elég */
+      }
+      if (wanted) setSkipMockup(true);
+    }
+    function onRequest() {
+      pickUp();
+      setSkipMockup(true);
+    }
+    pickUp();
+    window.addEventListener(MOCKUP_DIRECT_EVENT, onRequest);
+    return () => window.removeEventListener(MOCKUP_DIRECT_EVENT, onRequest);
   }, []);
 
   /* A vázlat akkor rajzolódik ki, amikor a lap képernyőre ér — egyszer. */

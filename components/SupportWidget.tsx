@@ -3,7 +3,7 @@
 import { FormEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { trackEvent, trackLeadConversion } from "@/lib/analytics";
-import { PRICING_MODEL_EVENT, PRICING_MODEL_REQUEST_KEY } from "@/lib/pricing-model-request";
+import { MOCKUP_DIRECT_EVENT, MOCKUP_DIRECT_REQUEST_KEY, PRICING_MODEL_EVENT, PRICING_MODEL_REQUEST_KEY } from "@/lib/pricing-model-request";
 import { type BotAction, botActionById, sanitizeBotActions } from "@/lib/support-bot/actions";
 
 type ChatMessage = {
@@ -1114,6 +1114,14 @@ export function SupportWidget() {
       } catch {
         /* helyben az esemény is elég */
       }
+    }
+    if (action.mockupDirect) {
+      try {
+        window.sessionStorage.setItem(MOCKUP_DIRECT_REQUEST_KEY, "1");
+      } catch {
+        /* helyben az esemény is elég */
+      }
+      window.dispatchEvent(new CustomEvent(MOCKUP_DIRECT_EVENT));
     }
     if (window.matchMedia("(max-width: 640px)").matches) {
       setOpen(false);
