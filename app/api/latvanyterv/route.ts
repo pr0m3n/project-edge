@@ -151,8 +151,8 @@ export async function POST(request: Request) {
       to: email,
       subject: `Megkaptam az ajánlatkérésedet (${plan.name} csomag)`,
       eyebrow: "PROJECTEDGE · AJÁNLATKÉRÉS",
-      preheader: `Szia ${firstName}! Egy munkanapon belül küldöm az ajánlatot.`,
-      message: `Szia ${firstName}!\n\nKöszönöm, megkaptam az ajánlatkérésedet a(z) ${plan.name} csomagra (${model}). Egy munkanapon belül válaszolok a pontos ajánlattal és a következő lépéssel.\n\nHa van logód, fotód vagy szöveged, a lenti gombbal már most elküldheted.`,
+      preheader: `Szia ${firstName}! 24 órán belül küldöm az ajánlatot.`,
+      message: `Szia ${firstName}!\n\nKöszönöm, megkaptam az ajánlatkérésedet a(z) ${plan.name} csomagra (${model}). 24 órán belül válaszolok a pontos ajánlattal és a következő lépéssel.\n\nHa van logód, fotód vagy szöveged, a lenti gombbal már most elküldheted.`,
       link: supportResumePath(ticket.id, ticket.visitor_token),
       linkLabel: "Beszélgetés megnyitása",
       details: [
@@ -168,15 +168,15 @@ export async function POST(request: Request) {
     to: email,
     subject: "Megkaptam a látványterv-kérésedet",
     eyebrow: "PROJECTEDGE · INGYENES LÁTVÁNYTERV",
-    preheader: `Szia ${firstName}! Néhány munkanapon belül küldöm a látványtervet.`,
+    preheader: `Szia ${firstName}! 24 órán belül küldöm a látványtervet.`,
     message: hasSite
-      ? `Szia ${firstName}!\n\nKöszönöm, megkaptam a kérésedet. Átnézem a(z) ${website} oldalt, és néhány munkanapon belül elküldöm erre a címre a látványtervet PDF-ben: hogyan nézne ki az új főoldalad telefonon és számítógépen.\n\nHa közben eszedbe jut valami, amit mindenképp látnál benne (fotók, egy oldal, ami tetszik), írd meg a lenti gombbal.`
-      : `Szia ${firstName}!\n\nKöszönöm, megkaptam a kérésedet. Néhány munkanapon belül elküldöm erre a címre a látványtervet PDF-ben: hogyan nézne ki a vállalkozásod főoldala telefonon és számítógépen.\n\nHa van logód, fotód vagy egy oldal, ami tetszik, a lenti gombbal elküldheted, és beleteszem a tervbe.`,
+      ? `Szia ${firstName}!\n\nKöszönöm, megkaptam a kérésedet. Átnézem a(z) ${website} oldalt, és 24 órán belül elküldöm erre a címre a látványtervet PDF-ben: hogyan nézne ki az új főoldalad telefonon és számítógépen.\n\nHa közben eszedbe jut valami, amit mindenképp látnál benne (fotók, egy oldal, ami tetszik), írd meg a lenti gombbal.`
+      : `Szia ${firstName}!\n\nKöszönöm, megkaptam a kérésedet. 24 órán belül elküldöm erre a címre a látványtervet PDF-ben: hogyan nézne ki a vállalkozásod főoldala telefonon és számítógépen.\n\nHa van logód, fotód vagy egy oldal, ami tetszik, a lenti gombbal elküldheted, és beleteszem a tervbe.`,
     link: supportResumePath(ticket.id, ticket.visitor_token),
     linkLabel: "Beszélgetés megnyitása",
     details: [
       hasSite ? { label: "Weboldal", value: website } : { label: "Vállalkozás", value: business },
-      { label: "Várható válasz", value: "néhány munkanapon belül" }
+      { label: "Várható válasz", value: "24 órán belül" }
     ],
     tags: ["Látványterv", "ProjectEdge"]
   });

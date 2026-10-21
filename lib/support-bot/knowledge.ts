@@ -109,7 +109,7 @@ ${bullet(CHANGE_QUOTA_FREE)}
 ${CHANGE_LEAD_REALITY}
 
 ## A folyamat
-0. Ingyenes látványterv: a főoldal űrlapján (név, e-mail, a mostani weboldal címe vagy pár szó a vállalkozásról) kérhető, regisztráció és kötelezettség nélkül. Néhány munkanapon belül PDF-ben érkezik: hogyan nézne ki a főoldal telefonon és számítógépen.
+0. Ingyenes látványterv: a főoldal űrlapján (név, e-mail, a mostani weboldal címe vagy pár szó a vállalkozásról) kérhető, regisztráció és kötelezettség nélkül. 24 órán belül PDF-ben érkezik: hogyan nézne ki a főoldal telefonon és számítógépen.
 1. Csomagválasztás és adatlap az ügyfélkapun, ha tetszik az irány — Patrik küldi el a linket.
 2. Digitális szerződés az ügyfélkapun — ez indítja az építést, fizetés nélkül.
 3. Egyedi építés mobilra tervezve; az ügyfélkapun végig látszik, hol tart.

@@ -243,8 +243,8 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
               <p className="letter-hello">Szia{firstName ? ` ${firstName}` : ""}!</p>
               <p className="letter-body">
                 {direct
-                  ? <>Megkaptam. Egy munkanapon belül küldöm az ajánlatot a(z) {planName} csomagra, ide: <strong>{email}</strong>.</>
-                  : <>Megkaptam. Néhány munkanap, és küldöm a kész látványtervet PDF-ben, ide: <strong>{email}</strong>.</>}
+                  ? <>Megkaptam. 24 órán belül küldöm az ajánlatot a(z) {planName} csomagra, ide: <strong>{email}</strong>.</>
+                  : <>Megkaptam. 24 órán belül küldöm a kész látványtervet PDF-ben, ide: <strong>{email}</strong>.</>}
               </p>
               <p className="letter-body small">Ha közben eszedbe jut valami — egy fotó, egy oldal, ami tetszik —, a visszaigazoló levélre válaszolva elküldheted.</p>
               <p className="letter-sign">Patrik</p>
@@ -321,7 +321,7 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
                   </svg>
                 </button>
                 <p className="letter-fine">
-                  {direct ? "Egy munkanapon belül válaszolok." : "Néhány munkanapon belül, PDF-ben. Ingyenes, és nem kötelez semmire."}
+                  {direct ? "24 órán belül válaszolok." : "24 órán belül, PDF-ben. Ingyenes, és nem kötelez semmire."}
                 </p>
               </div>
             </form>
