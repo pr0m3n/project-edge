@@ -198,7 +198,8 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
   }, []);
 
   const planName = SUBSCRIPTION_PLANS.find((item) => item.key === plan)?.name ?? null;
-  const direct = Boolean(planName) && skipMockup;
+  /* Látványterv nélkül, egyből ajánlat — csomagválasztással vagy anélkül. */
+  const direct = skipMockup;
   const title = (hasSite ? domainOf(website) : business.trim()) || "A te vállalkozásod";
   const titleSize = Math.max(15, Math.min(30, (30 * 15) / Math.max(15, title.length)));
   const firstName = name.trim().split(/\s+/).slice(-1)[0] || "";
@@ -237,13 +238,17 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
     <div className={`letter-sheet${drawn ? " is-drawn" : ""}${sent ? " is-sent" : ""}`} ref={sheetRef}>
       <span aria-hidden="true" className="letter-sheet-under" />
       <div className="letter-paper">
+        <span aria-hidden="true" className={`letter-stamp${direct ? " is-off" : ""}`}>
+          <b>Ingyenes</b>
+          <i>24 órán<br />belül</i>
+        </span>
         <div className="letter-col">
           {sent ? (
             <div className="letter-reply" role="status">
               <p className="letter-hello">Szia{firstName ? ` ${firstName}` : ""}!</p>
               <p className="letter-body">
                 {direct
-                  ? <>Megkaptam. 24 órán belül küldöm az ajánlatot a(z) {planName} csomagra, ide: <strong>{email}</strong>.</>
+                  ? <>Megkaptam. 24 órán belül küldöm az ajánlatot{planName ? <> a(z) {planName} csomagra</> : null}, ide: <strong>{email}</strong>.</>
                   : <>Megkaptam. 24 órán belül küldöm a kész látványtervet PDF-ben, ide: <strong>{email}</strong>.</>}
               </p>
               <p className="letter-body small">Ha közben eszedbe jut valami — egy fotó, egy oldal, ami tetszik —, a visszaigazoló levélre válaszolva elküldheted.</p>
@@ -261,18 +266,29 @@ export function MockupRequestForm({ plan, model, onClearPlan }: Props) {
                   <>
                     , és a(z){" "}
                     <Blank autoComplete="url" disabled={loading} inputMode="url" label="A weboldalad címe" min={12} onChange={setWebsite} placeholder="vallalkozasom.hu" value={website} />{" "}
-                    oldalamhoz kérnék {direct ? "egy ajánlatot" : "egy ingyenes látványtervet"}.{" "}
+                    oldalamhoz kérnék {direct ? "egy árajánlatot, és indulnék" : "egy ingyenes látványtervet"}.{" "}
                     <button className="letter-switch" onClick={() => setHasSite(false)} type="button">Még nincs weboldalam</button>
                   </>
                 ) : (
                   <>
                     , ezzel foglalkozom:{" "}
                     <Blank disabled={loading} label="Mivel foglalkozol, és hol?" min={14} onChange={setBusiness} placeholder="fodrászat Győrben" value={business} />
-                    , és kérnék {direct ? "egy ajánlatot" : "egy ingyenes látványtervet"}.{" "}
+                    , és kérnék {direct ? "egy árajánlatot, és indulnék" : "egy ingyenes látványtervet"}.{" "}
                     <button className="letter-switch" onClick={() => setHasSite(true)} type="button">Van már weboldalam</button>
                   </>
                 )}
               </p>
+
+              {/* Aki már tudja, mit akar, annak nem kell előbb az árakhoz görgetnie:
+                  innen is átválthat egyből ajánlatkérésre. Csomag esetén a lenti
+                  mondat kapcsolója ugyanezt az állapotot váltja. */}
+              {!planName ? (
+                <p className="letter-mode">
+                  <button aria-pressed={skipMockup} className="letter-mode-btn" onClick={() => setSkipMockup((value) => !value)} type="button">
+                    {skipMockup ? "← Mégis kérek ingyenes látványtervet" : "Látványterv nélkül, egyből indulnék →"}
+                  </button>
+                </p>
+              ) : null}
 
               {planName ? (
                 <p className="letter-body">

@@ -57,9 +57,9 @@ export async function POST(request: Request) {
   // A csomagot csak a valódi listából fogadjuk el — szabad szöveg ne kerüljön a levélbe.
   const plan = SUBSCRIPTION_PLANS.find((item) => item.key === clean(payload.plan)) ?? null;
   const model = clean(payload.model) === "purchase" ? "egyszeri vásárlás" : "havidíj";
-  // Csak csomaggal együtt értelmes: csomag nélkül mindig látványterv-kérés.
-  const direct = Boolean(plan) && payload.skipMockup === true;
-  const kind = direct ? "Ajánlatkérés csomagra" : "Ingyenes látványterv-kérés";
+  // Látványterv nélkül, egyből ajánlat — csomaggal vagy anélkül.
+  const direct = payload.skipMockup === true;
+  const kind = direct ? (plan ? "Ajánlatkérés csomagra" : "Ajánlatkérés, látványterv nélkül") : "Ingyenes látványterv-kérés";
 
   if (
     clean(payload.honeypot) ||
@@ -93,7 +93,8 @@ export async function POST(request: Request) {
     kind,
     "",
     hasSite ? `Mostani weboldal: ${website}` : `Még nincs weboldala. Vállalkozás: ${business}`,
-    plan ? `Csomag: ${plan.name} (${model})${direct ? " — látványterv nélkül, egyből ajánlatot kér" : ""}` : null,
+    plan ? `Csomag: ${plan.name} (${model})` : null,
+    direct ? "Látványterv nélkül, egyből ajánlatot kér." : null,
     note ? `Megjegyzés: ${note}` : null
   ].filter((line): line is string => line !== null);
   const ticketMessage = lines.join("\n");
@@ -139,25 +140,26 @@ export async function POST(request: Request) {
     subject: `${direct ? "Új ajánlatkérés" : "Új látványterv-kérés"}: ${subject} (${name})`,
     eyebrow: direct ? "PROJECTEDGE · AJÁNLATKÉRÉS" : "PROJECTEDGE · LÁTVÁNYTERV-KÉRÉS",
     preheader: `${name}: ${kind.toLowerCase()} — ${subject}`,
-    message: `${name} ${direct ? "ajánlatot kért a(z) " + plan?.name + " csomagra, látványterv nélkül" : "ingyenes látványtervet kért"}.\n\n${lines.slice(2).join("\n")}`,
+    message: `${name} ${direct ? (plan ? `ajánlatot kért a(z) ${plan.name} csomagra, látványterv nélkül` : "látványterv nélkül, egyből ajánlatot kért") : "ingyenes látványtervet kért"}.\n\n${lines.slice(2).join("\n")}`,
     link: "/admin/dashboard",
     linkLabel: "Megnyitás az adminban",
     details,
     tags: [direct ? "Ajánlatkérés" : "Látványterv", "Lead"]
   });
 
-  if (direct && plan) {
+  if (direct) {
     await sendProjectEdgeEmail({
       to: email,
-      subject: `Megkaptam az ajánlatkérésedet (${plan.name} csomag)`,
+      subject: plan ? `Megkaptam az ajánlatkérésedet (${plan.name} csomag)` : "Megkaptam az ajánlatkérésedet",
       eyebrow: "PROJECTEDGE · AJÁNLATKÉRÉS",
       preheader: `Szia ${firstName}! 24 órán belül küldöm az ajánlatot.`,
-      message: `Szia ${firstName}!\n\nKöszönöm, megkaptam az ajánlatkérésedet a(z) ${plan.name} csomagra (${model}). 24 órán belül válaszolok a pontos ajánlattal és a következő lépéssel.\n\nHa van logód, fotód vagy szöveged, a lenti gombbal már most elküldheted.`,
+      message: `Szia ${firstName}!\n\nKöszönöm, megkaptam az ajánlatkérésedet${plan ? ` a(z) ${plan.name} csomagra (${model})` : ""}. 24 órán belül válaszolok a pontos ajánlattal és a következő lépéssel.\n\nHa van logód, fotód vagy szöveged, a lenti gombbal már most elküldheted.`,
       link: supportResumePath(ticket.id, ticket.visitor_token),
       linkLabel: "Beszélgetés megnyitása",
       details: [
         hasSite ? { label: "Weboldal", value: website } : { label: "Vállalkozás", value: business },
-        { label: "Csomag", value: `${plan.name} · ${model}` }
+        ...(plan ? [{ label: "Csomag", value: `${plan.name} · ${model}` }] : []),
+        { label: "Várható válasz", value: "24 órán belül" }
       ],
       tags: ["Ajánlatkérés", "ProjectEdge"]
     });

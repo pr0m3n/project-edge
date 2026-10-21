@@ -24,7 +24,7 @@ import { trackEvent } from "@/lib/analytics";
  * mutatnak.
  */
 
-const GATE_TEXTS = ["Kérd az ingyenes látványtervet.", "Megmutatom, milyen lehetne az oldalad."];
+const GATE_TEXTS = ["Kérd az ingyenes látványtervet.", "Ingyen megrajzolom az új oldaladat."];
 
 /* A szakadás-sávok helye és vastagsága. Dekoráció, `aria-hidden`. */
 const TEARS = [

@@ -648,6 +648,12 @@ export function PosterHero() {
           <strong>Egyedi céges weboldal, már 2–4 munkanap alatt.</strong>
           <br />
           <span>Havidíjjal vagy egyszeri vásárlással — végig egy emberrel egyeztetsz.</span>
+          <br />
+          {/* A fő ajánlat (ingyenes látványterv) az első képernyőn is látsszon:
+              korábban csak két görgetésnyire lent derült ki, hogy van ilyen. */}
+          <Link href="#projektbrief" className={styles.free}>
+            Ingyenes látványterv, 24 órán belül <span aria-hidden="true">→</span>
+          </Link>
         </p>
         {/* „Nézzük a lehetőségeket" nem mondta meg, hova visz — a cél viszont a
             csomagok és az árak. A hirdetésekből érkezők jelentős része

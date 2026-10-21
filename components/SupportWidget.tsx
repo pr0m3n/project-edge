@@ -428,18 +428,38 @@ export function SupportWidget() {
     if (shown) return;
 
     const timers: number[] = [];
-    timers.push(
-      window.setTimeout(() => {
-        try {
-          window.sessionStorage.setItem(greetKey, "1");
-        } catch {
-          /* nem baj */
-        }
-        setGreeting(true);
-        timers.push(window.setTimeout(() => setGreeting(false), 13_000));
-      }, 9_000)
-    );
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
+    /* A buborék ne takarja ki a látványterv-kérő levelet: amíg a látogató
+       azt tölti ki (a lap a képernyőn van), a köszöntés vár. Telefonon
+       pont a küldőgombra csúszott rá. */
+    const formInView = () => {
+      const sheet = document.querySelector(".letter-sheet");
+      if (!sheet) return false;
+      const rect = sheet.getBoundingClientRect();
+      return rect.top < window.innerHeight && rect.bottom > 0;
+    };
+    const greet = () => {
+      if (formInView()) {
+        timers.push(window.setTimeout(greet, 4_000));
+        return;
+      }
+      try {
+        window.sessionStorage.setItem(greetKey, "1");
+      } catch {
+        /* nem baj */
+      }
+      setGreeting(true);
+      timers.push(window.setTimeout(() => setGreeting(false), 13_000));
+    };
+    timers.push(window.setTimeout(greet, 9_000));
+    /* Ha már látszik, és a látogató a levélhez görget, a buborék elmegy. */
+    const onScroll = () => {
+      if (formInView()) setGreeting(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [open, ticket]);
 
   const loadMessages = useCallback(async (currentTicket: StoredTicket, silent = false) => {
