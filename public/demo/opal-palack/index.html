@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opál Palack – PET palackok és kupakok | ProjectEdge demó</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Kitalált PET-palackgyártó cég bemutató oldala a ProjectEdge-től.">
+<link rel="icon" href="/demo/opal-palack/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demo/opal-palack/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/demo/opal-palack/assets/demo-bar.css">
+<style>
+:root{
+  --ink:#16191d; --ink2:#3d4550; --mute:#6b7682; --line:#dde3ea; --soft:#f2f5f8; --soft2:#e8edf2;
+  --navy:#2a2a6c; --blue:#2464a4; --sky:#3394d4; --sun:#f2ba14; --green:#2e6a4c;
+  --mono:"IBM Plex Mono",ui-monospace,monospace; --sans:"Schibsted Grotesk",system-ui,sans-serif;
+  --w:1280px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html,body{overflow-x:hidden}
+section,.blogh{scroll-margin-top:136px}
+.chips span:hover{border-color:var(--ink2)}
+.pal:focus-visible{outline:2px solid var(--blue);outline-offset:6px;border-radius:8px}
+body{font-family:var(--sans);color:var(--ink);background:#fff;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--w);margin:0 auto;padding:0 32px}
+.mono{font-family:var(--mono)}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em}
+h2{font-size:44px;line-height:1.06}
+.lead{font-size:19px;color:var(--ink2);max-width:640px;margin:16px 0 0}
+.btn{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 24px;border-radius:10px;font-weight:600;font-size:16px;border:1.5px solid transparent;white-space:nowrap}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-line{border-color:#c7d0da;color:var(--ink)}
+.btn svg{width:18px;height:18px}
+
+/* felső sáv + fejléc */
+.top{background:var(--soft);font-size:13.5px;color:var(--ink2)}
+.top .wrap{display:flex;gap:28px;align-items:center;height:38px}
+.top .sp{flex:1}
+.top b{font-weight:600;color:var(--ink)}
+.lang{display:flex;gap:4px}.lang span{padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:12px}.lang .on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+header.hd{position:sticky;top:var(--demo-bar-h,0px);z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hd .wrap{display:flex;align-items:center;height:78px;gap:36px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .jel{width:50px}
+.brand .fel{display:block;font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.brand svg.jel{height:46px}
+.brand small{display:block;white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.02em}
+nav.main{display:flex;gap:24px;white-space:nowrap;font-weight:500;font-size:15.5px;color:var(--ink2)}
+nav.main a.on{color:var(--blue)}
+.hd .sp{flex:1}
+.hd .btn{height:44px;padding:0 18px;font-size:15px}
+.burger{display:none}
+
+/* nyitókép */
+.hero{padding:44px 0 56px}
+.hero .wrap{display:grid;grid-template-columns:1fr 600px;gap:56px;align-items:center}
+.hero h1{font-size:62px;line-height:1.02;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.hero .lead{font-size:19.5px}
+.hero .cta{display:flex;gap:12px;margin-top:30px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:44px;border-top:1px solid var(--line)}
+.facts div{padding:16px 16px 0 0}
+.facts b{display:block;font-size:27px;white-space:nowrap;letter-spacing:-.02em;line-height:1.1}
+.facts span{font-size:14px;color:var(--mute)}
+.ipar{display:flex;gap:8px;margin-top:26px;flex-wrap:wrap}
+.ipar span{font-size:13.5px;padding:6px 12px;border-radius:99px;background:var(--soft);color:var(--ink2)}
+.studio{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:1400/1500;background:#c9d4df}
+.studio img{width:100%;height:100%;object-fit:cover}
+.studio svg{position:absolute;inset:0;width:100%;height:100%}
+.studio .tag{position:absolute;left:20px;top:20px;background:#fff;border-radius:12px;padding:13px 16px;box-shadow:0 8px 28px rgba(20,40,70,.16)}
+.studio .tag b{display:block;font-size:16px}
+.studio .tag span{font-family:var(--mono);font-size:12.5px;color:var(--mute)}
+.studio .tag i{font-style:normal;display:block;margin-top:6px;font-size:13.5px;color:var(--blue);font-weight:600}
+.dim line{stroke:#1d3d63;stroke-width:2.4}
+.dim .ld{stroke:#1d3d63;stroke-width:2;stroke-dasharray:0}
+.dim text{font-family:var(--mono);font-size:30px;fill:#14304f;font-weight:500}
+.dim .pill{fill:rgba(255,255,255,.88)}
+
+/* palacksor */
+.sor{background:var(--soft);padding:88px 0 96px}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips span{padding:9px 15px;border-radius:99px;border:1px solid #cfd8e1;font-size:14.5px;color:var(--ink2);background:#fff;cursor:pointer}
+.chips span.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.polc{margin-top:40px;background:#fff;border-radius:20px;padding:30px 30px 54px 76px;position:relative;box-shadow:0 1px 0 var(--line)}
+.polcsor{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:0;margin-bottom:78px}
+.polcsor:last-child{margin-bottom:8px}
+.polcsor::after{content:"";position:absolute;left:-12px;right:-12px;bottom:-1px;height:8px;border-radius:2px;background:linear-gradient(#e2e8ee,#cdd6df);box-shadow:0 6px 10px -6px rgba(30,50,80,.35)}
+.ruler{position:absolute;left:-58px;bottom:0;width:40px;border-right:1.5px solid #9aa7b4}
+.ruler i{position:absolute;right:0;height:1px;background:#9aa7b4;width:6px}
+.ruler i.f{width:12px}
+.ruler b{position:absolute;right:16px;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--mute);transform:translateY(-50%)}
+.pal{position:relative;display:flex;flex-direction:column;align-items:center;flex:none;cursor:pointer}
+.pal img{mix-blend-mode:multiply;height:var(--h);width:auto}
+.pal .nv{position:absolute;top:100%;margin-top:14px;text-align:center;white-space:nowrap;font-size:12px;line-height:1.25;color:var(--ink2)}
+.pal .nv span{display:block;font-family:var(--mono);font-size:11px;color:var(--mute)}
+.pal.sel img{filter:drop-shadow(0 0 0 transparent)}
+.pal.sel::before{content:"";position:absolute;inset:-10px -8px -2px;border-radius:12px;background:rgba(51,148,212,.10);box-shadow:inset 0 0 0 1.5px rgba(36,100,164,.45)}
+.pal .meret{position:absolute;right:-26px;bottom:0;height:var(--h);border-right:1.5px solid var(--blue);width:8px}
+.pal .meret::before,.pal .meret::after{content:"";position:absolute;right:-5px;width:9px;height:1.5px;background:var(--blue)}
+.pal .meret::before{top:0}.pal .meret::after{bottom:0}
+.pal .meret b{position:absolute;right:-12px;top:50%;transform:translate(100%,-50%);font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:600;background:#fff;padding:2px 5px;border-radius:4px}
+.kartya{position:absolute;z-index:3;width:310px;background:var(--ink);color:#fff;border-radius:14px;padding:18px 20px 16px;box-shadow:0 18px 40px rgba(10,20,40,.28)}
+.kartya h4{margin:0;font-size:18px}
+.kartya dl{display:grid;grid-template-columns:auto 1fr;gap:5px 16px;margin:12px 0 14px;font-size:14px}
+.kartya dt{color:#9aa6b3}.kartya dd{margin:0;font-family:var(--mono);font-size:13.5px}
+.kartya .ar{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #333b45;padding-top:12px}
+.kartya .ar b{font-size:20px}.kartya .ar small{color:#9aa6b3;font-size:12.5px;display:block}
+.kartya .ar a{background:var(--sun);color:var(--ink);font-weight:600;font-size:14px;padding:9px 13px;border-radius:8px}
+.valaszt{display:flex;align-items:center;gap:28px;background:var(--ink);color:#fff;border-radius:14px;padding:14px 16px 14px 22px;margin:0 0 34px -46px}
+.valaszt .nev small{display:block;font-size:12px;color:#9aa6b3}.valaszt .nev b{font-size:18px}
+.valaszt dl{display:flex;gap:26px;margin:0;flex:1}
+.valaszt dt{font-size:12px;color:#9aa6b3}.valaszt dd{margin:0;font-family:var(--mono);font-size:14px}
+.valaszt .ar b{font-size:20px}.valaszt .ar small{display:block;font-size:12px;color:#9aa6b3}
+.valaszt a{background:var(--sun);color:var(--ink);font-weight:600;font-size:14.5px;padding:11px 16px;border-radius:9px;white-space:nowrap}
+.sorcim{position:absolute;right:0;top:-6px;font-family:var(--mono);font-size:12px;color:var(--mute)}
+.egyedi-k{margin-left:auto;align-self:center;width:300px;border:1.5px dashed #b9c6d3;border-radius:14px;padding:20px 22px;color:var(--ink2);font-size:15px}
+.egyedi-k b{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+.egyedi-k a{display:inline-block;margin-top:10px;color:var(--blue);font-weight:600}
+.polc-lab{display:flex;justify-content:space-between;color:var(--mute);font-size:13.5px;margin-top:18px}
+.polc-lab b{color:var(--ink2);font-weight:600}
+
+/* kupakok */
+.kupak{padding:96px 0}
+.kupak .wrap{display:grid;grid-template-columns:380px 1fr;gap:56px}
+.nyak{margin-top:30px;display:grid;gap:10px}
+.nyak div{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--soft)}
+.nyak .kor{flex:none;border-radius:50%;border:2px solid var(--blue);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:600}
+.nyak b{display:block;font-size:15.5px}.nyak span{font-size:13.5px;color:var(--mute)}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kt{background:var(--soft);border-radius:14px;padding:14px 12px 12px;display:flex;flex-direction:column}
+.kt .im{height:118px;display:grid;place-items:center}
+.kt img{max-height:104px;max-width:92%;mix-blend-mode:multiply}
+.kt b{font-size:14.5px;font-weight:600;margin-top:8px}
+.kt span{font-family:var(--mono);font-size:11.5px;color:var(--blue);margin-top:2px;min-height:16px}
+
+/* boltok polcain */
+.bolt{padding:20px 0 100px}
+.bolt-pan{border-radius:24px;background:linear-gradient(180deg,#fff 0%,#f3f5f7 100%);border:1px solid var(--line);padding:56px 56px 0;overflow:hidden}
+.bolt-top{display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
+.bolt-sor{display:flex;justify-content:space-between;align-items:flex-end;margin-top:44px;padding:0 10px;position:relative}
+.bolt-sor img{height:250px;width:auto;mix-blend-mode:multiply}
+.bolt-sor img.polc-kep{width:100%;height:auto;border-radius:14px;mix-blend-mode:normal}
+.bolt-sor img.k{height:200px}
+.bolt-polc{height:30px;margin:0 -56px;background:linear-gradient(#fbfcfd,#e9eef3);border-top:1px solid #d6dee6;position:relative}
+.bolt-polc::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;background:var(--blue)}
+
+/* egyedi tervezés: tervrajz */
+.terv{background:var(--blue);color:#fff;padding:96px 0;position:relative;overflow:hidden}
+.terv::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:80px 80px,80px 80px,16px 16px,16px 16px}
+.terv .wrap{position:relative;display:grid;grid-template-columns:1fr 560px;gap:64px;align-items:center}
+.terv .lead{color:#d9e8f6}
+.lepes{margin-top:36px;display:grid;gap:0;border-top:1px solid rgba(255,255,255,.25)}
+.lepes div{display:grid;grid-template-columns:56px 1fr;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.25)}
+.lepes i{font-style:normal;font-family:var(--mono);color:var(--sun);font-weight:600}
+.lepes b{display:block;font-size:18px}.lepes span{color:#d4e4f3;font-size:15.5px}
+.rajz{position:relative}
+.rajz svg{width:100%;height:auto;display:block}
+.fejlec{position:absolute;left:0;bottom:0;border:1.5px solid rgba(255,255,255,.8);font-family:var(--mono);font-size:11.5px;display:grid;grid-template-columns:auto auto}
+.fejlec span{padding:6px 10px;border-right:1px solid rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.5)}
+.fejlec span:nth-child(2n){border-right:0}
+
+/* gyártás */
+.gyar{padding:100px 0}
+.gyar-grid{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:240px 240px;gap:14px;margin-top:44px}
+.gyar-grid figure{margin:0;border-radius:16px;overflow:hidden;position:relative;background:var(--soft2)}
+.gyar-grid img{width:100%;height:100%;object-fit:cover}
+.gyar-grid figcaption{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.92);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:500}
+.gyar-grid .big{grid-row:span 2}
+.adat{display:grid;grid-template-columns:repeat(5,1fr);margin-top:28px;border:1px solid var(--line);border-radius:16px}
+.adat div{padding:20px 22px;border-right:1px solid var(--line)}
+.adat div:last-child{border-right:0}
+.adat span{display:block;font-size:13px;color:var(--mute)}
+.adat b{font-size:17px}
+
+/* rPET */
+.rpet{padding:0 0 100px}
+.rpet-pan{background:var(--green);color:#fff;border-radius:24px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;position:relative;overflow:hidden}
+.rpet-pan .lead{color:#d8eadf}
+.rpet ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rpet li{background:rgba(255,255,255,.1);border-radius:14px;padding:18px}
+.rpet li b{display:block;font-size:17px;margin-bottom:4px}.rpet li span{font-size:14.5px;color:#d3e6da}
+.rpet-logo{display:inline-block;font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:.04em;color:#fff;border:2px solid rgba(255,255,255,.85);border-radius:999px;padding:6px 18px;margin-bottom:22px}
+
+/* vásárlás + ajánlatkérés */
+.vas{background:var(--soft);padding:100px 0}
+.vas .wrap{display:grid;grid-template-columns:1fr 560px;gap:64px}
+.vlist{margin-top:30px;display:grid;gap:12px}
+.vlist div{background:#fff;border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:44px 1fr;gap:4px 14px}
+.vlist svg{width:30px;height:30px;color:var(--blue);grid-row:span 2}
+.vlist b{font-size:16.5px}.vlist span{font-size:14.5px;color:var(--ink2)}
+.urlap{background:#fff;border-radius:20px;padding:32px;box-shadow:0 20px 50px -20px rgba(20,50,90,.25)}
+.urlap h3{font-size:26px}
+.urlap p{margin:6px 0 20px;color:var(--mute);font-size:14.5px}
+.mezo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.f label{font-size:13px;color:var(--ink2);font-weight:500}
+.f .in{height:46px;border:1.5px solid var(--line);border-radius:9px;display:flex;align-items:center;padding:0 13px;font-size:15px;justify-content:space-between}
+.f .in.ph{color:#9aa5b1}
+.f .in small{font-family:var(--mono);color:var(--mute);font-size:12px}
+.tog{display:flex;background:var(--soft);border-radius:9px;padding:4px;height:46px}
+.tog span{flex:1;display:grid;place-items:center;border-radius:7px;font-size:14.5px;color:var(--ink2)}
+.tog .on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.urlap .btn{width:100%;justify-content:center;margin-top:8px}
+.urlap .kis{font-size:13px;color:var(--mute);text-align:center;margin-top:10px}
+
+/* emberek */
+.kap{padding:100px 0 80px}
+.kap-grid{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:14px;margin-top:40px}
+.kap-grid > div{border:1px solid var(--line);border-radius:16px;padding:22px}
+.kap-grid .cim{background:var(--ink);color:#fff;border:0}
+.kap-grid .cim b{font-size:20px;display:block;margin-bottom:8px}
+.kap-grid .cim p{margin:0 0 4px;color:#c9d1da;font-size:15px}
+.kap-grid .cim .tel{font-size:22px;color:#fff;font-weight:600;margin-top:14px;display:block}
+.ember .ini{width:46px;height:46px;border-radius:50%;background:var(--soft2);display:grid;place-items:center;font-weight:700;color:var(--blue);margin-bottom:14px}
+.ember span{display:block;font-size:13px;color:var(--mute)}
+.ember b{display:block;font-size:16.5px;margin:2px 0 10px;line-height:1.25}
+.ember a{display:block;font-size:14px;color:var(--ink2);font-family:var(--mono);font-size:12.5px;margin-top:3px}
+.blog{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.blog a{border-radius:16px;background:var(--soft);padding:22px 24px}
+.blog span{font-size:12.5px;font-family:var(--mono);color:var(--blue)}
+.blog b{display:block;font-size:18px;line-height:1.3;margin:8px 0 10px}
+.blog small{color:var(--mute);font-size:13px}
+.blogh{display:flex;justify-content:space-between;align-items:baseline;margin-top:72px}
+.blogh h3{font-size:28px}
+.blogh a{color:var(--blue);font-weight:600;font-size:15px}
+
+footer{background:#121519;color:#c8d0d8;padding:64px 0 36px;font-size:14.5px}
+footer .wrap{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px}
+footer .lg{background:#fff;border-radius:12px;padding:14px 16px;display:inline-block}
+footer .lg{display:inline-flex!important;align-items:center;gap:10px}footer .lg b{font-size:20px;color:var(--ink);white-space:nowrap}
+footer h5{margin:0 0 12px;color:#fff;font-size:15px}
+footer p{margin:0 0 6px}
+footer .also{grid-column:1/-1;display:flex;justify-content:space-between;border-top:1px solid #2a3037;padding-top:22px;margin-top:20px;color:#8994a0;font-size:13px}
+
+/* termékoldal */
+.page{display:none}.page.on{display:block}
+.morzsa{padding-top:22px;font-size:14px;color:var(--mute)}
+.morzsa b{color:var(--ink);font-weight:500}
+.termek{padding:26px 0 80px}
+.termek .wrap{display:grid;grid-template-columns:620px 1fr;gap:64px}
+.tkep{background:var(--soft);border-radius:22px;height:720px;position:relative;display:grid;place-items:center}
+.tkep img{height:600px;mix-blend-mode:multiply}
+.tkep svg{position:absolute;inset:0;width:100%;height:100%}
+.tkep .ft{position:absolute;left:20px;top:20px;display:flex;gap:6px}
+.tkep .ft span{background:#fff;border-radius:7px;padding:5px 10px;font-size:13px;font-weight:500}
+.tinfo h1{font-size:48px;line-height:1.05;letter-spacing:-.03em}
+.tinfo .alc{font-family:var(--mono);font-size:14px;color:var(--mute);margin-top:12px}
+.tinfo p{color:var(--ink2);font-size:17.5px}
+.spec{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;margin:22px 0;overflow:hidden}
+.spec div{padding:14px 18px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.spec div:nth-child(2n){border-right:0}
+.spec div:nth-last-child(-n+2){border-bottom:0}
+.spec span{display:block;font-size:12.5px;color:var(--mute)}
+.spec b{font-family:var(--mono);font-size:16px;font-weight:500}
+.vesz{display:flex;align-items:center;gap:22px;background:var(--soft);border-radius:16px;padding:20px 22px}
+.vesz .ar b{font-size:34px;letter-spacing:-.02em}
+.vesz .ar span{display:block;font-size:13px;color:var(--mute)}
+.vesz .sp{flex:1}
+.szinek{display:flex;gap:10px;align-items:center;margin:20px 0 0;font-size:14px;color:var(--ink2)}
+.szinek i{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.illo{padding:0 0 100px}
+.illo h3{font-size:28px}
+.illo-sor{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:22px}
+.rokon{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:22px}
+.rokon a{background:var(--soft);border-radius:14px;padding:18px 10px 14px;text-align:center}
+.rokon .im{height:190px;display:flex;align-items:flex-end;justify-content:center}
+.rokon img{max-height:190px;mix-blend-mode:multiply}
+.rokon b{display:block;font-size:14.5px;margin-top:12px}
+.rokon span{font-family:var(--mono);font-size:12px;color:var(--mute)}
+
+/* telefon */
+@media (max-width:760px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .top{display:none}
+  .hd .wrap{height:64px;gap:12px}
+  nav.main,.hd .btn-line{display:none}
+  .hd .btn{height:40px;padding:0 14px;font-size:14px}
+  .brand .jel{width:40px}.brand svg.jel{height:38px}.brand .fel{font-size:18px}.brand small{font-size:10px}
+  .burger{display:grid;place-items:center;width:40px;height:40px;border-radius:9px;border:1.5px solid var(--line)}
+  .hero{padding:0 0 40px}
+  .hero .wrap{display:flex;flex-direction:column;padding:0;gap:0}
+  .hero .txt{padding:0 18px;order:2}
+  .hero .studio{order:1;border-radius:0;width:100%;aspect-ratio:auto;padding-top:128px;background:linear-gradient(90deg,#c5d6e7,#d0e3f6 50%,#bed0e2)}
+  .hero .studio img{height:auto;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 9%);mask-image:linear-gradient(to bottom,transparent 0,#000 9%)}
+  .hero .studio svg{top:128px;height:calc(100% - 128px)}
+  .hero .studio .tag{display:none}
+  .dim text{font-size:38px}
+  .hero h1{font-size:38px}
+  .hero .lead{font-size:16.5px}
+  .m-h1{position:absolute;left:18px;right:18px;top:18px;z-index:2}
+  .m-h1 b{display:block;font-size:31px;line-height:1.06;letter-spacing:-.03em;color:#10243b}
+  .m-h1 span{display:block;font-family:var(--mono);font-size:12px;color:#244566;margin-top:8px}
+  .hero .txt h1{display:none}
+  .hero .cta{flex-direction:column;margin-top:18px}
+  .hero .cta .btn{justify-content:center}
+  .facts{grid-template-columns:1fr 1fr;margin-top:28px}
+  .facts b{font-size:24px}
+  h2{font-size:31px}
+  .lead{font-size:16px}
+  .sor,.kupak,.gyar,.vas,.kap,.terv{padding:60px 0}
+  .sec-head{flex-direction:column;align-items:flex-start;gap:20px}
+  .sec-head > div{min-width:0;max-width:100%}
+  .chips{flex-wrap:nowrap;overflow:hidden;max-width:100%}
+  .chips span{white-space:nowrap}
+  .polc{padding:24px 14px 46px 50px;overflow:hidden;margin-left:-18px;margin-right:-18px;border-radius:0}
+  .polcsor{gap:8px;margin-bottom:64px}
+  .valaszt{margin:0 0 30px -36px;flex-wrap:wrap;gap:12px 16px;padding:14px 14px 14px 16px}
+  .valaszt .nev{flex:1}.valaszt dl{order:3;flex-basis:100%;flex-wrap:wrap;gap:8px 16px}
+  .valaszt .ar{text-align:right}.valaszt a{order:4;flex-basis:100%;text-align:center}
+  .pal .nv{font-size:11.5px}
+  .polc-lab{flex-direction:column;gap:6px}
+  .kupak .wrap,.terv .wrap,.vas .wrap,.termek .wrap{grid-template-columns:1fr;gap:32px}
+  .kgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .kt .im{height:84px}.kt img{max-height:76px}.kt b{font-size:13px}
+  .bolt-pan{padding:32px 18px 0}
+  .bolt-top{flex-direction:column;align-items:flex-start;gap:12px}
+  .bolt-sor{overflow:hidden;justify-content:flex-start;gap:6px;padding:0;margin-top:28px}
+  .bolt-sor img{height:150px}.bolt-sor img.polc-kep{height:auto}.bolt-sor img.k{height:120px}
+  .bolt-polc{margin:0 -18px}
+  .gyar-grid{grid-template-columns:1fr 1fr;grid-template-rows:180px 140px 140px}
+  .gyar-grid .big{grid-column:span 2;grid-row:auto}
+  .adat{grid-template-columns:1fr 1fr}
+  .adat div{border-bottom:1px solid var(--line)}
+  .rpet-pan{grid-template-columns:1fr;padding:32px 22px;gap:28px}
+  .rpet ul{grid-template-columns:1fr}
+  .kap-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .ember a{overflow-wrap:anywhere}
+  .kap-grid .cim{grid-column:span 2}
+  .blog{grid-template-columns:1fr}
+  footer .wrap{grid-template-columns:1fr 1fr}
+  .tkep{height:520px}.tkep img{height:430px}
+  .tinfo h1{font-size:34px}
+  .fejlec{position:static;margin-top:14px;display:inline-grid}
+  .illo-sor,.rokon{grid-template-columns:repeat(3,1fr)}
+}
+@media (min-width:761px){.m-h1{display:none}}
+</style>
+</head>
+<body>
+<div class="demo-bar" role="note"><div class="demo-bar-inner"><span class="demo-bar-tag">Iparági demó</span><p class="demo-bar-text"><strong>ProjectEdge demó</strong> — az Opál Palack kitalált cég, nem valós ügyfél. PET-palackgyártó oldala méretes palacksorral.</p><p class="demo-bar-text short"><strong>ProjectEdge demó</strong> — kitalált cég</p><a class="demo-bar-link" href="/munkak?munka=opal-palack#munka-valaszto"><span class="demo-bar-arrow" aria-hidden="true"></span><span class="demo-bar-link-long">Vissza a munkákhoz</span><span class="demo-bar-link-short">Munkák</span></a></div></div>
+
+<div class="top"><div class="wrap">
+  <span>6000 Kecskemét, Kiskörösi út 41.</span>
+  <span>Hétfő–péntek 8:00–16:00</span>
+  <span class="sp"></span>
+  <span><b>+36 1 555 0187</b></span>
+  <span>rendeles@opalpalack.hu</span>
+  <span class="lang"><span class="on">HU</span><span>EN</span><span>DE</span></span>
+</div></div>
+
+<header class="hd"><div class="wrap">
+  <a class="brand" href="#/"><svg class="jel" viewBox="0 0 50 50" aria-hidden="true"><path d="M25 3 44 14v22L25 47 6 36V14z" fill="#2464a4"/><path d="M25 3 44 14 25 25 6 14z" fill="#3394d4"/><path d="M25 25v22L6 36V14z" fill="#2a2a6c"/><path d="M25 25 44 14v22L25 47z" fill="#f2ba14" opacity=".92"/></svg><span><b class="fel">Opál Palack</b><small>PET palackgyártás</small></span></a>
+  <nav class="main"><a class="on" href="#/s/sor">Palackok</a><a href="#/s/kupak">Kupakok</a><a href="#/s/terv">Egyedi tervezés</a><a href="#/s/rpet">rPET</a><a href="#/s/gyar">Cégünkről</a><a href="#/s/blog">Blog</a><a href="#/s/kap">Kapcsolat</a></nav>
+  <span class="sp"></span>
+  <a class="btn btn-line" href="#/">Webshop</a>
+  <a class="btn btn-blue" href="#/s/vas">Ajánlatkérés</a>
+  <span class="burger"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 6h14M3 10h14M3 14h14" stroke="#16191d" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+</div></header>
+
+<!-- ============ FŐOLDAL ============ -->
+<main class="page" id="p-fo">
+
+<section class="hero"><div class="wrap">
+  <div class="txt">
+    <h1>PET palackok <em>100&nbsp;ml-től 5&nbsp;literig</em>, kupakkal együtt</h1>
+    <p class="lead">Standard palackok raktárról, egyedi formák saját 3D-tervezéssel. Előformából és granulátumból gyártunk Kecskeméten, élelmiszer-, kozmetikai és vegyipari termékekhez, kérésre újrahasznosított rPET-ből is.</p>
+    <div class="cta">
+      <a class="btn btn-blue" href="#/s/sor">Palackok méretekkel <svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8"/></svg></a>
+      <a class="btn btn-line" href="#/s/vas">Ajánlatot kérek</a>
+    </div>
+    <div class="facts">
+      <div><b>16 év</b><span>a hazai PET-gyártásban</span></div>
+      <div><b>2400 m²</b><span>saját üzem</span></div>
+      <div><b>14</b><span>standard palackforma</span></div>
+      <div><b>8</b><span>kupak és adagoló</span></div>
+    </div>
+    <div class="ipar"><span>Élelmiszer és ital</span><span>Kozmetika</span><span>Háztartás-vegyipar</span><span>Bor</span><span>ISO 9001</span></div>
+  </div>
+  <div class="studio" id="studio">
+    <div class="m-h1"><b>PET palackok 100 ml-től 5 literig, kupakkal</b><span>Opál Palack · gyártás Kecskeméten, 16 éve</span></div>
+    <img src="/demo/opal-palack/assets/foto/hero-render.webp" alt="Opál 0,5 literes PET palack, mellette a 22 grammos előforma és egy sárga 28-as kupak">
+    <svg id="dims" class="dim" viewBox="0 0 1400 1500" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="tag"><b>Opál 0,5 liter</b><span>500 ml · PET · 28/410 · 22 g</span><i>84 Ft/db a webshopban</i></div>
+  </div>
+</div></section>
+
+<section class="sor"><div class="wrap">
+  <div class="sec-head">
+    <div><h2>Palackjaink egy sorban</h2><p class="lead">Mind a 14 standard forma, űrtartalom szerint, egymáshoz mért magasságban. Egy palackra kattintva megjelennek a méretei.</p></div>
+    <div class="chips"><span class="on">Mind</span><span>1 dl – 0,33 l</span><span>0,5 – 1 l</span><span>1,5 – 5 l</span><span>Boros PET</span></div>
+  </div>
+  <div class="polc" id="polc"></div>
+  <div class="polc-lab"><span><b>Színezve, más grammsúllyal vagy rPET-ből</b> is kérhetők, a raktári színük víztiszta.</span><span class="mono">1 osztás = 1 cm</span></div>
+</div></section>
+
+<section class="kupak"><div class="wrap">
+  <div>
+    <h2>Kupakok és adagolók</h2>
+    <p class="lead">Csavaros, garanciazáras és gyermekzáras kupakok, adagoló- és szórófejek, a palackjainkhoz illő nyakmérettel.</p>
+    <div class="nyak">
+      <div><span class="kor" style="width:44px;height:44px">28</span><span><b>28/410</b><span>a legtöbb 0,1–1 literes palack</span></span></div>
+      <div><span class="kor" style="width:52px;height:52px">38</span><span><b>38 mm</b><span>öblítős és 1–2 literes palackok</span></span></div>
+      <div><span class="kor" style="width:60px;height:60px">48</span><span><b>48 mm</b><span>kockák és fogófüles kupak</span></span></div>
+    </div>
+  </div>
+  <div class="kgrid" id="kgrid"></div>
+</div></section>
+
+<section class="bolt"><div class="wrap"><div class="bolt-pan">
+  <div class="bolt-top">
+    <div><h2>Ugyanaz a palack, sokféle termékhez</h2><p class="lead">Tisztítószer, szósz, olaj, üdítő vagy öblítő: a standard formáink színes kupakkal és címkével a polcon is megállják a helyüket.</p></div>
+    <a class="btn btn-line" href="#/">Referenciák</a>
+  </div>
+  <div class="bolt-sor"><img class="polc-kep" src="/demo/opal-palack/assets/foto/polc.webp" alt="Kilenc töltött palack színes kupakkal egy polcon: tisztítószerek, szósz, olaj, üdítő és öblítő"></div>
+</div></div></section>
+
+<section class="terv"><div class="wrap">
+  <div>
+    <h2>Egyedi forma, saját tervezéssel</h2>
+    <p class="lead">Ha a termékéhez nincs megfelelő palack a kínálatban, műszaki kollégánk megtervezi 3D-ben. Méretre, nyakra, grammsúlyra és színre szabjuk, és rPET-ből is legyártjuk.</p>
+    <div class="lepes">
+      <div><i>01</i><span><b>Igény és vázlat</b>Űrtartalom, termék, töltés módja, a polcon elvárt megjelenés.</span></div>
+      <div><i>02</i><span><b>3D-terv és műszaki rajz</b>A forma, a falvastagság és a nyakmenet jóváhagyásra.</span></div>
+      <div><i>03</i><span><b>Mintadarab</b>Kézbe vehető palack a próbatöltéshez.</span></div>
+      <div><i>04</i><span><b>Sorozatgyártás</b>Saját nyújtva-fúvó gépeinken, a kért színben.</span></div>
+    </div>
+  </div>
+  <div class="rajz"><svg id="rajz" viewBox="0 0 560 640"></svg></div>
+</div></section>
+
+<section class="gyar"><div class="wrap">
+  <div class="sec-head">
+    <div><h2>Az üzem Kecskeméten</h2><p class="lead">2400 négyzetméteren gyártunk előformából és granulátumból átlátszó és színezett palackokat, 50 ml-től 5 literig.</p></div>
+    <a class="btn btn-line" href="#/">Bemutatkozás</a>
+  </div>
+  <div class="gyar-grid">
+    <figure class="big"><img src="/demo/opal-palack/assets/foto/uzem-epulet.webp" alt=""><figcaption>Iroda és gyártócsarnok, Kiskörösi út 41.</figcaption></figure>
+    <figure><img src="/demo/opal-palack/assets/foto/uzem-fuvogep.webp" alt=""><figcaption>Fúvógép</figcaption></figure>
+    <figure><img src="/demo/opal-palack/assets/foto/uzem-granulatum.webp" alt=""><figcaption>PET granulátum</figcaption></figure>
+    <figure><img src="/demo/opal-palack/assets/foto/uzem-eloforma.webp" alt=""><figcaption>Előformák</figcaption></figure>
+    <figure><img src="/demo/opal-palack/assets/foto/uzem-palackok.webp" alt=""><figcaption>Kész palackok</figcaption></figure>
+  </div>
+  <div class="adat">
+    <div><span>Gépek</span><b>Nyújtva-fúvó, egy- és kétlépcsős</b></div>
+    <div><span>Alapanyag</span><b>Előforma és granulátum</b></div>
+    <div><span>Méret</span><b>50 ml – 5 liter</b></div>
+    <div><span>Szín</span><b>Víztiszta vagy színezett</b></div>
+    <div><span>Minőség</span><b>ISO 9001</b></div>
+  </div>
+</div></section>
+
+<section class="rpet"><div class="wrap"><div class="rpet-pan">
+  <div>
+    <div class="rpet-logo" aria-hidden="true">rPET</div>
+    <h2>rPET: palack újrahasznosított alapanyagból</h2>
+    <p class="lead">A standard palackjaink kérésre rPET-ből is készülnek. Ugyanaz a forma és nyak, kisebb ökológiai lábnyommal, élelmiszeripari felhasználásra is.</p>
+  </div>
+  <ul>
+    <li><b>Kevesebb hulladék</b><span>A felhasznált PET újra csomagolás lesz.</span></li>
+    <li><b>Kisebb lábnyom</b><span>Újrahasznosított alapanyag a gyártásban.</span></li>
+    <li><b>Élelmiszerhez is</b><span>Az rPET palackok élelmiszeripari felhasználásra is alkalmasak.</span></li>
+    <li><b>Ugyanaz a kínálat</b><span>A standard formák rPET-ből is kérhetők.</span></li>
+  </ul>
+</div></div></section>
+
+<section class="vas"><div class="wrap">
+  <div>
+    <h2>Vásárlás és szállítás</h2>
+    <p class="lead">A raktári palackok a webshopban rendelhetők, egyedi mennyiségre és színre ajánlatot adunk.</p>
+    <div class="vlist">
+      <div><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21h22M6 21v4M24 21v4M15 21v4M6 9h18v12H6z"/><path d="M11 9V5h8v4"/></svg><b>Legkisebb tétel: egy gyűjtőcsomag</b><span>A palackok zárt, fóliázott csomagban, egész egységben indulnak.</span></div>
+      <div><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h15v13H3zM18 12h5l4 4v5h-9"/><circle cx="8" cy="22" r="2.5"/><circle cx="22" cy="22" r="2.5"/></svg><b>Raklapon vagy futárral</b><span>A szállítási díjat a rendelés méretétől függően előre megírjuk.</span></div>
+      <div><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 11l10-6 10 6-10 6zM5 11v8l10 6 10-6v-8M15 17v8"/></svg><b>Visszavesszük a göngyöleget</b><span>Az ép raklapot és kartontálcát a következő szállításkor elvisszük.</span></div>
+      <div><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 26s8-7 8-13a8 8 0 1 0-16 0c0 6 8 13 8 13z"/><circle cx="15" cy="13" r="3"/></svg><b>Személyes átvétel Kecskeméten</b><span>Készpénzzel vagy előre utalással, hétköznap 8 és 16 óra között.</span></div>
+    </div>
+  </div>
+  <div class="urlap">
+    <h3>Ajánlatkérés</h3>
+    <p>Adja meg az alapvető paramétereket, és rövid időn belül válaszolunk. Az ajánlatkérés nem jár kötelezettséggel.</p>
+    <div class="f"><label>Palack</label><div class="in" id="urlap-palack">Opál 0,5 liter <small>500 ml · 28/410</small></div></div>
+    <div class="mezo">
+      <div class="f"><label>Mennyiség</label><div class="in">20 000 <small>db</small></div></div>
+      <div class="f"><label>Szín</label><div class="in">Víztiszta <small>▾</small></div></div>
+    </div>
+    <div class="mezo">
+      <div class="f"><label>Alapanyag</label><div class="tog"><span class="on">PET</span><span>rPET</span></div></div>
+      <div class="f"><label>Kupak</label><div class="in">Garanciazáras 28 <small>▾</small></div></div>
+    </div>
+    <div class="mezo">
+      <div class="f"><label>Cégnév</label><div class="in ph">Cég neve</div></div>
+      <div class="f"><label>E-mail vagy telefon</label><div class="in ph">elérhetőség</div></div>
+    </div>
+    <a class="btn btn-blue" href="#/">Ajánlatot kérek</a>
+    <div class="kis">Egyedi forma esetén műszaki kollégánk is segít.</div>
+  </div>
+</div></section>
+
+<section class="kap"><div class="wrap">
+  <h2>Kit keressen?</h2>
+  <div class="kap-grid">
+    <div class="cim"><b>Opál Palack Kft.</b><p>6000 Kecskemét, Kiskörösi út 41.</p><p>Hétfő–péntek 8:00–16:00</p><p>rendeles@opalpalack.hu</p><span class="tel">+36 1 555 0187</span></div>
+    <div class="ember"><div class="ini">KB</div><span>Ügyvezető</span><b>Kovács Bence</b><a>kovacs.bence@opalpalack.hu</a></div>
+    <div class="ember"><div class="ini">FA</div><span>Kereskedelem és minőség</span><b>Fehér Anna</b><a>kereskedelem@opalpalack.hu</a><a>+36 1 555 0188</a></div>
+    <div class="ember"><div class="ini">MG</div><span>Műszaki vezető, egyedi tervezés</span><b>Molnár Gergő</b><a>molnar.gergo@opalpalack.hu</a><a>+36 1 555 0189</a></div>
+    <div class="ember"><div class="ini">SE</div><span>Pénzügy</span><b>Szabó Eszter</b><a>penzugy@opalpalack.hu</a><a>+36 1 555 0190</a></div>
+  </div>
+  <div class="blogh" id="blog"><h3>A blogról</h3><a href="#/">Összes cikk →</a></div>
+  <div class="blog">
+    <a href="#/"><span>Beszerzési tippek</span><b>PET palack ára: miből tevődik össze a gyártás költsége?</b><small>Fehér Anna · 2026. március 16.</small></a>
+    <a href="#/"><span>Gyártástechnológia</span><b>Hogyan készül egy PET palack az előformától a raklapig?</b><small>Fehér Anna · 2025. november 11.</small></a>
+    <a href="#/"><span>Beszerzési tippek</span><b>5 gyakori hiba a csomagolástervezésben, amit érdemes elkerülni</b><small>Fehér Anna · 2025. november 10.</small></a>
+  </div>
+</div></section>
+</main>
+
+<!-- ============ TERMÉKOLDAL ============ -->
+<main class="page" id="p-opal">
+  <div class="wrap morzsa">Palackok / 0,5 – 1 liter / <b>Opál 0,5 liter</b></div>
+  <section class="termek"><div class="wrap">
+    <div class="tkep" id="tkep">
+      <div class="ft"><span>Raktáron</span><span>rPET-ből is</span></div>
+      <img id="tkep-img" style="margin-top:-30px" src="/demo/opal-palack/assets/palack/opal-500.webp" alt="Opál 0,5 literes PET palack">
+      <svg id="tdim" viewBox="0 0 620 720"></svg>
+    </div>
+    <div class="tinfo">
+      <h1>Opál 0,5 liter PET palack</h1>
+      <div class="alc">víztiszta PET · 28/410-es nyak · raktárról</div>
+      <p>Bármilyen termék csomagolásához jó választás, legyen szó élelmiszeripari, vegyipari vagy kozmetikai folyadékról. Ugyanez a forma 100 ml-es, 250 ml-es és 1 literes méretben is kapható.</p>
+      <div class="spec">
+        <div><span>Űrtartalom</span><b>500 ml</b></div>
+        <div><span>Anyag</span><b>PET, kérésre rPET</b></div>
+        <div><span>Magasság</span><b>200 mm</b></div>
+        <div><span>Átmérő</span><b>65 mm</b></div>
+        <div><span>Nyakméret</span><b>28/410</b></div>
+        <div><span>Súly</span><b>22 g</b></div>
+      </div>
+      <div class="vesz">
+        <div class="ar"><b>84 Ft</b><span>darabonként, webshop-ár</span></div>
+        <span class="sp"></span>
+        <a class="btn btn-line" href="#/">Ajánlatkérés</a>
+        <a class="btn btn-blue" href="#/">Webshopba</a>
+      </div>
+      <div class="szinek">Raktáron víztiszta, kérésre színezve: <i style="background:#eef4f8"></i><i style="background:#3394d4"></i><i style="background:#2e6a4c"></i><i style="background:#8a5a2b"></i><i style="background:#f2f2f2"></i></div>
+    </div>
+  </div></section>
+  <section class="illo"><div class="wrap">
+    <h3>Illő kupakok és adagolók (28/410)</h3>
+    <div class="illo-sor" id="illo"></div>
+    <h3 style="margin-top:56px">Az Opál család és más palackok</h3>
+    <div class="rokon" id="rokon"></div>
+  </div></section>
+</main>
+
+<footer><div class="wrap">
+  <div><span class="lg"><svg class="jel" style="height:40px" viewBox="0 0 50 50" aria-hidden="true"><path d="M25 3 44 14v22L25 47 6 36V14z" fill="#2464a4"/><path d="M25 3 44 14 25 25 6 14z" fill="#3394d4"/><path d="M25 25v22L6 36V14z" fill="#2a2a6c"/><path d="M25 25 44 14v22L25 47z" fill="#f2ba14" opacity=".92"/></svg><b>Opál Palack</b></span><p style="margin-top:18px;max-width:300px">PET és rPET palackok, kupakok és adagolók gyártása és forgalmazása, 16 éve.</p></div>
+  <div><h5>Termékek</h5><p>PET palackok</p><p>Boros PET</p><p>Kupakok</p><p>Egyedi tervezés</p><p>rPET</p></div>
+  <div><h5>Cégünkről</h5><p>Bemutatkozás</p><p>ISO-minősítés</p><p>Pályázatok</p><p>Galéria</p><p>Blog</p></div>
+  <div><h5>Kapcsolat</h5><p>6000 Kecskemét,<br>Kiskörösi út 41.</p><p>+36 1 555 0187</p><p>rendeles@opalpalack.hu</p><p style="margin-top:12px">Facebook · LinkedIn · TikTok</p></div>
+  <div class="also"><span>© 2026 Opál Palack Kft. · kitalált cég, ProjectEdge demó</span><span>Adatkezelés · Vásárlási információk · ÁSZF</span></div>
+</div></footer>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const PAL = [{"id":"opal-100","n":"Opál","v":100,"h":11.2,"d":38,"ny":"28/410","g":9,"ar":46},{"id":"szoszos-200","n":"Szószos","v":200,"h":17.5,"d":42,"ny":"28/410","g":14,"ar":58},{"id":"opal-250","n":"Opál","v":250,"h":15.4,"d":52,"ny":"28/410","g":15,"ar":62},{"id":"henger-250","n":"Henger","v":250,"h":18.0,"d":45,"ny":"24/410","g":17,"ar":66},{"id":"boston-330","n":"Boston","v":330,"h":14.2,"d":68,"ny":"28/410","g":18,"ar":71},
+ {"id":"opal-500","n":"Opál","v":500,"h":20.0,"d":65,"ny":"28/410","g":22,"ar":84},{"id":"mosogatos-500","n":"Mosogatós","v":500,"h":19.6,"d":66,"ny":"28/410","g":25,"ar":88},{"id":"szorofejes-750","n":"Szórófejes","v":750,"h":24.8,"d":78,"ny":"28/410","g":32,"ar":112},{"id":"bordeaux-750","n":"Bordeaux","v":750,"h":28.0,"d":74,"ny":"28/410","g":34,"ar":118},{"id":"opal-1000","n":"Opál","v":1000,"h":24.0,"d":80,"ny":"28/410","g":33,"ar":104},
+ {"id":"oblito-1500","n":"Öblítős","v":1500,"h":27.6,"d":102,"ny":"38 mm","g":52,"ar":164},{"id":"kocka-2000","n":"Kocka","v":2000,"h":27.2,"d":106,"ny":"38 mm","g":58,"ar":178},{"id":"bordazott-2000","n":"Bordázott","v":2000,"h":32.0,"d":104,"ny":"28/410","g":46,"ar":148},{"id":"kocka-5000","n":"Kanna","v":5000,"h":30.8,"d":172,"ny":"48 mm","g":120,"ar":392}];
+const fmtV = v => v < 1000 ? v + ' ml' : (v/1000).toString().replace('.', ',') + ' l';
+const mobil = matchMedia('(max-width:760px)').matches;
+
+let SEL = 'opal-500', SZURO = () => true;
+const fmtCm = h => (h*10).toFixed(0) + ' mm';
+const nevV = v => v < 500 ? v + ' ml' : (v/1000).toString().replace('.', ',') + ' liter';
+function valaszt(){
+  const p = PAL.find(x=>x.id===SEL);
+  const cel = p.id==='opal-500' ? '<a href="#/opal">Termékoldal</a>' : '<a href="#/s/vas" data-kerek="'+p.id+'">Ajánlatkérés</a>';
+  return '<div class="valaszt"><div class="nev"><small>Kiválasztva</small><b>'+p.n+' '+nevV(p.v)+'</b></div><dl><div><dt>Űrtartalom</dt><dd>'+fmtV(p.v)+'</dd></div><div><dt>Magasság</dt><dd>'+fmtCm(p.h)+'</dd></div><div><dt>Átmérő</dt><dd>'+p.d+' mm</dd></div><div><dt>Nyak</dt><dd>'+p.ny+'</dd></div><div><dt>Súly</dt><dd>'+p.g+' g</dd></div></dl><div class="ar"><b>'+p.ar+' Ft</b><small>darabonként</small></div>'+cel+'</div>';
+}
+function polc(){
+  const el = document.getElementById('polc'); if(!el) return;
+  const PX = mobil ? 5.2 : 9.2;   // képpont / cm
+  const cimek = ['100 – 330 ml','0,5 – 1 liter','1,5 – 5 liter'];
+  const sorok = [PAL.filter(p=>p.v<=330), PAL.filter(p=>p.v>=500&&p.v<=1000), PAL.filter(p=>p.v>1000)].map(r=>r.filter(SZURO));
+  el.innerHTML = valaszt() + sorok.map((sor,i)=>{
+    if(!sor.length) return '';
+    const max = Math.ceil(Math.max(...sor.map(p=>p.h)) + 2);
+    let r = '<div class="ruler" style="height:'+(max*PX)+'px">';
+    for(let c=0;c<=max;c++){ r += '<i class="'+(c%5===0?'f':'')+'" style="bottom:'+(c*PX)+'px"></i>' + (c%5===0&&c? '<b style="bottom:'+(c*PX)+'px">'+c+'</b>':''); }
+    r += '</div>';
+    const vege = (!mobil && i===2) ? '<div class="egyedi-k"><b>Nincs köztük megfelelő?</b>Egyedi formát is tervezünk és gyártunk, 50 ml-től.<br><a href="#/s/terv">Egyedi tervezés →</a></div>' : '';
+    const kevés = sor.length < 4;
+    return '<div class="polcsor" style="height:'+(max*PX)+'px;'+((!mobil&&i===2)||kevés?'justify-content:flex-start;gap:'+(mobil?28:56)+'px;padding-left:'+(mobil?8:24)+'px':'')+'">'+r+(mobil?'':'<span class="sorcim">'+cimek[i]+'</span>')+sor.map(p=>{
+      const h = p.h*PX, sel = p.id===SEL;
+      return '<div class="pal'+(sel?' sel':'')+'" data-id="'+p.id+'" role="button" tabindex="0" aria-pressed="'+sel+'" aria-label="'+p.n+' '+fmtV(p.v)+'" style="--h:'+h.toFixed(1)+'px"><img src="/demo/opal-palack/assets/palack/'+p.id+'.webp" alt="">'
+        + '<div class="nv">'+p.n+'<span>'+fmtV(p.v)+'</span></div></div>';
+    }).join('')+vege+'</div>';
+  }).join('');
+}
+const SZUROK = [()=>true, p=>p.v<=330, p=>p.v>=500&&p.v<=1000, p=>p.v>1000, p=>p.id==='bordeaux-750'];
+document.querySelectorAll('.sor .chips span').forEach((c,i)=>{
+  c.setAttribute('role','button'); c.tabIndex = 0;
+  const f = () => { document.querySelectorAll('.sor .chips span').forEach(x=>x.classList.toggle('on', x===c)); SZURO = SZUROK[i];
+    if(!PAL.filter(SZURO).some(p=>p.id===SEL)) SEL = PAL.filter(SZURO)[0].id; polc(); };
+  c.addEventListener('click', f); c.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); f(); } });
+});
+document.getElementById('polc').addEventListener('click', e=>{
+  const k = e.target.closest('[data-kerek]');
+  if(k){ const p = PAL.find(x=>x.id===k.dataset.kerek); document.getElementById('urlap-palack').innerHTML = p.n+' '+nevV(p.v)+' <small>'+fmtV(p.v)+' · '+p.ny+'</small>'; return; }
+  const pal = e.target.closest('.pal'); if(!pal) return;
+  SEL = pal.dataset.id; polc();
+});
+document.getElementById('polc').addEventListener('keydown', e=>{
+  const pal = e.target.closest('.pal'); if(!pal || (e.key!=='Enter'&&e.key!==' ')) return;
+  e.preventDefault(); SEL = pal.dataset.id; polc(); document.querySelector('.pal[data-id="'+SEL+'"]').focus();
+});
+
+const KUP = [["kupak-28","Garanciazáras 28","28/410"],["kupak-gyerek","Gyermekzáras","28/410"],["kupak-pushpull","Push-pull","28/410"],["kupak-fliptop","Flip-top","24/410"],
+ ["kupak-pumpa","Pumpás adagoló","28/410"],["kupak-szorofej","Karos szórófej","28/410"],["kupak-38","Garanciazáras 38","38 mm"],["kupak-48","Garanciazáras 48","48 mm"]];
+function kupak(id, lista){
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = lista.map(([f,n,ny])=>'<div class="kt"><div class="im"><img src="/demo/opal-palack/assets/kupak/'+f+'.webp" alt=""></div><b>'+n+'</b><span>'+ny+'</span></div>').join('');
+}
+
+function heroDims(){
+  const svg = document.getElementById('dims'); if(!svg) return;
+  const P = {"b_top":[700,289.8],"b_bot":[700,1191.1],"b_left":[551.5,876.4],"b_right":[848.8,877.7],"pf_top":[398.8,654.5],"pf_bot":[403,1226.2],"pf_mid":[344.3,946.8],"cap_y":[969.6,1169.4]};
+  const x = 872, t = P.b_top[1], b = P.b_bot[1]-6;
+  const lab = (tx,ty,txt,w)=>'<rect class="pill" x="'+(tx-10)+'" y="'+(ty-30)+'" width="'+w+'" height="42" rx="8"/><text x="'+tx+'" y="'+ty+'">'+txt+'</text>';
+  let s = '';
+  // magasság
+  s += '<line x1="'+(x-40)+'" y1="'+t+'" x2="'+(x+14)+'" y2="'+t+'" opacity=".55"/><line x1="'+(x-40)+'" y1="'+b+'" x2="'+(x+14)+'" y2="'+b+'" opacity=".55"/>';
+  s += '<line x1="'+x+'" y1="'+t+'" x2="'+x+'" y2="'+b+'"/>';
+  s += '<path d="M'+(x-9)+' '+(t+18)+'L'+x+' '+t+'L'+(x+9)+' '+(t+18)+'M'+(x-9)+' '+(b-18)+'L'+x+' '+b+'L'+(x+9)+' '+(b-18)+'" fill="none" stroke="#1d3d63" stroke-width="2.4"/>';
+  s += lab(x+26, (t+b)/2+10, '200 mm', 140);
+  // átmérő
+  const y = 1262, l = P.b_left[0]+2, r = P.b_right[0]-2;
+  s += '<line x1="'+l+'" y1="'+(y-36)+'" x2="'+l+'" y2="'+(y+12)+'" opacity=".55"/><line x1="'+r+'" y1="'+(y-36)+'" x2="'+r+'" y2="'+(y+12)+'" opacity=".55"/>';
+  s += '<line x1="'+l+'" y1="'+y+'" x2="'+r+'" y2="'+y+'"/>';
+  s += '<path d="M'+(l+18)+' '+(y-9)+'L'+l+' '+y+'L'+(l+18)+' '+(y+9)+'M'+(r-18)+' '+(y-9)+'L'+r+' '+y+'L'+(r-18)+' '+(y+9)+'" fill="none" stroke="#1d3d63" stroke-width="2.4"/>';
+  s += lab((l+r)/2-70, y+52, '⌀ 65 mm', 160);
+  // előforma
+  s += '<line class="ld" x1="'+P.pf_top[0]+'" y1="'+(P.pf_top[1]-58)+'" x2="'+P.pf_top[0]+'" y2="'+(P.pf_top[1]-14)+'"/>';
+  s += lab(P.pf_top[0]-115, P.pf_top[1]-70, 'előforma, 22 g', 250);
+  // kupak
+  s += '<line class="ld" x1="'+(P.cap_y[0]+10)+'" y1="'+(P.cap_y[1]+50)+'" x2="'+(P.cap_y[0]+10)+'" y2="'+(P.cap_y[1]+92)+'"/>';
+  s += lab(P.cap_y[0]-100, P.cap_y[1]+130, 'kupak 28/410', 250);
+  svg.innerHTML = s;
+}
+
+// műszaki rajz: egy általános kerek palack félkörvonala (mm)
+const PROF = [[0,0],[16,.5],[27,2.6],[31.5,6],[32.5,10],[32.5,128],[32,134],[30.5,140],[27.8,147],[24,154],[19.5,161],[15.6,166.5],[13.2,170],[13.2,176.5],[16.2,177.5],[16.2,179.3],[12.9,180.6],[12.9,200]];
+function rajz(){
+  const svg = document.getElementById('rajz'); if(!svg) return;
+  const S = 2.7, cx = 330, by = 590, X = r=>cx + r*S, Y = z=>by - z*S;
+  const half = PROF.map(([r,z])=>X(r)+','+Y(z)), mir = PROF.slice().reverse().map(([r,z])=>(cx - r*S)+','+Y(z));
+  const w = 'stroke="#fff" fill="none"';
+  let s = '<polyline points="'+half.join(' ')+'" '+w+' stroke-width="2.2"/><polyline points="'+mir.join(' ')+'" '+w+' stroke-width="2.2"/>';
+  s += '<line x1="'+(cx-28*S)+'" y1="'+Y(200)+'" x2="'+(cx+28*S)+'" y2="'+Y(200)+'" '+w+' stroke-width="0" />';
+  s += '<line x1="'+X(-12.9)+'" y1="'+Y(200)+'" x2="'+X(12.9)+'" y2="'+Y(200)+'" '+w+' stroke-width="2.2"/>';
+  // menet
+  for(const z of [185,189,193,197]) s += '<line x1="'+X(-14.1)+'" y1="'+Y(z)+'" x2="'+X(14.1)+'" y2="'+Y(z-1.6)+'" '+w+' stroke-width="1.2" opacity=".75"/>';
+  // falvastagság (belső vonal szaggatva)
+  const inner = PROF.slice(3,13).map(([r,z])=>X(r-1.6)+','+Y(z)).join(' ');
+  s += '<polyline points="'+inner+'" '+w+' stroke-width="1" stroke-dasharray="5 4" opacity=".55"/>';
+  // középvonal
+  s += '<line x1="'+cx+'" y1="'+(Y(200)-26)+'" x2="'+cx+'" y2="'+(by+20)+'" '+w+' stroke-width="1" stroke-dasharray="22 5 3 5" opacity=".8"/>';
+  // méretvonalak
+  const dim = (x1,y1,x2,y2,t,tx,ty,rot)=>{
+    let d = '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#f2ba14" stroke-width="1.4"/>';
+    d += '<text x="'+tx+'" y="'+ty+'" fill="#fff" font-family="IBM Plex Mono" font-size="15"'+(rot?' transform="rotate(-90 '+tx+' '+ty+')"':'')+'>'+t+'</text>';
+    return d;
+  };
+  const hx = X(32.5)+70;
+  s += '<line x1="'+X(16.2)+'" y1="'+Y(200)+'" x2="'+(hx+10)+'" y2="'+Y(200)+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/><line x1="'+X(32.5)+'" y1="'+by+'" x2="'+(hx+10)+'" y2="'+by+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/>';
+  s += dim(hx, Y(200), hx, by, '200', hx-10, (Y(200)+by)/2+20, true);
+  s += '<path d="M'+(hx-5)+' '+(Y(200)+12)+'L'+hx+' '+Y(200)+'L'+(hx+5)+' '+(Y(200)+12)+'M'+(hx-5)+' '+(by-12)+'L'+hx+' '+by+'L'+(hx+5)+' '+(by-12)+'" stroke="#f2ba14" fill="none" stroke-width="1.4"/>';
+  const dy = by+40;
+  s += '<line x1="'+X(-32.5)+'" y1="'+by+'" x2="'+X(-32.5)+'" y2="'+(dy+8)+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/><line x1="'+X(32.5)+'" y1="'+by+'" x2="'+X(32.5)+'" y2="'+(dy+8)+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/>';
+  s += dim(X(-32.5), dy, X(32.5), dy, '⌀ 65', cx-30, dy-8);
+  const ny = Y(200)-40;
+  s += '<line x1="'+X(-14.1)+'" y1="'+Y(200)+'" x2="'+X(-14.1)+'" y2="'+(ny-6)+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/><line x1="'+X(14.1)+'" y1="'+Y(200)+'" x2="'+X(14.1)+'" y2="'+(ny-6)+'" stroke="#f2ba14" stroke-width=".8" opacity=".7"/>';
+  s += dim(X(-14.1), ny, X(14.1), ny, '28/410', X(14.1)+12, ny+5);
+  // vállív jelölés
+  svg.innerHTML = s + '';
+  const f = document.createElement('div'); f.className='fejlec';
+  f.innerHTML = '<span>Opál 0,5 l</span><span>méretek mm</span><span>PET · 22 g</span><span>Opál Palack</span>';
+  svg.parentNode.appendChild(f);
+}
+
+function termekDims(){
+  const svg = document.getElementById('tdim'); const img = document.getElementById('tkep-img'); if(!svg||!img) return;
+  const box = svg.getBoundingClientRect(), ir = img.getBoundingClientRect();
+  svg.setAttribute('viewBox', '0 0 '+box.width+' '+box.height);
+  const sx = 1, sy = 1;
+  const t = (ir.top-box.top)*sy + 6, b = (ir.bottom-box.top)*sy - 6;
+  const l = (ir.left-box.left)*sx + 6, r = (ir.right-box.left)*sx - 6;
+  const x = r + 46;
+  const st = 'stroke="#1d3d63" stroke-width="1.6"';
+  let s = '<line x1="'+(r-30)+'" y1="'+t+'" x2="'+(x+10)+'" y2="'+t+'" '+st+' opacity=".5"/><line x1="'+(r-10)+'" y1="'+b+'" x2="'+(x+10)+'" y2="'+b+'" '+st+' opacity=".5"/>';
+  s += '<line x1="'+x+'" y1="'+t+'" x2="'+x+'" y2="'+b+'" '+st+'/>';
+  s += '<rect x="'+(x-34)+'" y="'+((t+b)/2-15)+'" width="68" height="30" rx="6" fill="#fff"/><text x="'+x+'" y="'+((t+b)/2+5)+'" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" fill="#14304f">200</text>';
+  const y = b + 30;
+  s += '<line x1="'+l+'" y1="'+(b-10)+'" x2="'+l+'" y2="'+(y+8)+'" '+st+' opacity=".5"/><line x1="'+r+'" y1="'+(b-10)+'" x2="'+r+'" y2="'+(y+8)+'" '+st+' opacity=".5"/>';
+  s += '<line x1="'+l+'" y1="'+y+'" x2="'+r+'" y2="'+y+'" '+st+'/>';
+  s += '<rect x="'+((l+r)/2-44)+'" y="'+(y-15)+'" width="88" height="30" rx="6" fill="#fff"/><text x="'+((l+r)/2)+'" y="'+(y+5)+'" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" fill="#14304f">⌀ 65</text>';
+  svg.innerHTML = s;
+}
+
+function rokon(){
+  const el = document.getElementById('rokon'); if(!el) return;
+  const ids = ['opal-100','opal-250','opal-1000','boston-330','henger-250','mosogatos-500'];
+  el.innerHTML = ids.map(id=>{const p = PAL.find(x=>x.id===id); return '<a href="#/"><div class="im"><img src="/demo/opal-palack/assets/palack/'+id+'.webp" style="height:'+(p.h/34*190+40)+'px" alt=""></div><b>'+p.n+'</b><span>'+fmtV(p.v)+'</span></a>';}).join('');
+}
+
+function route(){
+  const h = location.hash.replace('#','') || '/';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  if(h.startsWith('/opal')){ document.getElementById('p-opal').classList.add('on'); setTimeout(termekDims, 250); }
+  else document.getElementById('p-fo').classList.add('on');
+  requestAnimationFrame(()=>{ polc(); });
+  const cel = h.startsWith('/s/') && document.querySelector('.'+h.slice(3)+', #'+h.slice(3));
+  if(cel) requestAnimationFrame(()=>cel.scrollIntoView({behavior:'smooth'}));
+  else window.scrollTo(0,0);
+}
+heroDims(); rajz();
+kupak('kgrid', KUP);
+kupak('illo', KUP.filter(k=>k[2]==='28/410'));
+rokon();
+addEventListener('hashchange', route);
+document.addEventListener('click', e=>{ const a = e.target.closest('a[href^="#/s/"]'); if(a && a.getAttribute('href')===location.hash) route(); });
+document.fonts.ready.then(route);
+</script>
+</body>
+</html>

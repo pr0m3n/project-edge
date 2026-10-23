@@ -113,11 +113,20 @@ const nextConfig = {
       {
         source: "/demo/klarhaus",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
+      },
+      // Az Opál Palack ugyanilyen statikus demó (public/demo/opal-palack).
+      {
+        source: "/demo/opal-palack/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
+      },
+      {
+        source: "/demo/opal-palack",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
       }
     ];
   },
   /**
-   * A Klarhaus iparági demó sima HTML (public/demo/klarhaus), nem React-oldal.
+   * A Klarhaus és az Opál Palack iparági demó sima HTML (public/demo/...), nem React-oldal.
    * A tiszta URL-ekhez (`/demo/klarhaus`, `/demo/klarhaus/impressum`) kell a
    * rewrite: a public mappa a könyvtárhoz nem szolgál ki index.html-t.
    */
@@ -125,7 +134,8 @@ const nextConfig = {
     return [
       { source: "/demo/klarhaus", destination: "/demo/klarhaus/index.html" },
       { source: "/demo/klarhaus/impressum", destination: "/demo/klarhaus/impressum.html" },
-      { source: "/demo/klarhaus/datenschutz", destination: "/demo/klarhaus/datenschutz.html" }
+      { source: "/demo/klarhaus/datenschutz", destination: "/demo/klarhaus/datenschutz.html" },
+      { source: "/demo/opal-palack", destination: "/demo/opal-palack/index.html" }
     ];
   }
 };

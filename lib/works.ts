@@ -170,6 +170,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "opal-palack",
+    name: "Opál Palack",
+    goal: "Termékkatalógus ajánlatkéréssel",
+    industry: "Gyártás · csomagolóipar",
+    copy:
+      "Minden palack egy sorban, valódi méretarányban: kattintásra a méretei és az ára, onnan egyből ajánlatkérés.",
+    href: "/demo/opal-palack",
+    external: false,
+    src: "/work/demos/opal-palack.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
