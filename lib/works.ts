@@ -248,6 +248,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "pusztafu",
+    name: "Pusztafű",
+    goal: "Felvásárlás és ajánlatkérés",
+    industry: "Gyógynövény-feldolgozás",
+    copy:
+      "Három ajtó a nyitóképen, kereshető növénytár, „Átvehető-e?” számoló a felvásárláshoz és szerepkör szerint változó ajánlatkérő.",
+    href: "/demo/pusztafu",
+    external: false,
+    src: "/work/demos/pusztafu.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",

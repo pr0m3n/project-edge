@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pusztafű Gyógynövény – ProjectEdge demó</title>
+<meta name="description" content="Kitalált gyógynövény-feldolgozó bemutató oldala a ProjectEdge-től.">
+<link rel="icon" href="/demo/pusztafu/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demo/pusztafu/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/demo/pusztafu/assets/demo-bar.css">
+<style>
+:root{
+  --deep:#0b2a1b; --deep-2:#123a26; --leaf:#2c7a3b; --lime:#94c93d; --red:#d98a1c; --red-d:#b06d0f;
+  --bg:#f2f6ec; --white:#fff; --ink:#14231a; --muted:#51615a; --line:#cfd9c8;
+  --wrap:1240px; --gut:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.55;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:clip}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut);position:relative}
+h1,h2,h3{font-family:"Big Shoulders Display","Hanken Grotesk",sans-serif;font-weight:800;letter-spacing:.005em;line-height:.98;text-transform:uppercase}
+h2{font-size:clamp(44px,6vw,84px)}
+h3{font-size:30px;line-height:1.02}
+.num{font-variant-numeric:tabular-nums}
+.sec{padding:100px 0;position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--leaf)}
+.eyebrow::before{content:"";width:34px;height:4px;background:var(--red)}
+.dark .eyebrow{color:var(--lime)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 26px;border-radius:0;font-weight:800;font-size:16px;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;border:2px solid transparent;transition:background .15s,color .15s,border-color .15s,transform .15s;white-space:nowrap;cursor:pointer}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-d)}
+.btn-green{background:var(--leaf);color:#fff}.btn-green:hover{background:#226230}
+.btn-line{border-color:var(--ink);color:var(--ink);background:transparent}.btn-line:hover{background:var(--ink);color:#fff}
+.btn-lw{border-color:#fff;color:#fff}.btn-lw:hover{background:#fff;color:var(--deep)}
+.btn:focus-visible,.fb:focus-visible,.pl:focus-visible,.dr:focus-visible,.st:focus-visible,.roleb:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+
+
+/* Fejléc */
+.util{background:var(--deep);color:#cfe3d4;font-size:14px}
+.util .wrap{display:flex;gap:26px;align-items:center;min-height:38px;flex-wrap:wrap}
+.util a{text-decoration:none;font-weight:600}
+.util a:hover{color:var(--lime)}
+.util .sp{margin-left:auto}
+.demo-bar a{text-decoration:none}
+html{scroll-padding-top:calc(var(--demo-bar-h,0px) + 90px)}
+.hdr{position:sticky;top:var(--demo-bar-h,0px);z-index:30;background:#fff;border-bottom:3px solid var(--deep)}
+.hdr .wrap{display:flex;align-items:center;gap:28px;height:84px}
+.brand img{height:52px;width:auto}
+.pf-logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none}.pf-logo>span{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:28px;line-height:.9;text-transform:uppercase;color:var(--deep)}.pf-logo small{display:block;font-family:"Hanken Grotesk",sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;color:var(--leaf)}
+.ftr .pf-logo>span{color:#fff}
+.nav{display:flex;gap:2px;margin-left:auto}
+.nav a{text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.07em;text-transform:uppercase;padding:10px 13px;color:var(--ink)}
+.nav a:hover{background:var(--bg);color:var(--leaf)}
+.sm-only{display:none}
+
+/* Hero: három ajtó */
+.hero{background:var(--deep);color:#fff;position:relative;overflow:hidden}
+.hero-top{padding:66px 0 40px;display:grid;grid-template-columns:1.3fr .7fr;gap:50px;align-items:end;position:relative;z-index:2}
+.hero h1{font-size:clamp(56px,8.6vw,132px);line-height:.88}
+.hero h1 span{color:var(--lime)}
+.hero-top p{font-size:19px;color:#cfe3d4;max-width:420px}
+.hero-top .stamp{display:inline-block;margin-bottom:12px;border:2px solid var(--lime);color:var(--lime);padding:5px 14px;font-weight:800;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
+.doors{display:flex;height:540px;gap:0;border-top:4px solid var(--red)}
+.dr{text-decoration:none;position:relative;flex:1 1 0;overflow:hidden;border:0;border-right:3px solid var(--deep);background:#000;color:#fff;text-align:left;transition:flex-grow .5s cubic-bezier(.2,.7,.2,1)}
+.dr:last-child{border-right:0}
+.dr:hover,.dr:focus-visible,.dr.on{flex-grow:2.4}
+.dr img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s,opacity .4s;opacity:.78}
+.dr:hover img,.dr.on img{transform:scale(1.05);opacity:.95}
+.dr::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,42,27,0) 30%,rgba(11,42,27,.94) 100%)}
+.dr-b{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:26px 28px 28px}
+.dr-n{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:22px;color:var(--lime)}
+.dr h3{font-size:clamp(34px,3.4vw,54px);margin-top:2px}
+.dr p{font-size:16px;color:#d6e6da;max-width:330px;margin-top:8px;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s,opacity .4s}
+.dr:hover p,.dr.on p,.dr:focus-visible p{max-height:140px;opacity:1}
+.dr em{display:inline-block;margin-top:12px;font-style:normal;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:14px;color:#fff;border-bottom:3px solid var(--red)}
+.facts{background:#fff;color:var(--ink);border-bottom:3px solid var(--deep)}
+.facts .wrap{display:grid;grid-template-columns:repeat(5,1fr)}
+.facts div{padding:22px 18px 20px;border-left:1px solid var(--line)}
+.facts div:first-child{border-left:0;padding-left:0}
+.facts b{display:block;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:50px;line-height:1;color:var(--red)}
+.facts b small{font-size:22px;color:var(--ink);font-weight:800}
+.facts span{font-size:14.5px;color:var(--muted);font-weight:600}
+
+/* Növénytár */
+.nov-top{display:grid;grid-template-columns:1fr 340px;gap:50px;align-items:end}
+.nov-top p{font-size:18px;color:var(--muted);max-width:560px;margin-top:16px}
+.nov-top .side{border:2px solid var(--ink);padding:16px 18px;background:#fff;font-size:15px}
+.nov-top .side b{display:block;font-family:"Big Shoulders Display",sans-serif;font-size:34px;color:var(--leaf);font-weight:900;line-height:1}
+.tools{margin-top:34px;display:grid;gap:12px}
+.fbs{display:flex;flex-wrap:wrap;gap:8px}
+.fb{border:2px solid var(--ink);background:#fff;color:var(--ink);padding:9px 18px;font-weight:800;font-size:14px;letter-spacing:.07em;text-transform:uppercase}
+.fb:hover{background:var(--bg)}
+.fb[aria-pressed=true]{background:var(--ink);color:#fff}
+.fb.part[aria-pressed=true]{background:var(--leaf);border-color:var(--leaf)}
+.tools input{height:52px;border:2px solid var(--ink);padding:0 18px;font:inherit;font-size:17px;background:#fff;width:100%;max-width:520px}
+.tools input:focus{outline:none;box-shadow:0 0 0 4px rgba(148,201,61,.6)}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:26px}
+.pgrid > *{min-width:0}
+.pl{background:#fff;border:2px solid var(--ink);padding:0;text-align:left;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;color:var(--ink)}
+.pl:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--ink)}
+.pl .tp{height:10px;background:var(--leaf)}
+.pl.t2 .tp{background:var(--lime)}.pl.t3 .tp{background:var(--red)}
+.pl .bd{padding:14px 16px 16px}
+.pl small{display:block;font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pl b{display:block;overflow-wrap:anywhere;hyphens:auto;font-family:"Big Shoulders Display",sans-serif;font-size:29px;line-height:1.02;text-transform:uppercase;font-weight:800;margin-top:6px}
+.pl .ft{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--leaf)}
+.pl .ft span{color:var(--red)}
+.pempty{grid-column:1/-1;padding:40px;border:2px dashed var(--ink);text-align:center;color:var(--muted)}
+.nov-ft{margin-top:22px;font-size:15.5px;color:var(--muted);max-width:760px}
+
+/* Átvétel */
+.at{background:var(--deep);color:#fff}
+.at h2{max-width:900px}
+.at .sub{font-size:18px;color:#cfe3d4;max-width:620px;margin-top:16px}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);margin-top:50px;position:relative}
+.steps::before{content:"";position:absolute;left:0;right:0;top:34px;height:4px;background:#2f5a43}
+.steps .prog{position:absolute;left:0;top:34px;height:4px;background:var(--lime);width:0;transition:width .4s}
+.st{background:none;border:0;color:#fff;text-align:left;padding:0 10px 0 0;position:relative}
+.st i{display:grid;place-items:center;width:68px;height:68px;border:4px solid #2f5a43;background:var(--deep);font-style:normal;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:32px;position:relative;z-index:2;transition:background .2s,border-color .2s,color .2s}
+.st[aria-selected=true] i,.st.done i{background:var(--lime);border-color:var(--lime);color:var(--deep)}
+.st b{display:block;margin-top:12px;font-family:"Big Shoulders Display",sans-serif;font-size:24px;text-transform:uppercase;font-weight:800;line-height:1.05}
+.stp{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;margin-top:46px;align-items:start}
+.stp > *{min-width:0}
+.panel{background:#fff;color:var(--ink);padding:30px 32px 32px;border-top:8px solid var(--red);min-height:270px}
+.panel small{font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--leaf);text-transform:uppercase}
+.panel h3{font-size:44px;margin-top:4px}
+.panel p{font-size:18px;margin-top:12px;color:#26362d}
+.panel ul{margin-top:12px;list-style:none;display:grid;gap:6px}
+.panel li{padding-left:22px;position:relative;font-size:16.5px}
+.panel li::before{content:"";position:absolute;left:0;top:10px;width:10px;height:4px;background:var(--red)}
+.check{background:var(--deep-2);border:2px solid var(--lime);padding:26px 26px 28px}
+.check h3{font-size:36px;color:var(--lime)}
+.check .q{font-weight:800;font-size:14px;letter-spacing:.12em;text-transform:uppercase;margin:18px 0 10px;color:#dcebe0}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:inline-block;border:2px solid #4b7a5e;padding:9px 16px;font-weight:700;cursor:pointer;font-size:15.5px}
+.seg input:checked + span{background:var(--lime);color:var(--deep);border-color:var(--lime)}
+.seg input:focus-visible + span{outline:3px solid #fff;outline-offset:2px}
+.kg{display:flex;align-items:center;gap:16px}
+.kg input{flex:1;accent-color:var(--lime);height:30px}
+.kg output{min-width:92px;text-align:right;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:36px;color:#fff}
+.res{margin-top:22px;padding:18px 20px;background:var(--lime);color:var(--deep);font-weight:700;font-size:17px;line-height:1.4}
+.res b{font-family:"Big Shoulders Display",sans-serif;font-size:26px;text-transform:uppercase;display:block;line-height:1.05;margin-bottom:4px}
+
+/* Üzem */
+.uz-top{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:end}
+.uz-top p{font-size:18px;color:var(--muted);max-width:520px}
+.line{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:46px;border:3px solid var(--deep)}
+.ln{position:relative;background:#000;color:#fff;aspect-ratio:4/5;overflow:hidden}
+.ln + .ln{border-left:3px solid var(--deep)}
+.ln img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85;transition:transform .6s}
+.ln:hover img{transform:scale(1.05)}
+.ln::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,42,27,0) 45%,rgba(11,42,27,.92) 100%)}
+.ln div{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px 20px 22px}
+.ln i{font-style:normal;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:20px;color:var(--lime)}
+.ln b{display:block;font-family:"Big Shoulders Display",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.ln span{display:block;font-size:15px;color:#d6e6da;margin-top:6px}
+.arrow{position:absolute;right:-22px;top:50%;width:42px;height:42px;margin-top:-21px;background:var(--red);z-index:5;clip-path:polygon(0 0,60% 0,100% 50%,60% 100%,0 100%)}
+.ln:last-child .arrow{display:none}
+.uz-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.uz-ph figure{aspect-ratio:3/2;overflow:hidden;background:var(--deep)}
+.uz-ph img{width:100%;height:100%;object-fit:cover}
+
+/* Szolgáltatások */
+.sz{background:#fff;border-top:3px solid var(--deep);border-bottom:3px solid var(--deep)}
+.sz-g{display:grid;grid-template-columns:.8fr 1.2fr;gap:56px;margin-top:40px;align-items:start}
+.sz-g > *{min-width:0}
+.svc{border-top:3px solid var(--ink)}
+.svc div{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.svc em{font-style:normal;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:28px;color:var(--red)}
+.svc b{font-weight:700;font-size:18px;line-height:1.3}
+.svc a{font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;border-bottom:3px solid var(--lime)}
+.vis{background:var(--deep);color:#fff;padding:30px 30px 32px}
+.vis h3{font-size:48px;line-height:.95}
+.vis p{color:#cfe3d4;margin-top:12px}
+.vis ul{list-style:none;margin-top:16px;display:grid;gap:8px}
+.vis li{display:grid;grid-template-columns:30px 1fr;gap:10px;font-weight:600;align-items:center;border-top:1px solid #2f5a43;padding-top:8px}
+.vis li::before{content:"";width:14px;height:14px;background:var(--lime);clip-path:polygon(0 50%,50% 0,100% 50%,50% 100%)}
+.vis .btn{margin-top:20px}
+
+/* Tanúsítványok */
+.cert-g{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+.cb{background:#fff;border:2px solid var(--ink);padding:22px 22px 20px;position:relative}
+.cb::before{content:"";position:absolute;right:18px;top:18px;width:48px;height:48px;border:3px solid var(--leaf);border-radius:50%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232c7a3b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/26px 26px no-repeat}
+.cb b{display:block;font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:60px;line-height:.95}
+.cb b small{font-size:30px;color:var(--leaf)}
+.cb span{display:block;font-size:15px;color:var(--muted);margin-top:8px}
+.cert-ft{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;margin-top:20px;align-items:center}
+.cert-ft p{font-size:17px;color:var(--muted)}
+.cert-ph{aspect-ratio:3/2;max-height:360px;overflow:hidden;background:#fff;border:2px solid var(--ink)}
+.cert-ph img{width:100%;height:100%;object-fit:cover}
+
+/* Ajánlatkérés */
+.aj{background:var(--deep);color:#fff}
+.aj-g{display:grid;grid-template-columns:.85fr 1.15fr;gap:56px;align-items:start}
+.aj-g > *{min-width:0}
+.aj h2{max-width:560px}
+.aj .sub{font-size:18px;color:#cfe3d4;max-width:480px;margin-top:16px}
+.how{margin-top:28px;border-top:3px solid var(--lime)}
+.how div{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid #2f5a43}
+.how b{font-family:"Big Shoulders Display",sans-serif;font-size:24px;text-transform:uppercase;font-weight:800;color:var(--lime)}
+.how span{font-size:16px;color:#dcebe0}
+.sites{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}
+.site{border:2px solid #2f5a43;padding:16px 18px;font-size:15px;color:#dcebe0}
+.site b{display:block;font-family:"Big Shoulders Display",sans-serif;font-size:28px;text-transform:uppercase;color:#fff;line-height:1.05}
+.site a{color:#fff;font-weight:700;text-decoration:none}
+.form{background:#fff;color:var(--ink);padding:34px 34px 36px;border-top:10px solid var(--red)}
+.form h3{font-size:46px}
+.form > p{color:var(--muted);font-size:15px;margin-top:4px}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}
+.roleb{border:2px solid var(--ink);background:#fff;color:var(--ink);padding:12px 12px 11px;text-align:left;font-weight:800;font-size:14.5px;line-height:1.2}
+.roleb small{display:block;font-weight:600;font-size:12.5px;color:var(--muted);margin-top:3px}
+.roleb:hover{background:var(--bg)}
+.roleb[aria-pressed=true]{background:var(--deep);color:#fff;border-color:var(--deep)}
+.roleb[aria-pressed=true] small{color:#cfe3d4}
+.dyn{margin-top:6px}
+.dyn .g{display:none}
+.dyn .g.on{display:block}
+.field label{display:block;font-size:14.5px;font-weight:800;margin:18px 0 7px;letter-spacing:.02em}
+.field input,.field select,.field textarea{width:100%;height:50px;border:2px solid #b9c7b4;padding:0 13px;font:inherit;font-size:16px;color:var(--ink);background:#fff;border-radius:0}
+.field textarea{height:92px;padding:12px 13px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px rgba(148,201,61,.6)}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.agree{display:flex;gap:10px;align-items:flex-start;margin-top:20px;font-size:14.5px;color:var(--muted)}
+.agree input{margin-top:4px;accent-color:var(--leaf);width:17px;height:17px;flex:none}
+.agree a{color:var(--ink);font-weight:700}
+.f-ft{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:18px}
+.f-ft small{color:var(--muted);font-size:14.5px;max-width:290px}
+.sent{display:none;margin-top:16px;padding:14px 16px;background:#e4f3e3;color:#155724;font-weight:700;font-size:15px}
+
+.ftr{background:#06180f;color:#a9c4b2;font-size:15px;padding:60px 0 28px}
+.ftr-g{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:40px}
+.ftr .lg{display:inline-block;background:#fff;padding:12px 18px;margin-bottom:14px}
+.ftr .lg img{height:42px}
+.ftr h4{font-family:"Big Shoulders Display",sans-serif;color:#fff;font-size:22px;text-transform:uppercase;margin-bottom:12px;letter-spacing:.04em}
+.ftr ul{list-style:none;display:grid;gap:7px}
+.ftr a{text-decoration:none}.ftr a:hover{color:var(--lime)}
+.ftr-b{margin-top:40px;padding-top:20px;border-top:1px solid #1d3b2a;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:14px}
+
+@media (max-width:1100px){
+  .nav{display:none}.hdr .btn{margin-left:auto}
+  .hero-top{grid-template-columns:1fr;gap:20px}
+  .facts .wrap{grid-template-columns:repeat(3,1fr)}
+  .facts div:nth-child(4){border-left:0;padding-left:0}
+  .nov-top{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .steps{grid-template-columns:repeat(3,1fr);gap:26px 0}
+  .steps::before,.steps .prog{display:none}
+  .stp,.uz-top,.sz-g,.aj-g,.cert-ft{grid-template-columns:1fr;gap:34px}
+  .line{grid-template-columns:1fr 1fr}.ln:nth-child(3){border-left:0}.ln:nth-child(n+3){border-top:3px solid var(--deep)}.arrow{display:none}
+  .cert-g{grid-template-columns:1fr 1fr}
+  .ftr-g{grid-template-columns:1fr 1fr}
+}
+@media (max-width:700px){
+  :root{--gut:18px}
+  body{font-size:16px}
+  .sec{padding:70px 0}
+  .util .wrap{gap:4px 18px;padding-top:6px;padding-bottom:6px}.util .sp{display:none}
+  .hdr .wrap{height:70px;gap:12px}.brand img{height:40px}
+  .lg-only{display:none}.sm-only{display:inline}
+  .hero-top{padding:40px 0 28px}
+  .doors{flex-direction:column;height:auto}
+  .dr{flex:none;height:auto;min-height:330px;display:flex;align-items:flex-end;border-right:0;border-bottom:3px solid var(--deep)}
+  .dr:hover,.dr.on{flex-grow:0}
+  .dr-b{position:relative;width:100%;padding:150px 20px 22px}
+  .dr p{max-height:140px;opacity:1}
+  .facts .wrap{grid-template-columns:1fr 1fr}
+  .facts div,.facts div:nth-child(4){border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .facts div:nth-child(-n+2){border-top:0}
+  .facts b{font-size:42px}
+  .pgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .pl b{font-size:22px}
+  .pl .bd{padding:12px 12px 14px}
+  .steps{grid-template-columns:1fr 1fr}
+  .st i{width:56px;height:56px;font-size:26px}
+  .st b{font-size:21px}
+  .panel{padding:22px 18px 24px}.panel h3{font-size:36px}
+  .line{grid-template-columns:1fr}.ln,.ln + .ln{border-left:0;aspect-ratio:3/2}.ln + .ln{border-top:3px solid var(--deep)}
+  .uz-ph{grid-template-columns:1fr 1fr}
+  .svc div{grid-template-columns:48px 1fr}.svc a{grid-column:2}
+  .vis h3{font-size:40px}
+  .cert-g{grid-template-columns:1fr 1fr}.cb b{font-size:46px}
+  .how div{grid-template-columns:1fr;gap:2px}
+  .sites{grid-template-columns:1fr}
+  .form{padding:24px 18px 28px}.form h3{font-size:38px}
+  .roles{grid-template-columns:1fr 1fr}
+  .row2,.row3{grid-template-columns:1fr;gap:0}
+  .f-ft .btn{width:100%}
+  .ftr-g{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar" role="note"><div class="demo-bar-inner"><span class="demo-bar-tag">Iparági demó</span><p class="demo-bar-text"><strong>ProjectEdge demó</strong> — a Pusztafű kitalált cég, nem valós ügyfél. Gyógynövény-felvásárló és feldolgozó, kereshető növénytárral.</p><p class="demo-bar-text short"><strong>ProjectEdge demó</strong> — kitalált cég</p><a class="demo-bar-link" href="/munkak?munka=pusztafu#munka-valaszto"><span class="demo-bar-arrow" aria-hidden="true"></span><span class="demo-bar-link-long">Vissza a munkákhoz</span><span class="demo-bar-link-short">Munkák</span></a></div></div>
+
+<div class="util"><div class="wrap">
+  <span>Tiszaréve <a href="tel:+3615550911">+36 1 555 0911</a></span>
+  <span>Kunhalom <a href="tel:+3615550912">+36 1 555 0912</a></span>
+  <a href="mailto:info@pusztafu.hu">info@pusztafu.hu</a>
+  <span class="sp">Ügyfélszolgálat munkanapokon 8:00–16:00</span>
+</div></div>
+
+<header class="hdr">
+  <div class="wrap">
+    <a href="#" class="brand" aria-label="Pusztafű főoldal"><span class="pf-logo"><svg viewBox="0 0 40 40" aria-hidden="true" style="width:40px;height:40px"><circle cx="20" cy="20" r="19" fill="#0b2a1b"/><path d="M12 28c0-9 6-15 16-16-1 10-7 16-16 16z" fill="#94c93d"/><path d="M12 28 24 16" stroke="#0b2a1b" stroke-width="1.6"/></svg><span>Pusztafű<small>gyógynövény</small></span></span></a>
+    <nav class="nav" aria-label="Főmenü">
+      <a href="#noveny">Növénytár</a><a href="#atvetel">Felvásárlás</a><a href="#uzem">Üzemünk</a><a href="#szolgaltatasok">Szolgáltatások</a><a href="#tanusitvanyok">Tanúsítványok</a><a href="#ajanlat">Kapcsolat</a>
+    </nav>
+    <a class="btn btn-red" href="#ajanlat"><span class="lg-only">Ajánlatot kérek</span><span class="sm-only">Ajánlat</span></a>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div><span class="stamp">2004 óta a gyógynövények útján</span><h1>A mezőről <span>a csészébe.</span></h1></div>
+      <p>Vadon termő gyógynövények felvásárlása és feldolgozása, gyógyteák és fűszerek csomagolása, bérmunka és export-import. Két telephely, 35 munkatárs, ISO 9001, GACP, GMP és HACCP szerint.</p>
+    </div>
+  </div>
+  <div class="doors" id="doors">
+    <a class="dr on" href="#atvetel" data-door="felvasarlas"><img src="/demo/pusztafu/assets/foto/gyujto.webp" alt="Szárított kamilla átadása az üzem udvarán" style="object-position:50% 60%"><div class="dr-b"><span class="dr-n">01</span><h3>Gyógynövényt<br>kínálok</h3><p>Gyűjtőként, termelőként vagy felvásárlóként ajánlana fel alapanyagot. Mit vesznek át, hogyan kell szállítani, mikor fizetnek.</p><em>Felvásárlás →</em></div></a>
+    <a class="dr" href="#szolgaltatasok" data-door="rendeles"><img src="/demo/pusztafu/assets/foto/csomagol.webp" alt="Gyógytea csomagolása az üzemben" style="object-position:40% 50%"><div class="dr-b"><span class="dr-n">02</span><h3>Terméket vagy<br>bérmunkát kérek</h3><p>Gyógyteák, fűszerek, feldolgozás és csomagolás bérmunkában, export-import. Árajánlat a lista alapján.</p><em>Szolgáltatások →</em></div></a>
+    <a class="dr" href="#ajanlat" data-door="viszontelado"><img src="/demo/pusztafu/assets/foto/kezfogas.webp" alt="Kézfogás" style="object-position:22% 50%"><div class="dr-b"><span class="dr-n">03</span><h3>Viszonteladó<br>szeretnék lenni</h3><p>Reformélelmiszer, bio és gyógynövény üzletek, hentes- és pékségek. Legyen Ön is partnerünk.</p><em>Partnerség →</em></div></a>
+  </div>
+  <div class="facts"><div class="wrap">
+    <div><b class="num">22</b><span>éve működünk, 2004 óta</span></div>
+    <div><b class="num">3 → 35</b><span>munkatárs a kezdéstől mára</span></div>
+    <div><b class="num">~1500<small> t</small></b><span>áru egy szezonban</span></div>
+    <div><b class="num">2200<small> m²</small></b><span>tárolókapacitás</span></div>
+    <div><b class="num">2</b><span>telephely: Tiszaréve és Kunhalom</span></div>
+  </div></div>
+</section>
+
+<section class="sec" id="noveny">
+  <div class="wrap">
+    <div class="nov-top">
+      <div><span class="eyebrow">Növénytár</span><h2 style="margin-top:12px">Átveszik a növényemet?</h2><p>Az oldalunkon közzétett, nagyobb mennyiségben átvehető gyógynövények listája. Szűrjön típus és növényrész szerint, vagy keressen a névben.</p></div>
+      <div class="side"><b>60–70 + 30</b>vadon termő és termesztett gyógynövény alapanyagot vásárolunk. A lista a nagyobb mennyiségben átvehetőket mutatja.</div>
+    </div>
+    <div class="tools">
+      <div class="fbs" id="fT" role="group" aria-label="Típus"><button class="fb" type="button" data-t="all" aria-pressed="true">Mind</button><button class="fb" type="button" data-t="vad" aria-pressed="false">Vadon termő</button><button class="fb" type="button" data-t="termesztett" aria-pressed="false">Termesztett</button><button class="fb" type="button" data-t="termes" aria-pressed="false">Termés (tisztított)</button></div>
+      <div class="fbs" id="fP" role="group" aria-label="Növényrész"><button class="fb part" type="button" data-p="all" aria-pressed="true">Minden rész</button><button class="fb part" type="button" data-p="levél" aria-pressed="false">Levél</button><button class="fb part" type="button" data-p="virág" aria-pressed="false">Virág</button><button class="fb part" type="button" data-p="fű" aria-pressed="false">Fű</button><button class="fb part" type="button" data-p="gyökér" aria-pressed="false">Gyökér</button><button class="fb part" type="button" data-p="termés" aria-pressed="false">Termés</button></div>
+      <input id="q" type="search" placeholder="Keresés: kamilla, orbáncfű, menta…" aria-label="Keresés a növények között">
+    </div>
+    <div class="pgrid" id="pgrid"></div>
+    <p class="nov-ft">Összeállított árlistánk nincs: a felajánlott növényre konkrét átvételi árat adunk. Frissen gyűjtött, nyers alapanyagot csak előre egyeztetett keretek között veszünk át (a kamillavirágot nyersen is).</p>
+  </div>
+</section>
+
+<section class="sec at dark" id="atvetel">
+  <div class="wrap">
+    <span class="eyebrow">Felvásárlás</span>
+    <h2 style="margin-top:12px">Hat lépés a gyűjtéstől a kifizetésig.</h2>
+    <p class="sub">Gyógynövény alapanyag gyűjtéssel, felvásárlással kapcsolatos, folyamatosan érkező kérdésekre itt találja a választ.</p>
+    <div class="steps" id="steps" role="tablist" aria-label="Felvásárlás lépései"><div class="prog" id="prog"></div></div>
+    <div class="stp">
+      <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
+      <div class="check">
+        <h3>Átvehető-e?</h3>
+        <div class="q" id="qa">Hol van az alapanyag?</div>
+        <div class="seg" role="radiogroup" aria-labelledby="qa"><label><input type="radio" name="hol" value="alfold" checked><span>Alföld, Kelet-Magyarország</span></label><label><input type="radio" name="hol" value="duna"><span>Dunántúl</span></label></div>
+        <div class="q" id="qb">Mennyi?</div>
+        <div class="kg"><input id="kg" type="range" min="10" max="1000" step="10" value="120" aria-labelledby="qb"><output id="kgo" for="kg">120 kg</output></div>
+        <div class="res" id="res" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="uzem">
+  <div class="wrap">
+    <div class="uz-top"><div><span class="eyebrow">Üzemünk</span><h2 style="margin-top:12px">A zsáktól a csomagig.</h2></div><p>A kunhalmi üzem 2015-ös átadása óta kétszer annyit tudunk feldolgozni: forrólevegős szárítók, vágógépek és 2200 m² raktár biztosítja, hogy szezonon kívül is legyen áru.</p></div>
+    <div class="line">
+      <div class="ln"><img src="/demo/pusztafu/assets/foto/zsakok.webp" alt="Átvett gyógynövény zsákokban" style="object-position:50% 55%"><div><i>01</i><b>Átvétel</b><span>Feliratozott zsákokban érkező alapanyag.</span></div><span class="arrow"></span></div>
+      <div class="ln"><img src="/demo/pusztafu/assets/foto/tepsi.webp" alt="Szárítótálcák" style="object-position:50% 40%"><div><i>02</i><b>Szárítás</b><span>Forrólevegős szárítógépek.</span></div><span class="arrow"></span></div>
+      <div class="ln"><img src="/demo/pusztafu/assets/foto/gep.webp" alt="Vágógép" style="object-position:50% 40%"><div><i>03</i><b>Vágás</b><span>Speciális vágógépek.</span></div><span class="arrow"></span></div>
+      <div class="ln"><img src="/demo/pusztafu/assets/foto/csomagol.webp" alt="Csomagolás" style="object-position:40% 50%"><div><i>04</i><b>Csomagolás</b><span>Gyógytea és fűszer kicsomagolása.</span></div></div>
+    </div>
+    <div class="uz-ph"><figure><img src="/demo/pusztafu/assets/foto/csarnok.webp" alt="Raktárcsarnok"></figure><figure><img src="/demo/pusztafu/assets/foto/epulet.webp" alt="A cég székháza"></figure><figure><img src="/demo/pusztafu/assets/foto/szaritogep.webp" alt="Feldolgozás a szárítóban"></figure></div>
+  </div>
+</section>
+
+<section class="sec sz" id="szolgaltatasok">
+  <div class="wrap">
+    <span class="eyebrow">Szolgáltatások</span><h2 style="margin-top:12px">Amit a partnereinknek kínálunk.</h2>
+    <div class="sz-g">
+      <div class="svc">
+        <div><em>01</em><b>Vadon termő gyógynövények gyűjtése, felvásárlása</b><a href="#atvetel">Lépések</a></div>
+        <div><em>02</em><b>Gyógy- és fűszernövények termelése és termeltetése</b><a href="#ajanlat" data-role="termelo">Kérem</a></div>
+        <div><em>03</em><b>Szárított zöldségfélék forgalmazása, ipari növények és fűszermagok termeltetése, feldolgozása, értékesítése</b><a href="#ajanlat" data-role="rendeles">Kérem</a></div>
+        <div><em>04</em><b>Gyógynövények feldolgozása gyógyteává</b><a href="#ajanlat" data-role="rendeles">Kérem</a></div>
+        <div><em>05</em><b>Monoteák és fűszerek kicsomagolása, forgalmazása</b><a href="#ajanlat" data-role="rendeles">Kérem</a></div>
+        <div><em>06</em><b>Gyógy- és fűszernövények feldolgozásával kapcsolatos bérmunka</b><a href="#ajanlat" data-role="bermunka">Kérem</a></div>
+        <div><em>07</em><b>Export-import</b><a href="#ajanlat" data-role="rendeles">Kérem</a></div>
+      </div>
+      <div class="vis">
+        <span class="eyebrow" style="color:var(--lime)">Viszonteladóknak</span>
+        <h3 style="margin-top:10px">Legyen Ön is a partnerünk!</h3>
+        <p>Ha szívesen bővítené üzlete termékkínálatát, és beleillik a profiljába a gyógyteák és fűszerek forgalmazása, keressen bennünket bizalommal. Termékeink forgalmazhatók:</p>
+        <ul><li>Reformélelmiszerek kis- és nagykereskedelme</li><li>Élelmiszerüzletek, reformélelmiszer és bio üzletek</li><li>Gyógynövény és gyógyhatású készítmény forgalmazók</li><li>Hús- és hentesárú üzletek</li><li>Pékségek</li></ul>
+        <a class="btn btn-red" href="#ajanlat" data-role="viszontelado">Partner leszek</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="tanusitvanyok">
+  <div class="wrap">
+    <span class="eyebrow">Minőség</span><h2 style="margin-top:12px">Négy rendszer, egy minőség.</h2>
+    <div class="cert-g">
+      <div class="cb"><b>ISO <small>9001</small></b><span>Minőségirányítási rendszer (Quality Management System).</span></div>
+      <div class="cb"><b>GACP</b><span>Jó Mezőgazdasági Gyakorlat (Good Agricultural Practice).</span></div>
+      <div class="cb"><b>GMP</b><span>Jó Gyártási Gyakorlat (Good Manufacturing Practice).</span></div>
+      <div class="cb"><b>HACCP</b><span>Veszélyelemzés, kritikus szabályozási pontok.</span></div>
+    </div>
+    <div class="cert-ft"><p>A rendszereket évente független tanúsító szervezet auditálja. Termékeink az európai, ázsiai és amerikai országok kis- és nagykereskedelmi hálózatában is elérhetők.</p><div class="cert-ph"><img src="/demo/pusztafu/assets/foto/labor.webp" alt="Minőségellenőrzés a laborban" style="object-position:50% 50%"></div></div>
+  </div>
+</section>
+
+<section class="sec aj dark" id="ajanlat">
+  <div class="wrap">
+    <div class="aj-g">
+      <div>
+        <span class="eyebrow">Kapcsolat</span><h2 style="margin-top:12px">Kérjen ajánlatot.</h2>
+        <p class="sub">Küldje el, mit kínál vagy mire van szüksége, és megküldjük a mennyiségtől függő aktuális ajánlatunkat.</p>
+        <div class="how">
+          <div><b>Vásárlás</b><span>Postai küldemény, közúti kiszállítás, vagy személyes átvétel a kunhalmi telephelyen, munkanapokon 7:00–15:00.</span></div>
+          <div><b>Mennyiség</b><span>Egyéni igények alapján, a raktáron lévő készlet erejéig.</span></div>
+          <div><b>Árajánlat</b><span>Elküldi a kért termékek listáját, mi megküldjük az aktuális ajánlatot.</span></div>
+          <div><b>Elérhető</b><span>Ügyfélszolgálat munkanapokon 8:00–16:00.</span></div>
+        </div>
+        <div class="sites">
+          <div class="site"><b>Tiszaréve</b>Székhely<br>Malom utca 7.<br><a href="tel:+3615550911">+36 1 555 0911</a></div>
+          <div class="site"><b>Kunhalom</b>Üzem, személyes átvétel<br>Külterület 112.<br><a href="tel:+3615550912">+36 1 555 0912</a></div>
+        </div>
+      </div>
+      <form class="form" id="quoteForm">
+        <h3>Ki Ön?</h3>
+        <p>Válassza ki, és a kérdések ehhez igazodnak.</p>
+        <div class="roles" role="group" aria-label="Szerepkör">
+          <button class="roleb" type="button" data-r="gyujto" aria-pressed="true">Gyógynövényt kínálok<small>gyűjtő, felvásárló</small></button>
+          <button class="roleb" type="button" data-r="termelo" aria-pressed="false">Termelő vagyok<small>termeltetés</small></button>
+          <button class="roleb" type="button" data-r="rendeles" aria-pressed="false">Terméket kérek<small>tea, fűszer, export</small></button>
+          <button class="roleb" type="button" data-r="bermunka" aria-pressed="false">Bérmunkát kérek<small>feldolgozás</small></button>
+          <button class="roleb" type="button" data-r="viszontelado" aria-pressed="false">Viszonteladó leszek<small>üzlet, bolt</small></button>
+          <button class="roleb" type="button" data-r="egyeb" aria-pressed="false">Más kérdésem van<small>egyéb</small></button>
+        </div>
+        <div class="row2"><div class="field"><label for="f-nev">Név, cégnév *</label><input id="f-nev" autocomplete="organization" required></div><div class="field"><label for="f-tel">Telefon *</label><input id="f-tel" type="tel" autocomplete="tel" required></div></div>
+        <div class="field"><label for="f-mail">E-mail *</label><input id="f-mail" type="email" autocomplete="email" required></div>
+        <div class="dyn" id="dyn">
+          <div class="g on" data-g="gyujto,termelo"><div class="row2"><div class="field"><label for="d-nov">Milyen növényt kínál?</label><input id="d-nov" list="plist" placeholder="pl. kamillavirágzat"><datalist id="plist"></datalist></div><div class="field"><label for="d-kg">Mennyiség (kg, kb.)</label><input id="d-kg" type="number" min="0" placeholder="pl. 200"></div></div><div class="field"><label for="d-hol">Honnan szállítaná?</label><select id="d-hol"><option>Alföld, Kelet-Magyarország</option><option>Dunántúl</option><option>Más</option></select></div></div>
+          <div class="g" data-g="rendeles"><div class="field"><label for="d-lista">Kért termékek listája</label><textarea id="d-lista" placeholder="Termék és mennyiség soronként"></textarea></div><div class="field"><label for="d-at">Átvétel módja</label><select id="d-at"><option>Postai küldemény</option><option>Közúti kiszállítás</option><option>Személyes átvétel (Kunhalom)</option></select></div></div>
+          <div class="g" data-g="bermunka"><div class="field"><label for="d-bm">Milyen feldolgozást kér?</label><textarea id="d-bm" placeholder="Pl. szárítás, vágás, csomagolás; alapanyag és mennyiség"></textarea></div></div>
+          <div class="g" data-g="viszontelado"><div class="field"><label for="d-ut">Üzlet típusa</label><select id="d-ut"><option>Reformélelmiszer, bio üzlet</option><option>Élelmiszerüzlet</option><option>Gyógynövény és gyógyhatású készítmény forgalmazó</option><option>Hús- és hentesárú üzlet</option><option>Pékség</option><option>Egyéb</option></select></div></div>
+          <div class="g" data-g="egyeb"><div class="field"><label for="d-msg">Üzenet</label><textarea id="d-msg"></textarea></div></div>
+        </div>
+        <label class="agree"><input type="checkbox" required><span>Elfogadom az <a href="#">adatkezelési tájékoztatót</a>.</span></label>
+        <div class="f-ft"><small>Az adatait csak az ajánlat elkészítéséhez használjuk.</small><button class="btn btn-red" type="submit">Ajánlatot kérek</button></div>
+        <div class="sent" id="sent" role="status">Köszönjük! Két munkanapon belül küldjük az ajánlatunkat. <small>(Ez egy bemutató oldal, valójában nem ment el üzenet.)</small></div>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="ftr"><div class="wrap">
+  <div class="ftr-g">
+    <div><a href="#" class="lg"><span class="pf-logo"><svg viewBox="0 0 40 40" aria-hidden="true" style="width:40px;height:40px"><circle cx="20" cy="20" r="19" fill="#0b2a1b"/><path d="M12 28c0-9 6-15 16-16-1 10-7 16-16 16z" fill="#94c93d"/><path d="M12 28 24 16" stroke="#0b2a1b" stroke-width="1.6"/></svg><span>Pusztafű<small>gyógynövény</small></span></span></a><p>Pusztafű Gyógynövény Kft.<br>2004 óta a gyógynövények útján.</p></div>
+    <div><h4>Menü</h4><ul><li><a href="#noveny">Növénytár</a></li><li><a href="#atvetel">Felvásárlás</a></li><li><a href="#uzem">Üzemünk</a></li><li><a href="#szolgaltatasok">Szolgáltatások</a></li></ul></div>
+    <div><h4>Információk</h4><ul><li><a href="#tanusitvanyok">Tanúsítványok</a></li><li><a href="#ajanlat">Ajánlatkérés</a></li><li><a href="#">Impresszum</a></li><li><a href="#">Adatkezelési tájékoztató, ÁSZF</a></li></ul></div>
+    <div><h4>Elérhetőség</h4><ul><li>Tiszaréve, Malom utca 7.<br><a href="tel:+3615550911">+36 1 555 0911</a></li><li>Kunhalom, Külterület 112.<br><a href="tel:+3615550912">+36 1 555 0912</a></li><li><a href="mailto:info@pusztafu.hu">info@pusztafu.hu</a><br><a href="mailto:kunhalom@pusztafu.hu">kunhalom@pusztafu.hu</a></li></ul></div>
+  </div>
+  <div class="ftr-b"><span>© 2026 Pusztafű Gyógynövény Kft. · kitalált cég</span><span>ProjectEdge demó</span></div>
+</div></footer>
+
+<script>
+const $=id=>document.getElementById(id);
+
+/* Ajtók */
+const doors=[...document.querySelectorAll('.dr')];
+doors.forEach(d=>{d.addEventListener('mouseenter',()=>{doors.forEach(x=>x.classList.toggle('on',x===d))});d.addEventListener('focus',()=>{doors.forEach(x=>x.classList.toggle('on',x===d))})});
+document.querySelector('[data-door=viszontelado]').addEventListener('click',()=>setRole('viszontelado'));
+document.querySelector('[data-door=rendeles]').addEventListener('click',()=>setRole('rendeles'));
+
+/* Növénytár */
+const PL=[
+ ['Csalánlevél','vad','levél'],['Cickafarkfű','vad','fű'],['Hársfavirágzat','vad','virág'],['Kamillavirágzat','vad','virág'],['Orbáncfű','vad','fű'],['Párlófű','vad','fű'],['Orvosi zilizlevél','vad','levél'],['Fehér ürömfű','vad','fű'],['Gyermekláncfű gyökér','vad','gyökér'],['Bojtorján gyökér','vad','gyökér'],['Sédkender fű','vad','fű'],['Legyezőfű','vad','fű'],['Tejoltó galajfű','vad','fű'],['Orvosi ziliz gyökér, kocka','vad','gyökér'],
+ ['Borsosmentalevél','termesztett','levél'],['Citromfű','termesztett','fű'],['Macskagyökér','termesztett','gyökér'],['Kerti kakukkfű','termesztett','fű'],['Orvosi zilizlevél (termesztett)','termesztett','levél'],['Máriatövis fű','termesztett','fű'],
+ ['Keserű édesköménytermés','termes','termés'],['Máriatövis termés','termes','termés'],['Fehér mustármag','termes','termés']];
+const TL={vad:'Vadon termő',termesztett:'Termesztett',termes:'Tisztított termés'};
+let FT='all',FP='all',Q='';
+function pr(){
+  const l=PL.filter(p=>(FT==='all'||p[1]===FT)&&(FP==='all'||p[2]===FP)&&(!Q||p[0].toLowerCase().includes(Q)));
+  $('pgrid').innerHTML=l.length?l.map(p=>'<button class="pl '+(p[1]==='termesztett'?'t2':(p[1]==='termes'?'t3':''))+'" type="button" data-n="'+p[0].replace(/"/g,'&quot;')+'"><div class="tp"></div><div class="bd"><small>'+TL[p[1]]+' · '+p[2]+'</small><b>'+p[0]+'</b><div class="ft"><span>Felajánlom →</span></div></div></button>').join(''):'<div class="pempty">Erre a szűrésre nincs találat a nagyobb mennyiségben átvehető növények között. Az átvehető növények köre ennél szélesebb (60–70 vadon termő, 30 termesztett): kérdezzen bátran.</div>';
+  document.querySelectorAll('.pl').forEach(b=>b.addEventListener('click',()=>{setRole('gyujto');$('d-nov').value=b.dataset.n;$('ajanlat').scrollIntoView({behavior:'smooth'})}));
+}
+document.querySelectorAll('#fT .fb').forEach(b=>b.addEventListener('click',()=>{FT=b.dataset.t;document.querySelectorAll('#fT .fb').forEach(x=>x.setAttribute('aria-pressed',x===b));pr()}));
+document.querySelectorAll('#fP .fb').forEach(b=>b.addEventListener('click',()=>{FP=b.dataset.p;document.querySelectorAll('#fP .fb').forEach(x=>x.setAttribute('aria-pressed',x===b));pr()}));
+$('q').addEventListener('input',e=>{Q=e.target.value.trim().toLowerCase();pr()});
+$('plist').innerHTML=PL.map(p=>'<option value="'+p[0]+'">').join('');
+pr();
+
+/* Átvétel lépései */
+const ST=[
+ ['Gyűjtés','A gyűjtés szabályai','A gyógynövény gyűjtés általános szabályairól és az alapanyagokra vonatkozó minőségi követelményekről a Magyar Gyógyszerkönyv gyógynövényekre vonatkozó előírásait vesszük alapul.',['Konkrét növény esetén külön írásos dokumentációt küldünk.','Nagyobb mennyiségben átvehető növények: lásd a Növénytárat.']],
+ ['Szárítás','Természetes szárítás','A nyers alapanyagot tiszta, szellős, közvetlen napsugárzástól védett helyen kell szárítani, időnként kíméletesen megforgatva.',['Frissen gyűjtött, nyers alapanyag átvételére csak előre egyeztetett, szervezett keretek között van lehetőség.','Kamillavirágot nyersen is átveszünk.','Az üzemek közelében lévő területekről rövid időn belül kell beszállítani, hogy ne romoljon a minőség.']],
+ ['Címkézés','Csomagolás és címke','A száraz alapanyag könnyen törik, porlad, ezért kíméletesen, lazán kell zsákokba csomagolni. Az átvétel feltétele a zsákok feliratozása.',['A függőcímkén szerepeljen: a növény megnevezése, a gyűjtés ideje (év, hónap), helye és a gyűjtő neve.','A zsákot a gyűjtő biztosítja, visszaadására nincs lehetőség.','Nagy mennyiségnél egyéni megállapodással csere zsákot adunk.']],
+ ['Átadás','Hol és mennyit','Két feldolgozó üzemünkben, Tiszarévén és Kunhalmon van lehetőség az átvételre. A Dunántúl területén nincs átvevő helyünk.',['Minimális mennyiséget nem határozunk meg, a szállítás gazdaságossága dönt.','400 kg felett, előzetes egyeztetéssel a szállítást alkalmi fuvarral megszervezzük.','Különféle növényekből eltérő mennyiséget vásárolunk, a gyűjtési időszak közben az átvételt leállíthatjuk.']],
+ ['Ár','Átvétel és átvételi ár','Megszárított gyógynövény alapanyagot átveszünk felvásárlóktól, cégektől és magánszemélyektől egyaránt. Az áru átadásakor számla vagy őstermelői igazolvány szükséges.',['Összeállított, közzétehető árlistánk nincs.','A felajánlott konkrét gyógynövény alapanyagra adunk átvételi árat.']],
+ ['Kifizetés','Hogyan fizetünk','Magánszemélyektől átvett alapanyagok ellenértékét azonnali készpénz kifizetéssel rendezzük.',['Felvásárlóktól, cégektől nagyobb mennyiségben átvett alapanyagnál egyedi megállapodás szerint fizetünk, készpénzben vagy átutalással.']]];
+let SI=0;
+$('steps').insertAdjacentHTML('beforeend',ST.map((s,i)=>'<button class="st" role="tab" type="button" data-i="'+i+'" aria-selected="'+(i===0)+'"><i>'+(i+1)+'</i><b>'+s[0]+'</b></button>').join(''));
+function step(i){SI=i;const s=ST[i];
+  document.querySelectorAll('.st').forEach((b,k)=>{b.setAttribute('aria-selected',k===i);b.classList.toggle('done',k<i)});
+  $('prog').style.width=(i/(ST.length-1)*(100-100/ST.length*0.5))+'%';
+  $('panel').innerHTML='<small>'+(i+1)+' / '+ST.length+'</small><h3>'+s[1]+'</h3><p>'+s[2]+'</p><ul>'+s[3].map(x=>'<li>'+x+'</li>').join('')+'</ul>';}
+document.querySelectorAll('.st').forEach(b=>b.addEventListener('click',()=>step(+b.dataset.i)));
+step(0);
+function chk(){
+  const kg=+$('kg').value,h=document.querySelector('input[name=hol]:checked').value;$('kgo').textContent=kg+' kg';
+  let t,d;
+  if(h==='duna'){
+    if(kg>=400){t='Egyeztessünk!';d='Dunántúlon nincs átvevő helyünk, de 400 kg felett, előzetes egyeztetéssel a szállítást alkalmi fuvarral megszervezzük. Hívjon vagy írjon, mielőtt a szállítást megkezdené.'}
+    else{t='Kis mennyiség, nagy távolság';d='A Dunántúlon nincs átvevő helyünk, és kisebb mennyiségnél a szállítás a nagy távolság miatt nem gazdaságos. Nagyobb mennyiségnél (400 kg felett) előzetes egyeztetéssel tudunk segíteni.'}
+  }else{t='Beszállítható';d='Tiszarévére vagy Kunhalomra beszállíthatja. Minimális mennyiséget nem határozunk meg, a szállítás gazdaságossága dönt. A felajánlott növényre konkrét átvételi árat adunk, a konkrét növény átvételét pedig a készletünktől függően döntjük el.'}
+  $('res').innerHTML='<b>'+t+'</b>'+d;}
+$('kg').addEventListener('input',chk);document.querySelectorAll('input[name=hol]').forEach(i=>i.addEventListener('change',chk));chk();
+
+/* Űrlap */
+function setRole(r){
+  document.querySelectorAll('.roleb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===r));
+  document.querySelectorAll('.dyn .g').forEach(g=>g.classList.toggle('on',g.dataset.g.split(',').includes(r)));}
+document.querySelectorAll('.roleb').forEach(b=>b.addEventListener('click',()=>setRole(b.dataset.r)));
+document.querySelectorAll('[data-role]').forEach(a=>a.addEventListener('click',()=>setRole(a.dataset.role)));
+$('quoteForm').addEventListener('submit',e=>{e.preventDefault();$('sent').style.display='block'});
+</script>
+</body>
+</html>
