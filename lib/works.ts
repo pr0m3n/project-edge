@@ -196,6 +196,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "negyszem",
+    name: "Négyszem Tárgyalók",
+    goal: "Foglalás árkalkulátorral",
+    industry: "Terembérlés · Budapest",
+    copy:
+      "A nyitóképen árkalkulátor: létszám és óraszám alapján kiírja, melyik terem kell és mennyibe kerül, és onnan egyből időpontot lehet kérni.",
+    href: "/demo/negyszem",
+    external: false,
+    src: "/work/demos/negyszem.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
