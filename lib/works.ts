@@ -209,6 +209,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "vandorkor",
+    name: "Vándorkör",
+    goal: "Útkereső naptárral",
+    industry: "Utazási iroda",
+    copy:
+      "Huszonkét út képeslapokon: indulási naptár, ahol minden pötty egy út, szűrők, keresés, és egy kattintással jelentkezés a kiválasztott útra.",
+    href: "/demo/vandorkor",
+    external: false,
+    src: "/work/demos/vandorkor.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
