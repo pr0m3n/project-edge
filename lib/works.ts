@@ -235,6 +235,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "bambusz",
+    name: "Bambusz Kung-fu Iskola",
+    goal: "Jelentkezés órarendből",
+    industry: "Sportegyesület",
+    copy:
+      "Függőleges menüsáv, heti órarend kezdési napokkal: egy órára kattintva látszik a díj és az első alkalom, és onnan egyből lehet jelentkezni.",
+    href: "/demo/bambusz",
+    external: false,
+    src: "/work/demos/bambusz.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",

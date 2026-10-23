@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bambusz Kung-fu Iskola – ProjectEdge demó</title>
+<meta name="description" content="Kitalált kung-fu iskola bemutató oldala a ProjectEdge-től.">
+<link rel="icon" href="/demo/bambusz/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demo/bambusz/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/demo/bambusz/assets/demo-bar.css">
+<style>
+:root{
+  --ink:#0a0909; --smoke:#151212; --smoke-2:#1e1919; --line:#2c2525; --blood:#c1121f; --red:#e3261f; --gold:#c8a24e;
+  --bone:#efe8da; --ash:#9a928a; --text:#e9e3d8; --rail:84px; --gut:28px; --wrap:1220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Manrope",system-ui,sans-serif;font-size:17px;line-height:1.6;color:var(--text);background:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:clip}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+main{margin-left:var(--rail)}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut);position:relative}
+h1,h2,h3{font-family:"Anton","Manrope",sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.015em;line-height:1.08}
+h2{font-size:clamp(46px,6.4vw,92px)}
+h3{font-size:30px}
+.sec{padding:110px 0;position:relative}
+.kick{display:flex;align-items:center;gap:14px;font-weight:800;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.kick::before{content:"";width:46px;height:3px;background:var(--red)}
+.seal{display:inline-grid;place-items:center;width:58px;height:58px;background:var(--blood);color:#fff;font-family:"Noto Serif SC",serif;font-weight:900;font-size:36px;line-height:1;border:2px solid rgba(255,255,255,.18);transform:rotate(-4deg);box-shadow:inset 0 0 0 3px var(--blood),inset 0 0 0 5px rgba(255,255,255,.35)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 28px;border:2px solid transparent;font-weight:800;font-size:15px;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;transition:background .15s,color .15s,border-color .15s,transform .15s;white-space:nowrap}
+.btn:hover{transform:translateY(-2px)}
+.btn-red{background:var(--blood);color:#fff}.btn-red:hover{background:var(--red)}
+.btn-line{border-color:#f0e9dc;color:#f0e9dc}.btn-line:hover{background:#f0e9dc;color:var(--ink)}
+.btn:focus-visible,.cardp:focus-visible,.chipd:focus-visible,.f:focus-visible,.sess:focus-visible,.pn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* Megjegyzések: pecsétes jegyzet */
+
+/* Bal oldali sáv */
+.demo-bar a{text-decoration:none}
+.demo-bar{z-index:300}
+.rail{position:fixed;left:0;top:var(--demo-bar-h,0px);bottom:0;width:var(--rail);background:var(--ink);border-right:1px solid var(--line);z-index:60;display:flex;flex-direction:column;align-items:center;padding:16px 0 0}
+.rail .lg{width:58px;height:58px;border-radius:50%;overflow:hidden;background:#000;display:block;flex:none}
+.rail .lg{background:var(--blood)!important;border-radius:6px!important;display:grid!important;place-items:center}
+.seal-lg{font-family:"Noto Serif SC",serif;font-weight:900;font-size:30px;color:#fff;line-height:1}
+.rail nav{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:26px;flex:1}
+.rail nav a{writing-mode:vertical-rl;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:#cfc8bd;padding:14px 0;border-top:1px solid var(--line);width:100%;text-align:center;transition:color .15s,background .15s}
+.rail nav a:first-child{border-top:0}
+.rail nav a:hover{color:#fff;background:var(--smoke-2)}
+.rail .go{writing-mode:vertical-rl;background:var(--blood);color:#fff;text-decoration:none;font-weight:800;letter-spacing:.24em;text-transform:uppercase;font-size:13px;width:100%;padding:22px 0;text-align:center}
+.rail .go:hover{background:var(--red)}
+
+/* Hero */
+.hero{min-height:100vh;position:relative;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.hero > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:78% 40%}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,9,9,.94) 0%,rgba(10,9,9,.72) 38%,rgba(10,9,9,.1) 66%),linear-gradient(180deg,rgba(10,9,9,0) 50%,rgba(10,9,9,.95) 100%);z-index:1}
+.hero .wrap{z-index:2;width:100%;padding-top:140px}
+.hero h1{font-size:clamp(56px,8vw,128px);line-height:1;margin-top:18px;text-shadow:0 4px 40px rgba(0,0,0,.5)}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero .sub{font-size:20px;color:#d9d1c4;max-width:520px;margin-top:20px}
+.hero .seal{position:absolute;right:var(--gut);top:-80px;width:84px;height:84px;font-size:54px}
+.hero-sc{position:absolute;right:34px;top:34px;z-index:3;text-align:right;font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#d9d1c4}
+.start{margin:56px 0 44px}
+.start h2{font-size:34px;letter-spacing:.04em;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.start h2::after{content:"";height:2px;background:var(--line);flex:1}
+.cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cardp{position:relative;background:rgba(21,18,18,.9);border:1px solid var(--line);padding:0;overflow:hidden;text-align:left;color:var(--text);transition:transform .2s,border-color .2s}
+.cardp:hover{transform:translateY(-6px);border-color:var(--red)}
+.cardp .ph{height:130px;overflow:hidden;position:relative}
+.cardp .ph img{width:100%;height:100%;object-fit:cover;opacity:.9;transition:transform .6s}
+.cardp:hover .ph img{transform:scale(1.07)}
+.cardp .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,18,18,0) 40%,rgba(21,18,18,1) 100%)}
+.cardp .bd{padding:6px 18px 18px}
+.cardp small{font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.cardp b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:30px;text-transform:uppercase;line-height:1.02;margin-top:4px}
+.cardp span{display:block;font-size:14.5px;color:var(--ash);margin-top:8px}
+.cardp em{display:block;font-style:normal;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#fff;margin-top:12px}
+.cardp em::after{content:" →";color:var(--red)}
+
+/* Órarend */
+.ora{background:var(--ink)}
+.ora h2{max-width:900px}
+.ora .intro{font-size:18px;color:#cfc8bd;max-width:620px;margin-top:16px}
+.dates{margin-top:44px;border:1px solid var(--line);background:var(--smoke);padding:20px 22px 22px}
+.dates h3{font-size:22px;letter-spacing:.08em;color:var(--gold)}
+.dr{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:14px}
+.chipd{background:var(--smoke-2);border:1px solid var(--line);color:var(--text);padding:12px 14px;text-align:left;transition:border-color .15s,background .15s}
+.chipd:hover{border-color:#6b5a4a}
+.chipd[aria-pressed=true]{background:var(--blood);border-color:var(--blood)}
+.chipd b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:34px;line-height:1}
+.chipd i{display:block;font-style:normal;font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+.chipd[aria-pressed=true] i{color:#ffd9d3}
+.chipd span{display:block;font-size:13px;line-height:1.3;margin-top:6px;color:#cfc8bd}
+.chipd[aria-pressed=true] span{color:#fff}
+.fs{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;align-items:center}
+.f{background:transparent;border:2px solid #4a4040;color:var(--text);padding:8px 16px;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.f:hover{border-color:#f0e9dc}
+.f[aria-pressed=true]{background:#f0e9dc;color:var(--ink);border-color:#f0e9dc}
+.week{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:20px}
+.day{background:var(--smoke);border-top:3px solid var(--line);min-height:330px;padding:12px 10px 14px}
+.day h4{font-family:"Anton",sans-serif;font-weight:400;font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--ash);margin-bottom:10px}
+.day.on h4{color:#fff}
+.sess{display:block;width:100%;text-align:left;border:0;border-left:5px solid var(--c,#6b5a4a);background:var(--smoke-2);color:var(--text);padding:10px 11px 11px;margin-bottom:8px;transition:background .15s,opacity .2s,transform .15s}
+.sess:hover{background:#2a2323}
+.sess time{display:block;font-weight:800;font-size:15px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.sess b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:21px;line-height:1.04;text-transform:uppercase;margin-top:3px}
+.sess small{display:block;font-size:12.5px;color:var(--ash);margin-top:3px}
+.sess.hot{background:#3a1416;box-shadow:0 0 0 2px var(--red)}
+.sess.dim{opacity:.28}
+.sess.sel{background:#f0e9dc;color:var(--ink);border-left-color:var(--red)}
+.sess.sel small{color:#5a4f46}
+.g-start{--c:var(--red)}.g-stilus{--c:#f0e9dc}.g-gyerek{--c:var(--gold)}.g-junior{--c:#5aa7a3}
+.lg-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:13.5px;color:var(--ash);font-weight:600}
+.lg-row i{display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-1px}
+.detail{margin-top:20px;border:1px solid var(--line);background:var(--smoke);display:grid;grid-template-columns:1.2fr .8fr;min-height:140px}
+.detail > *{min-width:0}
+.dt-l{padding:22px 26px 24px}
+.dt-l small{font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.dt-l h3{font-size:44px;margin-top:4px}
+.dt-l p{color:#cfc8bd;margin-top:8px;font-size:16px}
+.dt-r{padding:22px 26px 24px;border-left:1px solid var(--line);background:var(--smoke-2);display:flex;flex-direction:column;gap:10px}
+.dt-r .pr{font-family:"Anton",sans-serif;font-size:46px;line-height:1}
+.dt-r .pr small{font-family:"Manrope",sans-serif;font-size:15px;color:var(--ash);font-weight:700;letter-spacing:0}
+.dt-r .row{font-size:15px;color:#cfc8bd}
+.dt-r .row b{color:#fff}
+.dt-r .btn{margin-top:auto}
+.trial{margin-top:14px;font-size:15px;color:var(--ash);max-width:880px}
+.trial b{color:#f0e9dc}
+
+/* Irányzatok */
+.ir{background:var(--smoke)}
+.ir-top{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:end}
+.ir-top p{font-size:18px;color:#cfc8bd;max-width:520px}
+.panels{display:flex;height:620px;margin-top:46px;border:1px solid var(--line)}
+.pn{position:relative;flex:1 1 0;overflow:hidden;border:0;border-right:1px solid var(--ink);background:#000;color:#fff;text-align:left;transition:flex-grow .6s cubic-bezier(.2,.7,.2,1);min-width:0}
+.pn:last-child{border-right:0}
+.pn.on{flex-grow:3.2}
+.pn img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;transition:opacity .4s,transform .8s;transform:scale(1.04)}
+.pn.on img{opacity:.92;transform:scale(1)}
+.pn::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,9,.1) 30%,rgba(10,9,9,.96) 100%)}
+.pn .v{position:absolute;left:0;right:0;top:24px;z-index:2;text-align:center;writing-mode:vertical-rl;margin:0 auto;font-family:"Anton",sans-serif;font-size:42px;letter-spacing:.06em;text-transform:uppercase;width:100%;transition:opacity .3s}
+.pn.on .v{opacity:0}
+.pn .b{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:28px 30px 30px;opacity:0;transform:translateY(16px);transition:opacity .4s .15s,transform .4s .15s;pointer-events:none}
+.pn.on .b{opacity:1;transform:none;pointer-events:auto}
+.pn .b small{font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.pn .b h3{font-size:clamp(40px,4.4vw,64px);margin-top:4px}
+.pn .b p{font-size:16.5px;color:#d9d1c4;max-width:560px;margin-top:10px}
+.pn .b ul{list-style:none;margin-top:12px;display:grid;gap:5px}
+.pn .b li{font-size:15px;padding-left:22px;position:relative;color:#e9e3d8;font-weight:600}
+.pn .b li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:3px;background:var(--red)}
+
+/* Mesterek */
+.me-top{display:flex;justify-content:space-between;align-items:end;gap:30px;flex-wrap:wrap}
+.me-top p{font-size:18px;color:#cfc8bd;max-width:460px}
+.masters{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:46px;align-items:start}
+.ms{position:relative}
+.ms:nth-child(even){margin-top:46px}
+.ms .ph{aspect-ratio:3/4;overflow:hidden;background:#000;position:relative}
+.ms .ph img{width:100%;height:100%;object-fit:cover;filter:saturate(.9) contrast(1.03)}
+.ms .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,9,0) 55%,rgba(10,9,9,.7) 100%)}
+.ms .nm{font-family:"Anton",sans-serif;font-size:32px;text-transform:uppercase;line-height:1;margin-top:14px;letter-spacing:.02em}
+.ms .nm small{display:block;font-family:"Manrope",sans-serif;font-weight:800;font-size:12px;letter-spacing:.2em;color:var(--gold);margin-bottom:4px}
+.ms p{font-size:15px;color:#cfc8bd;margin-top:8px;line-height:1.5}
+.founder{margin-top:64px;border:1px solid var(--line);background:var(--smoke);display:grid;grid-template-columns:.8fr 1.2fr}
+.founder > *{min-width:0}
+.founder .ph{min-height:360px;position:relative;overflow:hidden}
+.founder .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:76% 50%}
+.founder .tx{padding:34px 36px 36px}
+.founder h3{font-size:48px}
+.founder p{color:#cfc8bd;margin-top:12px;font-size:16.5px}
+.founder .st{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+.founder .st b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:44px;line-height:1;color:var(--red)}
+.founder .st span{font-size:13.5px;color:var(--ash);font-weight:600;line-height:1.3;display:block;margin-top:4px}
+
+/* iskola */
+.ak{background:var(--smoke)}
+.ak-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.ak-grid > *{min-width:0}
+.ak h2{max-width:560px;line-height:1.04}
+.ak p.l{font-size:18px;color:#cfc8bd;margin-top:18px;max-width:520px}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:30px;border-top:1px solid var(--line)}
+.nums div{padding:18px 14px 6px 0;border-bottom:1px solid var(--line)}
+.nums b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:52px;line-height:1;color:#fff}
+.nums b small{font-size:20px;color:var(--red)}
+.nums span{font-size:14px;color:var(--ash);font-weight:600;line-height:1.3;display:block;margin-top:4px;padding-bottom:12px}
+.mos{display:grid;grid-template-columns:1.1fr 1fr;grid-auto-rows:190px;gap:8px}
+.mos figure{overflow:hidden;background:#000;position:relative}
+.mos img{width:100%;height:100%;object-fit:cover;opacity:.92;transition:transform .6s}
+.mos figure:hover img{transform:scale(1.05)}
+.mos .a{grid-row:1/3}.mos .d{grid-column:1/3}
+.mos figcaption{position:absolute;left:0;bottom:0;background:rgba(10,9,9,.82);padding:6px 12px;font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase}
+.quote{margin-top:70px;padding:44px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.quote q{font-family:"Anton",sans-serif;font-size:clamp(30px,4vw,56px);line-height:1.08;text-transform:uppercase;quotes:none;letter-spacing:.01em}
+.quote q em{font-style:normal;color:var(--red)}
+.quote small{display:block;margin-top:12px;font-family:"Manrope",sans-serif;font-weight:700;font-size:15px;letter-spacing:.06em;color:var(--ash);text-transform:none}
+
+/* Edzőtábor */
+.tab{position:relative;overflow:hidden;min-height:700px;display:flex;align-items:flex-end}
+.tab > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.tab::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,9,.55) 0%,rgba(10,9,9,.2) 35%,rgba(10,9,9,.96) 100%);z-index:1}
+.tab .wrap{z-index:2;width:100%;padding-top:100px;padding-bottom:80px}
+.tab h2{max-width:760px}
+.tab .sub{font-size:18px;color:#e0d9cc;max-width:560px;margin-top:14px}
+.tix{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
+.tx{background:rgba(21,18,18,.92);border:1px solid var(--line);padding:20px 22px 22px;position:relative}
+.tx.next{background:var(--blood);border-color:var(--red)}
+.tx small{font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.tx.next small{color:#ffd9d3}
+.tx b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:46px;line-height:1;margin-top:6px}
+.tx span{display:block;font-size:15px;color:#cfc8bd;margin-top:6px}
+.tx.next span{color:#fff}
+.tx.next{padding-top:62px}
+.tx .cd{position:absolute;right:18px;top:14px;text-align:right;font-family:"Anton",sans-serif;font-size:40px;line-height:1}
+.tx .cd small{display:inline;margin-left:6px;font-family:"Manrope",sans-serif;font-size:11px;letter-spacing:.16em;font-weight:800;color:#ffd9d3}
+.cond{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+.cond > *{min-width:0}
+.cond h3{font-size:26px;letter-spacing:.06em;color:var(--gold);margin-bottom:10px}
+.cond ul{list-style:none;display:grid;gap:7px}
+.cond li{font-size:15.5px;color:#e0d9cc;padding-left:22px;position:relative;line-height:1.45}
+.cond li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:3px;background:var(--red)}
+
+/* Kezdés */
+.kz{background:var(--ink)}
+.kz-g{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:40px}
+.kz-g > *{min-width:0}
+.st3{list-style:none;border-top:1px solid var(--line)}
+.st3 li{display:grid;grid-template-columns:70px 1fr;gap:14px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.st3 em{font-style:normal;font-family:"Anton",sans-serif;font-size:56px;line-height:.9;color:var(--red)}
+.st3 b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:28px;text-transform:uppercase}
+.st3 span{color:#cfc8bd;font-size:16px;display:block;margin-top:4px}
+.pay{background:var(--bone);color:#1b1410;padding:30px 32px 32px;position:relative;border-top:8px solid var(--blood)}
+.pay .seal{position:absolute;right:22px;top:-28px}
+.pay small{font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--blood)}
+.pay .pr{font-family:"Anton",sans-serif;font-size:76px;line-height:1;margin-top:6px}
+.pay .pr small{font-family:"Manrope",sans-serif;font-size:18px;letter-spacing:0;color:#5a4f46;text-transform:none;font-weight:700}
+.pay dl{margin-top:16px;display:grid;grid-template-columns:130px 1fr;gap:8px 14px;font-size:15.5px;border-top:1px solid #cdbfa8;padding-top:16px}
+.pay dt{font-weight:800;color:#5a4f46}
+.pay dd{font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pay p{margin-top:14px;font-size:14.5px;color:#4a3f36}
+.gear{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.gear span{border:2px solid var(--line);padding:8px 14px;font-weight:700;font-size:14.5px}
+
+/* GYIK */
+.gy{background:var(--bone);color:#1b1410;clip-path:polygon(0 24px,3% 8px,7% 22px,12% 4px,18% 20px,24% 6px,31% 22px,38% 8px,45% 24px,52% 6px,60% 20px,67% 4px,74% 22px,81% 8px,88% 24px,94% 6px,100% 18px,100% 100%,0 100%);padding-top:130px}
+.gy .kick{color:var(--blood)}
+.gy h2{max-width:800px;line-height:1.1}
+.fq{margin-top:40px;border-top:3px solid #1b1410}
+.fq details{border-bottom:1px solid #cdbfa8}
+.fq summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:54px 1fr 30px;gap:12px;align-items:center;padding:22px 0;font-family:"Anton",sans-serif;font-size:clamp(22px,2.6vw,32px);text-transform:uppercase;letter-spacing:.02em;line-height:1.1}
+.fq summary::-webkit-details-marker{display:none}
+.fq summary em{font-style:normal;color:var(--blood);font-size:34px}
+.fq summary i{width:22px;height:22px;position:relative;justify-self:end}
+.fq summary i::before,.fq summary i::after{content:"";position:absolute;left:0;right:0;top:50%;height:3px;background:#1b1410;transform:translateY(-50%)}
+.fq summary i::after{transform:translateY(-50%) rotate(90deg);transition:transform .2s}
+.fq details[open] summary i::after{transform:translateY(-50%) rotate(0)}
+.fq details p{padding:0 40px 26px 66px;font-size:17px;color:#3a2f27;max-width:900px}
+.fq summary:focus-visible{outline:3px solid var(--blood);outline-offset:3px}
+
+/* Jelentkezés */
+.jel{background:var(--ink)}
+.jel-g{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:start}
+.jel-g > *{min-width:0}
+.jel .sub{font-size:18px;color:#cfc8bd;max-width:460px;margin-top:16px}
+.ct{margin-top:30px;border-top:1px solid var(--line)}
+.ct div{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ct small{font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.ct b,.ct a{font-weight:700;font-size:17px;text-decoration:none}
+.form{background:var(--smoke);border:1px solid var(--line);border-top:6px solid var(--blood);padding:32px 32px 34px}
+.form h3{font-size:44px}
+.form > p{color:var(--ash);font-size:14.5px;margin-top:4px}
+.field label{display:block;font-weight:800;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:#cfc8bd;margin:18px 0 7px}
+.field input,.field select,.field textarea{width:100%;height:52px;border:2px solid #3a3030;background:var(--ink);color:#fff;padding:0 14px;font:inherit;font-size:16px;border-radius:0}
+.field textarea{height:86px;padding:12px 14px;resize:vertical}
+.field select option{background:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(200,162,78,.3)}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.agree{display:flex;gap:10px;align-items:flex-start;margin-top:20px;font-size:14.5px;color:var(--ash)}
+.agree input{margin-top:5px;accent-color:var(--blood);width:17px;height:17px;flex:none}
+.agree a{color:#fff;font-weight:700}
+.f-ft{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:20px}
+.f-ft small{color:var(--ash);font-size:14px;max-width:280px}
+.sent{display:none;margin-top:16px;padding:14px 16px;background:#173324;color:#9be3b6;font-weight:700;font-size:15px}
+.ftr{margin-left:var(--rail);background:#050404;border-top:1px solid var(--line);padding:50px 0 30px;font-size:15px;color:var(--ash)}
+.ftr-g{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:40px;align-items:start}
+.ftr h4{font-family:"Anton",sans-serif;font-weight:400;font-size:22px;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.ftr a{text-decoration:none}.ftr a:hover{color:#fff}
+.ftr ul{list-style:none;display:grid;gap:6px}
+.ftr-b{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13.5px}
+
+@media (max-width:1100px){
+  .cards4{grid-template-columns:1fr 1fr}
+  .dr{grid-template-columns:repeat(3,1fr)}
+  .week{grid-template-columns:repeat(3,1fr)}
+  .detail{grid-template-columns:1fr}.dt-r{border-left:0;border-top:1px solid var(--line)}
+  .ir-top,.ak-grid,.kz-g,.jel-g,.cond{grid-template-columns:1fr;gap:34px}
+  .masters{grid-template-columns:1fr 1fr}.ms:nth-child(even){margin-top:0}
+  .founder{grid-template-columns:1fr}
+  .tix{grid-template-columns:1fr}
+  .ftr-g{grid-template-columns:1fr 1fr}
+}
+@media (max-width:820px){
+  :root{--rail:0px;--gut:20px}
+  main,.ftr{margin-left:0}
+  .rail{position:sticky;top:var(--demo-bar-h,0px);bottom:auto;width:100%;height:64px;flex-direction:row;padding:0 14px;gap:14px;border-right:0;border-bottom:1px solid var(--line)}
+  .rail .lg{width:44px;height:44px}
+  .rail nav{display:none}
+  .rail .go{writing-mode:horizontal-tb;margin-left:auto;width:auto;padding:12px 20px;letter-spacing:.12em}
+  .hero{min-height:auto}
+  .hero .wrap{padding-top:60px}
+  .hero h1{font-size:58px}
+  .hero .sub{font-size:17px}
+  .hero-sc,.hero .seal{display:none}
+  .hero::before{background:linear-gradient(180deg,rgba(10,9,9,.55) 0%,rgba(10,9,9,.88) 70%,rgba(10,9,9,.98) 100%)}
+  .cards4{grid-template-columns:1fr}
+  .cardp{display:grid;grid-template-columns:110px 1fr}
+  .cardp .ph{height:auto;min-height:130px}
+  .cardp .ph::after{background:linear-gradient(90deg,rgba(21,18,18,0) 40%,rgba(21,18,18,1) 100%)}
+  .sec{padding:76px 0}
+  .dr{grid-template-columns:repeat(2,1fr)}
+  .week{grid-template-columns:1fr}
+  .day{min-height:0}
+  .panels{flex-direction:column;height:auto}
+  .pn{flex:none;height:96px;border-right:0;border-bottom:1px solid var(--ink)}
+  .pn.on{flex-grow:0;height:auto;min-height:480px}
+  .pn .v{writing-mode:horizontal-tb;top:24px;text-align:left;padding-left:22px;font-size:34px}
+  .pn.on .v{opacity:0}
+  .pn .b{position:absolute;padding:22px}
+  .pn:not(.on) .b{display:none}
+  .masters{grid-template-columns:1fr 1fr;gap:10px}
+  .ms .nm{font-size:25px}.ms p{font-size:14px}
+  .founder .st{grid-template-columns:1fr 1fr 1fr}
+  .founder .tx{padding:24px 20px 26px}.founder h3{font-size:38px}
+  .mos{grid-template-columns:1fr;grid-auto-rows:200px}.mos .a{grid-row:auto}.mos .d{grid-column:auto}
+  .nums{grid-template-columns:1fr 1fr}.nums b{font-size:44px}
+  .quote{grid-template-columns:1fr}
+  .tab{min-height:0}
+  .tab .wrap{padding-top:80px;padding-bottom:50px}
+  .pay{padding:24px 18px 26px}.pay .pr{font-size:62px}
+  .pay dl{grid-template-columns:1fr;gap:2px 0}.pay dd{margin-bottom:8px}
+  .fq details p{padding:0 0 22px}
+  .fq summary{grid-template-columns:40px 1fr 24px}
+  .form{padding:24px 18px 28px}.form h3{font-size:38px}
+  .row2{grid-template-columns:1fr;gap:0}
+  .f-ft .btn{width:100%}
+  .ct div{grid-template-columns:1fr;gap:2px}
+  .ftr-g{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar" role="note"><div class="demo-bar-inner"><span class="demo-bar-tag">Iparági demó</span><p class="demo-bar-text"><strong>ProjectEdge demó</strong> — a Bambusz Kung-fu Iskola kitalált egyesület, nem valós ügyfél. Órarend kezdési napokkal és jelentkezéssel.</p><p class="demo-bar-text short"><strong>ProjectEdge demó</strong> — kitalált iskola</p><a class="demo-bar-link" href="/munkak?munka=bambusz#munka-valaszto"><span class="demo-bar-arrow" aria-hidden="true"></span><span class="demo-bar-link-long">Vissza a munkákhoz</span><span class="demo-bar-link-short">Munkák</span></a></div></div>
+
+<aside class="rail">
+  <a class="lg" href="#" aria-label="Bambusz Kung-fu Iskola főoldal"><span class="seal-lg" aria-hidden="true">竹</span></a>
+  <nav aria-label="Főmenü">
+    <a href="#orarend">Órarend</a><a href="#iranyzatok">Irányzatok</a><a href="#mesterek">Mesterek</a><a href="#akademia">Iskola</a><a href="#edzotabor">Edzőtábor</a><a href="#kezdes">Kezdés</a><a href="#gyik">Kérdések</a>
+  </nav>
+  <a class="go" href="#jelentkezes">Jelentkezés</a>
+</aside>
+
+<main>
+<section class="hero" id="hero">
+  <img src="/demo/bambusz/assets/foto/hero.webp" alt="Két gyakorló sziluettje hajnalban a mezőn">
+  <div class="hero-sc">Óbudán, a Flórián térnél<br>III. ker., Bécsi út 88.</div>
+  <div class="wrap">
+    <span class="seal" aria-hidden="true">武</span>
+    <div class="kick">Hagyományos kung-fu iskola · 1998 óta</div>
+    <h1>Az út, amit<br><em>28 éve</em> járunk.</h1>
+    <p class="sub">Hagyományos kínai harcművészetek Óbudán. Nem versenycentrikus: a gyakorlás életmódként. Gyerekeknek, juniorknak és felnőtteknek, teljesen kezdőtől a mesterképzésig.</p>
+    <div class="start">
+      <h2>Hol kezdjem?</h2>
+      <div class="cards4">
+        <button class="cardp" type="button" data-go="start"><div class="ph"><img src="/demo/bambusz/assets/foto/start.webp" alt="" style="object-position:50% 45%"></div><div class="bd"><small>Teljesen kezdő</small><b>Kezdő kör</b><span>3 alkalmas alapképzés, stílustól függetlenül.</span><em>Új csoport a jövő héten</em></div></button>
+        <button class="cardp" type="button" data-go="gyerek"><div class="ph"><img src="/demo/bambusz/assets/foto/gyerek.webp" alt="" style="object-position:50% 40%"></div><div class="bd"><small>Gyerek, 7–13 év</small><b>Kis Tigrisek</b><span>Játékos bevezetés, önfegyelem és figyelem.</span><em>Új csoport a jövő héten</em></div></button>
+        <button class="cardp" type="button" data-go="junior"><div class="ph"><img src="/demo/bambusz/assets/foto/junior.webp" alt="" style="object-position:40% 40%"></div><div class="bd"><small>Junior, 13–18 év</small><b>Ifjú Sárkányok</b><span>Önvédelem és erőfejlesztés fiataloknak.</span><em>Új csoport a jövő héten</em></div></button>
+        <button class="cardp" type="button" data-go="stilus"><div class="ph"><img src="/demo/bambusz/assets/foto/stilusok.webp" alt="" style="object-position:50% 40%"></div><div class="bd"><small>Már gyakoroltam</small><b>Három irányzat</b><span>Xing Yi, Shaolin Duan Quan, Chen Taiji.</span><em>Ingyenes próbaóra</em></div></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec ora" id="orarend">
+  <div class="wrap">
+    <div class="kick">Órarend</div>
+    <h2 style="margin-top:14px">Mikor kezdhetek?</h2>
+    <p class="intro">A képzések mindenképpen elindulnak. Válasszon egy kezdési napot, vagy nézze végig a hetet.</p>
+    <div class="dates"><h3>Első foglalkozások</h3><div class="dr" id="dr" role="group" aria-label="Kezdési napok"></div></div>
+    <div class="fs" id="fs" role="group" aria-label="Szűrők"><button class="f" type="button" data-f="all" aria-pressed="true">Minden óra</button><button class="f" type="button" data-f="start" aria-pressed="false">Kezdőknek</button><button class="f" type="button" data-f="stilus" aria-pressed="false">Stílusok</button><button class="f" type="button" data-f="gyerek" aria-pressed="false">Gyerek, junior</button></div>
+    <div class="week" id="week"></div>
+    <div class="lg-row"><span><i style="background:var(--red)"></i>kezdő tréning</span><span><i style="background:#f0e9dc"></i>stílus</span><span><i style="background:var(--gold)"></i>gyerek, 7–13</span><span><i style="background:#5aa7a3"></i>junior, 13–18</span></div>
+    <div class="detail" id="detail"></div>
+    <p class="trial"><b>Ingyenes próbaóra:</b> a komplett stílusoknál (Xing Yi Quan, Shaolin Duan Quan, Chen Taiji Quan) az első alkalom lehet díjtalan, annak is, aki bizonytalan. A rövidebb tréningeknél (Kezdő kör, Erőnlét, Önvédelem) nincs ingyenes próbaóra.</p>
+  </div>
+</section>
+
+<section class="sec ir" id="iranyzatok">
+  <div class="wrap">
+    <div class="ir-top"><div><div class="kick">Irányzatok</div><h2 style="margin-top:14px">Három út, egy iskola.</h2></div><p>A több éves képzéseket mindig egy pár alkalmas próbaidővel kezdjük. Válasszon irányzatot, és nézze meg, mit tanul.</p></div>
+    <div class="panels" id="panels">
+      <button class="pn on" type="button" aria-expanded="true"><img src="/demo/bambusz/assets/foto/xingyi.webp" alt="Xing Yi Quan gyakorlat a havas mezőn" style="object-position:50% 50%"><span class="v">Xing Yi Quan</span><div class="b"><small>A Forma és a Tudat Ökle</small><h3>Xing Yi Quan</h3><p>Belső harcművészet, az iskola fő irányzata. Szalai Bence vezeti, aki húsz éve tanítja.</p><ul><li>Hétfő és péntek, 17.15–18.45 / 17.30–19.00</li><li>3 alkalmas próbaidővel kezdődik</li><li>Az első alkalom lehet díjtalan</li></ul></div></button>
+      <button class="pn" type="button" aria-expanded="false"><img src="/demo/bambusz/assets/foto/shaolin.webp" alt="Shaolin Duan Quan gyakorlat" style="object-position:50% 50%"><span class="v">Shaolin Duan Quan</span><div class="b"><small>A Shaolin Rövid Ököl</small><h3>Shaolin Duan Quan</h3><p>Bármely életkorban elkezdhető, mert nem tartalmaz akrobatikus elemeket.</p><ul><li>Kedd és csütörtök, 20.15–21.45</li><li>3 alkalmas próbaidővel kezdődik</li><li>Az első alkalom lehet díjtalan</li></ul></div></button>
+      <button class="pn" type="button" aria-expanded="false"><img src="/demo/bambusz/assets/foto/taiji.webp" alt="Chen Taiji Quan gyakorlat" style="object-position:50% 50%"><span class="v">Chen Taiji Quan</span><div class="b"><small>A Nagy Végső Ököl</small><h3>Chen Taiji Quan</h3><p>A taiji lágy, belső kung-fu irányzat: nem csupán egészségvédő torna, hanem harcművészet.</p><ul><li>24 lépéses formagyakorlat, kedd és csütörtök, 17.30–19.00</li><li>6 000 Ft / 2 alkalom</li><li>Az első alkalom lehet díjtalan</li></ul></div></button>
+    </div>
+  </div>
+</section>
+
+<section class="sec me" id="mesterek">
+  <div class="wrap">
+    <div class="me-top"><div><div class="kick">Mesterek</div><h2 style="margin-top:14px">Akiktől tanulsz.</h2></div><p>A mesterek a természetben, a saját irányzatukban. Kínai mesterekkel is tartják a kapcsolatot, akik időnként vendégként tanítanak.</p></div>
+    <div class="masters">
+      <div class="ms"><div class="ph"><img src="/demo/bambusz/assets/foto/m1.webp" alt="Szalai Bence gyakorlás közben" style="object-position:50% 50%"></div><div class="nm"><small>Elnök, alapító</small>Szalai Bence</div><p>Az iskola alapítója, a Xing Yi Quan irányzat vezetője. A lándzsás csoportot is ő tartja.</p></div>
+      <div class="ms"><div class="ph"><img src="/demo/bambusz/assets/foto/m2.webp" alt="Varga Eszter gyakorlás közben" style="object-position:50% 50%"></div><div class="nm"><small>Elnökhelyettes</small>Varga Eszter</div><p>Xing Yi Quan mester és Chen stílusú Taiji Quan oktató. Ő fordítja a kínai szakanyagokat.</p></div>
+      <div class="ms"><div class="ph"><img src="/demo/bambusz/assets/foto/m3.webp" alt="Kertes Ádám gyakorlás közben" style="object-position:50% 50%"></div><div class="nm"><small>Mester</small>Kertes Ádám</div><p>Shaolin Duan Quan mester, a kardvívó csoport vezetője.</p></div>
+      <div class="ms"><div class="ph"><img src="/demo/bambusz/assets/foto/m4.webp" alt="Fodor Márk gyakorlás közben" style="object-position:50% 50%"></div><div class="nm"><small>Mester</small>Fodor Márk</div><p>Xing Yi Quan oktató, a haladó csoport edzője.</p></div>
+    </div>
+    <div class="founder">
+      <div class="ph"><img src="/demo/bambusz/assets/foto/lando.webp" alt="Lándzsás gyakorlás a tó partján"></div>
+      <div class="tx"><div class="kick">Az alapító</div><h3 style="margin-top:12px">Szalai Bence</h3><p>Tizenhat évesen kezdett gyakorolni, és azóta minden reggel edz. Kínai tanulmányútjairól hozta a Xing Yi Quant, amit ma az iskola fő irányzataként tanít. Magánóráin mindenkit másképp tanít: az egyén kondíciója, alkata és célja szerint.</p>
+        <div class="st"><div><b>8</b><span>alkalommal hívott meg kínai mestert vendégoktatónak</span></div><div><b>~6</b><span>többhetes kínai tanulmányút</span></div><div><b>2012</b><span>óta működik az oktatóképzés</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec ak" id="akademia">
+  <div class="wrap">
+    <div class="ak-grid">
+      <div><div class="kick">Az iskola</div><h2 style="margin-top:14px">Nem verseny, hanem életmód.</h2>
+        <p class="l">A Bambusz Kung-fu Iskola elsődleges célja az egészséges életmódra nevelés, a fizikai és mentális állóképesség fejlesztése. Másodsorban a kínai harci művészetek történetének, filozófiájának tanulmányozása és az önvédelmi képességek kifejlesztése.</p>
+        <div class="nums"><div><b>1998</b><span>óta működő egyesület</span></div><div><b>2</b><span>európai színvonalú edzőterem</span></div><div><b>07–22</b><span>óráig gyakorolhatnak a tagok, minden nap</span></div><div><b>60</b><span>oktatóvideó a tagoknak</span></div><div><b>4</b><span>edzőtábor évente, tavasz, nyár, ősz, tél</span></div><div><b>2011</b><span>óta a mai gyakorlóközpont</span></div></div>
+      </div>
+      <div class="mos"><figure class="a"><img src="/demo/bambusz/assets/foto/terem1.webp" alt="Zöld edzőterem" style="object-position:50% 50%"><figcaption>Zöld terem</figcaption></figure><figure class="b"><img src="/demo/bambusz/assets/foto/kek.webp" alt="Kék edzőterem"><figcaption>Kék terem</figcaption></figure><figure class="c"><img src="/demo/bambusz/assets/foto/buzogany.webp" alt="Buzogány tréning" style="object-position:30% 50%"><figcaption>Buzogány tréning</figcaption></figure><figure class="d"><img src="/demo/bambusz/assets/foto/magan.webp" alt="Magánóra" style="object-position:50% 40%"><figcaption>Magánóra</figcaption></figure></div>
+    </div>
+    <div class="quote"><span class="seal" aria-hidden="true">武</span><q>Ezerszer gyakorolni ugyanazt: ez a <em>gyorsabb</em> út.<small>Az iskola jelmondata</small></q></div>
+  </div>
+</section>
+
+<section class="tab" id="edzotabor">
+  <img src="/demo/bambusz/assets/foto/tabor.webp" alt="Edzőtábor: gyakorló csoport a tóparti réten">
+  <div class="wrap">
+    <div class="kick">Edzőtábor · a Bükk lábánál</div>
+    <h2 style="margin-top:14px" id="tabCim">Edzőtábor</h2>
+    <p class="sub">Egy erdei vendégházban, tó mellett. Rossz időben tornacsarnokban edzünk, jó időben a szabadban, a réten és az erdei tisztásokon.</p>
+    <div class="tix" id="tix"></div>
+    <div class="cond">
+      <div><h3>Feltételek</h3><ul><li>Az iskola felvett tagja vagy, teljes kung-fu iskolai ruházattal és övvel.</li><li>Nincs tanfolyamdíj-hátralékod.</li><li>A jelentkezési határidő előtt regisztráltál, és a részvételi díj legalább 50%-át befizetted.</li><li>A tábort megelőző 6 hétben rendszeresen jártál edzésre.</li><li>Van babzsákod és polifoam matracod, ezeket elhozod.</li></ul></div>
+      <div><h3>Mit kapsz</h3><ul><li>Naponta 2–3 edzés, reggel, délelőtt és délután.</li><li>2 ágyas szobák (mosdó, fürdő, WC és hűtő minden szobához).</li><li>Teljes ellátás: reggeli, ebéd és vacsora.</li><li>Fegyveres gyakorlás (lándzsa, hosszú bot, kard) és fakultatív tanfolyamok, előzetes jelentkezéssel.</li><li>Kirándulási és kulturális programok.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec kz" id="kezdes">
+  <div class="wrap">
+    <div class="kick">Hogyan kezdd</div>
+    <h2 style="margin-top:14px">Három lépés, és már edzel.</h2>
+    <div class="kz-g">
+      <div>
+        <ol class="st3">
+          <li><em>1</em><div><b>Válaszd ki a tréninget</b><span>Ha nem tudsz rögtön választani, a Kezdő kör belépőtanfolyamot javasoljuk: onnan bármely irányba tovább lehet lépni.</span></div></li>
+          <li><em>2</em><div><b>Utald el a díjat</b><span>A teljes részvételi díj előre történő utalása számít jelentkezésnek, így tudjuk, mire készüljünk. A közleménybe a neved és a tréning neve kerül.</span></div></li>
+          <li><em>3</em><div><b>Gyere el</b><span>Könnyű ruházat elég. Ha utaltál, jelentkezésed érvényes, és mehetsz az első alkalomra.</span></div></li>
+        </ol>
+        <div class="gear"><span>fekete melegítő</span><span>fehér póló</span><span>vékony talpú cipő</span></div>
+      </div>
+      <div class="pay"><span class="seal" aria-hidden="true">武</span><small>Kezdő kör</small><div class="pr">13 500 Ft <small>/ 3 alkalom</small></div>
+        <dl><dt>Név</dt><dd>Bambusz Kung-fu Egyesület</dd><dt>Számlaszám</dt><dd>11111111-22222222-33333333</dd><dt>Közlemény</dt><dd>a résztvevő neve + Kezdő kör</dd><dt>Készpénz</dt><dd>helyszínen, óra előtt, +1 000 Ft</dd></dl>
+        <p>A képzések mindenképpen elindulnak. Ha más nevére utalsz, a megjegyzésbe írd a résztvevő nevét és az érkezésed napját.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec gy" id="gyik">
+  <div class="wrap">
+    <div class="kick">Kérdések</div>
+    <h2 style="margin-top:14px">Amit kezdőként kérdeznek.</h2>
+    <div class="fq">
+      <details open><summary><em>01</em><span>Be kell jelentkezni előre?</span><i></i></summary><p>A néhány alkalmas tréningeknél, például a Kezdő körnél a részvételi díj előre elutalása számít jelentkezésnek. A komoly jelentkezők így kiválasztódnak, a szervezéshez pedig jó, ha előre látjuk a csoportlétszámot. A többéves képzéseknél nem feltétlenül szükséges, de ajánlott, mert elszántságot mutat.</p></details>
+      <details><summary><em>02</em><span>Milyen ruházat szükséges?</span><i></i></summary><p>Könnyű, laza ruházatot ajánlunk: egy fekete melegítőnadrágot, egy rövid ujjú fehér pólót és egy vékony talpú cipőt.</p></details>
+      <details><summary><em>03</em><span>Meg lehet előbb nézni egy edzést?</span><i></i></summary><p>Igen, de inkább azt javasoljuk, hogy próbáld ki. Egy kezdő csoport megtekintése nem ad teljes képet, és ha része vagy az edzésnek, közvetlenebb tapasztalatokhoz jutsz. A tagoknak hatvan oktatóvideó érhető el, ezekből az első kettő nyilvános.</p></details>
+      <details><summary><em>04</em><span>Van értelme heti egy alkalomnak?</span><i></i></summary><p>Ez esetben a heti 168 órából mindössze 1,5 órát áldoznál a kungfura, ez az időd kevesebb mint 1%-a. Áthidaló megoldás lehet, ha otthoni gyakorlással kiegészíted: kérj házi feladatot. Javaslatunk: legalább heti két alkalom.</p></details>
+      <details><summary><em>05</em><span>Menet közben be lehet kapcsolódni?</span><i></i></summary><p>Egy-két alkalom hiányzás a tréning elejéről nem jelent különösebb problémát, mert vannak ismétlő órák is. A legszerencsésebb mégis, ha az első időponton megjelenéssel kezdődik a tanulás.</p></details>
+      <details><summary><em>06</em><span>Nem vagyok túl idős a kezdéshez?</span><i></i></summary><p>A gyakorlók átlagéletkora 25–30 év, de szép számban vannak 40–50 év körüliek is. A belső harcművészetek gyakorlása nincs életkorhoz kötve, és a Shaolin Rövid Ököl is bármely életkorban elkezdhető, mert nem tartalmaz akrobatikus elemeket.</p></details>
+      <details><summary><em>07</em><span>Mi a különbség a taiji és a kung-fu között?</span><i></i></summary><p>A kung-fu a kínai harcművészetek összefoglaló neve. A taiji lágy, belső kung-fu irányzat, tehát a taiji is kung-fu, nem csupán egészségvédő torna, ahogy sokan gondolják.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec jel" id="jelentkezes">
+  <div class="wrap">
+    <div class="jel-g">
+      <div><div class="kick">Jelentkezés</div><h2 style="margin-top:14px">Gyere el.</h2><p class="sub">Töltsd ki, melyik tanfolyamra jönnél, és visszajelzünk. A díj utalása számít a jelentkezésnek.</p>
+        <div class="ct"><div><small>Cím</small><b>Budapest, III. ker., Bécsi út 88.</b></div><div><small>Telefon</small><a href="tel:+3615550814">+36 1 555 0814</a></div><div><small>E-mail</small><a href="mailto:info@bambuszkungfu.hu">info@bambuszkungfu.hu</a></div><div><small>Gyakorlás</small><b>tagoknak minden nap 07.00–22.00</b></div></div></div>
+      <form class="form" id="quoteForm">
+        <h3>Jelentkezés</h3><p>A csillaggal jelölt mezők kötelezők.</p>
+        <div class="field"><label for="f-t">Melyik tanfolyamra? *</label><select id="f-t" required></select></div>
+        <div class="row2"><div class="field"><label for="f-vn">Vezetéknév *</label><input id="f-vn" autocomplete="family-name" required></div><div class="field"><label for="f-kn">Keresztnév *</label><input id="f-kn" autocomplete="given-name" required></div></div>
+        <div class="row2"><div class="field"><label for="f-mail">E-mail *</label><input id="f-mail" type="email" autocomplete="email" required></div><div class="field"><label for="f-nap">Melyik első alkalom?</label><select id="f-nap"><option>Az első szabad</option></select></div></div>
+        <div class="field"><label for="f-msg">Megjegyzés</label><textarea id="f-msg" placeholder="Pl. más nevére utalok, vagy kérdésem van."></textarea></div>
+        <label class="agree"><input type="checkbox" required><span>A Bambusz Kung-fu Iskola <a href="#">adatvédelmi szabályzatát</a> elfogadom. *</span></label>
+        <div class="f-ft"><small>A díj utalása számít jelentkezésnek.</small><button class="btn btn-red" type="submit">Jelentkezem</button></div>
+        <div class="sent" id="sent" role="status">Köszönjük! Visszaigazoljuk a jelentkezést és elküldjük az utaláshoz szükséges adatokat. <small>(Ez egy bemutató oldal, valójában nem ment el üzenet.)</small></div>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="ftr"><div class="wrap"><div class="ftr-g">
+  <div><h4>Bambusz Kung-fu Iskola</h4><p>Hagyományos kung-fu iskola 1998 óta, Óbudán, a Flórián térnél.</p></div>
+  <div><h4>Oldalak</h4><ul><li><a href="#orarend">Órarend</a></li><li><a href="#iranyzatok">Irányzatok</a></li><li><a href="#mesterek">Mesterek</a></li><li><a href="#edzotabor">Edzőtábor</a></li></ul></div>
+  <div><h4>Kapcsolat</h4><ul><li>III. ker., Bécsi út 88.</li><li><a href="tel:+3615550814">+36 1 555 0814</a></li><li><a href="mailto:info@bambuszkungfu.hu">info@bambuszkungfu.hu</a></li></ul></div>
+</div><div class="ftr-b"><span>© 2026 Bambusz Kung-fu Iskola · kitalált egyesület</span><span>ProjectEdge demó</span></div></div></footer>
+
+<script>
+const $=id=>document.getElementById(id);
+
+/* Órarend */
+const SESS=[
+ {id:'start-a',n:'Kezdő kör',s:'A csoport',g:'start',pr:'13 500 Ft',per:'3 alkalom',lvl:'Teljesen kezdőknek, stílustól független háromalkalmas alapképzés. A végén tanácsot adunk a számodra legjobb irányzat kiválasztásához.',d:[['H','17.15–18.45','12'],['P','17.30–19.00','16']]},
+ {id:'start-b',n:'Kezdő kör',s:'B csoport',g:'start',pr:'13 500 Ft',per:'3 alkalom',lvl:'Ugyanaz az alapképzés, későbbi időpontban.',d:[['H','18.45–20.15','12'],['P','19.00–20.30','16']]},
+ {id:'xingyi',n:'Xing Yi Quan',s:'a Forma és a Tudat Ökle',g:'stilus',pr:'13 500 Ft',per:'3 alkalom',lvl:'Belső harcművészet, több éves képzés 3 alkalmas próbaidővel. Az első alkalom lehet díjtalan.',d:[['H','17.15–18.45','12'],['P','17.30–19.00','16']]},
+ {id:'taiji',n:'Chen Taiji Quan',s:'24 lépéses formagyakorlat',g:'stilus',pr:'6 000 Ft',per:'2 alkalom',lvl:'A Nagy Végső Ököl: lágy, belső kung-fu irányzat. Az első alkalom lehet díjtalan.',d:[['K','17.30–19.00','13'],['Cs','17.30–19.00','15']]},
+ {id:'shaolin',n:'Shaolin Duan Quan',s:'a Shaolin Rövid Ököl',g:'stilus',pr:'13 500 Ft',per:'3 alkalom',lvl:'Bármely életkorban kezdhető, akrobatikus elemek nélkül. Az első alkalom lehet díjtalan.',d:[['K','20.15–21.45','13'],['Cs','20.15–21.45','15']]},
+ {id:'barany',n:'Kis Tigrisek',s:'gyerek, 7–13 év',g:'gyerek',pr:'13 500 Ft',per:'3 alkalom',lvl:'Játékos bevezetés, önfegyelem, koncentrált figyelem. Heti egy alkalom is lehetséges.',d:[['Sz','16.30–17.30','14'],['Szo','09.45–10.45','10']]},
+ {id:'azur',n:'Ifjú Sárkányok',s:'junior, 13–18 év',g:'junior',pr:'13 500 Ft',per:'3 alkalom',lvl:'Gyakorlatias, önvédelmi hangsúlyú kung-fu sok erőfejlesztéssel, a szellemiség megismerésével.',d:[['H','17.15–18.30','14'],['Sz','17.15–18.30','14']]}];
+const DAYS=[['H','Hétfő'],['K','Kedd'],['Sz','Szerda'],['Cs','Csütörtök'],['P','Péntek'],['Szo','Szombat']];
+const _t0=new Date();_t0.setHours(0,0,0,0);
+const _mon=new Date(_t0.getFullYear(),_t0.getMonth(),_t0.getDate()+((8-_t0.getDay())%7||7));
+const DOFF={'H':0,'K':1,'Sz':2,'Cs':3,'P':4,'Szo':5},KD={},DOW={};
+Object.entries(DOFF).forEach(([k,o])=>{const d=new Date(_mon.getFullYear(),_mon.getMonth(),_mon.getDate()+o);const key=String(d.getDate());KD[key]=d;DOW[key]=k});
+SESS.forEach(s=>s.d.forEach(x=>{x[2]=Object.keys(DOW).find(k=>DOW[k]===x[0])}));
+const HUM=['jan.','febr.','márc.','ápr.','máj.','jún.','júl.','aug.','szept.','okt.','nov.','dec.'];
+let FILT='all',DATE=null,SEL=null;
+function dayMonth(n){return HUM[KD[n].getMonth()]+' '+n+'.'}
+/* első foglalkozások */
+const FIRST={};
+SESS.forEach(s=>s.d.forEach(([dd,t,fd])=>{const key=fd+'@'+dd;(FIRST[key]=FIRST[key]||[]).push(s)}));
+const dKeys=Object.keys(DOW);
+$('dr').innerHTML=dKeys.map(k=>{const names=[...new Set(Object.entries(FIRST).filter(([kk])=>kk.startsWith(k+'@')).flatMap(([,v])=>v.map(x=>x.n)))];
+  return '<button class="chipd" type="button" data-k="'+k+'" aria-pressed="false"><i>'+DAYS.find(d=>d[0]===DOW[k])[1]+'</i><b>'+k+'.</b><span>'+names.join(', ')+'</span></button>'}).join('');
+function weekHtml(){
+  return DAYS.map(([dk,dn])=>{
+    const items=SESS.flatMap(s=>s.d.filter(x=>x[0]===dk).map(x=>({s,t:x[1],fd:x[2]}))).sort((a,b)=>a.t.localeCompare(b.t));
+    return '<div class="day '+(items.length?'on':'')+'"><h4>'+dn+'</h4>'+(items.length?items.map(it=>{
+      const vis=FILT==='all'||(FILT==='start'&&it.s.g==='start')||(FILT==='stilus'&&it.s.g==='stilus')||(FILT==='gyerek'&&(it.s.g==='gyerek'||it.s.g==='junior'));
+      const hot=DATE&&it.fd===DATE&&DOW[DATE]===dk;
+      const dim=(!vis)||(DATE&&!hot);
+      return '<button type="button" class="sess g-'+it.s.g+(hot?' hot':'')+(dim?' dim':'')+(SEL&&SEL.id===it.s.id?' sel':'')+'" data-id="'+it.s.id+'" data-d="'+dk+'" data-t="'+it.t+'" data-fd="'+it.fd+'"><time>'+it.t.replace('.',':').replace('.',':').replace('–',' – ')+'</time><b>'+it.s.n+'</b><small>'+it.s.s+'</small></button>'}).join(''):'<small style="color:var(--ash);font-size:13px">Nincs óra</small>')+'</div>'}).join('');}
+function detail(){
+  if(!SEL){$('detail').innerHTML='<div class="dt-l"><small>Részletek</small><h3>Válasszon egy órát</h3><p>Kattintson egy órára az órarendben, hogy lássa a díját, a kezdés napját, és jelentkezhessen.</p></div><div class="dt-r"><div class="row">Az első alkalom díja a teljes csoportdíj része.</div></div>';return}
+  const s=SEL.s,x=SEL.x;
+  $('detail').innerHTML='<div class="dt-l"><small>'+({start:'Kezdő tréning',stilus:'Stílus',gyerek:'Gyerek',junior:'Junior'})[s.g]+' · '+s.s+'</small><h3>'+s.n+'</h3><p>'+s.lvl+'</p></div><div class="dt-r"><div class="pr">'+s.pr+' <small>/ '+s.per+'</small></div><div class="row"><b>'+DAYS.find(d=>d[0]===x.d)[1]+'</b>, '+x.t.replace('.',':').replace('.',':').replace('–',' – ')+'</div><div class="row">Első foglalkozás: <b>'+dayMonth(x.fd)+'</b>'+(SEL.alt?' (vagy '+SEL.alt+')':'')+'</div><a class="btn btn-red" href="#jelentkezes" id="dtGo">Jelentkezem</a></div>';
+  $('dtGo').addEventListener('click',()=>{fillForm(s,x)});
+}
+function render(){
+  $('week').innerHTML=weekHtml();
+  document.querySelectorAll('.sess').forEach(b=>b.addEventListener('click',()=>{
+    const s=SESS.find(z=>z.id===b.dataset.id);
+    const others=s.d.filter(z=>z[0]!==b.dataset.d).map(z=>dayMonth(z[2])+' ('+DAYS.find(d=>d[0]===z[0])[1].toLowerCase()+')');
+    SEL={id:s.id,s,x:{d:b.dataset.d,t:b.dataset.t,fd:b.dataset.fd},alt:others.join(', ')};render();detail();
+  }));
+}
+document.querySelectorAll('.chipd').forEach(b=>b.addEventListener('click',()=>{DATE=(DATE===b.dataset.k)?null:b.dataset.k;document.querySelectorAll('.chipd').forEach(x=>x.setAttribute('aria-pressed',DATE!==null&&x.dataset.k===DATE));render()}));
+document.querySelectorAll('#fs .f').forEach(b=>b.addEventListener('click',()=>{FILT=b.dataset.f;DATE=null;document.querySelectorAll('.chipd').forEach(x=>x.setAttribute('aria-pressed','false'));document.querySelectorAll('#fs .f').forEach(x=>x.setAttribute('aria-pressed',x===b));render()}));
+render();detail();
+
+/* Hol kezdjem? kártyák */
+document.querySelectorAll('.cardp').forEach(c=>c.addEventListener('click',()=>{
+  const g=c.dataset.go;FILT=(g==='gyerek'||g==='junior')?'gyerek':(g==='stilus'?'stilus':'start');DATE=null;
+  document.querySelectorAll('#fs .f').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f===FILT));
+  document.querySelectorAll('.chipd').forEach(x=>x.setAttribute('aria-pressed','false'));
+  render();$('orarend').scrollIntoView({behavior:'smooth'});}));
+
+/* Irányzatok panelek */
+const pn=[...document.querySelectorAll('.pn')];
+pn.forEach(p=>{p.addEventListener('click',()=>pn.forEach(x=>{x.classList.toggle('on',x===p);x.setAttribute('aria-expanded',x===p)}));p.addEventListener('mouseenter',()=>{if(matchMedia('(min-width:821px)').matches)pn.forEach(x=>{x.classList.toggle('on',x===p);x.setAttribute('aria-expanded',x===p)})})});
+
+/* Edzőtábor */
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const _HM=['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const _evszak=d=>['Téli','Téli','Tavaszi','Tavaszi','Tavaszi','Nyári','Nyári','Nyári','Őszi','Őszi','Őszi','Téli'][d.getMonth()];
+const _tab=(o,n)=>{const a=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+o),b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+n-1);
+  return [_evszak(a),_HM[a.getMonth()]+' '+a.getDate()+'–'+(b.getMonth()!==a.getMonth()?_HM[b.getMonth()]+' ':'')+b.getDate()+'.',a]};
+const CAMPS=[_tab(-160,4),_tab(-75,5),_tab(24,4)];
+document.getElementById('tabCim').textContent=CAMPS[2][0]+' edzőtábor, '+CAMPS[2][1];
+$('tix').innerHTML=CAMPS.map((c,i)=>{const dd=Math.round((c[2]-TODAY)/864e5);const next=i===2;
+  return '<div class="tx'+(next?' next':'')+'"><small>'+c[0]+' edzőtábor</small><b>'+c[1]+'</b><span>erdei vendégház, tóparton'+(dd<0?' · lezajlott':'')+'</span>'+(next?'<div class="cd">'+dd+'<small>NAP MÚLVA</small></div>':'')+'</div>'}).join('');
+
+/* Űrlap */
+const sel=$('f-t');
+sel.innerHTML='<option value="">Válassz tanfolyamot…</option>'+SESS.map(s=>'<option value="'+s.id+'">'+s.n+' · '+s.s+' ('+s.pr+' / '+s.per+')</option>').join('')+'<option value="edzotabor">A következő edzőtábor</option><option value="egyeb">Más kérdésem van</option>';
+function fillForm(s,x){sel.value=s.id;const o=$('f-nap');o.innerHTML='<option>'+dayMonth(x.fd)+' ('+DAYS.find(d=>d[0]===x.d)[1].toLowerCase()+')</option>'+s.d.filter(z=>z[0]!==x.d).map(z=>'<option>'+dayMonth(z[2])+' ('+DAYS.find(d=>d[0]===z[0])[1].toLowerCase()+')</option>').join('')}
+sel.addEventListener('change',()=>{const s=SESS.find(z=>z.id===sel.value);if(s)fillForm(s,{d:s.d[0][0],t:s.d[0][1],fd:s.d[0][2]})});
+$('quoteForm').addEventListener('submit',e=>{e.preventDefault();$('sent').style.display='block'});
+</script>
+</body>
+</html>
