@@ -183,6 +183,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "halmos-ugyved",
+    name: "Dr. Halmos Kende",
+    goal: "Ügyfélszerzés szolgáltatónak",
+    industry: "Ügyvédi iroda",
+    copy:
+      "A nyitóképen „Mi a helyzet?” választó: a látogató a saját élethelyzetét jelöli, és megtudja, melyik jogterület, mit hozzon, és kérhet konzultációt.",
+    href: "/demo/halmos-ugyved",
+    external: false,
+    src: "/work/demos/halmos-ugyved.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",

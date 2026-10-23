@@ -88,6 +88,13 @@ const csp = [
   ...(isDev ? [] : ["upgrade-insecure-requests"])
 ].join("; ");
 
+/**
+ * Látványtervekből kitalált céggé alakított statikus demók (public/demo/<név>/index.html).
+ * Új demó = egy név ebben a listában: ebből lesz a tiszta URL-hez kellő
+ * rewrite és a noindex fejléc.
+ */
+const STATIC_DEMOS = ["opal-palack", "halmos-ugyved"];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
@@ -114,15 +121,11 @@ const nextConfig = {
         source: "/demo/klarhaus",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
       },
-      // Az Opál Palack ugyanilyen statikus demó (public/demo/opal-palack).
-      {
-        source: "/demo/opal-palack/:path*",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
-      },
-      {
-        source: "/demo/opal-palack",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
-      }
+      // A többi statikus iparági demó (public/demo/<név>) ugyanígy, egy listából.
+      ...STATIC_DEMOS.flatMap((name) => [
+        { source: `/demo/${name}/:path*`, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+        { source: `/demo/${name}`, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }
+      ])
     ];
   },
   /**
@@ -135,7 +138,7 @@ const nextConfig = {
       { source: "/demo/klarhaus", destination: "/demo/klarhaus/index.html" },
       { source: "/demo/klarhaus/impressum", destination: "/demo/klarhaus/impressum.html" },
       { source: "/demo/klarhaus/datenschutz", destination: "/demo/klarhaus/datenschutz.html" },
-      { source: "/demo/opal-palack", destination: "/demo/opal-palack/index.html" }
+      ...STATIC_DEMOS.map((name) => ({ source: `/demo/${name}`, destination: `/demo/${name}/index.html` }))
     ];
   }
 };
