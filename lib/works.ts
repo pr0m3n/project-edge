@@ -222,6 +222,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "kohegy",
+    name: "Kőhegyi Kulturális Központ",
+    goal: "Műsor és órarend sok helyszínre",
+    industry: "Önkormányzati intézmény",
+    copy:
+      "Hét művelődési ház egy oldalon: szűrhető műsor naptárba mentéssel, heti órarend idősávokkal, térkép a házakkal és teremkereső létszám szerint.",
+    href: "/demo/kohegy",
+    external: false,
+    src: "/work/demos/kohegy.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",

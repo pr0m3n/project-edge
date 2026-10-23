@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kőhegyi Kulturális Központ – ProjectEdge demó</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Kitalált városi művelődésiház-hálózat bemutató oldala a ProjectEdge-től.">
+<link rel="icon" href="/demo/kohegy/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demo/kohegy/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/demo/kohegy/assets/demo-bar.css">
+<style>
+:root{
+  --paper:#f3efe6;--paper2:#e9e3d5;--card:#fbf9f4;--ink:#0d1d19;--ink2:#3b524c;--mut:#6b7f79;
+  --teal:#2a8a72;--teal-d:#17574a;--teal-dd:#0e3a31;--mint:#d5ebe2;--eoz:#b4412e;--eoz-l:#f4d9cf;--gold:#d8a24a;
+  --line:rgba(13,29,25,.14);--line-d:rgba(255,255,255,.14);
+  --head:"Bricolage Grotesque",system-ui,sans-serif;--body:"Hanken Grotesk",system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;
+  --r:14px;--wrap:1240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--demo-bar-h,0px) + 84px)}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 32px}
+.sec{padding:112px 0}
+.k{font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+h1,h2,h3{font-family:var(--head);font-weight:800;letter-spacing:-.02em;line-height:.98;font-variation-settings:"wdth" 82}
+h2{font-size:clamp(44px,6vw,84px)}
+.lead{font-size:19px;color:var(--ink2);max-width:620px}
+.btn{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 24px;border-radius:999px;font-weight:700;font-size:16px;text-decoration:none;transition:transform .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-t{background:var(--teal);color:#fff}.btn-t:hover{background:var(--teal-d)}
+.btn-o{border:1.5px solid currentColor}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px}
+
+/* ---------- header ---------- */
+.hdr{position:sticky;top:var(--demo-bar-h,0px);left:0;right:0;z-index:60;background:rgba(243,239,230,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr .wrap{display:flex;align-items:center;gap:28px;height:76px}
+.logo img{height:44px;width:auto}
+.kk-logo{display:inline-flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:15px;line-height:1.1;color:var(--ink);text-decoration:none}
+.lg-t{margin-bottom:20px}.lg-t .kk-logo{color:#fff}.lg-t .kk-logo svg{color:#fff!important}
+.demo-bar a{text-decoration:none}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav a{text-decoration:none;font-weight:600;font-size:15.5px;padding:9px 13px;border-radius:999px}
+.nav a:hover{background:var(--paper2)}
+.hdr-tel{font-family:var(--mono);font-size:14px;text-decoration:none;display:flex;align-items:center;gap:8px;color:var(--ink2)}
+.hdr .btn{height:44px;padding:0 18px;font-size:15px}
+.menu-b{display:none;height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--ink);font-weight:700;align-items:center;gap:8px;margin-left:auto}
+.sheet{position:fixed;inset:0;z-index:80;background:var(--ink);color:#fff;padding:calc(var(--demo-bar-h,0px) + 18px) 20px 22px;display:none;flex-direction:column}
+.sheet.open{display:flex}
+.sheet .x{align-self:flex-end;height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #fff;font-weight:700}
+.sheet nav{display:flex;flex-direction:column;margin-top:24px}
+.sheet nav a{font-family:var(--head);font-weight:800;font-size:40px;text-decoration:none;padding:8px 0;border-bottom:1px solid var(--line-d);font-variation-settings:"wdth" 80}
+.sheet .tel{margin-top:auto;font-family:var(--mono);font-size:15px;opacity:.8}
+
+/* ---------- hero ---------- */
+#hero{background:var(--ink);color:#f3efe6;position:relative;overflow:hidden;padding:72px 0 92px}
+#hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 70% at 78% 30%,rgba(42,138,114,.32),transparent 70%),radial-gradient(40% 50% at 10% 100%,rgba(180,65,46,.18),transparent 70%)}
+.hero-spi{position:absolute;width:980px;height:1030px;left:-300px;top:-170px;color:var(--teal);opacity:.16}
+.hero-spi use{fill:none}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.08fr .92fr;gap:64px;align-items:center}
+.hero-k{color:#8fd1bd}
+#hero h1{font-size:clamp(58px,7.4vw,112px);margin:22px 0 26px}
+#hero h1 em{font-style:normal;color:#8fd1bd}
+#hero .lead{color:rgba(243,239,230,.78);font-size:20px}
+.hero-cta{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
+.hero-cta .btn-o{color:#f3efe6}
+.today{margin-top:44px;border-top:1px solid var(--line-d);padding-top:22px;display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:26px;align-items:start}
+.today .day{display:flex;gap:10px;align-items:center;font-weight:700;font-size:15px;color:#fff}
+.today .day .ico{color:var(--gold)}
+.today b{display:block;font-family:var(--head);font-size:40px;line-height:1;font-weight:800;color:#fff;font-variation-settings:"wdth" 80}
+.today span{font-size:14px;color:rgba(243,239,230,.66);line-height:1.35;display:block;margin-top:6px}
+.today a{text-decoration:none}
+
+/* playbill */
+.bill{background:var(--card);color:var(--ink);border-radius:6px;padding:26px 26px 20px;transform:rotate(1.4deg);box-shadow:0 30px 80px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.05);position:relative;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.bill::before,.bill::after{content:"";position:absolute;top:-12px;width:86px;height:26px;background:rgba(232,220,190,.75);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.bill::before{left:30px;transform:rotate(-6deg)}.bill::after{right:30px;transform:rotate(5deg)}
+.bill-h{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--ink);padding-bottom:14px}
+.bill-h svg{width:46px;height:48px;color:var(--teal);flex:none}.bill-h svg use{fill:currentColor}
+.bill-h .t{font-family:var(--head);font-weight:800;font-size:17px;letter-spacing:.16em;line-height:1.15;text-transform:uppercase;font-variation-settings:"wdth" 90}
+.bill-h .s{margin-left:auto;text-align:right;font-family:var(--mono);font-size:12px;line-height:1.35;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.bill-feat{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);text-decoration:none}
+.bill-feat img{width:150px;aspect-ratio:4/3;object-fit:cover;border-radius:3px}
+.bill-feat .lbl{font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--eoz)}
+.bill-feat h3{font-size:27px;margin:6px 0 6px;font-variation-settings:"wdth" 78}
+.bill-feat p{font-size:13.5px;color:var(--ink2);line-height:1.4}
+.bill ol{list-style:none}
+.bill li a{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);text-decoration:none}
+.bill li a:hover .bt{color:var(--teal)}
+.bill .bd{font-family:var(--head);font-weight:800;font-size:34px;line-height:.9;font-variation-settings:"wdth" 75}
+.bill .bd small{display:block;white-space:nowrap;font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+.bill .bt{font-weight:700;font-size:15.5px;line-height:1.2}
+.bill .bv{display:block;font-size:12.5px;color:var(--mut);font-weight:500;margin-top:2px}
+.bill .bh{font-family:var(--mono);font-size:13px}
+.bill-f{display:flex;justify-content:space-between;align-items:center;padding-top:14px;font-size:13.5px;font-weight:600}
+.bill-f a{color:var(--teal-d)}
+.bill-mobile-tag{display:none}
+
+/* ---------- műsor ---------- */
+.sec-h{display:flex;justify-content:space-between;align-items:end;gap:40px;margin-bottom:40px;flex-wrap:wrap}
+.sec-h .lead{margin-top:18px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:34px}
+.seg{display:inline-flex;background:var(--paper2);border-radius:999px;padding:4px}
+.seg button{padding:9px 16px;border-radius:999px;font-weight:600;font-size:14.5px}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.chip{padding:9px 15px;border-radius:999px;border:1.5px solid var(--line);font-weight:600;font-size:14.5px;background:var(--card)}
+.chip[aria-pressed=true]{border-color:var(--teal);background:var(--mint);color:var(--teal-dd)}
+.ctrl .sp{flex:1}
+.cnt{font-family:var(--mono);font-size:13.5px;color:var(--mut)}
+.evs{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.ev{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);transition:transform .25s,box-shadow .25s}
+.ev:hover{transform:translateY(-4px);box-shadow:0 22px 50px rgba(13,29,25,.13)}
+.ev-img{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--paper2)}
+.ev-img img{width:100%;height:100%;object-fit:cover}
+.pst{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px 18px 16px;color:#fff;overflow:hidden;background:var(--pc,#2a8a72)}
+.pst::after{content:"";position:absolute;right:-60px;bottom:-70px;width:220px;height:220px;border-radius:50%;border:26px solid rgba(255,255,255,.14)}
+.pst small{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85;position:relative;z-index:1;text-align:right}
+.pst b{font-family:var(--head);font-weight:800;font-size:clamp(22px,2.2vw,30px);line-height:.98;letter-spacing:-.02em;position:relative;z-index:1;max-width:92%}
+.pst i{font-style:normal;font-family:var(--mono);font-size:12px;opacity:.85;position:relative;z-index:1}
+.bill-feat .pst-w{position:relative;width:150px;aspect-ratio:4/3;border-radius:3px;overflow:hidden}
+.bill-feat .pst{padding:10px}.bill-feat .pst b{font-size:14px;line-height:1.05;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.bill-feat .pst small,.bill-feat .pst i{display:none}
+.evs.list .pst{display:none}
+.ev-date{position:absolute;left:14px;top:14px;background:var(--card);border-radius:10px;padding:8px 12px 7px;text-align:center;min-width:66px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.ev-date b{display:block;font-family:var(--head);font-size:34px;line-height:.9;font-weight:800;font-variation-settings:"wdth" 75}
+.ev-date span{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2)}
+.ev-free{position:absolute;right:14px;top:14px;background:var(--eoz);color:#fff;font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px;border-radius:999px}
+.ev-b{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1}
+.ev-cat{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--teal)}
+.ev h3{font-size:28px;margin:8px 0 12px;font-variation-settings:"wdth" 80;line-height:1.02}
+.ev-m{display:flex;flex-direction:column;gap:5px;font-size:14.5px;color:var(--ink2)}
+.ev-m div{display:flex;gap:8px;align-items:center}
+.ev-m .ico{width:16px;height:16px;color:var(--teal)}
+.ev-price{margin-top:12px;font-weight:700;font-size:15px}
+.ev-price small{font-weight:500;color:var(--mut)}
+.ev-a{margin-top:auto;padding-top:18px;display:flex;gap:10px}
+.ev-a a,.ev-a button{flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14.5px;text-decoration:none}
+.ev-a a{background:var(--ink);color:#fff}
+.ev-a button{border:1.5px solid var(--line)}
+.ev-a button:hover{border-color:var(--teal);color:var(--teal-d)}
+.evs.list{grid-template-columns:1fr;gap:0;border-top:2px solid var(--ink)}
+.evs.list .ev{flex-direction:row;border-radius:0;border:0;border-bottom:1px solid var(--line);background:transparent;align-items:center}
+.evs.list .ev:hover{transform:none;box-shadow:none;background:var(--card)}
+.evs.list .ev-img{width:120px;flex:none;margin:12px 0}
+.evs.list .ev-date{position:static;box-shadow:none;background:none;padding:0;min-width:0}
+.evs.list .ev-img img,.evs.list .ev-free{display:none}
+.evs.list .ev-img{aspect-ratio:auto;background:none;display:flex;align-items:center}
+.evs.list .ev-b{flex-direction:row;align-items:center;gap:24px;padding:14px 10px}
+.evs.list h3{font-size:22px;margin:4px 0 0;flex:1}
+.evs.list .ev-cat{width:110px}
+.evs.list .ev-m{width:290px}
+.evs.list .ev-price{margin:0;width:170px}
+.evs.list .ev-a{margin:0;padding:0;width:240px}
+.evs.list .bwrap{flex:1}
+.empty{padding:40px;text-align:center;color:var(--mut);grid-column:1/-1}
+
+/* ---------- heti ---------- */
+#heti{background:var(--paper2)}
+.days{display:flex;gap:8px;flex-wrap:wrap}
+.days button{min-width:94px;padding:10px 14px;border-radius:12px;background:var(--card);border:1.5px solid var(--line);text-align:left}
+.days button b{display:block;font-family:var(--head);font-size:22px;font-weight:800;font-variation-settings:"wdth" 80}
+.days button span{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.days button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.days button[aria-pressed=true] span{color:rgba(255,255,255,.7)}
+.days button .td{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--eoz);margin-left:6px}
+.srch{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:0 18px;height:50px;min-width:300px}
+.srch input{border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none;color:var(--ink)}
+.srch .ico{color:var(--mut)}
+.gantt{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:18px 22px 22px;position:relative}
+.g-axis,.g-row{display:grid;grid-template-columns:210px 1fr;align-items:stretch}
+.g-axis .tl{position:relative;height:26px}
+.g-axis .tl span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:12px;color:var(--mut)}
+.g-row{border-top:1px solid var(--line)}
+.g-h{display:flex;gap:10px;align-items:center;padding:12px 10px 12px 0}
+.code{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.04em;background:var(--mint);color:var(--teal-dd);padding:4px 7px;border-radius:6px;flex:none}
+.g-h .n{font-weight:600;font-size:14.5px;line-height:1.2}
+.g-tr{position:relative;background-image:linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:calc(100%/13) 100%}
+.bar{position:absolute;height:34px;cursor:default;transition:opacity .2s;white-space:nowrap}
+.bar i{display:block;height:7px;border-radius:4px;background:var(--teal)}
+.bar span{display:block;font-size:13px;font-weight:600;line-height:1.2;margin-top:5px;color:var(--ink)}
+.bar:hover i{background:var(--teal-dd)}.bar:hover span{color:var(--teal-dd)}
+.bar.dim{opacity:.18}
+.bar.hit i{background:var(--eoz)}.bar.hit span{color:var(--eoz)}
+.nowl{position:absolute;top:0;bottom:0;width:2px;background:var(--eoz);z-index:4;pointer-events:none}
+.nowl span{position:absolute;top:-2px;left:6px;font-family:var(--mono);font-size:11px;color:var(--eoz);white-space:nowrap;background:var(--card);padding:0 4px}
+.wk-list{display:none}
+.wk-note{margin-top:16px;font-size:14.5px;color:var(--ink2)}
+.wk-tip{position:fixed;z-index:70;background:var(--ink);color:#fff;padding:10px 12px;border-radius:10px;font-size:13.5px;pointer-events:none;opacity:0;transition:opacity .15s;max-width:260px}
+.wk-tip b{display:block}
+.wk-tip span{font-family:var(--mono);font-size:12px;opacity:.8}
+
+/* ---------- házak ---------- */
+.hz{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.map{background:var(--card);border-radius:var(--r);border:1px solid var(--line);overflow:hidden}
+.map svg{display:block;width:100%;height:auto}
+.map .pin{cursor:pointer}
+.map .pin circle.o{fill:var(--card);stroke:var(--teal);stroke-width:3;transition:.2s}
+.map .pin circle.i{fill:var(--teal);transition:.2s}
+.map .pin text{font-family:var(--mono);font-size:15px;font-weight:500;fill:var(--ink)}
+.map .pin.on circle.o{fill:var(--eoz);stroke:var(--eoz);r:16}
+.map .pin.on circle.i{fill:#fff}
+.map .pin.on text{fill:var(--eoz);font-weight:700}
+.map-cap{display:flex;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--line);font-size:13px;color:var(--mut);font-family:var(--mono)}
+.houses{display:grid;gap:14px}
+.houses{gap:0;border-top:2px solid var(--ink)}
+.house{display:grid;grid-template-columns:58px 1fr auto;gap:14px;align-items:center;border-bottom:1px solid var(--line);padding:14px 10px;cursor:pointer;transition:background .2s;text-align:left;width:100%}
+.house:hover,.house.on{background:var(--card)}
+.house.on{box-shadow:inset 4px 0 0 var(--eoz)}
+.house .code{justify-self:start}
+.house.on .code{background:var(--eoz);color:#fff}
+.house h3{font-size:21px;font-variation-settings:"wdth" 82;line-height:1.05}
+.house .ad{font-size:14px;color:var(--ink2);line-height:1.35;margin-top:3px}
+.house .tc{font-family:var(--mono);font-size:12.5px;color:var(--teal-d);text-align:right;white-space:nowrap}
+.district{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);padding:18px 10px 8px;border-bottom:1px solid var(--line)}
+.hd{display:grid;grid-template-columns:190px 1fr;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.hd img{width:190px;height:100%;min-height:170px;object-fit:cover}
+.hd>div{padding:18px 20px}
+.hd h3{font-size:26px;font-variation-settings:"wdth" 82;line-height:1.05;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hd p{font-size:14.5px;color:var(--ink2);line-height:1.45}
+.hd .st{display:flex;gap:7px;align-items:center;margin-top:10px;font-size:14px;font-weight:600}
+.hd .st .ico{width:16px;height:16px;color:var(--teal)}
+.hd .st.cl{color:var(--mut)}.hd .st.cl .ico{color:var(--mut)}
+.outd{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.od{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.od img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.od>div{padding:16px 18px 18px}
+.od h3{font-size:22px;font-variation-settings:"wdth" 82;margin-bottom:6px}
+.od p{font-size:14.5px;color:var(--ink2);line-height:1.45}
+.od .st{margin-top:10px;font-size:13.5px;font-weight:600;display:flex;gap:7px;align-items:center}
+.od .st .ico{width:16px;height:16px;color:var(--teal)}
+
+/* ---------- terembérlés ---------- */
+#terem{background:var(--teal-dd);color:#eef5f2;position:relative;overflow:hidden}
+#terem .k{color:#8fd1bd}
+#terem .lead{color:rgba(238,245,242,.8)}
+.tb{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:start;position:relative}
+.tb>*,.hz>*,.gal>*,.hero-grid>*{min-width:0}
+.fld select{width:100%;min-width:0;text-overflow:ellipsis}
+.tb-spi{position:absolute;right:-220px;bottom:-260px;width:640px;height:672px;color:#fff;opacity:.05}
+.tb-spi use{fill:none}
+.cap{margin-top:36px;background:rgba(255,255,255,.06);border:1px solid var(--line-d);border-radius:var(--r);padding:24px}
+.cap-top{display:flex;justify-content:space-between;align-items:end}
+.cap-top label{font-weight:700}
+.cap-top output{font-family:var(--head);font-size:64px;font-weight:800;line-height:.9;font-variation-settings:"wdth" 75}
+.cap-top output small{font-size:22px;margin-left:6px}
+input[type=range]{width:100%;margin:18px 0 6px;accent-color:#8fd1bd;height:28px}
+.cap-scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;opacity:.6}
+.occ{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.occ button{padding:8px 14px;border-radius:999px;border:1.5px solid var(--line-d);font-weight:600;font-size:14px}
+.occ button[aria-pressed=true]{background:#8fd1bd;color:var(--teal-dd);border-color:#8fd1bd}
+.rooms{margin-top:22px;display:grid;gap:10px}
+.room{display:grid;grid-template-columns:1fr auto;gap:6px 18px;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.07);transition:opacity .25s}
+.room.no{opacity:.32}
+.room.no .meter{display:none}
+.room b{font-size:16px}
+.room span{font-size:13.5px;opacity:.75;grid-column:1}
+.room .cp{grid-row:1/3;grid-column:2;font-family:var(--mono);font-size:14px;align-self:center;text-align:right}
+.room .meter{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.room .meter i{display:block;height:100%;background:#8fd1bd;border-radius:3px;transition:width .3s}
+.room.tight .meter i{background:var(--gold)}
+.form{background:var(--card);color:var(--ink);border-radius:var(--r);padding:30px;position:relative;box-shadow:0 30px 70px rgba(0,0,0,.3)}
+.form h3{font-size:34px;font-variation-settings:"wdth" 80}
+.form p.s{font-size:14.5px;color:var(--ink2);margin:8px 0 18px}
+.fld{display:grid;gap:6px;margin-bottom:14px}
+.fld label{font-size:13.5px;font-weight:700}
+.fld input,.fld select,.fld textarea{font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--teal)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .btn{width:100%;justify-content:center;margin-top:6px}
+.form .fine{font-size:12.5px;color:var(--mut);margin-top:12px}
+.form .fine a{color:var(--teal-d)}
+.stamp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(251,249,244,.94);border-radius:var(--r);flex-direction:column;gap:10px;text-align:center;padding:30px}
+.stamp.on{display:flex}
+.stamp .sx{border:4px solid var(--teal);color:var(--teal);font-family:var(--head);font-weight:800;font-size:40px;padding:6px 22px;border-radius:10px;transform:rotate(-6deg);letter-spacing:.06em;font-variation-settings:"wdth" 80}
+.stamp p{max-width:300px;color:var(--ink2);font-size:15px}
+.rider{display:inline-flex;gap:10px;align-items:center;margin-top:22px;font-weight:700;color:#fff;text-decoration:none;border-bottom:1.5px solid rgba(255,255,255,.4);padding-bottom:3px}
+
+/* ---------- galéria ---------- */
+.gal{display:grid;grid-template-columns:1.25fr .75fr;gap:28px}
+.szalon{background:var(--ink);color:#f3efe6;border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.szalon .im{position:relative;height:220px;overflow:hidden}
+.szalon .im img{width:100%;height:100%;object-fit:cover}
+.szalon .b{padding:30px 32px 32px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;flex:1}
+.szalon h3{font-size:46px;font-variation-settings:"wdth" 80}
+.szalon p{color:rgba(243,239,230,.75);font-size:15.5px;margin-top:14px;max-width:470px}
+.szalon .k{color:#8fd1bd}
+.cd{text-align:center;border:1.5px solid var(--line-d);border-radius:12px;padding:14px 18px;min-width:130px}
+.cd b{display:block;font-family:var(--head);font-size:58px;line-height:.9;font-weight:800;color:#8fd1bd;font-variation-settings:"wdth" 75}
+.cd span{font-family:var(--mono);font-size:12px;opacity:.7}
+.news{display:grid;gap:14px}
+.nw{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;text-decoration:none;display:block;transition:border-color .2s}
+.nw:hover{border-color:var(--teal)}
+.nw .dt{font-family:var(--mono);font-size:12.5px;color:var(--mut);display:flex;justify-content:space-between;gap:10px}
+.nw .dt em{font-style:normal;color:var(--eoz);text-transform:uppercase;letter-spacing:.08em}
+.nw h3{font-size:22px;margin:8px 0 6px;font-variation-settings:"wdth" 82;line-height:1.08}
+.nw p{font-size:14.5px;color:var(--ink2);line-height:1.45}
+.nw.past{opacity:.7}
+
+/* ---------- rólunk ---------- */
+#rolunk{padding:96px 0}
+.ab{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.ab blockquote{font-family:var(--head);font-size:clamp(30px,3.2vw,44px);font-weight:700;line-height:1.1;letter-spacing:-.015em;font-variation-settings:"wdth" 85}
+.ab blockquote::before{content:"„";color:var(--teal)}
+.ab blockquote::after{content:"”";color:var(--teal)}
+.ab cite{display:block;margin-top:18px;font-style:normal;font-family:var(--mono);font-size:13px;color:var(--mut)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:2px solid var(--ink)}
+.stats div{padding:22px 0 22px;border-bottom:1px solid var(--line)}
+.stats div:nth-child(odd){padding-right:24px;border-right:1px solid var(--line)}
+.stats div:nth-child(even){padding-left:24px}
+.stats b{display:block;font-family:var(--head);font-size:60px;font-weight:800;line-height:.95;color:var(--teal-d);font-variation-settings:"wdth" 75}
+.stats span{font-size:15px;color:var(--ink2)}
+
+/* ---------- footer ---------- */
+footer{background:var(--ink);color:rgba(243,239,230,.8);padding:72px 0 30px;font-size:15px}
+.ft{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:40px}
+.ft h4{font-family:var(--mono);font-weight:500;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:#8fd1bd;margin-bottom:14px}
+.ft a{display:block;text-decoration:none;padding:4px 0}
+.ft a:hover{color:#fff}
+.ft .lg{filter:brightness(0) invert(1);opacity:.92;height:46px;width:auto;margin-bottom:20px}
+.ft-b{margin-top:56px;padding-top:22px;border-top:1px solid var(--line-d);display:flex;justify-content:space-between;gap:20px;font-size:13px;opacity:.7;flex-wrap:wrap}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+  .nav,.hdr-tel,.hdr .btn{display:none}.menu-b{display:inline-flex}
+  .hero-grid{grid-template-columns:1fr}
+  .bill{max-width:620px;transform:none}
+  .evs{grid-template-columns:1fr 1fr}
+  .hz{grid-template-columns:1fr}
+  .tb{grid-template-columns:1fr}
+  .gal{grid-template-columns:1fr}
+  .ft{grid-template-columns:1fr 1fr}
+  .evs.list .ev-m,.evs.list .ev-price{display:none}
+}
+@media (max-width:899px){
+  .gantt{display:none}.wk-list{display:block}
+}
+@media (max-width:720px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .sec{padding:76px 0}
+  .hdr .wrap{height:64px}.logo img{height:36px}
+  #hero{padding:18px 0 56px}
+  .hero-grid{gap:34px}
+  .hero-txt{order:2}
+  .bill{order:1;padding:18px 16px 14px;border-radius:4px}
+  .bill::before,.bill::after{display:none}
+  .bill-h{gap:10px;padding-bottom:12px}
+  .bill-h svg{width:38px;height:40px}
+  .bill-h .t{font-size:14.5px;letter-spacing:.13em}
+  .bill-h .s{font-size:10.5px}
+  .bill-mobile-tag{display:block;font-size:14px;line-height:1.4;color:var(--ink2);padding:10px 0 2px;font-weight:500}
+  .bill-feat{grid-template-columns:104px 1fr;gap:12px;padding:12px 0}
+  .bill-feat img{width:104px}
+  .bill-feat .pst-w{width:104px}.bill-feat .pst{padding:8px}.bill-feat .pst b{font-size:12px}
+  .bill-feat h3{font-size:22px;margin:4px 0 4px}
+  .bill-feat p{font-size:12.5px}
+  .bill li a{grid-template-columns:54px 1fr auto;gap:10px;padding:8px 0}
+  .bill .bd small{font-size:10px;letter-spacing:.04em}
+  .bill .bd{font-size:28px}
+  .bill .bt{font-size:14.5px}
+  .bill li:nth-child(n+5){display:none}
+  #hero h1{font-size:52px;margin:16px 0 18px}
+  #hero .lead{font-size:17px}
+  .today{grid-template-columns:repeat(3,1fr);gap:14px}
+  .today span{font-size:13px}
+  .today .day{grid-column:1/-1}
+  .today b{font-size:34px}
+  .hero-cta .btn{flex:1;justify-content:center}
+  h2{font-size:48px}
+  .lead{font-size:17px}
+  .sec-h{margin-bottom:26px}
+  .ctrl{gap:8px}
+  .ctrl .sp{display:none}
+  .chips{display:flex;gap:8px;overflow-x:auto;width:calc(100% + 36px);margin:0 -18px;padding:2px 18px 6px;scrollbar-width:none}
+  .chips .chip{flex:none}
+  .evs{grid-template-columns:1fr;gap:20px}
+  .ev{flex-direction:row}
+  .ev:hover{transform:none}
+  .ev-img{width:116px;flex:none;aspect-ratio:auto}
+  .ev-date{left:8px;top:8px;min-width:50px;padding:5px 7px 4px}
+  .ev-date b{font-size:24px}.ev-date span{font-size:9.5px}
+  .ev-free{left:8px;right:auto;top:auto;bottom:8px;font-size:9.5px;padding:4px 7px}
+  .ev-b{padding:12px 14px 14px}
+  .ev h3{font-size:20px;margin:4px 0 6px}
+  .ev-m{font-size:13px;gap:2px}
+  .ev-price{font-size:13.5px;margin-top:6px}.ev-price small{display:block}
+  .ev-a{padding-top:10px}
+  .ev-a a{display:none}
+  .ev-a button{height:38px;flex:none;padding:0 14px;font-size:13.5px}
+  .evs.list .ev{flex-direction:row}
+  .evs.list .ev-b{flex-direction:column;align-items:flex-start;gap:4px}
+  .evs.list .ev-cat{width:auto}.evs.list .ev-a{display:none}.evs.list .ev-img{width:74px}
+  .days{flex-wrap:nowrap;overflow-x:auto;width:calc(100% + 36px);margin:0 -18px;padding:0 18px 4px;scrollbar-width:none}
+  .days button{min-width:84px;flex:none}
+  .srch{min-width:0;width:100%}
+  .house{grid-template-columns:52px 1fr;gap:10px;padding:13px 4px}
+  .house .tc{grid-column:2;text-align:left}
+  .house h3{font-size:19px}
+  .hd{grid-template-columns:1fr}.hd img{width:100%;height:160px;min-height:0}
+  .outd{grid-template-columns:1fr;margin-top:36px}
+  .cap-top output{font-size:52px}
+  .form{padding:22px 18px}
+  .row2{grid-template-columns:1fr}
+  .szalon .b{grid-template-columns:1fr;padding:22px 20px 24px}
+  .szalon h3{font-size:36px}
+  .szalon .im{height:130px}
+  .cd{justify-self:start;display:flex;gap:12px;align-items:baseline}
+  .cd b{font-size:44px}
+  .ab{grid-template-columns:1fr;gap:36px}
+  .stats b{font-size:46px}
+  .ft{grid-template-columns:1fr;gap:28px}
+}
+.wk-list .wl-h{font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:18px 0 6px}
+.wk-list .wl{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start}
+.wk-list .wl .t{font-family:var(--mono);font-size:14px}
+.wk-list .wl b{display:block;font-size:16px;line-height:1.25}
+.wk-list .wl span{display:flex;gap:6px;align-items:center;margin-top:5px;font-size:13.5px;color:var(--ink2)}
+.wk-list .wl.past{opacity:.45}
+.wk-list .more{margin-top:14px;font-weight:700;color:var(--teal-d);text-decoration:underline}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="spi" viewBox="0 0 1120 1176"><g fill="none" stroke="currentColor" stroke-width="64">
+<path d="M560 140a448 448 0 1 1-448 448"/><path d="M560 300a288 288 0 1 1-288 288"/><path d="M560 460a128 128 0 1 1-128 128"/></g></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+<symbol id="i-arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-tel" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+<symbol id="i-srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></symbol>
+<symbol id="i-tik" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 0 0-4V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/></symbol>
+</svg>
+
+<div class="demo-bar" role="note"><div class="demo-bar-inner"><span class="demo-bar-tag">Iparági demó</span><p class="demo-bar-text"><strong>ProjectEdge demó</strong> — a Kőhegyi Kulturális Központ kitalált intézmény, nem valós ügyfél. Városi művelődési házak műsorral és heti órarenddel.</p><p class="demo-bar-text short"><strong>ProjectEdge demó</strong> — kitalált intézmény</p><a class="demo-bar-link" href="/munkak?munka=kohegy#munka-valaszto"><span class="demo-bar-arrow" aria-hidden="true"></span><span class="demo-bar-link-long">Vissza a munkákhoz</span><span class="demo-bar-link-short">Munkák</span></a></div></div>
+
+<header class="hdr" id="hdr">
+  <div class="wrap">
+    <a class="logo" href="#hero" aria-label="Kőhegyi Kulturális Központ, főoldal"><span class="kk-logo"><svg viewBox="0 0 1120 1176" aria-hidden="true" style="width:40px;height:42px;color:var(--teal)"><use href="#spi"/></svg><span>Kőhegyi<br>Kulturális Központ</span></span></a>
+    <nav class="nav" aria-label="Fő menü">
+      <a href="#musor">Műsor</a><a href="#heti">Minden héten</a><a href="#hazak">Házaink</a><a href="#terem">Terembérlés</a><a href="#galeria">Galéria</a><a href="#rolunk">Rólunk</a>
+    </nav>
+    <a class="hdr-tel" href="tel:+3615550700"><svg class="ico"><use href="#i-tel"/></svg>+36 1 555 0700</a>
+    <a class="btn btn-t" href="#kapcsolat">Kapcsolat</a>
+    <button class="menu-b" id="menuB" aria-expanded="false" aria-controls="sheet">Menü</button>
+  </div>
+</header>
+<div class="sheet" id="sheet" role="dialog" aria-label="Menü">
+  <button class="x" id="menuX">Bezár</button>
+  <nav><a href="#musor">Műsor</a><a href="#heti">Minden héten</a><a href="#hazak">Házaink</a><a href="#terem">Terembérlés</a><a href="#galeria">Galéria</a><a href="#rolunk">Rólunk</a><a href="#kapcsolat">Kapcsolat</a></nav>
+  <div class="tel">+36 1 555 0700 · info@kohegykult.hu</div>
+</div>
+
+<main>
+<!-- ============ HERO ============ -->
+<section id="hero" class="dark">
+  <svg class="hero-spi" aria-hidden="true"><use href="#spi"/></svg>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-txt">
+        <div class="k hero-k">Kőhegyi Kulturális Központ · 7 ház · 13 telephely</div>
+        <h1>Kultúra Kőhegy <em>minden részén.</em></h1>
+        <p class="lead">Színház, koncert, előadás, kiállítás, és hetente több mint száz klub, tanfolyam és torna a Ligettől Bányatelepen át a Szőlőhegyig.</p>
+        <div class="hero-cta">
+          <a class="btn btn-t" href="#musor">Teljes műsor <svg class="ico"><use href="#i-arr"/></svg></a>
+          <a class="btn btn-o" href="#terem">Terembérlés</a>
+        </div>
+        <div class="today" id="today"></div>
+      </div>
+      <div class="bill" id="bill" aria-label="Műsorlap"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MŰSOR ============ -->
+<section id="musor" class="sec">
+  <div class="wrap">
+    <div class="sec-h rv">
+      <div><div class="k">Műsor</div><h2>Mi lesz a színpadon?</h2><p class="lead">Előadások, koncertek és estek a házainkban. A jegyeket a szervezők árusítják; a részleteknél megtalálja, hol.</p></div>
+    </div>
+    <div class="ctrl rv">
+      <div class="seg" id="segM" role="group" aria-label="Hónap"><button aria-pressed="true" data-m="all">Mind</button></div>
+      <div class="chips" id="chips" role="group" aria-label="Műfaj"></div>
+      <div class="sp"></div>
+      <span class="cnt" id="evCnt"></span>
+      <div class="seg" id="segV" role="group" aria-label="Nézet"><button aria-pressed="true" data-v="grid">Plakátok</button><button aria-pressed="false" data-v="list">Lista</button></div>
+    </div>
+    <div class="evs" id="evs"></div>
+  </div>
+</section>
+
+<!-- ============ MINDEN HÉTEN ============ -->
+<section id="heti" class="sec">
+  <div class="wrap">
+    <div class="sec-h rv">
+      <div><div class="k">Klubok, tanfolyamok, torna</div><h2>Minden héten.</h2><p class="lead" id="wkLead">Hétfőtől péntekig 116 rendszeres foglalkozás hét házban. Válasszon napot, vagy keressen rá arra, ami érdekli.</p></div>
+    </div>
+    <div class="ctrl rv">
+      <div class="days" id="days" role="group" aria-label="Nap"></div>
+      <div class="sp"></div>
+      <label class="srch"><svg class="ico"><use href="#i-srch"/></svg><input id="wkQ" type="search" placeholder="Keresés: jóga, tánc, baba…" aria-label="Foglalkozás keresése"></label>
+    </div>
+    <div class="gantt rv" id="gantt"></div>
+    <div class="wk-list" id="wkList"></div>
+    <p class="wk-note" id="wkNote"></p>
+  </div>
+  <div class="wk-tip" id="wkTip"></div>
+</section>
+
+<!-- ============ HÁZAK ============ -->
+<section id="hazak" class="sec">
+  <div class="wrap">
+    <div class="sec-h rv">
+      <div><div class="k">Intézményegységeink</div><h2>Hét ház, a közelében.</h2><p class="lead">Mindegyik a saját városrésze közösségi otthona: klubok, foglalkozások, családi rendezvények.</p></div>
+    </div>
+    <div class="hz">
+      <div class="map rv" id="map"></div>
+      <div><div class="houses" id="houses"></div><div class="hd" id="hd"></div></div>
+    </div>
+    <div class="outd" id="outd"></div>
+  </div>
+</section>
+
+<!-- ============ TEREMBÉRLÉS ============ -->
+<section id="terem" class="sec dark">
+  <svg class="tb-spi" aria-hidden="true"><use href="#spi"/></svg>
+  <div class="wrap">
+    <div class="tb">
+      <div class="rv">
+        <div class="k">Terembérlés</div>
+        <h2>Termet keres rendezvényre?</h2>
+        <p class="lead" style="margin-top:18px">Színházterem 300 főig, konferenciaterem, klubtermek. Koncertek, előadások, konferenciák, családi ünnepek a város három részén.</p>
+        <div class="cap">
+          <div class="cap-top"><label for="capR">Hány főre?</label><output id="capO">60<small>fő</small></output></div>
+          <input type="range" id="capR" min="5" max="300" step="5" value="60">
+          <div class="cap-scale"><span>5</span><span>100</span><span>200</span><span>300</span></div>
+          <div class="occ" id="occ" role="group" aria-label="Alkalom"></div>
+          <div class="rooms" id="rooms"></div>
+        </div>
+        <a class="rider" href="#terem"><svg class="ico"><use href="#i-doc"/></svg>Színpadtechnikai eszközeink (PDF)</a>
+      </div>
+      <form class="form rv" id="rForm">
+        <h3>Ajánlatkérés</h3>
+        <p class="s">Írja meg, mikor és mire keres termet; a titkárság válaszol a részletekkel és az árral.</p>
+        <div class="row2">
+          <div class="fld"><label for="fD">Dátum</label><input id="fD" type="date" required></div>
+          <div class="fld"><label for="fN">Létszám</label><input id="fN" type="number" min="1" value="60"></div>
+        </div>
+        <div class="fld"><label for="fR">Terem</label><select id="fR"></select></div>
+        <div class="fld"><label for="fW">A rendezvény</label><textarea id="fW" rows="3" placeholder="pl. jótékonysági koncert, 2 óra, büfé nem kell"></textarea></div>
+        <div class="row2">
+          <div class="fld"><label for="fName">Név / szervezet</label><input id="fName" autocomplete="name" required></div>
+          <div class="fld"><label for="fE">E-mail vagy telefon</label><input id="fE" autocomplete="email" required></div>
+        </div>
+        <button class="btn btn-t" type="submit">Ajánlatot kérek <svg class="ico"><use href="#i-arr"/></svg></button>
+        <p class="fine">Az adatokat csak az ajánlatkérés megválaszolására használjuk. <a href="#kapcsolat">Adatkezelési tájékoztató</a></p>
+        <div class="stamp" id="stamp"><div class="sx">MEGKAPTUK</div><p>Köszönjük! A titkárság e-mailben vagy telefonon jelentkezik a részletekkel. <small>(Ez egy bemutató oldal, valójában nem ment el üzenet.)</small></p><button type="button" class="btn btn-o" id="stampX" style="height:44px">Új ajánlatkérés</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GALÉRIA + HÍREK ============ -->
+<section id="galeria" class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><div><div class="k">Galéria · hírek</div><h2>A házak körül.</h2></div></div>
+    <div class="gal">
+      <article class="szalon rv">
+        <div class="im"><img src="/demo/kohegy/assets/foto/szalon.webp" alt="Őszi Tárlat a Galériában"></div>
+        <div class="b">
+          <div><div class="k">Központi Művelődési Ház · Galéria</div><h3>Őszi Tárlat: kőhegyi alkotók</h3><p>Helyi festők és grafikusok csoportos kiállítása, szakmai zsűri válogatásában. <span id="tarlat"></span> A látogatók is szavazhatnak: a közönségdíjast a záráskor hirdetjük ki.</p></div>
+          <div class="cd" id="cd"><b>–</b><span>nap a megnyitóig</span></div>
+        </div>
+      </article>
+      <div class="news rv" id="news"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RÓLUNK ============ -->
+<section id="rolunk" style="background:var(--paper2)">
+  <div class="wrap">
+    <div class="ab">
+      <div class="rv"><div class="k" style="margin-bottom:18px">Rólunk</div><blockquote>Hogy a város minden részén legyen egy hely, ahová este is érdemes elmenni, és ahol a szomszédok nemcsak köszönnek egymásnak.</blockquote><cite>A Kőhegyi Kulturális Központ küldetéséből</cite></div>
+      <div class="stats rv"><div><b>13</b><span>telephely, a székhellyel együtt</span></div><div><b>7</b><span>közösségi és művelődési ház Kőhegyen</span></div><div><b>116</b><span>rendszeres foglalkozás egy héten</span></div><div><b>300</b><span>fős színházterem a székhelyen</span></div></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer id="kapcsolat">
+  <div class="wrap">
+    <div class="ft">
+      <div><div class="lg-t"><span class="kk-logo"><svg viewBox="0 0 1120 1176" aria-hidden="true" style="width:40px;height:42px;color:var(--teal)"><use href="#spi"/></svg><span>Kőhegyi<br>Kulturális Központ</span></span></div><p>Székhely: Központi Művelődési Ház<br>Kőhegy, Kossuth tér 4.</p><p style="margin-top:12px"><a href="tel:+3615550700" style="display:inline">+36 1 555 0700</a> · <a href="mailto:info@kohegykult.hu" style="display:inline">info@kohegykult.hu</a></p><p style="margin-top:12px">Titkárság: +36 1 555 0701</p></div>
+      <div><h4>Látogatóknak</h4><a href="#musor">Műsor</a><a href="#heti">Minden héten</a><a href="#hazak">Házaink</a><a href="#galeria">Képgaléria</a><a href="#musor">Program archívum</a></div>
+      <div><h4>Szervezőknek</h4><a href="#terem">Terembérlés</a><a href="#terem">Színpadtechnika</a><a href="#hazak">Tóparti tábor</a><a href="#rolunk">Szolgáltatások</a><a href="#galeria">Álláshirdetés</a></div>
+      <div><h4>Közérdekű</h4><a href="#kapcsolat">Közérdekű adatok</a><a href="#kapcsolat">Házirend</a><a href="#kapcsolat">Pályázatok, támogatások</a><a href="#kapcsolat">Adatkezelési tájékoztató</a><a href="#kapcsolat">Akadálymentességi nyilatkozat</a></div>
+    </div>
+    <div class="ft-b"><span>© Kőhegyi Kulturális Központ · kitalált intézmény</span><span>ProjectEdge demó</span></div>
+  </div>
+</footer>
+
+<script>
+const WEEK={"1":[["09:00","10:00","Gerinctorna","mkh"],["09:30","10:30","Babajelbeszéd","mkh"],["10:00","11:00","Mondókázó","pmh"],["11:00","15:00","Lakossági iroda","kmh"],["14:00","16:00","Őszikék Nyugdíjas Klub","amh"],["14:30","16:30","Egészség Klub","umh"],["14:45","15:45","Gyógytorna","mkh"],["15:00","16:00","Senior Torna","mkh"],["16:00","19:00","Sakk Klub","amh"],["16:00","17:00","Break Tánc","amh"],["16:00","17:00","Senior Örömtánc","mkh"],["16:00","18:30","Makramé Szakkör","umh"],["16:00","19:30","Sakk Klub","umh"],["16:00","18:00","Asszonyklub","szmh"],["16:00","18:00","Asztalitenisz Klub","kmh"],["16:00","17:00","Modern tánc (kicsiknek)","mkh"],["16:00","17:30","Asszony Klub","szmh"],["16:45","17:45","Kung-Fu gyerekeknek","amh"],["17:00","17:30","Meridián Torna","mkh"],["17:00","19:00","Bűvész Szakkör","umh"],["17:30","19:00","Shotokan Karate","mkh"],["17:30","18:30","Asszonytorna","szmh"],["17:30","18:30","Tornász Klub","szmh"],["18:00","19:00","Kung-Fu felnőtteknek","amh"],["18:00","19:00","Aerobic","pmh"]],"2":[["08:30","09:30","Pilates","mkh"],["08:30","09:30","Hastánc","mkh"],["09:00","10:00","Meridián Torna","akh"],["09:00","10:00","Jóga","umh"],["09:00","10:00","Senior örömtánc","pmh"],["09:30","10:30","Gyermekjóga","mkh"],["09:30","10:30","Mackó mocorgó","mkh"],["10:00","11:00","Senior Örömtánc","amh"],["10:00","11:00","Baba-mama pilates","mkh"],["10:00","11:00","Ovi kézi (szeptembertől májusig)","kmh"],["10:30","11:30","Baba-Anya Jóga","umh"],["11:00","15:00","Lakossági iroda","kmh"],["14:00","15:30","Bokréta Népdalkör","amh"],["14:00","17:00","Bányatelepi Nyugdíjas Klub","umh"],["15:00","15:30","Meridián Torna","mkh"],["15:00","16:00","Csicsergők","pmh"],["16:00","19:00","Nyitott Színházi Műhely","amh"],["16:00","17:30","Ötös Tánccsoport","mkh"],["16:00","17:00","Break Tánc","amh"],["16:00","19:00","Foltvarró Kör (haladó)","umh"],["16:00","17:00","Mazsorett","mkh"],["17:00","18:00","Kertészeti beszélgetések","akh"],["17:00","19:00","Shotokan Karate","umh"],["17:30","19:30","Tradicionális Hatha-jóga","mkh"],["17:30","19:00","Fúziós Jóga (időseknek is)","pmh"],["18:00","19:45","Break Klub","amh"],["18:00","20:00","Ping-Pong","szmh"]],"3":[["08:30","09:30","Gerinctorna","akh"],["09:00","12:00","Szakkör – Bútorfestés","pmh"],["09:30","10:30","Zenebölcsi","mkh"],["10:00","11:00","Örökmozgó – tipegő babáknak","akh"],["11:00","12:00","Nyugdíjas Gyógytorna","mkh"],["11:00","12:00","Homloklebeny terápia","umh"],["11:00","15:00","Lakossági iroda","kmh"],["13:00","16:00","Szakkör – Natúr kozmetika","pmh"],["13:30","15:30","Foltvarró Kör","akh"],["16:00","19:00","Nyitott Színházi Műhely","amh"],["16:00","17:30","Ötös Tánccsoport","mkh"],["16:00","17:00","Break Tánc","amh"],["16:00","18:00","Asztalitenisz Klub","kmh"],["16:30","19:30","Borbarátok","szmh"],["16:45","17:45","Kung-Fu gyerekeknek","amh"],["17:00","19:00","Szivárvány Fotóklub","umh"],["17:00","19:00","Borklub","szmh"],["17:30","18:30","Asszonytorna","szmh"],["17:30","19:30","Western Táncklub","pmh"],["17:30","18:30","Tornász Klub","szmh"],["18:00","19:00","Kung-Fu felnőtteknek","amh"],["18:00","19:00","Pilates","mkh"],["19:00","21:00","Tai-Chi","szmh"],["19:00","20:00","Modern tánc (nagyoknak)","mkh"],["19:00","20:00","Country Táncház","pmh"]],"4":[["09:15","10:15","Énekelgető","mkh"],["09:30","10:30","Gyermekjóga","umh"],["10:00","11:00","Mami és baba","mkh"],["10:00","11:00","Ovi kézi (szeptembertől májusig)","kmh"],["10:00","11:00","Montessori percek","pmh"],["11:00","15:00","Lakossági iroda","kmh"],["14:00","15:30","Központi Nyugdíjas Klub","amh"],["15:00","16:00","Senior Torna","mkh"],["15:00","18:00","Tarokk Klub","umh"],["15:00","18:00","Kreatív Klub foglalkozás","szmh"],["15:30","16:30","Eurodance táncfoglalkozás","amh"],["15:30","19:30","Kreatív festők","szmh"],["16:00","19:00","Sakk Klub","amh"],["16:00","17:00","Break Tánc","amh"],["17:00","19:00","Origami Kör","mkh"],["17:00","18:00","Jóga","umh"],["17:00","18:00","Gyermek-néptánccsoport","szmh"],["17:30","19:00","Shotokan Karate","mkh"],["18:00","19:45","Break Klub","amh"],["18:00","19:00","Aerobic","pmh"],["18:30","20:00","Néptánccsoport (haladó)","szmh"]],"5":[["08:30","09:30","Jóga","umh"],["09:00","10:00","Gerinctorna","mkh"],["09:30","10:30","Baba-mama torna","mkh"],["10:00","11:00","Manótorna","pmh"],["10:00","11:00","Örökmozgó – babatorna","akh"],["10:30","11:30","Kismama torna","mkh"],["11:00","12:00","Nyugdíjas Gyógytorna","mkh"],["11:00","15:00","Lakossági iroda","kmh"],["16:00","19:00","Nyitott Színházi Műhely","amh"],["16:00","18:00","Fonalműhely","mkh"],["16:00","18:00","Asztalitenisz Klub","kmh"],["16:00","17:00","Modern tánc (kicsiknek)","mkh"],["16:30","17:30","Tánc-mozgásterápia","szmh"],["17:00","19:00","Karate","umh"],["17:00","18:00","Modern tánc (nagyoknak)","mkh"],["18:00","19:00","Női tánc","mkh"],["18:00","20:00","Ping-Pong","szmh"],["18:00","20:00","Pénteki klub","pmh"]]};
+const CITY=[[18.3486, 46.075], [18.3515, 46.0826], [18.3511, 46.0904], [18.3475, 46.0977], [18.3415, 46.1042], [18.335, 46.1101], [18.3291, 46.1161], [18.324, 46.1227], [18.3188, 46.1297], [18.3121, 46.1361], [18.3029, 46.1406], [18.2915, 46.1417], [18.2793, 46.1395], [18.2678, 46.1349], [18.2581, 46.1302], [18.25, 46.1274], [18.2423, 46.1277], [18.2335, 46.1306], [18.223, 46.1346], [18.211, 46.1377], [18.1989, 46.1383], [18.1879, 46.1361], [18.1788, 46.1316], [18.1714, 46.1257], [18.1651, 46.1191], [18.1596, 46.1123], [18.1552, 46.1052], [18.1525, 46.0977], [18.1524, 46.0898], [18.1547, 46.0822], [18.1586, 46.075], [18.1625, 46.0684], [18.1653, 46.0621], [18.1668, 46.0556], [18.168, 46.0489], [18.1704, 46.0421], [18.1754, 46.0362], [18.1828, 46.0317], [18.1917, 46.0286], [18.2004, 46.0261], [18.2079, 46.0228], [18.2142, 46.0175], [18.2205, 46.0101], [18.2283, 46.0019], [18.2382, 45.995], [18.25, 45.9914], [18.2621, 45.9924], [18.273, 45.9975], [18.2817, 46.0052], [18.2883, 46.0134], [18.2939, 46.0206], [18.2996, 46.0261], [18.3059, 46.0305], [18.3126, 46.0347], [18.3188, 46.0392], [18.3242, 46.0443], [18.3288, 46.0499], [18.3332, 46.0556], [18.3382, 46.0616], [18.3437, 46.068]];
+// A műsor a mai naphoz képest (nap-eltolás) számolódik, hogy a demó ne avuljon el.
+const EVRAW=[
+ [2,'18:30','19:30','Régizene a templomkertben','Reneszánsz táncok és dalok korhű hangszereken','Koncert','amh',{free:1,p:'Ingyenes, regisztráció nélkül'}],
+ [4,'16:30','18:00','A brémai muzsikusok','Zenés mesejáték 4 éves kortól','Gyerekeknek','amh',{p:'3 500 Ft',ps:'családi jegy 12 000 Ft'}],
+ [8,'19:00','21:00','Szerelmes levelek','Kétszereplős vígjáték','Színház','amh',{}],
+ [13,'19:00','21:00','Nevetni ér','Stand-up est három fellépővel','Humor','amh',{p:'6 900 Ft',ps:'elővétel · diák 4 900 Ft'}],
+ [15,'18:30','20:00','Csillagok a Sashegy felett','Csillagászati előadás, utána távcsöves bemutató','Előadás','umh',{free:1,p:'Ingyenes'}],
+ [19,'18:30','20:00','Városunk régi utcái','Helytörténeti vetítés régi fotókkal','Előadás','amh',{}],
+ [22,'18:00','19:30','Kertészkedés kis helyen','Gyakorlati előadás erkélyre és kiskertbe','Előadás','szmh',{}],
+ [26,'19:00','21:00','Négy kéz, egy zongora','Klasszikus és filmzenei átiratok','Koncert','amh',{p:'4 500 Ft'}],
+ [30,'18:00','20:00','Operettgála','Népszerű operettslágerek zenekarral','Koncert','amh',{p:'5 900 Ft',ps:'nyugdíjas 4 500 Ft'}],
+ [34,'19:00','21:00','Gyertyafényes vonósnégyes','Vivaldi és Mozart gyertyafénynél','Koncert','umh',{p:'5 500 Ft'}],
+ [39,'18:30','20:00','Hangfürdő gonggal','Relaxációs est hangtálakkal','Előadás','pmh',{}],
+ [43,'10:00','11:00','A kiskakas gyémánt félkrajcárja','Bábszínház a legkisebbeknek','Gyerekeknek','mkh',{p:'1 500 Ft'}]];
+const _d0=new Date();_d0.setHours(0,0,0,0);
+const _iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const EV=EVRAW.map(([o,t,e,ti,sub,c,v,x],i)=>Object.assign({d:_iso(new Date(_d0.getFullYear(),_d0.getMonth(),_d0.getDate()+o)),t,e,ti,sub,c,v,img:i+1},x));
+const H={
+ amh:{n:'Központi Művelődési Ház',s:'Székhely',dist:'Belváros',a:'Kőhegy, Kossuth tér 4.',tel:'+36 1 555 0700',h:[null,[7,20],[7,20],[7,20],[7,20],[7,20],[9,13]],lat:46.0705,lon:18.2385,img:'amh'},
+ mkh:{n:'Liget Közösségi Ház',dist:'Déli városrész · Liget',a:'Kőhegy, Gesztenyés sor 12.',tel:'+36 1 555 0711',h:[0,[9,20],[9,20],[9,20],[9,20],[9,20],0],lat:46.0455,lon:18.2205,img:'mkh'},
+ akh:{n:'Kertvárosi Közösségi Ház',dist:'Déli városrész · Liget',a:'Kőhegy, Tulipán utca 3.',tel:'+36 1 555 0712',h:'?',lat:46.0385,lon:18.2555,img:'akh'},
+ umh:{n:'Bányatelepi Művelődési Ház',dist:'Nyugati városrész · Bányatelep',a:'Kőhegy, Tárna utca 8.',tel:'+36 1 555 0721',h:[0,[8,19],[8,19],[8,19],[8,19],[8,19],0],lat:46.0675,lon:18.1855,img:'umh'},
+ pmh:{n:'Hegyaljai Művelődési Ház',dist:'Nyugati városrész · Bányatelep',a:'Kőhegy, Iskola köz 2.',tel:'+36 1 555 0722',h:[0,[10,18],[10,18],[10,18],[10,18],[10,18],0],lat:46.0955,lon:18.1855,img:'pmh'},
+ szmh:{n:'Szőlőhegyi Közösségi Ház',dist:'Keleti városrész',a:'Kőhegy, Présház utca 1.',tel:'+36 1 555 0731',h:[0,[12,20],[12,20],[12,20],[12,20],[12,20],0],lat:46.1035,lon:18.2905,img:'szmh'},
+ kmh:{n:'Vasútvidéki Művelődési Ház',dist:'Keleti városrész',a:'Kőhegy, Állomás tér 6.',tel:'+36 1 555 0732',h:[null,[9,17],[9,17],[9,17],[9,17],[9,17],null],lat:46.0725,lon:18.3055,img:'kmh'}
+};
+const CODES={amh:'KMH',mkh:'LKH',akh:'KKH',umh:'BMH',pmh:'HMH',szmh:'SZKH',kmh:'VMH'};
+const HU_M=['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const HU_MS=['jan','feb','márc','ápr','máj','jún','júl','aug','szept','okt','nov','dec'];
+const HU_D=['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
+const HU_DS=['V','H','K','Sze','Cs','P','Szo'];
+const $=s=>document.querySelector(s);
+const NOW=new Date();
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today0=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+const nowH=NOW.getHours()+NOW.getMinutes()/60;
+const hm=s=>{const [a,b]=s.split(':').map(Number);return a+b/60};
+const upcoming=EV.filter(e=>pd(e.d)>=today0);
+const UP=upcoming.length?upcoming:EV;
+const dow=NOW.getDay();
+const wkDay=(dow>=1&&dow<=5)?dow:1;
+
+const PCOL={'Koncert':'#2a8a72','Gyerekeknek':'#d8a24a','Színház':'#b4412e','Humor':'#0d1d19','Előadás':'#17574a'};
+const poster=e=>`<div class="pst" style="--pc:${PCOL[e.c]||'#2a8a72'}"><small>${e.c}</small><b>${e.ti}</b><i>${H[e.v].n}</i></div>`;
+/* ---- hero: today + playbill ---- */
+(function(){
+  const list=dow>=1&&dow<=5?WEEK[dow]:[];
+  const houses=new Set(list.map(x=>x[3])).size;
+  const nextEve=UP[0];const isToday=pd(nextEve.d).getTime()===today0.getTime();
+  $('#today').innerHTML=`<div class="day"><svg class="ico"><use href="#i-clock"/></svg>Ma, ${HU_D[dow]}, ${HU_M[NOW.getMonth()]} ${NOW.getDate()}.</div>
+   <a href="#heti"><b>${list.length||'–'}</b><span>${list.length?'rendszeres foglalkozás a házakban':'hétvégén nincs rendszeres foglalkozás'}</span></a>
+   <a href="#hazak"><b>${houses||7}</b><span>${list.length?'házban van ma program':'ház a város három részén'}</span></a>
+   <a href="#musor"><b>${isToday?nextEve.t:pd(nextEve.d).getDate()+'.'}</b><span>${isToday?'ma este: '+nextEve.ti:'a következő előadás: '+HU_M[pd(nextEve.d).getMonth()]+', '+nextEve.ti}</span></a>`;
+  const f=UP[0];const fd=pd(f.d);
+  const rows=UP.slice(1,7).map(e=>{const d=pd(e.d);return `<li><a href="#musor"><div class="bd">${d.getDate()}<small>${HU_MS[d.getMonth()]} ${HU_DS[d.getDay()]}</small></div><div><div class="bt">${e.ti}</div><span class="bv">${e.c} · ${H[e.v].n}</span></div><div class="bh">${e.t}</div></a></li>`}).join('');
+  $('#bill').innerHTML=`<div class="bill-h"><svg viewBox="0 0 1120 1176" aria-hidden="true"><use href="#spi"/></svg><div class="t">Kőhegyi<br>Kulturális<br>Központ</div><div class="s">Műsor<br>7 ház<br>Kőhegy</div></div>
+   <p class="bill-mobile-tag">Színház, koncert, előadás és heti 116 foglalkozás hét házban, a város három részén.</p>
+   <a class="bill-feat" href="#musor"><div class="pst-w">${poster(f)}</div><div><div class="lbl">${isToday?'Ma este':'Következő'} · ${fd.getDate()} ${HU_MS[fd.getMonth()]}. ${f.t}</div><h3>${f.ti}</h3><p>${f.sub}${f.free?' · <b>ingyenes</b>':''}</p></div></a>
+   <ol>${rows}</ol>
+   <div class="bill-f"><span>${UP.length} előadás ${HU_M[pd(UP[0].d).getMonth()]}tól ${HU_M[pd(UP[UP.length-1].d).getMonth()]}ig</span><a href="#musor">Teljes műsor →</a></div>`;
+})();
+
+/* ---- műsor ---- */
+[...new Set(UP.map(e=>pd(e.d).getMonth()+1))].forEach(m=>{const b=document.createElement('button');b.setAttribute('aria-pressed','false');b.dataset.m=m;b.textContent=HU_M[m-1][0].toUpperCase()+HU_M[m-1].slice(1);$('#segM').appendChild(b)});
+const CATS=['Mind',...new Set(EV.map(e=>e.c))];
+let fM='all',fC='Mind',view='grid';
+$('#chips').innerHTML=CATS.map((c,i)=>`<button class="chip" aria-pressed="${i===0}" data-c="${c}">${c}</button>`).join('');
+function renderEv(){
+  const L=UP.filter(e=>(fM==='all'||pd(e.d).getMonth()+1===+fM)&&(fC==='Mind'||e.c===fC));
+  $('#evCnt').textContent=L.length+' előadás';
+  $('#evs').className='evs'+(view==='list'?' list':'');
+  $('#evs').innerHTML=L.length?L.map(e=>{const d=pd(e.d);const i=EV.indexOf(e);return `<article class="ev">
+   <div class="ev-img">${poster(e)}<div class="ev-date"><b>${d.getDate()}</b><span>${HU_MS[d.getMonth()]} · ${HU_DS[d.getDay()]}</span></div>${e.free?'<span class="ev-free">Ingyenes</span>':''}</div>
+   <div class="ev-b"><div class="ev-cat">${e.c}</div><div class="bwrap"><h3>${e.ti}</h3></div>
+    <div class="ev-m"><div><svg class="ico"><use href="#i-clock"/></svg>${e.t}–${e.e}</div><div><svg class="ico"><use href="#i-pin"/></svg>${H[e.v].n}</div></div>
+    ${e.p?`<div class="ev-price">${e.p}${e.ps?` <small>${e.ps}</small>`:''}</div>`:''}
+    <div class="ev-a"><a href="#musor">Részletek</a><button type="button" data-ics="${i}"><svg class="ico"><use href="#i-cal"/></svg>Naptárba</button></div></div></article>`}).join(''):'<p class="empty">Ebben a hónapban ebben a műfajban nincs előadás.</p>';
+}
+$('#segM').onclick=e=>{const b=e.target.closest('button');if(!b)return;fM=b.dataset.m;[...$('#segM').children].forEach(x=>x.setAttribute('aria-pressed',x===b));renderEv()};
+$('#segV').onclick=e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;[...$('#segV').children].forEach(x=>x.setAttribute('aria-pressed',x===b));renderEv()};
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;fC=b.dataset.c;[...$('#chips').children].forEach(x=>x.setAttribute('aria-pressed',x===b));renderEv()};
+$('#evs').onclick=e=>{const b=e.target.closest('[data-ics]');if(!b)return;const ev=EV[+b.dataset.ics];const h=H[ev.v];const dt=(d,t)=>d.replace(/-/g,'')+'T'+t.replace(':','')+'00';
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//KKK//Musor//HU','BEGIN:VEVENT','UID:kkk-'+ev.d+'-'+ev.img+'@kohegykult.hu','DTSTAMP:20261014T080000Z','DTSTART;TZID=Europe/Budapest:'+dt(ev.d,ev.t),'DTEND;TZID=Europe/Budapest:'+dt(ev.d,ev.e),'SUMMARY:'+ev.ti,'LOCATION:'+h.n+'\\, '+h.a.replace(/,/g,'\\,'),'DESCRIPTION:'+ev.sub,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='kohegy-'+ev.d+'.ics';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  b.innerHTML='<svg class="ico"><use href="#i-cal"/></svg>Letöltve'};
+renderEv();
+
+/* ---- heti menetrend ---- */
+let wd=wkDay,q='';
+const ORDER=['amh','mkh','akh','umh','pmh','szmh','kmh'];
+const T0=8,T1=21;
+function renderDays(){
+  $('#days').innerHTML=[1,2,3,4,5].map(i=>{const d=new Date(today0);d.setDate(d.getDate()+(i-(dow===0?7:dow)));return `<button aria-pressed="${i===wd}" data-d="${i}"><b>${['','Hétfő','Kedd','Szerda','Csütörtök','Péntek'][i]}${i===dow?'<span class="td">ma</span>':''}</b><span>${WEEK[i].length} foglalkozás</span></button>`}).join('');
+}
+function match(x){return !q||x[2].toLowerCase().includes(q)}
+function renderWeek(){
+  const L=WEEK[wd];
+  const isToday=wd===dow;
+  // gantt
+  let html=`<div class="g-axis"><div></div><div class="tl">${Array.from({length:T1-T0+1},(_,i)=>`<span style="left:${i/(T1-T0)*100}%">${T0+i}</span>`).join('')}</div></div>`;
+  const gw=($('#gantt').clientWidth||1100)-44-210;const pxH=gw/(T1-T0);
+  const cx=document.createElement('canvas').getContext('2d');cx.font='600 13px "Hanken Grotesk"';
+  for(const k of ORDER){
+    const items=L.filter(x=>x[3]===k).sort((a,b)=>hm(a[0])-hm(b[0]));
+    const lanes=[];items.forEach(x=>{const vEnd=Math.max(hm(x[1]),hm(x[0])+(cx.measureText(x[2]).width+14)/pxH);let li=lanes.findIndex(end=>end<=hm(x[0]));if(li<0){li=lanes.length;lanes.push(0)}lanes[li]=vEnd;x._l=li});
+    const nl=Math.max(1,lanes.length);
+    html+=`<div class="g-row"><div class="g-h"><span class="code">${CODES[k]}</span><span class="n">${H[k].n}</span></div><div class="g-tr" style="height:${nl*38+14}px">${items.map(x=>{const l=(hm(x[0])-T0)/(T1-T0)*100,w=(hm(x[1])-hm(x[0]))/(T1-T0)*100;const m=match(x);return `<div class="bar${q?(m?' hit':' dim'):''}" style="left:${l}%;top:${x._l*38+10}px" data-tip="${x[2]}|${x[0]}–${x[1]}|${H[k].n}"><i style="width:${w/100*gw-3}px"></i><span>${x[2]}</span></div>`}).join('')}</div></div>`;
+  }
+  $('#gantt').innerHTML=html;
+  if(isToday&&nowH>=T0&&nowH<=T1){const tr=$('#gantt .g-axis .tl');const g=$('#gantt');const nl=document.createElement('div');nl.className='nowl';const gr=g.getBoundingClientRect(),tr0=tr.getBoundingClientRect();nl.style.left=(tr0.left-gr.left+(nowH-T0)/(T1-T0)*tr0.width)+'px';nl.style.top='40px';nl.style.bottom='18px';nl.innerHTML=`<span>most ${String(NOW.getHours()).padStart(2,'0')}:${String(NOW.getMinutes()).padStart(2,'0')}</span>`;g.appendChild(nl)}
+  // list (mobile)
+  const S=[...L].filter(match).sort((a,b)=>hm(a[0])-hm(b[0]));
+  const parts=[['Délelőtt',0,12],['Délután',12,17],['Este',17,24]];
+  $('#wkList').innerHTML=S.length?parts.map(([n,a,b])=>{const it=S.filter(x=>hm(x[0])>=a&&hm(x[0])<b);return it.length?`<div class="wl-h">${n}</div>`+it.map(x=>`<div class="wl${isToday&&hm(x[1])<nowH?' past':''}"><div class="t">${x[0]}–${x[1]}</div><div><b>${x[2]}</b><span><span class="code">${CODES[x[3]]}</span>${H[x[3]].n}</span></div></div>`).join(''):''}).join(''):'<p class="empty">Erre a napra nincs ilyen foglalkozás.</p>';
+  const hits=q?Object.entries(WEEK).map(([d,l])=>[d,l.filter(match).length]).filter(x=>x[1]):[];
+  $('#wkNote').innerHTML=q?(hits.length?`„${q}” a héten: `+hits.map(([d,n])=>`${['','hétfő','kedd','szerda','csütörtök','péntek'][d]} (${n})`).join(', '):`„${q}” erre a hétre nincs találat.`):'Szombaton és vasárnap a házak a rendezvényekhez igazodva tartanak nyitva.';
+}
+$('#days').onclick=e=>{const b=e.target.closest('button');if(!b)return;wd=+b.dataset.d;renderDays();renderWeek()};
+$('#wkQ').oninput=e=>{q=e.target.value.trim().toLowerCase();renderWeek()};
+const tip=$('#wkTip');
+$('#gantt').addEventListener('mousemove',e=>{const b=e.target.closest('.bar');if(!b){tip.style.opacity=0;return}const [n,t,h]=b.dataset.tip.split('|');tip.innerHTML=`<b>${n}</b><span>${t} · ${h}</span>`;tip.style.left=Math.min(e.clientX+14,innerWidth-270)+'px';tip.style.top=(e.clientY+16)+'px';tip.style.opacity=1});
+$('#gantt').addEventListener('mouseleave',()=>tip.style.opacity=0);
+renderDays();renderWeek();addEventListener('resize',()=>renderWeek());
+
+/* ---- házak + térkép ---- */
+(function(){
+  const lon0=18.128,lon1=18.374,lat0=45.988,lat1=46.168;const W=720,Hh=Math.round(W*((lat1-lat0)/((lon1-lon0)*Math.cos(46.08*Math.PI/180))));
+  const X=lo=>(lo-lon0)/(lon1-lon0)*W,Y=la=>(lat1-la)/(lat1-lat0)*Hh;
+  const bx=X(18.2290),by=Y(46.0790);
+  const city='M'+CITY.map(([lo,la])=>X(lo).toFixed(1)+' '+Y(la).toFixed(1)).join('L')+'Z';
+  let s=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="A hét ház Kőhegy térképén"><defs><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="9" stroke="rgba(42,138,114,.13)" stroke-width="2"/></pattern><clipPath id="cc"><path d="${city}"/></clipPath></defs>
+  <rect width="${W}" height="${Hh}" fill="#f6f3ec"/><path d="${city}" fill="#fbf9f4" stroke="#2a8a72" stroke-width="1.6" stroke-dasharray="1 0"/>`;
+  // Sashegy: contour lines in the north of the city
+  s+=`<g clip-path="url(#cc)">`;
+  for(let i=0;i<9;i++){const y0=Y(46.098)-i*15;s+=`<path d="M0 ${y0+34} C ${W*.22} ${y0-18}, ${W*.38} ${y0+26}, ${W*.58} ${y0-4} S ${W*.86} ${y0+30}, ${W} ${y0-6}" fill="none" stroke="rgba(42,138,114,${.12+i*.03})" stroke-width="1.3"/>`}
+  s+=`</g><text x="${X(18.215)}" y="${Y(46.128)}" font-family="DM Mono" font-size="13" letter-spacing="5" fill="#17574a">SASHEGY</text>`;
+  const lbl=(t,lo,la)=>`<text x="${X(lo)}" y="${Y(la)}" font-family="DM Mono" font-size="12" letter-spacing="1.8" fill="#6b7f79">${t}</text>`;
+  s+=lbl('LIGET',18.226,46.028)+lbl('BÁNYATELEP',18.150,46.052)+lbl('HEGYALJA',18.170,46.112)+lbl('SZŐLŐHEGY',18.282,46.122)+lbl('VASÚTVIDÉK',18.292,46.056);
+  // belváros
+  s+=`<g><circle cx="${bx}" cy="${by}" r="8" fill="none" stroke="#0d1d19" stroke-width="2"/><circle cx="${bx}" cy="${by}" r="3" fill="#0d1d19"/><text x="${bx+14}" y="${by+5}" font-family="Hanken Grotesk" font-weight="700" font-size="15" fill="#0d1d19">Belváros</text></g>`;
+  // extras
+  const ex=[['Kisvasút',46.1105,18.2305,12,5],['KRESZ-park',46.0575,18.2035,10,16]];
+  ex.forEach(([n,la,lo,dx,dy])=>{s+=`<g><rect x="${X(lo)-5}" y="${Y(la)-5}" width="10" height="10" transform="rotate(45 ${X(lo)} ${Y(la)})" fill="#d8a24a"/><text x="${X(lo)+dx}" y="${Y(la)+dy}" font-family="Hanken Grotesk" font-size="13" font-weight="600" fill="#3b524c">${n}</text></g>`});
+  const lab={amh:[16,24],mkh:[-56,6],akh:[16,-8],umh:[16,-6],pmh:[16,-10],szmh:[-62,-12],kmh:[16,5]};
+  for(const k of ORDER){const h=H[k];const x=X(h.lon),y=Y(h.lat);const [dx,dy]=lab[k];s+=`<g class="pin" data-k="${k}" tabindex="0" role="button" aria-label="${h.n}"><circle class="o" cx="${x}" cy="${y}" r="13"/><circle class="i" cx="${x}" cy="${y}" r="4.5"/><text x="${x+dx}" y="${y+dy}">${CODES[k]}</text></g>`}
+  s+='</svg>';
+  $('#map').innerHTML=s+'<div class="map-cap"><span>Kőhegy · vázlatos térkép</span><span>◆ a szabadban</span></div>';
+  const status=h=>{if(h.h==='?')return ['cl','Nyitvatartás: hamarosan'];const t=h.h[dow];if(!t)return ['cl','Ma zárva, vagy rendezvényekhez igazodva'];const [a,b]=t;if(nowH<a)return ['',`Ma ${a}:00–${b}:00, ${a}:00-kor nyit`];if(nowH<b)return ['',`Most nyitva, ${b}:00-ig`];return ['cl',`Ma ${a}:00–${b}:00, már zárva`]};
+  const cnt=k=>(dow>=1&&dow<=5?WEEK[dow]:[]).filter(x=>x[3]===k).length;
+  let out='',last='';
+  for(const k of ORDER){const h=H[k];if(h.dist!==last){out+=`<div class="district">${h.dist}</div>`;last=h.dist}const n=cnt(k);
+    out+=`<button class="house" data-k="${k}"><span class="code">${CODES[k]}</span><div><h3>${h.n}</h3><div class="ad">${h.a}</div></div><div class="tc">${n?`ma ${n} foglalkozás`:'rendezvények'}</div></button>`}
+  $('#houses').innerHTML=out;
+  const sel=k=>{document.querySelectorAll('.pin').forEach(p=>p.classList.toggle('on',p.dataset.k===k));document.querySelectorAll('.house').forEach(p=>p.classList.toggle('on',p.dataset.k===k));
+    const h=H[k];const [c,t]=status(h);const n=cnt(k);
+    $('#hd').innerHTML=`<img src="/demo/kohegy/assets/foto/${h.img}.webp" alt="${h.n}"><div><h3>${h.n}${h.s?` <span class="code">${h.s}</span>`:''}</h3><p>${h.a}<br><a href="tel:${h.tel.replace(/ /g,'')}">${h.tel}</a></p><div class="st ${c}"><svg class="ico"><use href="#i-clock"/></svg>${t}</div><p style="margin-top:6px">${n?`Ma ${n} rendszeres foglalkozás · <a href="#heti">menetrend</a>`:'Rendezvények és terembérlés'}</p></div>`};
+  $('#houses').onclick=e=>{const b=e.target.closest('.house');if(b)sel(b.dataset.k)};
+  $('#map').onclick=e=>{const p=e.target.closest('.pin');if(p)sel(p.dataset.k)};
+  sel('amh');
+  // outdoors: kisvasút schedule by season
+  const m=NOW.getMonth()+1,dd=NOW.getDate();let ks;
+  if(m<3||(m===3&&dd<15))ks='Vasárnap és ünnepnap 10:00–16:00';else if(m<5)ks='Hétvégén és ünnepnap 10:00–17:00';else if(m<9||(m===9&&dd<=7))ks='Minden nap 10:00–18:00';else if(m<11)ks='Hétvégén és ünnepnap 10:00–17:00';else ks='Vasárnap 10:00–16:00';
+  const kr=dow===3?'Ma (szerda) zárva':'Ma 14:00–19:00';
+  $('#outd').innerHTML=`<div class="od rv"><img src="/demo/kohegy/assets/foto/vasut.webp" alt="Sashegyi Kisvasút" loading="lazy"><div><h3>Sashegyi Kisvasút</h3><p>Az erdei kilátó és a vadaspark között, 20–25 percenként.</p><div class="st"><svg class="ico"><use href="#i-clock"/></svg>Most: ${ks}</div></div></div>
+   <div class="od rv"><img src="/demo/kohegy/assets/foto/kresz.webp" alt="Bringás KRESZ-park" loading="lazy"><div><h3>Bringás KRESZ-park</h3><p>Kerékpáros közlekedési park gyerekeknek, Bányatelepen, a Tárna utcában.</p><div class="st"><svg class="ico"><use href="#i-clock"/></svg>${kr}</div></div></div>
+   <div class="od rv"><img src="/demo/kohegy/assets/foto/tabor.webp" alt="Tóparti tábor" loading="lazy"><div><h3>Tóparti tábor</h3><p>Iskolás csoportoknak, nyári turnusokban, a fenyves szélén, saját stéggel.</p><div class="st"><svg class="ico"><use href="#i-pin"/></svg>a Balaton déli partján</div></div></div>`;
+})();
+
+/* ---- terembérlés ---- */
+const ROOMS=[
+ {n:'Színházterem',h:'amh',c:300,o:['Előadás, koncert','Konferencia']},
+ {n:'Konferenciaterem',h:'amh',c:50,o:['Konferencia','Tanfolyam, klub','Családi ünnep']},
+ {n:'Kisebb termek',h:'amh',c:15,o:['Tanfolyam, klub']},
+ {n:'Nagy előadóterem',h:'umh',c:50,o:['Előadás, koncert','Konferencia','Családi ünnep']},
+ {n:'Kis előadóterem',h:'umh',c:30,o:['Tanfolyam, klub','Családi ünnep','Konferencia']},
+ {n:'Klubtermek',h:'umh',c:12,o:['Tanfolyam, klub']}
+];
+const OCC=['Előadás, koncert','Konferencia','Családi ünnep','Tanfolyam, klub'];
+let occ=null;
+$('#occ').innerHTML=OCC.map(o=>`<button type="button" aria-pressed="false">${o}</button>`).join('');
+$('#fR').innerHTML=ROOMS.map(r=>`<option>${r.n} · ${H[r.h].n} (${r.c} főig)</option>`).join('')+'<option>Másik ház, egyeztetéssel</option>';
+function renderRooms(){
+  const n=+$('#capR').value;$('#capO').innerHTML=n+'<small>fő</small>';$('#fN').value=n;
+  const ok=ROOMS.map(r=>({r,fit:r.c>=n&&(!occ||r.o.includes(occ))}));
+  const sorted=[...ok].sort((a,b)=>(b.fit-a.fit)||(a.r.c-b.r.c));
+  $('#rooms').innerHTML=sorted.map(({r,fit})=>`<div class="room${fit?'':' no'}${fit&&n/r.c>.85?' tight':''}"><b>${r.n}</b><span>${H[r.h].n}${fit?(n/r.c>.85?' · szűkösen, de elfér':''):(r.c<n?' · túl kicsi ehhez':' · más alkalomra való')}</span><div class="cp">${r.c} főig</div><div class="meter"><i style="width:${Math.min(100,n/r.c*100)}%"></i></div></div>`).join('')+`<div class="room"><b>Liget, Kertváros, Hegyalja, Szőlőhegy, Vasútvidék</b><span>Klubtermek, közösségi terek · méret és ár egyeztetéssel</span><div class="cp">?</div></div>`;
+  const first=sorted.find(x=>x.fit);if(first)$('#fR').selectedIndex=ROOMS.indexOf(first.r);
+}
+$('#capR').oninput=renderRooms;
+$('#occ').onclick=e=>{const b=e.target.closest('button');if(!b)return;occ=occ===b.textContent?null:b.textContent;[...$('#occ').children].forEach(x=>x.setAttribute('aria-pressed',x.textContent===occ));renderRooms()};
+renderRooms();
+$('#fD').value=_iso(new Date(today0.getFullYear(),today0.getMonth()+1,today0.getDate()));
+$('#rForm').onsubmit=e=>{e.preventDefault();$('#stamp').classList.add('on')};
+$('#stampX').onclick=()=>$('#stamp').classList.remove('on');
+
+/* ---- galéria + hírek ---- */
+(function(){
+  const open=new Date(today0.getFullYear(),today0.getMonth(),today0.getDate()+12),close=new Date(open.getFullYear(),open.getMonth(),open.getDate()+60);
+  $('#tarlat').textContent=open.getFullYear()+'. '+HU_M[open.getMonth()]+' '+open.getDate()+'. – '+(close.getFullYear()!==open.getFullYear()?close.getFullYear()+'. ':'')+HU_M[close.getMonth()]+' '+close.getDate()+'.';
+  const dd=Math.ceil((open-today0)/864e5);
+  $('#cd').innerHTML=dd>0?`<b>${dd}</b><span>nap a megnyitóig</span>`:(today0<=close?`<b>Most</b><span>látogatható, szavazzon!</span>`:`<b>Vége</b><span>a tárlat bezárt</span>`);
+  const ago=n=>_iso(new Date(today0.getFullYear(),today0.getMonth(),today0.getDate()-n));
+  const N=[
+   {d:ago(3),lbl:'Álláshirdetés',t:'Közművelődési szakembert keresünk',p:'Felsőfokú szakirányú végzettséggel. Önéletrajz: munkaugy@kohegykult.hu, két héten belül.'},
+   {d:ago(10),lbl:'Hír',t:'Véleményláda a Központi Művelődési Házban',p:'Az emeleten kérdőívet tölthet ki az előadásokról; a kitöltők között ajándékcsomagot sorsolunk.'},
+   {d:ago(40),lbl:'Kiállítás',t:'Akvarellek a Sashegyről',p:'Húsz vízfestmény a Galériában, a hegy négy évszakáról.',until:ago(20)}
+  ];
+  $('#news').innerHTML=N.map(n=>{const past=n.until&&pd(n.until)<today0;const d=pd(n.d);return `<a class="nw${past?' past':''}" href="#galeria"><div class="dt"><span>${d.getFullYear()}. ${HU_M[d.getMonth()]} ${d.getDate()}.</span><em>${past?'Elmúlt kiállítás':n.lbl}</em></div><h3>${n.t}</h3><p>${n.p}</p></a>`}).join('');
+})();
+
+/* ---- menü, megjegyzések, reveal ---- */
+const sh=$('#sheet');$('#menuB').onclick=()=>{sh.classList.add('open');$('#menuB').setAttribute('aria-expanded','true')};
+$('#menuX').onclick=()=>{sh.classList.remove('open');$('#menuB').setAttribute('aria-expanded','false')};
+sh.querySelectorAll('nav a').forEach(a=>a.onclick=()=>$('#menuX').onclick());
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

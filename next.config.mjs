@@ -93,7 +93,7 @@ const csp = [
  * Új demó = egy név ebben a listában: ebből lesz a tiszta URL-hez kellő
  * rewrite és a noindex fejléc.
  */
-const STATIC_DEMOS = ["opal-palack", "halmos-ugyved", "negyszem", "vandorkor"];
+const STATIC_DEMOS = ["opal-palack", "halmos-ugyved", "negyszem", "vandorkor", "kohegy"];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
