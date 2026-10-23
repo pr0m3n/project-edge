@@ -1844,6 +1844,8 @@
 
 .zm-hero-head h1 {
   font-size: clamp(52px, 6.4vw, 104px);
+  /* A magyar ékezetek (Ö, Ü, Ő) a 0,95-ös sorközzel belelógtak a fölötte lévő sorba. */
+  line-height: 1.08;
   text-transform: uppercase;
 }
 

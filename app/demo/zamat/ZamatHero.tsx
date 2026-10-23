@@ -19,9 +19,9 @@ import { beanColor, beanTemp, formatMinute, formatTemp, toHex } from "./roast";
  */
 
 const PICKS = [
-  { label: "Világos", slug: "etiopia-guji", photo: "/demo/zamat/hero-vilagos.webp", alt: "Terrakotta kávészacskó, világos pörkölésű szemek és filteres kávéfőző" },
-  { label: "Közepes", slug: "kolumbia-huila", photo: "/demo/zamat/hero-kozepes.webp", alt: "Okkersárga kávészacskó, közepes pörkölésű szemek fakanálban, kézi daráló" },
-  { label: "Sötét", slug: "brazil-cerrado", photo: "/demo/zamat/hero-sotet.webp", alt: "Sötétbarna kávészacskó, sötét pörkölésű szemek és egy csésze espresso" }
+  { label: "Világos", slug: "etiopia-guji", photo: "/demo/zamat/zacsko-vilagos.webp", alt: "Terrakotta kávészacskó, világos pörkölésű szemek és filteres kávéfőző" },
+  { label: "Közepes", slug: "kolumbia-huila", photo: "/demo/zamat/zacsko-kozepes.webp", alt: "Okkersárga kávészacskó, közepes pörkölésű szemek fakanálban, kézi daráló" },
+  { label: "Sötét", slug: "brazil-cerrado", photo: "/demo/zamat/zacsko-sotet.webp", alt: "Sötétbarna kávészacskó, sötét pörkölésű szemek és egy csésze espresso" }
 ];
 
 export function ZamatHero() {
