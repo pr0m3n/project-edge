@@ -18487,9 +18487,7 @@ details.admin-collapse summary:hover {
    visz. Tiszta CSS 3D — nincs JS, nincs böngészőfüggő szűrő. */
 
 .work-deck{position:relative;isolation:isolate;overflow:hidden;
-  display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);
-  gap:clamp(28px,5vw,72px);align-items:center;
-  padding:clamp(64px,9vw,124px) clamp(18px,5vw,76px);
+  padding:clamp(64px,9vw,124px) 0 clamp(72px,9vw,128px);
   background:linear-gradient(168deg,#11171c 0%,#1b2027 55%,#232a32 100%);color:var(--paper)}
 .work-deck-glow{position:absolute;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(52% 46% at 78% 16%,rgba(255,87,34,.28),transparent 66%),
@@ -18502,91 +18500,72 @@ details.admin-collapse summary:hover {
     rgba(17,23,28,.92) 16%,rgba(17,23,28,.8) 29%,rgba(17,23,28,.62) 44%,
     rgba(17,23,28,.4) 61%,rgba(17,23,28,.18) 80%,rgba(17,23,28,0) 100%)}
 
-.work-deck-copy{position:relative;z-index:2}
-.work-deck-copy h2{margin:14px 0 16px;font-size:clamp(30px,4.2vw,54px);line-height:1.02;
+/* Fent a cím és a gomb egy sorban, alatta a teljes szélességű sáv. */
+.work-deck-copy{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+  gap:clamp(20px,4vw,64px);align-items:end;padding:0 clamp(18px,5vw,76px)}
+.work-deck-copy h2{margin:14px 0 0;font-size:clamp(30px,4.2vw,54px);line-height:1.02;
   letter-spacing:-.035em;font-weight:690;color:#fff}
 .work-deck-copy h2 em{font-style:normal;
   background:linear-gradient(96deg,#ff9147,var(--ember) 46%,#ff8fb0);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.work-deck-copy>p{margin:0 0 26px;max-width:46ch;color:rgba(255,255,255,.66);font-size:clamp(14.5px,1.6vw,16px);line-height:1.6}
+.work-deck-side p{margin:0 0 22px;max-width:46ch;color:rgba(255,255,255,.66);font-size:clamp(14.5px,1.6vw,16px);line-height:1.6}
 
-.work-deck-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.8vw,26px);margin:30px 0 0;max-width:460px}
-.work-deck-stats div{display:grid;gap:3px}
-.work-deck-stats dt{font-size:clamp(24px,2.6vw,34px);font-weight:700;letter-spacing:-.03em;color:#fff;line-height:1}
-.work-deck-stats dd{margin:0;font-size:12px;color:rgba(255,255,255,.5);line-height:1.35;text-wrap:balance}
+/* ── A sáv ──────────────────────────────────────────────────────────
+   Balról jobbra halad, és az ELSŐ munka megy elöl. Jobbra haladó sávba mindig
+   a bal szélen lép be a következő lap; ha a lista sima sorrendben állna, onnan
+   a lista VÉGE jönne be, és a látogató először az utolsó munkákat látná. Ezért
+   a sáv `row-reverse`: az első munka a jobb szélen áll, mögötte balra sorban a
+   többi. A DOM-sorrend közben változatlan (képernyőolvasó, Tab, mozgás nélkül).
 
-/* ── A pakli ────────────────────────────────────────────────────── */
-.work-deck-stack{position:relative;z-index:2;display:block;
-  height:clamp(300px,33vw,450px);perspective:1500px;perspective-origin:62% 45%}
-.work-deck-card{position:absolute;top:13%;left:0;width:70%;
-  border-radius:16px;overflow:hidden;
-  /* Amíg a kép úton van, ne fekete lyuk álljon a helyén. */
+   Induláskor a sáv jobb vége a nézet jobb szélén áll (-100% + 100vw), így a
+   legelső munkák látszanak; egy kör pontosan egy listányi út (-50% + 100vw),
+   ahol a második példány ugyanazt a képet adja, tehát nincs ugrás. A köz itt is
+   a kártyák jobb margója, nem `gap` (lásd .work-hero-track): így a fél sáv
+   pontosan egy lista. A sebesség a darabszámból jön. Rámutatásra megáll. */
+.work-reel{position:relative;z-index:2;margin-top:clamp(36px,5vw,64px);overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.work-reel-track{display:flex;flex-direction:row-reverse;width:max-content;padding:14px 0 18px;
+  animation:work-reel calc(var(--n,10) * 5.5s) linear infinite}
+.work-reel:hover .work-reel-track,.work-reel:focus-within .work-reel-track{animation-play-state:paused}
+@keyframes work-reel{from{transform:translateX(calc(-100% + 100vw))}to{transform:translateX(calc(-50% + 100vw))}}
+
+.work-reel-card{flex:none;margin-right:clamp(14px,1.6vw,22px);width:clamp(250px,24vw,340px);
+  display:grid;gap:12px;text-decoration:none;color:inherit;outline:none}
+.work-reel-shot{position:relative;display:block;aspect-ratio:16/10;border-radius:14px;overflow:hidden;
   background:linear-gradient(150deg,#222b35 0%,#141a21 60%,#0d1116 100%);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 34px 70px -34px rgba(0,0,0,.95);
-  transform-origin:left center;
-  /* Lépcsőzetes kaszkád: minden lap jobbra-fel csúszik és hátrébb kerül. */
-  transform:translate3d(calc(var(--i) * 5%),calc(var(--i) * -3.2%),calc(var(--i) * -34px))
-            rotateY(-21deg) rotateX(5deg) rotateZ(-1.2deg);
-  z-index:calc(20 - var(--i));
-  transition:transform .55s cubic-bezier(.2,.9,.3,1),box-shadow .4s ease,border-color .3s ease}
-.work-deck-card img{display:block;width:100%;height:auto;
-  transition:opacity .7s ease calc(var(--i) * 45ms),transform 1s cubic-bezier(.2,.9,.3,1) calc(var(--i) * 45ms)}
-/* Úton lévő kép (DeckImage): átlátszó, és beúszik, amint megérkezik. */
-.work-deck-card img[data-fade="wait"]{opacity:0;transform:scale(1.04)}
-/* Addig egy csillanás fut a kártyán, hogy látszódjon: tölt, nem üres. */
-.work-deck-card:has(img[data-fade="wait"])::before{content:"";position:absolute;inset:0;z-index:1;
+  border:1px solid rgba(255,255,255,.14);box-shadow:0 26px 60px -32px rgba(0,0,0,.9);
+  transition:transform .35s cubic-bezier(.2,.9,.3,1),border-color .3s ease,box-shadow .35s ease}
+.work-reel-shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top center;
+  transition:opacity .6s ease,transform .8s cubic-bezier(.2,.9,.3,1)}
+/* Úton lévő kép (DeckImage): átlátszó, csillanás fut, megérkezéskor beúszik. */
+.work-reel-shot img[data-fade="wait"]{opacity:0;transform:scale(1.04)}
+.work-reel-shot:has(img[data-fade="wait"])::before{content:"";position:absolute;inset:0;z-index:1;
   background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.07) 48%,transparent 66%) 0 0/250% 100%;
   animation:work-deck-shimmer 1.4s linear infinite}
 @keyframes work-deck-shimmer{from{background-position:100% 0}to{background-position:-150% 0}}
-.work-deck-card::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(196deg,rgba(255,255,255,.14),transparent 42%),
-             linear-gradient(0deg,rgba(8,11,15,.86) 0%,rgba(8,11,15,.15) 34%,transparent 62%)}
-
-.work-deck-label{position:absolute;left:14px;bottom:12px;z-index:3;display:grid;gap:2px}
-.work-deck-label b{font-size:clamp(13px,1.4vw,15.5px);font-weight:660;color:#fff;letter-spacing:-.01em}
-.work-deck-label small{font:600 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
-  letter-spacing:.14em;text-transform:uppercase;color:#ffb08a}
-
-/* Szétnyílás: a lapok távolabb kerülnek és kevésbé dőlnek. */
-.work-deck-stack:hover .work-deck-card,
-.work-deck-stack:focus-visible .work-deck-card{
-  transform:translate3d(calc(var(--i) * 6.6%),calc(var(--i) * -4.6%),calc(var(--i) * -22px))
-            rotateY(-13deg) rotateX(2deg) rotateZ(-.6deg)}
-/* A megcélzott lap teljesen előrejön. */
-.work-deck-stack .work-deck-card:hover{
-  transform:translate3d(calc(var(--i) * 6.6% + 3%),calc(var(--i) * -4.6%),60px)
-            rotateY(-4deg) rotateX(0deg) rotateZ(0deg);
-  z-index:30;border-color:rgba(255,87,34,.55);
-  box-shadow:0 44px 90px -30px rgba(255,87,34,.5),0 34px 70px -34px rgba(0,0,0,.95)}
-.work-deck-stack .work-deck-card:hover::after{background:linear-gradient(0deg,rgba(8,11,15,.7) 0%,transparent 52%)}
-
-.work-deck-hint{position:absolute;right:2%;bottom:-4px;z-index:25;
-  font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;
-  text-transform:uppercase;color:rgba(255,255,255,.34);transition:color .3s}
-.work-deck-stack:hover .work-deck-hint{color:rgba(255,176,138,.8)}
+.work-reel-card:hover .work-reel-shot,.work-reel-card:focus-visible .work-reel-shot{transform:translateY(-6px);
+  border-color:rgba(255,87,34,.55);box-shadow:0 34px 70px -30px rgba(255,87,34,.45),0 26px 60px -32px rgba(0,0,0,.9)}
+.work-reel-label{display:grid;gap:4px;padding:0 2px}
+.work-reel-label b{font-size:15.5px;font-weight:660;color:#fff;letter-spacing:-.01em}
+.work-reel-label small{font:600 10px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.12em;text-transform:uppercase;color:#ffb08a}
 
 @media (max-width:980px){
-  .work-deck{grid-template-columns:1fr;gap:clamp(30px,7vw,54px)}
-  .work-deck-stack{height:clamp(280px,52vw,400px);perspective-origin:56% 45%}
-  .work-deck-card{width:74%}
+  .work-deck-copy{grid-template-columns:1fr;gap:18px}
 }
 @media (max-width:620px){
-  /* Érintőn nincs hover: a pakli eleve nyitottabb, hogy minden címke látszódjon. */
-  /* A lapok lépcsője felfelé is kinyúlik a dobozból; tíz lapnál már a
-     gombra csúszott. A felső margó ennyit ad vissza. */
-  .work-deck-stack{height:clamp(280px,74vw,380px);margin-top:clamp(36px,12vw,56px)}
-  .work-deck-card{width:86%;
-    transform:translate3d(calc(var(--i) * 5.4%),calc(var(--i) * -5.2%),0) rotateY(-11deg) rotateX(2deg)}
-  .work-deck-label b{font-size:12.5px}
-  .work-deck-label small{font-size:8.5px}
-  .work-deck-hint{display:none}
+  .work-reel-card{width:250px}
+  .work-reel-label b{font-size:14px}
 }
+/* Mozgás nélkül a sáv kézzel görgethető, és a második példány elrejtve. */
 @media (prefers-reduced-motion:reduce){
-  .work-deck-card{transition:none}
-  .work-deck-card img{transition:opacity .3s ease}
-  .work-deck-card img[data-fade="wait"]{transform:none}
-  .work-deck-card:has(img[data-fade="wait"])::before{animation:none}
+  .work-reel{overflow-x:auto;-webkit-mask-image:none;mask-image:none;scroll-snap-type:x mandatory}
+  .work-reel-track{animation:none;flex-direction:row;padding-left:clamp(18px,5vw,76px)}
+  .work-reel-card{scroll-snap-align:start}
+  .work-reel-card[aria-hidden="true"]{display:none}
+  .work-reel-shot,.work-reel-shot img{transition:none}
+  .work-reel-shot:has(img[data-fade="wait"])::before{animation:none}
 }
 
 /* ════════════════════════════════════════════════════════════════════

@@ -1,34 +1,58 @@
 import { DeckImage } from "@/components/DeckImage";
 import { TransitionLink } from "@/components/TransitionLink";
-import { WORKS } from "@/lib/works";
+import { WORKS, type Work } from "@/lib/works";
 
 /**
- * A főoldal referencia-szakasza.
+ * A főoldal referencia-szakasza: az ÖSSZES munka egy folyamatosan, balról
+ * jobbra haladó sávban.
  *
- * Korábban EGYETLEN projektet emelt ki (Checky.hu), és az volt az egyetlen
- * bizonyíték a főoldalon. Ez a szakasz az ÖSSZESET megmutatja egyszerre,
- * perspektivikus pakliban, és a gyűjtőoldalra visz: az „ért hozzá és sokfélét
- * csinált" üzenet erősebb, mint egyetlen kiragadott példa.
+ * Korábban perspektivikus pakli állt itt. Amíg hat-hét munka volt, olvasható
+ * maradt, de húsz fölött a lapok lépcsője kifutott a képernyőből, és csak a
+ * legelső lap látszott; a többi csak egérrel nyílt szét, érintőn sehogy. A
+ * sávban minden munka sorra elhalad, mindegyik kártya kattintható, és
+ * telefonon is ugyanígy működik.
  *
- * A lista a `lib/works.ts`-ből jön, a darabszámok pedig BELŐLE számolódnak —
- * sem itt, sem a címben nincs beégetett szám, tehát új munka felvételekor ezt
- * a fájlt nem kell hozzányúlni.
+ * A lista a `lib/works.ts`-ből jön, a darabszám és a sáv sebessége is belőle
+ * számolódik — új munka felvételekor ezt a fájlt nem kell hozzányúlni.
  *
- * A pakli tiszta CSS-sel legyeződik szét — nincs JS, nincs böngészőfüggő
- * szűrő. Érintőn a `:hover` nem sül el, ezért ott a nyugalmi állapot is
- * olvasható marad: minden kártya címkéje látszik.
+ * A sáv kétszer tartalmazza a listát, hogy a végtelen futásnak ne legyen
+ * varrata. A második példány a képernyőolvasók és a Tab elől el van rejtve,
+ * így minden munka egyszer szerepel az akadálymentes fában.
  *
- * A képek NEM lusták. A szakasz közvetlenül a heró alatt van, a `next/image`
- * alapértelmezett `loading="lazy"`-je miatt viszont a böngésző csak a
- * szakasz közelében kérte le mind a tízet, egyszerre — mobilneten a kártyák
- * sötéten álltak, aztán a kép egy pillanat alatt „beteleportált". Most az
- * oldal betöltésekor indulnak, de alacsony prioritással, hogy a heró képét
- * ne előzzék meg.
- *
- * Gyors görgetésnél a szakasz így is megelőzheti a képeket, ezért egy
- * `DeckImage` kezeli őket: amíg úton vannak, a kártyán töltés-csillanás fut,
- * megérkezéskor pedig beúsznak, lapról lapra kis késleltetéssel.
+ * A képek NEM lusták: a szakasz közvetlenül a nyitókép alatt van, és a sáv
+ * folyamatosan hozza be őket a képernyőre. Alacsony prioritással indulnak,
+ * hogy a nyitókép képét ne előzzék meg; a `DeckImage` a még úton lévő képet
+ * csillanással jelzi, és beúsztatja, amikor megérkezik.
  */
+
+function ReelCard({ work, hidden }: { work: Work; hidden?: boolean }) {
+  return (
+    <a
+      aria-hidden={hidden || undefined}
+      className="work-reel-card"
+      href={work.href}
+      rel={work.external ? "noopener" : undefined}
+      tabIndex={hidden ? -1 : undefined}
+      target={work.external ? "_blank" : undefined}
+    >
+      <span className="work-reel-shot">
+        <DeckImage
+          alt={hidden ? "" : `${work.name} — ${work.goal}`}
+          fetchPriority="low"
+          height={work.height}
+          loading="eager"
+          sizes="(max-width: 620px) 250px, 340px"
+          src={work.src}
+          width={work.width}
+        />
+      </span>
+      <span className="work-reel-label">
+        <b>{work.name}</b>
+        <small>{work.external ? `${work.href.replace(/^https?:\/\//, "")} ↗` : work.goal}</small>
+      </span>
+    </a>
+  );
+}
 
 export function WorkDeck() {
   return (
@@ -36,43 +60,33 @@ export function WorkDeck() {
       <div className="work-deck-glow" aria-hidden="true" />
 
       <div className="work-deck-copy">
-        <p className="micro-label dark">Munkák</p>
-        <h2>
-          Minden munka egy <em>üzleti célra.</em>
-        </h2>
-        <p>
-          Autóápolás, webshop kosárral, időpontfoglalás, dashboard, ingatlankereső és
-          érdeklődőszerző oldal — köztük élesben futó ügyfélmunka. Mindegyiket meg tudod nyitni.
-        </p>
-        <TransitionLink className="button primary" href="/munkak">
-          Az összes munka megnézése
-        </TransitionLink>
+        <div>
+          <p className="micro-label dark">Munkák</p>
+          <h2>
+            Minden munka egy <em>üzleti célra.</em>
+          </h2>
+        </div>
+        <div className="work-deck-side">
+          <p>
+            Ügyvédi iroda, panzió, gyártó, utazási iroda, webshop és időpontfoglalás — köztük
+            élesben futó ügyfélmunka. Bármelyikre kattintva megnyílik.
+          </p>
+          <TransitionLink className="button primary" href="/munkak">
+            Az összes munka megnézése
+          </TransitionLink>
+        </div>
       </div>
 
-      <TransitionLink aria-label="Munkák és projektbemutatók megnyitása" className="work-deck-stack" href="/munkak">
-        {WORKS.map((work, index) => (
-          <span className="work-deck-card" key={work.src} style={{ "--i": index } as React.CSSProperties}>
-            <DeckImage
-              alt={`${work.name} — ${work.goal}`}
-              fetchPriority="low"
-              height={work.height}
-              loading="eager"
-              // A kártya szélessége a CSS-ből: telefonon a pakli 86%-a,
-              // tableten 74%-a, asztalin a jobb hasáb 70%-a.
-              sizes="(max-width: 620px) 82vw, (max-width: 980px) 70vw, 34vw"
-              src={work.src}
-              width={work.width}
-            />
-            <span className="work-deck-label">
-              <b>{work.name}</b>
-              <small>{work.goal}</small>
-            </span>
-          </span>
-        ))}
-        <span aria-hidden="true" className="work-deck-hint">
-          Vidd fölé — a pakli szétnyílik
-        </span>
-      </TransitionLink>
+      <div className="work-reel" style={{ "--n": WORKS.length } as React.CSSProperties}>
+        <div className="work-reel-track">
+          {WORKS.map((work) => (
+            <ReelCard key={work.id} work={work} />
+          ))}
+          {WORKS.map((work) => (
+            <ReelCard hidden key={`${work.id}-2`} work={work} />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
