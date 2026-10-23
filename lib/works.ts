@@ -279,10 +279,10 @@ export const WORKS: Work[] = [
     goal: "Webshop kosárral",
     industry: "Kereskedelem",
     copy:
-      "Nagy, forgó 3D zacskó, ami egy pördüléssel átöltözik a választott kávéra — webshop működő kosárral és termékoldalakkal.",
+      "Kávé-webshop működő kosárral: a pörkölési fokra kattintva vált a termékfotó, a termékoldalakon pedig forgatható 3D zacskó.",
     href: "/demo/zamat",
     external: false,
-    src: "/work/demos/zamat-zacsko.webp",
+    src: "/work/demos/zamat.webp",
     width: 1440,
     height: 900
   },
