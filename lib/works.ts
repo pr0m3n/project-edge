@@ -261,6 +261,19 @@ export const WORKS: Work[] = [
     height: 900
   },
   {
+    id: "erdokapu",
+    name: "Erdőkapu Panzió",
+    goal: "Szállásfoglalás árkalkulátorral",
+    industry: "Vendéglátás",
+    copy:
+      "A nyitóképen árkalkulátor: dátum, létszám és ellátás alapján kiírja a végösszeget, magától felismeri a csomagárat, és onnan egyből foglalási kérés.",
+    href: "/demo/erdokapu",
+    external: false,
+    src: "/work/demos/erdokapu.webp",
+    width: 1440,
+    height: 900
+  },
+  {
     id: "zamat",
     name: "Zamat",
     goal: "Webshop kosárral",
